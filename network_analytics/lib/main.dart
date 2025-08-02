@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'layout/topology_map_layout.dart';
+import 'ui/components/topology_map_layout.dart';
 
 void main() => runApp(const MyApp());
 

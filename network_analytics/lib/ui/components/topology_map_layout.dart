@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+import 'package:logger/web.dart';
+import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/services/topology_service.dart';
+import '../../theme/app_colors.dart';
 import 'title_bar.dart';
 import 'side_nav.dart';
 import 'drawer_panel.dart';
@@ -14,6 +17,7 @@ class TopologyMapLayout extends StatefulWidget {
 
 class _TopologyMapLayoutState extends State<TopologyMapLayout> with TickerProviderStateMixin {
   int? selectedIndex;
+  Topology? topology;
 
   final double drawerTargetWidth = 250;
   late final AnimationController _drawerController;
@@ -28,6 +32,7 @@ class _TopologyMapLayoutState extends State<TopologyMapLayout> with TickerProvid
   @override
   void initState() {
     super.initState();
+    fetchTopology();
 
     _drawerController = AnimationController(
       vsync: this,
@@ -68,6 +73,15 @@ class _TopologyMapLayoutState extends State<TopologyMapLayout> with TickerProvid
       });
       _drawerController.forward();
     }
+  }
+
+  Future<void> fetchTopology() async {
+    final topology  = await TopologyService(baseUrl: 'http://localhost:5050/api').fetchItems();
+
+    setState(() {
+      Logger().d(topology.items);
+      this.topology = topology;
+    });
   }
 
   @override
