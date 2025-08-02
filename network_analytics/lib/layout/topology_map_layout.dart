@@ -1,0 +1,116 @@
+import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+import 'title_bar.dart';
+import 'side_nav.dart';
+import 'drawer_panel.dart';
+import 'content_area.dart';
+
+class TopologyMapLayout extends StatefulWidget {
+  const TopologyMapLayout({super.key});
+
+  @override
+  State<TopologyMapLayout> createState() => _TopologyMapLayoutState();
+}
+
+class _TopologyMapLayoutState extends State<TopologyMapLayout> with TickerProviderStateMixin {
+  int? selectedIndex;
+
+  final double drawerTargetWidth = 250;
+  late final AnimationController _drawerController;
+  late final Animation<double> _drawerWidth;
+
+  late final AnimationController _fadeController;
+  late final Animation<double> _fadeAnimation;
+
+  final List<IconData> navIcons = [Icons.code, Icons.search, Icons.settings];
+  final List<String> navLabels = ['Explorer', 'Search', 'Settings'];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _drawerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _drawerWidth = Tween<double>(begin: 0, end: drawerTargetWidth)
+        .animate(CurvedAnimation(parent: _drawerController, curve: Curves.easeInOut));
+
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeIn,
+    );
+
+    _drawerController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _fadeController.forward();
+      } else if (status == AnimationStatus.reverse) {
+        _fadeController.reset();
+      }
+    });
+  }
+
+  void _handleNavClick(int index) {
+    if (selectedIndex == index) {
+      _drawerController.reverse();
+      setState(() {
+        selectedIndex = null;
+      });
+    } else {
+      setState(() {
+        selectedIndex = index;
+      });
+      _drawerController.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _drawerController.dispose();
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundColor,
+      body: Column(
+        children: [
+          const TitleBar(),
+          Expanded(
+            child: Row(
+              children: [
+                SideNav(
+                  selectedIndex: selectedIndex,
+                  icons: navIcons,
+                  labels: navLabels,
+                  onPressed: _handleNavClick,
+                ),
+                AnimatedBuilder(
+                  animation: _drawerController,
+                  builder: (context, child) {
+                    return DrawerPanel(
+                      width: _drawerWidth.value,
+                      isVisible: selectedIndex != null &&
+                          _drawerController.status == AnimationStatus.completed,
+                      fadeAnimation: _fadeAnimation,
+                      label: navLabels[selectedIndex ?? 0],
+                    );
+                  },
+                ),
+                const Expanded(child: ContentArea()),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
