@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:network_analytics/services/hover_interaction_service.dart';
+
 extension RequireNotNullExtension<T> on T? {
   T require([String? label]) {
     if (this == null) {
@@ -11,7 +13,7 @@ extension RequireNotNullExtension<T> on T? {
 
 
 
-class Device {
+class Device implements HoverTarget {
   final int id;
   final String name;
   final Offset positionNDC;
@@ -41,5 +43,10 @@ class Device {
     }
 
     return devices;
+  }
+
+  @override
+  bool hitTest(Offset pointNDC) {
+    return (pointNDC - positionNDC).distanceSquared <= 0.0001;
   }
 }

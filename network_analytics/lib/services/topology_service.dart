@@ -1,14 +1,16 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+// ignore: unused_import
+import 'package:logger/web.dart';
 import 'package:network_analytics/models/topology.dart';
 
 class TopologyService {
-  final String baseUrl;
+  final Uri endpoint;
 
-  TopologyService({required this.baseUrl});
+  TopologyService({required this.endpoint});
 
   Future<Topology> fetchItems() async {
-    final response = await http.get(Uri.parse('$baseUrl/topology'));
+    final response = await http.get(endpoint);
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> jsonList = json.decode(response.body);
@@ -18,3 +20,5 @@ class TopologyService {
     }
   }
 }
+
+

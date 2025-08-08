@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:logger/web.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/topology_service.dart';
 import '../../theme/app_colors.dart';
@@ -26,13 +25,12 @@ class _TopologyMapLayoutState extends State<TopologyMapLayout> with TickerProvid
   late final AnimationController _fadeController;
   late final Animation<double> _fadeAnimation;
 
-  final List<IconData> navIcons = [Icons.code, Icons.search, Icons.settings];
-  final List<String> navLabels = ['Explorer', 'Search', 'Settings'];
+  final List<IconData> navIcons = [Icons.segment, Icons.search, Icons.settings];
+  final List<String> navLabels = ['Listado', 'Search', 'Settings'];
 
   @override
   void initState() {
     super.initState();
-    fetchTopology();
 
     _drawerController = AnimationController(
       vsync: this,
@@ -76,10 +74,16 @@ class _TopologyMapLayoutState extends State<TopologyMapLayout> with TickerProvid
   }
 
   Future<void> fetchTopology() async {
-    final topology  = await TopologyService(baseUrl: 'http://localhost:5050/api').fetchItems();
+    // TODO: Change to actual endpoint
+    final topology  = await TopologyService(endpoint: Uri(
+      scheme: "http",
+      host  : "localhost",
+      port  : 5050,
+      path  : "/api/topology"
+
+    )).fetchItems();
 
     setState(() {
-      Logger().d(topology.items);
       this.topology = topology;
     });
   }

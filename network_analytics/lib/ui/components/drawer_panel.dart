@@ -22,7 +22,7 @@ class DrawerPanel extends StatelessWidget {
           ? FadeTransition(
               opacity: fadeAnimation,
               child: Container(
-                color: Colors.grey.shade200,
+                color: Colors.grey.shade300,
                 padding: const EdgeInsets.all(16),
                 alignment: Alignment.topLeft,
                 child: Text(

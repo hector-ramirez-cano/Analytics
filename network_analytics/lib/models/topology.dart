@@ -1,3 +1,5 @@
+// ignore: unused_import
+import 'package:logger/web.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link.dart';
 
@@ -24,4 +26,11 @@ class Topology {
     return Topology(items: itemsLocal);
   }
 
+  List<Device> getDevices() {
+    return items.values.whereType<Device>().toList();
+  }
+
+  List<Link> getLinks() {
+    return items.values.whereType<Link>().toList();
+  }
 }
