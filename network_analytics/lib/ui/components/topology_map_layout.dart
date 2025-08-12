@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/topology_service.dart';
 import '../../theme/app_colors.dart';
 import 'title_bar.dart';
 import 'side_nav.dart';
@@ -73,21 +72,7 @@ class _TopologyMapLayoutState extends State<TopologyMapLayout> with TickerProvid
     }
   }
 
-  Future<void> fetchTopology() async {
-    // TODO: Change to actual endpoint
-    final topology  = await TopologyService(endpoint: Uri(
-      scheme: "http",
-      host  : "localhost",
-      port  : 5050,
-      path  : "/api/topology"
-
-    )).fetchItems();
-
-    setState(() {
-      this.topology = topology;
-    });
-  }
-
+  
   @override
   void dispose() {
     _drawerController.dispose();
