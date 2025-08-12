@@ -91,4 +91,9 @@ class Link implements HoverTarget {
 
     return withinBounds && withinX && withinY;
   }
+
+  @override
+  int getId() {
+    return id;
+  }
 }

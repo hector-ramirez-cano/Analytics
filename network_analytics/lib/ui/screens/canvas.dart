@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 // ignore: unused_import
 import 'package:logger/web.dart';
 import 'package:network_analytics/services/hover_interaction_service.dart';
+import 'package:network_analytics/services/item_selection_service.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
@@ -28,32 +31,71 @@ extension OffsetNDCConversion on Offset {
 
 // TODO: Refactor all this code into different files
 class TopologyCanvas extends StatefulWidget {
-  const TopologyCanvas({super.key});
+  const TopologyCanvas({
+    super.key
+  });
 
   @override
   State<TopologyCanvas> createState() => _TopologyCanvasState();
 }
 
 class _TopologyCanvasState extends State<TopologyCanvas> {
+  final Duration delay = const Duration(seconds: 1);
+  
   Size? canvasActualSize;
-  HoverTarget? hovered;
+  HoverTarget? _hovered;
+  HoverTarget? prevHovered;
+  Timer? _hoverTimer;
 
-  MouseRegion _makeCustomPaint(Topology topology, HoverInteractionService hoverInteractionService) {
+  void _onEnter(PointerEvent event, VoidCallback onChangeSelection){
+    if (_hovered == null) {
+      _onExit(event);
+    } else {
+      _hoverTimer = Timer(delay, onChangeSelection);
+    }
+  }
+
+  // TODO: Decouple logic from UI
+  void _onExit(PointerEvent event) {
+    _hoverTimer?.cancel();
+    _hoverTimer = null;
+  }
+
+  void _onHover(PointerEvent event, CanvasInteractionService canvasInteractionService, VoidCallback onChangeSelection) {
+    if (canvasActualSize != null) {
+      var curr = canvasInteractionService.getHoveredTarget(event.localPosition.pixelToNDC(canvasActualSize!));
+
+      if (curr != prevHovered) {
+        _onExit(event);
+        _onEnter(event, onChangeSelection);
+
+        Logger().d("Currently Hovering over=$curr");
+        setState(() {
+          prevHovered = _hovered;
+          _hovered = curr;
+        });
+      }
+
+      if (curr == null) {
+        onChangeSelection();
+      }
+    }
+  }
+
+  MouseRegion _makeCustomPaint(
+    Topology topology,
+    CanvasInteractionService canvasInteractionService,
+    int? itemSelection,
+    VoidCallback onChangeSelection
+  ) {
     return MouseRegion (
-      onHover: ((event) {
-        if (canvasActualSize != null) {
-          var curr = hoverInteractionService.getHoveredTarget(event.localPosition.pixelToNDC(canvasActualSize!));
-          setState(() {
-            hovered = curr;
-          });
-        
-        }
-      }),
+      onHover: ((event) => _onHover(event, canvasInteractionService, onChangeSelection)),
       child: CustomPaint(
         size: Size.infinite,
         painter: TopologyCanvasPainter(
           topology: topology,
-          hoverInteractionService: hoverInteractionService,
+          itemSelection: itemSelection,
+          canvasInteractionService: canvasInteractionService,
           onSizeChanged: ((size) {
             canvasActualSize = size;
           }),  
@@ -68,27 +110,41 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     return Consumer(builder: 
       (context, ref, child) {
         final topologyAsync = ref.watch(topologyProvider);
-        final hoverInteractionService = ref.watch(hoverInteractionServiceProvider);
+        final canvasInteractionService = ref.watch(canvasInteractionServiceProvider);
+        final canvasItemSelection = ref.watch(itemSelectionProvider);
+
+        onChangeSelection() => {
+          if(mounted) {
+            ref.read(itemSelectionProvider.notifier).setSelected(_hovered?.getId()),
+          }};
 
         return topologyAsync.when(
           loading: () => CircularProgressIndicator(),
           error: (error, stackTrace) => Text('Error: $error'),
-          data: (topology) => _makeCustomPaint(topology, hoverInteractionService)
+          data: (topology) => _makeCustomPaint(topology, canvasInteractionService, canvasItemSelection, onChangeSelection)
         );
       }
     );
-    
+  }
+
+  @override
+  void dispose() {
+    _hoverTimer?.cancel();
+    super.dispose();
   }
 }
 
 class TopologyCanvasPainter extends CustomPainter {
   Topology topology;
-  HoverInteractionService hoverInteractionService;
+  CanvasInteractionService canvasInteractionService;
+  
+  final int? itemSelection;
   final void Function(Size) onSizeChanged;
 
   TopologyCanvasPainter({
     required this.topology,
-    required this.hoverInteractionService,
+    required this.canvasInteractionService,
+    required this.itemSelection,
     required this.onSizeChanged,
   });
 
@@ -109,24 +165,26 @@ class TopologyCanvasPainter extends CustomPainter {
       final start = link.sideA.positionNDC.ndcToPixel(size);
       final end   = link.sideB.positionNDC.ndcToPixel(size);
 
+      final Paint linkPaint = (itemSelection == link.getId()) ? AppColors.selectedLinkPaint : AppColors.linkPaint;
+
       if (link.linkType == LinkType.wireless) {
         final path = Path()
           ..moveTo(start.dx, start.dy)
           ..lineTo(end.dx, end.dy);
 
         final dashed = dashPath(path, dashArray: CircularIntervalList([10, 5]));
-        canvas.drawPath(dashed, AppColors.linkPaint);
+        canvas.drawPath(dashed, linkPaint);
       } else {
-        canvas.drawLine(start, end, AppColors.linkPaint);
+        canvas.drawLine(start, end, linkPaint);
       }
     }
   }
 
   void _registerHoverItems() {
-    hoverInteractionService.clearTargets();
+    canvasInteractionService.clearTargets();
     
-    topology.getDevices().forEach((device) => hoverInteractionService.registerTarget(device));
-    topology.getLinks().forEach((link) => hoverInteractionService.registerTarget(link));
+    topology.getDevices().forEach((device) => canvasInteractionService.registerTarget(device));
+    topology.getLinks().forEach((link) => canvasInteractionService.registerTarget(link));
   }
 
   @override

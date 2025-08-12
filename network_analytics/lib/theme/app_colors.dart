@@ -17,6 +17,11 @@ class AppColors {
     ..strokeWidth = 3.0;
     
 
+  static final Paint selectedLinkPaint = Paint()
+    ..color = Color.fromRGBO(38, 145, 145, 1)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 4.0;
+
   static final Paint canvasBorderPaint = Paint()
     ..color = Color.fromRGBO(107, 107, 107, 1)
     ..strokeWidth = 3.0

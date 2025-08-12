@@ -49,4 +49,9 @@ class Device implements HoverTarget {
   bool hitTest(Offset pointNDC) {
     return (pointNDC - positionNDC).distanceSquared <= 0.0001;
   }
+
+  @override
+  int getId() {
+    return id;
+  }
 }

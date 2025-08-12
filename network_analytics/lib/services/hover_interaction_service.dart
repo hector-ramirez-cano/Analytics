@@ -5,10 +5,12 @@ import 'package:logger/web.dart';
 
 abstract class HoverTarget {
   bool hitTest(Offset positionNDC);
+  int getId();
 }
 
-class HoverInteractionService {
+class CanvasInteractionService {
   final List<HoverTarget> targets = [];
+
 
   HoverTarget? getHoveredTarget(Offset positionNDC) {
     for (final target in targets) {
@@ -20,5 +22,6 @@ class HoverInteractionService {
 
   void registerTarget(HoverTarget target) => targets.add(target);
   void clearTargets() => targets.clear();
+  
 }
 

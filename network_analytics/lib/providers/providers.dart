@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/hover_interaction_service.dart';
+import 'package:network_analytics/services/item_selection_service.dart';
 
 import '../services/topology_service.dart';
 
@@ -18,6 +19,11 @@ final topologyProvider = FutureProvider<Topology>((ref) async {
   return service.fetchItems();
 });
 
-final hoverInteractionServiceProvider = Provider<HoverInteractionService>((ref) {
-  return HoverInteractionService();
+final canvasInteractionServiceProvider = Provider<CanvasInteractionService>((ref) {
+  return CanvasInteractionService();
 });
+
+final itemSelectionProvider = StateNotifierProvider<ItemSelectionService, int?>(
+  (ref) => ItemSelectionService(),
+);
+
