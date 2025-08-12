@@ -1,17 +1,8 @@
 import 'dart:ui';
 
 import 'package:network_analytics/services/hover_interaction_service.dart';
-
-extension RequireNotNullExtension<T> on T? {
-  T require([String? label]) {
-    if (this == null) {
-      throw Exception('Missing required value${label != null ? ' for $label' : ''}');
-    }
-    return this as T;
-  }
-}
-
-
+import 'package:network_analytics/extensions/offset.dart';
+import 'package:network_analytics/theme/app_colors.dart';
 
 class Device implements HoverTarget {
   final int id;
@@ -53,5 +44,13 @@ class Device implements HoverTarget {
   @override
   int getId() {
     return id;
+  }
+
+  Paint getPaint(Offset position, Size size) {
+    final rect = Rect.fromCircle(center: position, radius: 6);
+
+    return Paint()
+      ..shader = AppColors.deviceGradient.createShader(rect);
+
   }
 }

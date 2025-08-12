@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+// ignore: unused_import
+import 'package:logger/web.dart';
 import 'package:network_analytics/services/hover_interaction_service.dart';
 
-import 'package:path_drawing/path_drawing.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/ui/screens/canvas/topology_canvas.dart';
-
+import 'package:network_analytics/extensions/offset.dart';
 
 class TopologyCanvasPainter extends CustomPainter {
   Topology topology;
@@ -25,32 +26,30 @@ class TopologyCanvasPainter extends CustomPainter {
   void _paintDevices(Canvas canvas, Size size) {
     for (var device in topology.getDevices()) {
       final position = device.positionNDC.ndcToPixel(size);
-      final rect = Rect.fromCircle(center: position, radius: 6);
+      final devicePaint = device.getPaint(position, size);
+      double radius = 6;
 
-      final Paint devicePaint = Paint()
-        ..shader = AppColors.deviceGradient.createShader(rect);
+      if (canvasInteractionService.hovered?.getId() == device.getId()) {
+        // Logger().d("Painting shadow"); 
+        radius = 10;
+      }
 
-      canvas.drawCircle(position, 6, devicePaint);
+      canvas.drawCircle(position, radius, devicePaint);
     }
   }
 
   void _paintLinks(Canvas canvas, Size size) {
     for (var link in topology.getLinks()) {
-      final start = link.sideA.positionNDC.ndcToPixel(size);
-      final end   = link.sideB.positionNDC.ndcToPixel(size);
+      
+      final Paint linkPaint = link.getPaint(itemSelection);
+      final path = link.getPath(size);
 
-      final Paint linkPaint = (itemSelection == link.getId()) ? AppColors.selectedLinkPaint : AppColors.linkPaint;
+      if (itemSelection == link.getId()) {
+        canvas.drawPath(path, AppColors.linkShadowPaint);
+      } 
 
-      if (link.linkType == LinkType.wireless) {
-        final path = Path()
-          ..moveTo(start.dx, start.dy)
-          ..lineTo(end.dx, end.dy);
-
-        final dashed = dashPath(path, dashArray: CircularIntervalList([10, 5]));
-        canvas.drawPath(dashed, linkPaint);
-      } else {
-        canvas.drawLine(start, end, linkPaint);
-      }
+      canvas.drawPath(path, linkPaint);
+      
     }
   }
 

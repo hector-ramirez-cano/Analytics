@@ -11,7 +11,7 @@ abstract class HoverTarget {
 
 class CanvasInteractionService {
   final List<HoverTarget> targets = [];
-  final Duration delay = const Duration(seconds: 1);
+  final Duration delay = const Duration(milliseconds: 200);
 
   HoverTarget? hovered;
   HoverTarget? prevHovered;
@@ -50,7 +50,7 @@ class CanvasInteractionService {
         onExit(event);
         onEnter(event, onChangeSelection);
 
-        Logger().d("Currently Hovering over=$curr");
+        // Logger().d("Currently Hovering over=$curr");
       
         prevHovered = hovered;
         hovered = curr;

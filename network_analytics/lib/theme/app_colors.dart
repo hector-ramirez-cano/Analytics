@@ -22,12 +22,15 @@ class AppColors {
     ..style = PaintingStyle.stroke
     ..strokeWidth = 4.0;
 
+
+
   static final Paint canvasBorderPaint = Paint()
     ..color = Color.fromRGBO(107, 107, 107, 1)
     ..strokeWidth = 3.0
     ..style = PaintingStyle.stroke;
 
   static final Paint linkShadowPaint = Paint()
-    ..color = Color.fromRGBO(0, 52, 129, 1.0)
-    ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10);
+    ..color = Color.fromRGBO(60, 106, 173, 1)
+    ..maskFilter = MaskFilter.blur(BlurStyle.normal, 32)
+    ..style = PaintingStyle.stroke;
 }

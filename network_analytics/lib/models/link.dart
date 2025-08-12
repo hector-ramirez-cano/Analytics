@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:network_analytics/theme/app_colors.dart';
+import 'package:path_drawing/path_drawing.dart';
+
 // ignore: unused_import
 import 'package:logger/web.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/services/hover_interaction_service.dart';
+import 'package:network_analytics/extensions/offset.dart';
 
 class Link implements HoverTarget {
   final int id;
@@ -96,4 +100,30 @@ class Link implements HoverTarget {
   int getId() {
     return id;
   }
+
+
+  Path getPath(Size size) {
+    final start = sideA.positionNDC.ndcToPixel(size);
+    final end   = sideB.positionNDC.ndcToPixel(size);
+    final path = Path()
+          ..moveTo(start.dx, start.dy)
+          ..lineTo(end.dx, end.dy);
+
+    if (linkType == LinkType.wireless) {
+        return dashPath(path, dashArray: CircularIntervalList([10, 5]));
+    }
+
+    return path;
+  }
+
+  Paint getPaint(int? itemSelection) {
+    
+    if (itemSelection == getId()) {
+      return AppColors.selectedLinkPaint;
+    }
+
+    return AppColors.linkPaint;
+  }
+
+  
 }
