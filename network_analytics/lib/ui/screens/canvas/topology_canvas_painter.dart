@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/services/hover_interaction_service.dart';
 
-import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/ui/screens/canvas/topology_canvas.dart';
 import 'package:network_analytics/extensions/offset.dart';
 
 class TopologyCanvasPainter extends CustomPainter {
@@ -74,12 +72,11 @@ class TopologyCanvasPainter extends CustomPainter {
     _paintLinks(canvas, size);
     _paintDevices(canvas, size);
     
-    // TODO: Fix border
     // Draw border
-    // canvas.drawRect(
-    //   Rect.fromLTWH(0, 0, size.width, size.height),
-    //   AppColors.canvasBorderPaint,
-    // );
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      AppColors.canvasBorderPaint,
+    );
   }
 
   @override
