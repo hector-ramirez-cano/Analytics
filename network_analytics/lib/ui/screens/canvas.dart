@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // ignore: unused_import
@@ -39,48 +38,9 @@ class TopologyCanvas extends StatefulWidget {
   State<TopologyCanvas> createState() => _TopologyCanvasState();
 }
 
-class _TopologyCanvasState extends State<TopologyCanvas> {
-  final Duration delay = const Duration(seconds: 1);
-  
+class _TopologyCanvasState extends State<TopologyCanvas> {  
   Size? canvasActualSize;
-  HoverTarget? _hovered;
-  HoverTarget? prevHovered;
-  Timer? _hoverTimer;
 
-  void _onEnter(PointerEvent event, VoidCallback onChangeSelection){
-    if (_hovered == null) {
-      _onExit(event);
-    } else {
-      _hoverTimer = Timer(delay, onChangeSelection);
-    }
-  }
-
-  // TODO: Decouple logic from UI
-  void _onExit(PointerEvent event) {
-    _hoverTimer?.cancel();
-    _hoverTimer = null;
-  }
-
-  void _onHover(PointerEvent event, CanvasInteractionService canvasInteractionService, VoidCallback onChangeSelection) {
-    if (canvasActualSize != null) {
-      var curr = canvasInteractionService.getHoveredTarget(event.localPosition.pixelToNDC(canvasActualSize!));
-
-      if (curr != prevHovered) {
-        _onExit(event);
-        _onEnter(event, onChangeSelection);
-
-        Logger().d("Currently Hovering over=$curr");
-        setState(() {
-          prevHovered = _hovered;
-          _hovered = curr;
-        });
-      }
-
-      if (curr == null) {
-        onChangeSelection();
-      }
-    }
-  }
 
   MouseRegion _makeCustomPaint(
     Topology topology,
@@ -88,8 +48,9 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     int? itemSelection,
     VoidCallback onChangeSelection
   ) {
+
     return MouseRegion (
-      onHover: ((event) => _onHover(event, canvasInteractionService, onChangeSelection)),
+      onHover: ((event) => canvasInteractionService.onHover(event, onChangeSelection, event.localPosition.pixelToNDC(canvasActualSize!))),
       child: CustomPaint(
         size: Size.infinite,
         painter: TopologyCanvasPainter(
@@ -115,7 +76,7 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
 
         onChangeSelection() => {
           if(mounted) {
-            ref.read(itemSelectionProvider.notifier).setSelected(_hovered?.getId()),
+            ref.read(itemSelectionProvider.notifier).setSelected(canvasInteractionService.hovered?.getId()),
           }};
 
         return topologyAsync.when(
@@ -127,11 +88,6 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     );
   }
 
-  @override
-  void dispose() {
-    _hoverTimer?.cancel();
-    super.dispose();
-  }
 }
 
 class TopologyCanvasPainter extends CustomPainter {
