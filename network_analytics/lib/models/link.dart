@@ -6,7 +6,7 @@ import 'package:path_drawing/path_drawing.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link_type.dart';
-import 'package:network_analytics/services/hover_interaction_service.dart';
+import 'package:network_analytics/services/canvas_interaction_service.dart';
 import 'package:network_analytics/extensions/offset.dart';
 
 class Link implements HoverTarget {

@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:network_analytics/services/hover_interaction_service.dart';
+import 'package:network_analytics/services/canvas_interaction_service.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 
 class Device implements HoverTarget {

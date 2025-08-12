@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 // ignore: unused_import
 import 'package:logger/web.dart';
-import 'package:network_analytics/services/hover_interaction_service.dart';
+import 'package:network_analytics/services/canvas_interaction_service.dart';
+import 'package:network_analytics/services/item_selection_notifier.dart';
 
 import 'package:network_analytics/theme/app_colors.dart';
 import 'package:network_analytics/models/topology.dart';
@@ -11,7 +12,7 @@ class TopologyCanvasPainter extends CustomPainter {
   Topology topology;
   CanvasInteractionService canvasInteractionService;
   
-  final int? itemSelection;
+  final ItemSelection? itemSelection;
   final void Function(Size) onSizeChanged;
 
   TopologyCanvasPainter({
@@ -39,10 +40,10 @@ class TopologyCanvasPainter extends CustomPainter {
   void _paintLinks(Canvas canvas, Size size) {
     for (var link in topology.getLinks()) {
       
-      final Paint linkPaint = link.getPaint(itemSelection);
+      final Paint linkPaint = link.getPaint(itemSelection?.selected);
       final path = link.getPath(size);
 
-      if (itemSelection == link.getId()) {
+      if (itemSelection?.selected == link.getId()) {
         canvas.drawPath(path, AppColors.linkShadowPaint);
       } 
 

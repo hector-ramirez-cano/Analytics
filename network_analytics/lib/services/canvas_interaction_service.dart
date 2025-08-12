@@ -3,6 +3,11 @@ import 'dart:async';
 
 // ignore: unused_import
 import 'package:logger/web.dart';
+import 'package:network_analytics/extensions/offset.dart';
+import 'package:network_analytics/services/item_selection_notifier.dart';
+
+typedef ItemChangedCallback = Function(bool);
+
 
 abstract class HoverTarget {
   bool hitTest(Offset positionNDC);
@@ -29,11 +34,15 @@ class CanvasInteractionService {
   void clearTargets() => targets.clear();
   
 
-  void onEnter(PointerEvent event, VoidCallback onChangeSelection){
+  void onEnter(PointerEvent event, ItemChangedCallback onChangeSelection) {
+    callback() => {
+      onChangeSelection(false)
+    };
+
     if (hovered == null) {
       onExit(event);
     } else {
-      _hoverTimer = Timer(delay, onChangeSelection);
+      _hoverTimer = Timer(delay, callback);
     }
   }
 
@@ -42,9 +51,14 @@ class CanvasInteractionService {
     _hoverTimer = null;
   }
 
-  void onHover(PointerEvent event, VoidCallback onChangeSelection, Offset? positionPX) {
-    if (positionPX != null) {
-      var curr = getHoveredTarget(positionPX);
+  void onHover(PointerEvent event, ItemChangedCallback onChangeSelection, ItemSelection? itemSelection, Offset? positionNDC) {
+    if (positionNDC != null) {
+      var curr = getHoveredTarget(positionNDC);
+
+      if (itemSelection != null && itemSelection.forced) {
+        // Logger().d("Skipped interaction, selection is forced");
+        return;
+      }
 
       if (curr != prevHovered) {
         onExit(event);
@@ -58,9 +72,18 @@ class CanvasInteractionService {
       }
 
       if (curr == null) {
-        onChangeSelection();
+        onChangeSelection(false);
       }
     }
+  }
+
+  void onTapUp(TapUpDetails details, ItemChangedCallback onChangeSelection,  ItemSelection? itemSelection, Size canvasActualSize) {
+    hovered = getHoveredTarget(details.localPosition.pixelToNDC(canvasActualSize));
+    // Logger().d("On TapUp, hovered=$hovered");
+
+    bool forced = hovered != null;
+
+    onChangeSelection(forced);
   }
 }
 
