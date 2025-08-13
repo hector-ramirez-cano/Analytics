@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';// ignore: unused_import
 import 'package:logger/web.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/ui/components/drawer/side_nav_item.dart';

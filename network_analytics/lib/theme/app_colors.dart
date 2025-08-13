@@ -16,7 +16,7 @@ class AppColors {
     ..color = Color.fromRGBO(0, 52, 129, 1.0)
     ..style = PaintingStyle.stroke
     ..strokeWidth = 3.0;
-    
+
 
   // Paint used for a link that's selected via click, or other ui direct interactions
   static final Paint selectedLinkPaint = Paint()
@@ -33,7 +33,8 @@ class AppColors {
   // Paint used as shadow underneath a hovered or selected link
   static final Paint linkShadowPaint = Paint()
     ..color = Color.fromRGBO(60, 106, 173, 1)
-    ..maskFilter = MaskFilter.blur(BlurStyle.normal, 32)
+    ..maskFilter = MaskFilter.blur(BlurStyle.normal, 16)
+    ..strokeWidth = 2.0
     ..style = PaintingStyle.stroke;
 
   // Paint used for the border around the canvas widget

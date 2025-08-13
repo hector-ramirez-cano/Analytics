@@ -11,7 +11,7 @@ import 'package:network_analytics/extensions/offset.dart';
 class TopologyCanvasPainter extends CustomPainter {
   Topology topology;
   CanvasInteractionService canvasInteractionService;
-  
+
   final ItemSelection? itemSelection;
   final void Function(Size) onSizeChanged;
 
@@ -29,7 +29,7 @@ class TopologyCanvasPainter extends CustomPainter {
       double radius = 6;
 
       if (canvasInteractionService.hovered?.getId() == device.getId()) {
-        // Logger().d("Painting shadow"); 
+        // Logger().d("Painting shadow");
         radius = 10;
       }
 
@@ -39,22 +39,22 @@ class TopologyCanvasPainter extends CustomPainter {
 
   void _paintLinks(Canvas canvas, Size size) {
     for (var link in topology.getLinks()) {
-      
+
       final Paint linkPaint = link.getPaint(itemSelection);
       final path = link.getPath(size);
 
       if (itemSelection?.selected == link.getId()) {
         canvas.drawPath(path, AppColors.linkShadowPaint);
-      } 
+      }
 
       canvas.drawPath(path, linkPaint);
-      
+
     }
   }
 
   void _registerHoverItems() {
     canvasInteractionService.clearTargets();
-    
+
     topology.getDevices().forEach((device) => canvasInteractionService.registerTarget(device));
     topology.getLinks().forEach((link) => canvasInteractionService.registerTarget(link));
   }
@@ -72,7 +72,7 @@ class TopologyCanvasPainter extends CustomPainter {
     _registerHoverItems();
     _paintLinks(canvas, size);
     _paintDevices(canvas, size);
-    
+
     // Draw border
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
