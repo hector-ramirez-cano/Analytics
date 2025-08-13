@@ -40,7 +40,7 @@ class TopologyCanvasPainter extends CustomPainter {
   void _paintLinks(Canvas canvas, Size size) {
     for (var link in topology.getLinks()) {
       
-      final Paint linkPaint = link.getPaint(itemSelection?.selected);
+      final Paint linkPaint = link.getPaint(itemSelection);
       final path = link.getPath(size);
 
       if (itemSelection?.selected == link.getId()) {

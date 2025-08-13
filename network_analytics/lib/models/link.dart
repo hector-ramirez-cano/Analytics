@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:network_analytics/services/item_selection_notifier.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 import 'package:path_drawing/path_drawing.dart';
 
@@ -116,10 +117,12 @@ class Link implements HoverTarget {
     return path;
   }
 
-  Paint getPaint(int? itemSelection) {
-    
-    if (itemSelection == getId()) {
-      return AppColors.selectedLinkPaint;
+  Paint getPaint(ItemSelection? itemSelection) {
+    if (itemSelection?.selected == getId()) {
+      if (itemSelection?.forced == true) {
+        return AppColors.selectedLinkPaint;
+      }
+      return AppColors.hoveringLinkPaint;
     }
 
     return AppColors.linkPaint;
