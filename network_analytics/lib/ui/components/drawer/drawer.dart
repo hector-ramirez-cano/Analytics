@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/models/topology.dart';
-import '../side_nav.dart';
-import 'drawer_panel.dart';
-import '../content_area.dart';
+import 'package:network_analytics/ui/components/drawer/side_nav_item.dart';
+import 'package:network_analytics/ui/components/side_nav.dart';
+import 'package:network_analytics/ui/components/content_area.dart';
+import 'package:network_analytics/ui/components/drawer/drawer_panel.dart';
+
 
 class SideDrawer extends StatefulWidget {
   const SideDrawer({super.key});
@@ -13,7 +15,7 @@ class SideDrawer extends StatefulWidget {
 }
 
 class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
-  int? selectedIndex;
+  SideNavItem? selectedPanel;
   Topology? topology;
 
   final double drawerTargetWidth = 250;
@@ -22,9 +24,6 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
 
   late final AnimationController _fadeController;
   late final Animation<double> _fadeAnimation;
-
-  final List<IconData> navIcons = [Icons.segment, Icons.search, Icons.settings];
-  final List<String> navLabels = ['Listado', 'Search', 'Settings'];
 
   @override
   void initState() {
@@ -57,15 +56,15 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     });
   }
 
-  void _handleNavClick(int index) {
-    if (selectedIndex == index) {
+  void _handleNavClick(SideNavItem clickedItem) {
+    if (selectedPanel == clickedItem) {
       _drawerController.reverse();
       setState(() {
-        selectedIndex = null;
+        selectedPanel = null;
       });
     } else {
       setState(() {
-        selectedIndex = index;
+        selectedPanel = clickedItem;
       });
       _drawerController.forward();
     }
@@ -73,10 +72,8 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
 
   SideNav _buildSideNav() {
     return SideNav(
-            selectedIndex: selectedIndex,
-            icons: navIcons,
-            labels: navLabels,
-            onPressed: _handleNavClick,
+      selectedPanel: selectedPanel,
+      onPressed: _handleNavClick,
     );
   }
 
@@ -86,9 +83,9 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
       builder: (context, child) {
         return DrawerPanel(
           width: _drawerWidth.value,
-          isVisible: selectedIndex != null && _drawerController.status == AnimationStatus.completed,
+          isVisible: selectedPanel != null && _drawerController.status == AnimationStatus.completed,
           fadeAnimation: _fadeAnimation,
-          label: navLabels[selectedIndex ?? 0],
+          selectedPanel: selectedPanel,
         );
       },
     );
