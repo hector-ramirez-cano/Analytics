@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:logger/web.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'side_nav.dart';
+import '../side_nav.dart';
 import 'drawer_panel.dart';
-import 'content_area.dart';
+import '../content_area.dart';
 
 class SideDrawer extends StatefulWidget {
   const SideDrawer({super.key});
@@ -70,6 +71,28 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     }
   }
 
+  SideNav _buildSideNav() {
+    return SideNav(
+            selectedIndex: selectedIndex,
+            icons: navIcons,
+            labels: navLabels,
+            onPressed: _handleNavClick,
+    );
+  }
+
+  AnimatedBuilder _buildDrawerPanel() {
+    return AnimatedBuilder(
+      animation: _drawerController,
+      builder: (context, child) {
+        return DrawerPanel(
+          width: _drawerWidth.value,
+          isVisible: selectedIndex != null && _drawerController.status == AnimationStatus.completed,
+          fadeAnimation: _fadeAnimation,
+          label: navLabels[selectedIndex ?? 0],
+        );
+      },
+    );
+  }
 
   @override
   void dispose() {
@@ -80,27 +103,12 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    Logger().d("Triggered drawer rebuild");
     return Expanded(
       child: Row(
         children: [
-          SideNav(
-            selectedIndex: selectedIndex,
-            icons: navIcons,
-            labels: navLabels,
-            onPressed: _handleNavClick,
-          ),
-          AnimatedBuilder(
-            animation: _drawerController,
-            builder: (context, child) {
-              return DrawerPanel(
-                width: _drawerWidth.value,
-                isVisible: selectedIndex != null &&
-                    _drawerController.status == AnimationStatus.completed,
-                fadeAnimation: _fadeAnimation,
-                label: navLabels[selectedIndex ?? 0],
-              );
-            },
-          ),
+          _buildSideNav(),
+          _buildDrawerPanel(),
           const Expanded(child: ContentArea()),
         ],
       )

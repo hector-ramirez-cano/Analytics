@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/ui/components/drawer.dart';
+import 'package:network_analytics/ui/components/drawer/drawer.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 import 'title_bar.dart';
 
