@@ -23,8 +23,11 @@ class TopologyCanvasPainter extends CustomPainter {
   });
 
   void _paintDevices(Canvas canvas, Size size) {
+    double scale = canvasInteractionService.scale;
+    Offset centerOffset = canvasInteractionService.centerOffset;
+
     for (var device in topology.getDevices()) {
-      final position = device.positionNDC.ndcToPixel(size);
+      final position = device.position.globalToPixel(size, scale, centerOffset);
       final devicePaint = device.getPaint(position, size);
       double radius = 6;
 
@@ -38,10 +41,13 @@ class TopologyCanvasPainter extends CustomPainter {
   }
 
   void _paintLinks(Canvas canvas, Size size) {
+    double scale = canvasInteractionService.scale;
+    Offset centerOffset = canvasInteractionService.centerOffset;
+
     for (var link in topology.getLinks()) {
 
       final Paint linkPaint = link.getPaint(itemSelection);
-      final path = link.getPath(size);
+      final path = link.getPath(size, scale, centerOffset);
 
       if (itemSelection?.selected == link.getId()) {
         canvas.drawPath(path, AppColors.linkShadowPaint);

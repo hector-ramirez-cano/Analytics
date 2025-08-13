@@ -29,7 +29,7 @@ class Link implements HoverTarget {
 
     // equation of a line given two points
     // m = (y2 - y1) / (x2 - x1) 
-    double m = (sideB.positionNDC.dy - (sideA.positionNDC.dy + 0.0001)) / (sideB.positionNDC.dx - (sideA.positionNDC.dx + 0.0001));
+    double m = (sideB.position.dy - (sideA.position.dy + 0.0001)) / (sideB.position.dx - (sideA.position.dx + 0.0001));
 
     // equation of a line given a point and the slope
     // y - y1 = m (x - x1) 
@@ -39,10 +39,10 @@ class Link implements HoverTarget {
     // Ax + By + C        = 0
     A = m;
     B = -1;
-    C = sideA.positionNDC.dy + 0.0001 - m * (sideA.positionNDC.dx + 0.0001);
+    C = sideA.position.dy + 0.0001 - m * (sideA.position.dx + 0.0001);
 
     Logger().d("A=$A, B=$B, C=$C");
-    Logger().d("sideA=${sideA.positionNDC}, sideB=${sideB.positionNDC}, m=$m");
+    Logger().d("sideA=${sideA.position}, sideB=${sideB.position}, m=$m");
   }
 
   factory Link.fromJson(Map<String, dynamic> json, Map<int, dynamic> devices) {
@@ -67,15 +67,15 @@ class Link implements HoverTarget {
     return links;
   }
 
-  double dist2(Offset pointNDC) {
+  double dist2(Offset point) {
     // distance point-line
     // d = | Axp + Byp + C |  / sqrt (A²+B²)
     // d²= ( Axp + Byp + C )² / (A² + B²)
 
-    double numerator   = A * pointNDC.dx + B * pointNDC.dy + C;
+    double numerator   = A * point.dx + B * point.dy + C;
     double denominator = A * A + B * B;
     
-    // Logger().d("A=$A, B=$B, C=$C, Point=$pointNDC");
+    // Logger().d("A=$A, B=$B, C=$C, Point=$point");
     // Logger().d("Numerator = $numerator, Denominator=$denominator");
 
     if (denominator == 0) return 10e23;
@@ -84,13 +84,13 @@ class Link implements HoverTarget {
   }
 
   @override
-  bool hitTest(Offset pointNDC) {
+  bool hitTest(Offset point) {
     // checks whether the point is within the square bounding box of the line
-    final withinBounds = dist2(pointNDC) < 0.0005;
+    final withinBounds = dist2(point) < 0.0005;
     
     // Check bounding box overlap (i.e. P within X and Y bounds)
-    final withinX = (pointNDC.dx - sideA.positionNDC.dx) * (pointNDC.dx - sideB.positionNDC.dx) <= 0.01;
-    final withinY = (pointNDC.dy - sideA.positionNDC.dy) * (pointNDC.dy - sideB.positionNDC.dy) <= 0.01;
+    final withinX = (point.dx - sideA.position.dx) * (point.dx - sideB.position.dx) <= 0.01;
+    final withinY = (point.dy - sideA.position.dy) * (point.dy - sideB.position.dy) <= 0.01;
 
     // Logger().d("Hit test, withinBounds $withinBounds, withinX=$withinX, withinY=$withinY, dist2=$dist");
 
@@ -103,9 +103,9 @@ class Link implements HoverTarget {
   }
 
 
-  Path getPath(Size size) {
-    final start = sideA.positionNDC.ndcToPixel(size);
-    final end   = sideB.positionNDC.ndcToPixel(size);
+  Path getPath(Size canvasSize, double scale, Offset centerOffset) {
+    final start = sideA.position.globalToPixel(canvasSize, scale, centerOffset);
+    final end   = sideB.position.globalToPixel(canvasSize, scale, centerOffset);
     final path = Path()
           ..moveTo(start.dx, start.dy)
           ..lineTo(end.dx, end.dy);

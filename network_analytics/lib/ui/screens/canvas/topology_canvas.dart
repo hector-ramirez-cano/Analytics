@@ -30,10 +30,18 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     ItemChangedCallback onChangeSelection
   ) {
 
+    
+
     return GestureDetector(
       onTapUp: ((details) => canvasInteractionService.onTapUp(details, onChangeSelection, itemSelection, canvasActualSize!)),
       child: MouseRegion (
-        onHover: ((event) => canvasInteractionService.onHover(event, onChangeSelection, itemSelection, event.localPosition.pixelToNDC(canvasActualSize!))),
+        onHover: ((event) {
+          double scale = canvasInteractionService.scale;
+          Offset centerOffset = canvasInteractionService.centerOffset;
+          Offset position = event.localPosition.pixelToGlobal(canvasActualSize!, scale, centerOffset);
+
+          canvasInteractionService.onHover(event, onChangeSelection, itemSelection, position);
+        }),
         child: CustomPaint(
           size: Size.infinite,
           painter: TopologyCanvasPainter(

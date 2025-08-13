@@ -6,11 +6,11 @@ import 'package:network_analytics/theme/app_colors.dart';
 class Device implements HoverTarget {
   final int id;
   final String name;
-  final Offset positionNDC;
+  final Offset position;
 
   Device({
     required this.id,
-    required this.positionNDC,
+    required this.position,
     required this.name,
   });
 
@@ -18,7 +18,7 @@ class Device implements HoverTarget {
     return Device(
       id  : json['id'] as int,
       name: json['name'] as String,
-      positionNDC: Offset(
+      position: Offset(
         json['coordinates'][0] as double,
         json['coordinates'][1] as double,
       )
@@ -36,8 +36,8 @@ class Device implements HoverTarget {
   }
 
   @override
-  bool hitTest(Offset pointNDC) {
-    return (pointNDC - positionNDC).distanceSquared <= 0.0001;
+  bool hitTest(Offset point) {
+    return (point - position).distanceSquared <= 0.0001;
   }
 
   @override

@@ -10,7 +10,7 @@ typedef ItemChangedCallback = Function(bool);
 
 
 abstract class HoverTarget {
-  bool hitTest(Offset positionNDC);
+  bool hitTest(Offset position);
   int getId();
 }
 
@@ -18,13 +18,16 @@ class CanvasInteractionService {
   final List<HoverTarget> targets = [];
   final Duration delay = const Duration(milliseconds: 200);
 
+  double scale = 1.0;
+  Offset centerOffset = Offset.zero;
+
   HoverTarget? hovered;
   HoverTarget? prevHovered;
   Timer? _hoverTimer;
 
-  HoverTarget? getHoveredTarget(Offset positionNDC) {
+  HoverTarget? getHoveredTarget(Offset position) {
     for (final target in targets) {
-      if (target.hitTest(positionNDC)) return target;
+      if (target.hitTest(position)) return target;
     }
 
     return null;
@@ -51,9 +54,9 @@ class CanvasInteractionService {
     _hoverTimer = null;
   }
 
-  void onHover(PointerEvent event, ItemChangedCallback onChangeSelection, ItemSelection? itemSelection, Offset? positionNDC) {
-    if (positionNDC != null) {
-      var curr = getHoveredTarget(positionNDC);
+  void onHover(PointerEvent event, ItemChangedCallback onChangeSelection, ItemSelection? itemSelection, Offset? position) {
+    if (position != null) {
+      var curr = getHoveredTarget(position);
 
       if (itemSelection != null && itemSelection.forced) {
         // Logger().d("Skipped interaction, selection is forced");
@@ -78,7 +81,7 @@ class CanvasInteractionService {
   }
 
   void onTapUp(TapUpDetails details, ItemChangedCallback onChangeSelection,  ItemSelection? itemSelection, Size canvasActualSize) {
-    hovered = getHoveredTarget(details.localPosition.pixelToNDC(canvasActualSize));
+    hovered = getHoveredTarget(details.localPosition.pixelToGlobal(canvasActualSize, scale, centerOffset));
     // Logger().d("On TapUp, hovered=$hovered");
 
     bool forced = hovered != null;
