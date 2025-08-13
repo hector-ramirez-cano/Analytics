@@ -15,3 +15,25 @@ extension OffsetNDCConversion on Offset {
   }
 
 }
+
+extension GlobalCoordinateConversion on Offset {
+  Offset globalToPixel(Size canvasSize, double scale, Offset centerOffset) {
+    // Step 1: Translate so that centerOffset is at the canvas center
+    final Offset view = (this - centerOffset) * scale;
+
+    // Step 2: Move origin from (0,0) to canvas center
+    return view + Offset(canvasSize.width / 2, canvasSize.height / 2);
+  }
+
+  Offset pixelToGlobal(Size canvasSize, double scale, Offset centerOffset) {
+    // Step 1: Move origin from center to (0,0)
+    final Offset view = this - Offset(canvasSize.width / 2, canvasSize.height / 2);
+
+    // Step 2: Undo scale
+    final Offset unscaled = view / scale;
+
+    // Step 3: Translate back to global coords
+    return unscaled + centerOffset;
+  }
+
+}
