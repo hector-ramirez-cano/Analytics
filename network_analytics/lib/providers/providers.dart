@@ -4,6 +4,7 @@ import 'package:logger/web.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/app_config.dart';
 import 'package:network_analytics/services/canvas_interaction_service.dart';
+import 'package:network_analytics/services/canvas_state_notifier.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
 
 import '../services/topology_service.dart';
@@ -24,7 +25,10 @@ final canvasInteractionServiceProvider = Provider<CanvasInteractionService>((ref
   return CanvasInteractionService();
 });
 
+final canvasStateNotifierService = StateNotifierProvider<CanvasStateNotifierService, CanvasState>(
+  (ref) => CanvasStateNotifierService()
+);
+
 final itemSelectionProvider = StateNotifierProvider<ItemSelectionNotifier, ItemSelection?>(
   (ref) => ItemSelectionNotifier(),
 );
-

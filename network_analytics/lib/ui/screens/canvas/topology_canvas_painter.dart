@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 // ignore: unused_import
 import 'package:logger/web.dart';
 import 'package:network_analytics/services/canvas_interaction_service.dart';
+import 'package:network_analytics/services/canvas_state_notifier.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
 
 import 'package:network_analytics/theme/app_colors.dart';
@@ -11,20 +12,25 @@ import 'package:network_analytics/extensions/offset.dart';
 class TopologyCanvasPainter extends CustomPainter {
   Topology topology;
   CanvasInteractionService canvasInteractionService;
+  CanvasState canvasState;
 
   final ItemSelection? itemSelection;
-  final void Function(Size) onSizeChanged;
+  final CanvasStateChangedCallback onCanvasStateChanged;
+  final CanvasSizeChangedCallback onSizeChanged;
 
   TopologyCanvasPainter({
     required this.topology,
     required this.canvasInteractionService,
+    required this.canvasState,
     required this.itemSelection,
+    required this.onCanvasStateChanged,
     required this.onSizeChanged,
   });
 
   void _paintDevices(Canvas canvas, Size size) {
-    double scale = canvasInteractionService.scale;
-    Offset centerOffset = canvasInteractionService.centerOffset;
+
+    double scale = canvasState.scale;
+    Offset centerOffset = canvasState.centerOffset;
 
     for (var device in topology.getDevices()) {
       final position = device.position.globalToPixel(size, scale, centerOffset);
@@ -41,8 +47,8 @@ class TopologyCanvasPainter extends CustomPainter {
   }
 
   void _paintLinks(Canvas canvas, Size size) {
-    double scale = canvasInteractionService.scale;
-    Offset centerOffset = canvasInteractionService.centerOffset;
+    double scale = canvasState.scale;
+    Offset centerOffset = canvasState.centerOffset;
 
     for (var link in topology.getLinks()) {
 

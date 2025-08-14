@@ -17,6 +17,7 @@ extension OffsetNDCConversion on Offset {
 }
 
 extension GlobalCoordinateConversion on Offset {
+
   Offset globalToPixel(Size canvasSize, double scale, Offset centerOffset) {
     final halfW = canvasSize.width / 2;
     final halfH = canvasSize.height / 2;
@@ -24,8 +25,8 @@ extension GlobalCoordinateConversion on Offset {
     // Translate from global space to pixel space
     // Global (0,0) → pixel center
     // Global (1,1) → bottom right corner when scale=1
-    final pixelX = halfW + (dx + centerOffset.dx) * halfW * scale;
-    final pixelY = halfH - (dy + centerOffset.dy) * halfH * scale; // Flip Y so +Y is up
+    final pixelX = halfW + (dx - centerOffset.dx) * halfW * scale;
+    final pixelY = halfH + (dy - centerOffset.dy) * halfH * scale;
 
     return Offset(pixelX, pixelY);
   }
@@ -35,8 +36,8 @@ extension GlobalCoordinateConversion on Offset {
     final halfW = canvasSize.width / 2;
     final halfH = canvasSize.height / 2;
 
-    final globalX =  ((dx - halfW) / (halfW * scale)) - centerOffset.dx;
-    final globalY = -((dy - halfH) / (halfH * scale)) - centerOffset.dy;
+    final globalX = ((dx - halfW) / (halfW * scale)) + centerOffset.dx;
+    final globalY = ((dy - halfH) / (halfH * scale)) + centerOffset.dy;
 
     return Offset(globalX, globalY);
   }

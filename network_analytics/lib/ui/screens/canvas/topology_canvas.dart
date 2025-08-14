@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,9 +7,10 @@ import 'package:logger/web.dart';
 import 'package:network_analytics/services/canvas_interaction_service.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/canvas_state_notifier.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
+import 'package:network_analytics/ui/components/universal_detector.dart';
 import 'package:network_analytics/ui/screens/canvas/topology_canvas_painter.dart';
-import 'package:network_analytics/extensions/offset.dart';
 
 class TopologyCanvas extends StatefulWidget {
   const TopologyCanvas({
@@ -20,42 +22,65 @@ class TopologyCanvas extends StatefulWidget {
 }
 
 class _TopologyCanvasState extends State<TopologyCanvas> {
-  Size? canvasActualSize;
+  late Size canvasActualSize;
+  double _lastScale = 1.0;
 
-
-  GestureDetector _makeCustomPaint(
+  UniversalDetector _makeCustomPaint(
     Topology topology,
     CanvasInteractionService canvasInteractionService,
+    CanvasState canvasState,
     ItemSelection? itemSelection,
-    ItemChangedCallback onChangeSelection
+    ItemChangedCallback onChangeSelection,
+    CanvasStateChangedCallback onCanvasStateChanged,
+    ScaleChangedCallback onScaleChanged,
   ) {
 
-    
+    var onHover         = ((event)   => canvasInteractionService.onHover(event, onChangeSelection, itemSelection, canvasActualSize, canvasState, event.localPosition));
+    var onTapUp         = ((details) => canvasInteractionService.onTapUp(details, onChangeSelection, itemSelection, canvasActualSize, canvasState));
+    var onSizeChanged   = ((size)    => canvasActualSize = size);
+    var onScaleStart    = ((_)       => _lastScale = 1.0);
 
-    return GestureDetector(
-      onTapUp: ((details) => canvasInteractionService.onTapUp(details, onChangeSelection, itemSelection, canvasActualSize!)),
-      child: MouseRegion (
-        onHover: ((event) {
-          double scale = canvasInteractionService.scale;
-          Offset centerOffset = canvasInteractionService.centerOffset;
-          Offset position = event.localPosition.pixelToGlobal(canvasActualSize!, scale, centerOffset);
+    var onScaleUpdate   = ((details) {
+      if (details.pointerCount < 2) { return; }
+      final zoomDelta = details.scale / _lastScale;
+      _lastScale = details.scale;
 
-          canvasInteractionService.onHover(event, onChangeSelection, itemSelection, position);
-        }),
-        child: CustomPaint(
-          size: Size.infinite,
-          painter: TopologyCanvasPainter(
-            topology: topology,
-            itemSelection: itemSelection,
-            canvasInteractionService: canvasInteractionService,
-            onSizeChanged: ((size) {
-              canvasActualSize = size;
-            }),
-          ),
+      canvasInteractionService.onScaleUpdate(details.focalPoint, zoomDelta, canvasActualSize, onScaleChanged);
+    });
+
+    var onPointerSignal = ((pointerSignal) {
+      if (pointerSignal is! PointerScrollEvent) { return; }
+
+        final zoomFactor = pointerSignal.scrollDelta.dy > 0 ? 0.9 : 1.1;
+        canvasInteractionService.onScaleUpdate(
+          pointerSignal.localPosition,
+          zoomFactor,
+          canvasActualSize,
+          onScaleChanged
+        );
+    });
+
+    return UniversalDetector(
+      onTapUp        : onTapUp,
+      onScaleStart   : onScaleStart,
+      onScaleUpdate  : onScaleUpdate,
+      onPointerSignal: onPointerSignal,
+      onHover        : onHover,
+      
+      child: CustomPaint(
+        size: Size.infinite,
+        painter: TopologyCanvasPainter(
+          topology: topology,
+          itemSelection: itemSelection,
+          canvasInteractionService: canvasInteractionService,
+          canvasState: canvasState,
+          onCanvasStateChanged: onCanvasStateChanged,
+          onSizeChanged: onSizeChanged
         ),
       ),
     );
 
+  
   }
 
   @override
@@ -63,19 +88,37 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
 
     return Consumer(builder:
       (context, ref, child) {
-        final topologyAsync = ref.watch(topologyProvider);
         final canvasInteractionService = ref.watch(canvasInteractionServiceProvider);
         final canvasItemSelection = ref.watch(itemSelectionProvider);
+        final topologyAsync = ref.watch(topologyProvider);
+        final canvasState = ref.watch(canvasStateNotifierService);
 
         onChangeSelection(bool forced) => {
           if(mounted) {
             ref.read(itemSelectionProvider.notifier).setSelected(canvasInteractionService.hovered?.getId(), forced),
           }};
 
+        onCanvasStateChanged({Size? size, double? scale, Offset? center}) => {
+          ref.read(canvasStateNotifierService.notifier).setState(scale, center)
+        };
+
+        onScaleChanged(Offset cursorPixel, double zoomDelta, Size canvasSize) => {
+          ref.read(canvasStateNotifierService.notifier).zoomAt(cursorPixel, zoomDelta, canvasSize)
+        };
+
         return topologyAsync.when(
           loading: () => CircularProgressIndicator(),
           error: (error, stackTrace) => Text('Error: $error'),
-          data: (topology) => _makeCustomPaint(topology, canvasInteractionService, canvasItemSelection, onChangeSelection)
+          data: (topology) => 
+            _makeCustomPaint(
+              topology,
+              canvasInteractionService,
+              canvasState,
+              canvasItemSelection,
+              onChangeSelection,
+              onCanvasStateChanged,
+              onScaleChanged
+            )
         );
       }
     );
