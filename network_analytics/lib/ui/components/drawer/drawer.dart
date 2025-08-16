@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';// ignore: unused_import
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
+
 import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/drawer/side_nav_item.dart';
 import 'package:network_analytics/ui/components/side_nav.dart';
 import 'package:network_analytics/ui/components/content_area.dart';
 import 'package:network_analytics/ui/components/drawer/drawer_panel.dart';
-
 
 class SideDrawer extends StatefulWidget {
   const SideDrawer({super.key});
@@ -77,7 +79,7 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     );
   }
 
-  AnimatedBuilder _buildDrawerPanel() {
+  AnimatedBuilder _buildDrawerPanel(Topology? topology) {
     return AnimatedBuilder(
       animation: _drawerController,
       builder: (context, child) {
@@ -86,6 +88,7 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
           isVisible: selectedPanel != null && _drawerController.status == AnimationStatus.completed,
           fadeAnimation: _fadeAnimation,
           selectedPanel: selectedPanel,
+          topology: topology,
         );
       },
     );
@@ -101,14 +104,25 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     Logger().d("Triggered drawer rebuild");
-    return Expanded(
-      child: Row(
-        children: [
-          _buildSideNav(),
-          _buildDrawerPanel(),
-          const Expanded(child: ContentArea()),
-        ],
-      )
+
+    return Consumer(builder: 
+      (context, ref, child) {
+        var topology = ref.watch(topologyProvider);
+
+        return topology.when(
+          loading: () => CircularProgressIndicator(), // TODO: handle gracefully
+          error: (error, strackTrace) => Text('Error: $error'), // TODO: Graceful handling,
+          data: (topology) => Expanded(
+            child: Row(
+              children: [
+                _buildSideNav(),
+                _buildDrawerPanel(topology),
+                const Expanded(child: ContentArea()),
+              ],
+            )
+          ),
+        );
+      }
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:network_analytics/models/device_group.dart';
 
 class CollapsibleSection extends StatefulWidget {
   final String title;
@@ -9,21 +10,27 @@ class CollapsibleSection extends StatefulWidget {
     required this.items,
   });
 
-  static Column createExample() {
-    return Column(
-      children: [
-        CollapsibleSection (
-          title: "Group 1",
-          items: ["item 1", "item 2", "item 3"],
-        ),
-        CollapsibleSection (
-          title: "Group 2",
-          items: ["item 4", "item 5", "item 6"],
-        ),
-      ],
-    );
+  static Widget createCollapsibleSections(List<DeviceGroup> groups) {
+    List<CollapsibleSection> sections = [];
+
+    for (var group in groups) {
+      sections.add(fromDeviceGroup(group));
+    }
+
+    return Column(children: sections);
   }
 
+  static CollapsibleSection fromDeviceGroup(DeviceGroup group) {
+    List<String> items = [];
+
+    for (var device in group.devices) {
+      items.add(device.name);
+    }
+
+    return CollapsibleSection(title: group.name, items: items);
+  }
+
+  
   @override
   State<CollapsibleSection> createState() => _CollapsibleSectionState();
 }
@@ -90,11 +97,11 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
 
     var deviceGroupHeader = Expanded(
         child: Text(widget.title,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24.0)),
       );
 
     var deviceGroupContainer = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: Row(
         children: [deviceGroupHeader, animatedRotation],
       ),
@@ -113,7 +120,7 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
   Widget _buildContent() {
     List<Widget> contentChildren = widget.items
       .map((item) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.fromLTRB(10, 4, 4, 0),
             child: Text(item),
           ))
       .toList();

@@ -108,7 +108,7 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
 
         return topologyAsync.when(
           loading: () => CircularProgressIndicator(),
-          error: (error, stackTrace) => Text('Error: $error'),
+          error: (error, stackTrace) => Text('Error: $error'), // TODO: Graceful handling
           data: (topology) => 
             _makeCustomPaint(
               topology,

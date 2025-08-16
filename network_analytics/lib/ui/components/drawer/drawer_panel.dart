@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/ui/components/drawer/device_listing_panel.dart';
 import 'package:network_analytics/ui/components/drawer/side_nav_item.dart';
 
@@ -7,6 +8,7 @@ class DrawerPanel extends StatelessWidget {
   final bool isVisible;
   final Animation<double> fadeAnimation;
   final SideNavItem? selectedPanel;
+  final Topology? topology;
 
   const DrawerPanel({
     super.key,
@@ -14,16 +16,17 @@ class DrawerPanel extends StatelessWidget {
     required this.isVisible,
     required this.fadeAnimation,
     required this.selectedPanel,
+    required this.topology
   });
 
-  Widget createListingPanel() {
-    return CollapsibleSection.createExample();
+  Widget createListingPanel(Topology topology) {
+    return CollapsibleSection.createCollapsibleSections(topology.groups);
   }
 
-  Widget createContainerFromSelection() {
+  Widget createContainerFromSelection(Topology? topology) {
     switch (selectedPanel) {
       case SideNavItem.listado:
-        return createListingPanel();
+        return createListingPanel(topology!);
 
       default:
         return Text("No one here but us chickens!");
@@ -42,7 +45,7 @@ class DrawerPanel extends StatelessWidget {
                 color: Colors.grey.shade300,
                 padding: const EdgeInsets.all(16),
                 alignment: Alignment.topLeft,
-                child: createContainerFromSelection()
+                child: createContainerFromSelection(topology)
               ),
             )
           : const SizedBox.shrink(),
