@@ -11,7 +11,7 @@ import '../services/topology_service.dart';
 
 final topologyServiceProvider = Provider<TopologyService>((ref) {
   return TopologyService(
-    endpoint: Uri.parse(AppConfig.get("api")["toplogy_endpoint"]), // TODO: Handle timeout
+    endpoint: Uri.parse(AppConfig.getOrDefault("api/topology_endpoint")),
   );
 });
 

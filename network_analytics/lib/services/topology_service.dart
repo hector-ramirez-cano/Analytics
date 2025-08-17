@@ -3,20 +3,25 @@ import 'package:http/http.dart' as http;
 // ignore: unused_import
 import 'package:logger/web.dart';
 import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/services/app_config.dart';
 
 class TopologyService {
   final Uri endpoint;
-  final int retries = 3; // TODO: Make config global variable
-  final Duration delay = const Duration(seconds: 3);
 
   TopologyService({required this.endpoint});
 
   Future<Topology> fetchItems() async {
     int attempts = 0;
-    Logger().d("Fetching items...");
+    int retries = AppConfig.getOrDefault("api/retries", defaultVal: 3);
+    Duration retryDelayS = Duration(seconds: AppConfig.getOrDefault("api/retry_delay_s", defaultVal: 5));
+    Duration timeoutS = Duration(seconds: AppConfig.getOrDefault("api/timeout_s", defaultVal: 20));
+
+    Logger().d("Fetching items..., retries=$retries, retryAfter=$retryDelayS, timeout=$timeoutS");
     while (true) {
       try {
-        final response = await http.get(endpoint);
+        final response = await http
+          .get(endpoint)
+          .timeout(timeoutS);
 
         if (response.statusCode != 200) {
           throw Exception("Failed to load items with HTTP Code = ${response.statusCode}");
@@ -32,7 +37,7 @@ class TopologyService {
           return Future.error(e.toString());
         }
 
-        await Future.delayed(delay);
+        await Future.delayed(retryDelayS);
       }
     }
   }

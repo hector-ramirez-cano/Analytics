@@ -1,6 +1,6 @@
 api:
   endpoint: "http://localhost:5050"
-  toplogy_endpoint: "http://localhost:5050/api/topology"
-  retries: 10
-  retry_delay_s: 15
+  topology_endpoint: "http://localhost:5050/api/topology"
+  retries: 3
+  retry_delay_s: 5
   timeout_s: 15
