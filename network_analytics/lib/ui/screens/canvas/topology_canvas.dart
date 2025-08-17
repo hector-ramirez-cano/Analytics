@@ -9,6 +9,7 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/canvas_state_notifier.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
+import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
 import 'package:network_analytics/ui/screens/canvas/topology_canvas_painter.dart';
 
@@ -106,9 +107,13 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
           ref.read(canvasStateNotifierService.notifier).zoomAt(cursorPixel, zoomDelta, canvasSize)
         };
 
+        onRetry () async => {
+          ref.refresh(topologyProvider.future)
+        };
+
         return topologyAsync.when(
-          loading: () => CircularProgressIndicator(),
-          error: (error, stackTrace) => Text('Error: $error'), // TODO: Graceful handling
+          loading: () => RetryIndicator(onRetry: onRetry, isLoading: true),
+          error: (error, stackTrace) => RetryIndicator(onRetry: onRetry, error: error.toString(), isLoading: topologyAsync.isLoading,),
           data: (topology) => 
             _makeCustomPaint(
               topology,

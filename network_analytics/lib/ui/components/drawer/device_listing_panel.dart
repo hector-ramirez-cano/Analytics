@@ -97,7 +97,8 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
 
     var deviceGroupHeader = Expanded(
         child: Text(widget.title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24.0)),
+            style: Theme.of(context).textTheme.headlineMedium,
+        )
       );
 
     var deviceGroupContainer = Container(

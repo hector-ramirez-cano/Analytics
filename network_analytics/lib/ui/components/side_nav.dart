@@ -1,7 +1,10 @@
-import 'package:flutter/material.dart';// ignore: unused_import
+import 'package:flutter/material.dart';
+
+// ignore: unused_import
 import 'package:logger/web.dart';
+
 import 'package:network_analytics/ui/components/drawer/side_nav_item.dart';
-import '../../theme/app_colors.dart';
+import 'package:network_analytics/theme/app_colors.dart';
 
 class SideNav extends StatelessWidget {
   final SideNavItem? selectedPanel;
@@ -20,7 +23,7 @@ class SideNav extends StatelessWidget {
     widgets.add(Spacer());
     widgets.addAll(List.generate(SideNavItem.bottomItems.length, (index) => _buildChild(SideNavItem.bottomItems[index])));
 
-    Logger().d("Top =${SideNavItem.topItems}, Bottom=${SideNavItem.bottomItems}");
+    // Logger().d("Top =${SideNavItem.topItems}, Bottom=${SideNavItem.bottomItems}");
 
     return Container(
       width: 60,

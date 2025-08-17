@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';// ignore: unused_import
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// ignore: unused_import
 import 'package:logger/web.dart';
 
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/drawer/side_nav_item.dart';
+import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/components/side_nav.dart';
 import 'package:network_analytics/ui/components/content_area.dart';
 import 'package:network_analytics/ui/components/drawer/drawer_panel.dart';
@@ -79,19 +81,41 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     );
   }
 
-  AnimatedBuilder _buildDrawerPanel(Topology? topology) {
+  AnimatedBuilder _buildDrawerPanel(AsyncValue<Topology> topology, OnRetryCallback onRetry) {
+    // Logger().d("3 _buildDrawerPanel called, selectedPanel=$selectedPanel, status=${_drawerController.status}");
+    bool isVisible = selectedPanel != null && (_drawerController.status == AnimationStatus.completed || _drawerController.isAnimating);
+    
     return AnimatedBuilder(
       animation: _drawerController,
       builder: (context, child) {
         return DrawerPanel(
           width: _drawerWidth.value,
-          isVisible: selectedPanel != null && _drawerController.status == AnimationStatus.completed,
+          isVisible: isVisible,
           fadeAnimation: _fadeAnimation,
           selectedPanel: selectedPanel,
           topology: topology,
+          onRetry: onRetry,
         );
       },
     );
+  }
+
+  Widget _buildContent(AsyncValue<Topology> topology, OnRetryCallback onRetry) {
+
+    // Logger().d("2 BuildContent called with topology=$topology");
+    return Expanded(
+            child: Row(
+              children: [
+                _buildSideNav(),
+                _buildDrawerPanel(topology, onRetry),
+                const Expanded(child: ContentArea()),
+              ],
+            )
+          );
+  }
+
+  void _onRetry(WidgetRef ref) {
+    var _ = ref.refresh(topologyProvider.future);
   }
 
   @override
@@ -103,25 +127,15 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    Logger().d("Triggered drawer rebuild");
+    // Logger().d("Triggered drawer rebuild");
 
     return Consumer(builder: 
       (context, ref, child) {
         var topology = ref.watch(topologyProvider);
 
-        return topology.when(
-          loading: () => CircularProgressIndicator(), // TODO: handle gracefully
-          error: (error, strackTrace) => Text('Error: $error'), // TODO: Graceful handling,
-          data: (topology) => Expanded(
-            child: Row(
-              children: [
-                _buildSideNav(),
-                _buildDrawerPanel(topology),
-                const Expanded(child: ContentArea()),
-              ],
-            )
-          ),
-        );
+        // Logger().d("1 Triggered a drawer rebuild with topology=$topology");
+        Future<void> onRetry() async => _onRetry(ref);
+        return _buildContent(topology, onRetry);
       }
     );
   }
