@@ -4,3 +4,10 @@ api:
   retries: 3
   retry_delay_s: 5
   timeout_s: 15
+
+ui:
+  natural_scrolling: true
+
+
+debug:
+  enable_canvas_interaction_logging: true

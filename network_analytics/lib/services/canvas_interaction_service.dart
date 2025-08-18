@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/offset.dart';
 import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/app_config.dart';
 import 'package:network_analytics/services/canvas_state_notifier.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
 
@@ -31,7 +32,13 @@ class CanvasInteractionService {
   HoverTarget? prevHovered;
   Timer? _hoverTimer;
   double _lastScale = 1.0;
+  bool mouseMovingCanvas = false;
 
+
+  /// 
+  /// Retrieves the first target over which the position (in global space) is colliding with. If no collision is detected, null will be returned
+  /// [position] global-space position of the cursor, for which collision will be detected
+  /// 
   HoverTarget? getHoveredTarget(Offset position) {
     for (final target in targets) {
       if (target.hitTest(position)) return target;
@@ -40,8 +47,39 @@ class CanvasInteractionService {
     return null;
   }
 
+  ///
+  /// Makes the canvas scale and center offset move depending on the position at which the zoom happens.
+  /// [focalPoint] point at which the scale and centerOffset will be moved toward
+  /// [focalPointDelta] change in focalPoint since last call, to implement panning
+  /// [scaleDelta] change in scale since last call
+  /// [canvasSize] current size of the canvas in pixels
+  /// [ref] WidgetRef to call to update the canvas scale and offset state
+  /// 
+  /// Example: If zooming-in to the canvas with the focalPoint on the top-left of the canvas, the center will be shifted towards the top-left
+  void zoomAt(Offset focalPoint, Offset focalPointDelta, double scaleDelta, Size canvasSize, WidgetRef ref) {
+    var state = ref.read(canvasStateNotifierService.notifier);
+
+    final newScale = (state.scale * scaleDelta).clamp(0.1, 10.0);
+
+    final globalBefore = focalPoint.pixelToGlobal(canvasSize, state.scale, state.centerOffset);
+
+    state.setState(newScale, null);
+
+    final globalAfter = focalPoint.pixelToGlobal(canvasSize, state.scale, state.centerOffset);
+
+    final panGlobalDelta = Offset(
+       focalPointDelta.dx / (canvasSize.width / 2 * state.scale),
+       focalPointDelta.dy / (canvasSize.height / 2 * state.scale),
+    );
+
+    // Adjust offset so zoom pivots around cursor
+    final offsetDelta = globalAfter - globalBefore;
+    state.setState(null, state.centerOffset - offsetDelta - panGlobalDelta,);
+  }
+
   void registerTarget(HoverTarget target) => targets.add(target);
   void clearTargets() => targets.clear();
+  void onScaleStart() => _lastScale = 1.0;
 
   void onSelectTarget(bool forced, WidgetRef ref) {
     ref.read(itemSelectionProvider.notifier).setSelected(hovered?.getId(), forced);
@@ -94,10 +132,11 @@ class CanvasInteractionService {
 
   void onTapUp(TapUpDetails details, ItemChangedCallback onChangeSelection, ItemSelection? itemSelection, Size canvasSize, CanvasState state) {
     hovered = getHoveredTarget(details.localPosition.pixelToGlobal(canvasSize, state.scale, state.centerOffset));
-    // Logger().d("On TapUp, hovered=$hovered");
 
     bool forced = hovered != null;
     onChangeSelection(forced);
+
+    Logger().d("[INPUT]On TapUp, hovered=$hovered, hovered=$hovered");
   }
 
   void onScaleUpdate(ScaleUpdateDetails details, Size canvasActualSize, WidgetRef ref) {
@@ -105,19 +144,45 @@ class CanvasInteractionService {
       final scaleDelta = details.scale / _lastScale;
       _lastScale = details.scale;
 
-    Logger().d("OnScaleUp, scaleDelta=$scaleDelta");
 
-    ref.read(canvasStateNotifierService.notifier).zoomAt(details.focalPoint, scaleDelta, canvasActualSize);
+    zoomAt(details.focalPoint, details.focalPointDelta, scaleDelta, canvasActualSize, ref);
+    
+    Logger().d("[input]OnScaleUp, scaleDelta=$scaleDelta");
   }
 
   void onPointerSignal(dynamic pointerSignal, Size canvasActualSize, WidgetRef ref) {
     if (pointerSignal is! PointerScrollEvent) { return; }
 
-        final scaleDelta = pointerSignal.scrollDelta.dy > 0 ? 0.9 : 1.1;
+    final scaleDelta = pointerSignal.scrollDelta.dy > 0 ? 0.9 : 1.1;
 
-        ref.read(canvasStateNotifierService.notifier).zoomAt(pointerSignal.localPosition, scaleDelta, canvasActualSize);
+    zoomAt(pointerSignal.localPosition, Offset.zero, scaleDelta, canvasActualSize, ref);
+
+    Logger().d("OnPointerSignal");
   }
 
-  void onScaleStart() => _lastScale = 1.0;
+  void onPointerDown(PointerEvent event) {
+    if (event.buttons == kMiddleMouseButton) {
+      mouseMovingCanvas = true;
+    }
+  }
+
+  void onPointerUp(PointerEvent event) {
+    mouseMovingCanvas = false;
+  }
+
+
+  void onPointerMove(PointerEvent event, Size canvasActualSize, WidgetRef ref) {
+    if (!mouseMovingCanvas) {
+      return;
+    }
+
+    var delta = event.localDelta;
+    if (AppConfig.getOrDefault("ui/natural_scrolling", defaultVal: false)) {
+      delta = -delta;
+    }
+
+    zoomAt(event.localPosition, delta, 1.0, canvasActualSize, ref);
+  }
+
 }
 

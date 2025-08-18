@@ -31,21 +31,27 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     ItemSelection? itemSelection,
     WidgetRef ref,
   ) {
+    var onCanvasStateChanged = ((scale, center) => canvasInteractionService.onCanvasStateChanged(scale, center, ref));
     var onChangeSelection    = ((forced)  => canvasInteractionService.onSelectTarget(forced, ref));
     var onSizeChanged        = ((size)    => canvasActualSize = size);
     var onScaleStart         = ((_)       => canvasInteractionService.onScaleStart());
     var onScaleUpdate        = ((details) => canvasInteractionService.onScaleUpdate(details, canvasActualSize, ref));
-    var onPointerSignal      = ((signal)  => canvasInteractionService.onPointerSignal(signal, canvasActualSize, ref));
-    var onHover              = ((event)   => canvasInteractionService.onHover(event, onChangeSelection, itemSelection, canvasActualSize, canvasState, event.localPosition));
     var onTapUp              = ((details) => canvasInteractionService.onTapUp(details, onChangeSelection, itemSelection, canvasActualSize, canvasState));
-    var onCanvasStateChanged = ((scale, center) => canvasInteractionService.onCanvasStateChanged(scale, center, ref));
+    var onHover              = ((event)   => canvasInteractionService.onHover(event, onChangeSelection, itemSelection, canvasActualSize, canvasState, event.localPosition));
+    var onPointerSignal      = ((signal)  => canvasInteractionService.onPointerSignal(signal, canvasActualSize, ref));
+    var onPointerDown        = ((event)   => canvasInteractionService.onPointerDown(event));
+    var onPointerUp          = ((event)   => canvasInteractionService.onPointerUp(event));
+    var onPointerMove        = ((event)   => canvasInteractionService.onPointerMove(event, canvasActualSize, ref));
 
     return UniversalDetector(
       onTapUp        : onTapUp,
       onScaleStart   : onScaleStart,
       onScaleUpdate  : onScaleUpdate,
-      onPointerSignal: onPointerSignal,
       onHover        : onHover,
+      onPointerSignal: onPointerSignal,
+      onPointerDown  : onPointerDown,
+      onPointerUp    : onPointerUp,
+      onPointerMove  : onPointerMove,
       
       child: CustomPaint(
         size: Size.infinite,
@@ -59,8 +65,6 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
         ),
       ),
     );
-
-  
   }
 
   @override

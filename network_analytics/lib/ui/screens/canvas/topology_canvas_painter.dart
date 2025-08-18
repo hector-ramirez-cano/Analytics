@@ -92,6 +92,7 @@ class TopologyCanvasPainter extends CustomPainter {
     );
   }
 
+  // TODO: Optimization: Make it so it only repaints if either selection, scale, offset or data changed
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
