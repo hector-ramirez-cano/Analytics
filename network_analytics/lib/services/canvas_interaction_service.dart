@@ -1,15 +1,18 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'dart:async';
 
 // ignore: unused_import
 import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/offset.dart';
+import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/canvas_state_notifier.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
 
 typedef ItemChangedCallback = Function(bool);
-typedef CanvasStateChangedCallback = Function({double? scale, Offset? center});
+typedef CanvasStateChangedCallback = Function(double? scale, Offset? center);
 typedef CanvasSizeChangedCallback = Function(Size size);
 typedef ScaleChangedCallback = Function(Offset cursorPixel, double scaleDelta, Size canvasSize);
 
@@ -27,8 +30,7 @@ class CanvasInteractionService {
   HoverTarget? hovered;
   HoverTarget? prevHovered;
   Timer? _hoverTimer;
-
-
+  double _lastScale = 1.0;
 
   HoverTarget? getHoveredTarget(Offset position) {
     for (final target in targets) {
@@ -40,6 +42,14 @@ class CanvasInteractionService {
 
   void registerTarget(HoverTarget target) => targets.add(target);
   void clearTargets() => targets.clear();
+
+  void onSelectTarget(bool forced, WidgetRef ref) {
+    ref.read(itemSelectionProvider.notifier).setSelected(hovered?.getId(), forced);
+  }
+
+  void onCanvasStateChanged(double? scale, Offset? center, WidgetRef ref) {
+    ref.read(canvasStateNotifierService.notifier).setState(scale, center);
+  }
   
   void onEnter(PointerEvent event, ItemChangedCallback onChangeSelection) {
     callback() => onChangeSelection(false);
@@ -90,11 +100,24 @@ class CanvasInteractionService {
     onChangeSelection(forced);
   }
 
+  void onScaleUpdate(ScaleUpdateDetails details, Size canvasActualSize, WidgetRef ref) {
+    if (details.pointerCount < 2) { return; }
+      final scaleDelta = details.scale / _lastScale;
+      _lastScale = details.scale;
 
-  void onScaleUpdate(Offset cursorPixel, double scaleDelta, Size canvasSize, ScaleChangedCallback onScaleUpdate) {
     Logger().d("OnScaleUp, scaleDelta=$scaleDelta");
 
-    onScaleUpdate(cursorPixel, scaleDelta, canvasSize);
+    ref.read(canvasStateNotifierService.notifier).zoomAt(details.focalPoint, scaleDelta, canvasActualSize);
   }
+
+  void onPointerSignal(dynamic pointerSignal, Size canvasActualSize, WidgetRef ref) {
+    if (pointerSignal is! PointerScrollEvent) { return; }
+
+        final scaleDelta = pointerSignal.scrollDelta.dy > 0 ? 0.9 : 1.1;
+
+        ref.read(canvasStateNotifierService.notifier).zoomAt(pointerSignal.localPosition, scaleDelta, canvasActualSize);
+  }
+
+  void onScaleStart() => _lastScale = 1.0;
 }
 
