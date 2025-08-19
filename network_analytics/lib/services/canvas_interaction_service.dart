@@ -174,7 +174,17 @@ class CanvasInteractionService {
   }
 
   void onPointerDown(PointerEvent event) {
-    if (event.buttons == kMiddleMouseButton) {
+    var inputButtonConfig = AppConfig.getOrDefault("ui/move_canvas_with", defaultVal: "mouse1");
+
+    const inputButtonMap = {
+      "mouse1": kPrimaryMouseButton,
+      "mouse2": kSecondaryMouseButton,
+      "mouse3": kTertiaryButton,
+    };
+
+    var inputButton = inputButtonMap[inputButtonConfig] ?? kTertiaryButton;
+
+    if (event.buttons == inputButton) {
       mouseMovingCanvas = true;
     }
     logger.d("OnPointerDown, button=${event.buttons}");

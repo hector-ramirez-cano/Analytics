@@ -7,11 +7,11 @@ api:
 
 ui:
   natural_scrolling: false
-  move_canvas_with: "mouse1"
+  move_canvas_with: "mouse3"
 
 
 debug:
-  enable_canvas_interaction_logging: true
+  enable_canvas_interaction_logging: false
   enable_canvas_link_class_logging: false
   enable_topology_service_logging: false
   enable_drawer_logging: false
