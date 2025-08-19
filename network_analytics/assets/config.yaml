@@ -6,7 +6,7 @@ api:
   timeout_s: 15
 
 ui:
-  natural_scrolling: true
+  natural_scrolling: false
 
 
 debug:

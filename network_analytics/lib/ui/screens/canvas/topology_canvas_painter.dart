@@ -73,6 +73,7 @@ class TopologyCanvasPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     onSizeChanged(size);
+    canvas.clipRect(Offset.zero & size);
 
     // Draw background
     canvas.drawRect(
