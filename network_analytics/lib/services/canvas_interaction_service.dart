@@ -83,11 +83,15 @@ class CanvasInteractionService {
   /// Manually zooms the canvas by a given scaleDelta
   /// [scaleDelta] multiplicative zoom delta
   /// [ref] WidgetRef to ripple-notify state to other widgets via Riverpod
-  void zoom(double scaleDelta, ref) {
+  void zoom(double scaleDelta, WidgetRef ref) {
     var state = ref.read(canvasStateNotifierService.notifier);
     final newScale = (state.scale * scaleDelta).clamp(0.1, 10.0);
 
     state.setState(newScale, null);
+  }
+
+  void resetCanvasState(WidgetRef ref) {
+    ref.read(canvasStateNotifierService.notifier).reset();
   }
 
   void registerTarget(HoverTarget target) => targets.add(target);
@@ -212,5 +216,4 @@ class CanvasInteractionService {
     logger.d("OnPointerMove, position=${event.localPosition}, delta=$delta, naturalScrolling=$naturalScrolling");
   }
 
-}
-
+} 

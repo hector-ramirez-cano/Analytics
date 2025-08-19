@@ -7,6 +7,8 @@ import 'package:logger/web.dart';
 class CanvasState {
   final double scale;
   final Offset centerOffset;
+  
+  bool isModified = false;
 
   CanvasState({
     required this.scale,
@@ -30,13 +32,22 @@ class CanvasStateNotifierService extends StateNotifier<CanvasState> {
 
   double get scale => state.scale;
   Offset get centerOffset => state.centerOffset;
+  bool   get isModified => state.isModified;
 
   void setState(double? scale, Offset? centerOffset) {
     bool changed = state.scale != scale || state.centerOffset != centerOffset;
 
     if (changed) {
       state = state.copyWith(scale: scale, centerOffset: centerOffset);
+      state.isModified = true;
+
+      Logger().d("isModified=${state.isModified}");
     }
+  }
+
+  void reset() {
+    state = state.copyWith(scale: 1.0, centerOffset: Offset.zero);
+    state.isModified = false;
   }
 
   void pan(Offset delta) {

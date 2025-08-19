@@ -71,6 +71,9 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     return Consumer(builder: 
       (context, ref, child) {
         final canvasInteractionService = ref.watch(canvasInteractionServiceProvider);
+        final canvasStateNotifier = ref.watch(canvasStateNotifierService);
+
+        final isCenterButtonVisible = canvasStateNotifier.isModified;
 
         return Positioned(
           top: 16,
@@ -90,6 +93,13 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
                 onPressed: () => canvasInteractionService.zoom(0.9, ref),
                 child: Icon(Icons.zoom_out),
               ),
+              SizedBox(height: 8),
+              ?isCenterButtonVisible ? FloatingActionButton(
+                heroTag: "center",
+                mini: true,
+                onPressed: () => canvasInteractionService.resetCanvasState(ref),
+                child: Icon(Icons.center_focus_weak),
+              ) : null
             ],
           ),
         );
