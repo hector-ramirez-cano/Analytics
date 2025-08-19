@@ -16,9 +16,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: TopologyMapLayout(),
+
+      theme: ThemeData(
+        colorScheme:
+          ColorScheme.fromSeed(
+            seedColor: Color.fromRGBO(163, 213, 255, 1),
+            secondary: Color.fromRGBO(2, 66, 105, 1)
+          ),
+          floatingActionButtonTheme: FloatingActionButtonThemeData(
+            backgroundColor: Color.fromRGBO(163, 213, 255, 1),
+            foregroundColor: const Color.fromRGBO(248, 253, 255, 1),
+          ),
+
+      ),
     );
   }
 }

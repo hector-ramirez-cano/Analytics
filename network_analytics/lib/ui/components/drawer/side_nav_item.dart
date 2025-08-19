@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
 enum SideNavItem {
-  listado (Icons.segment , 'Listado' , false),
-  search  (Icons.search  , 'Search'  , false),
-  settings(Icons.settings, 'Settings', true);
+  listado (Icons.segment   , 'Listado' , false, true),
+  search  (Icons.search    , 'Search'  , false, true),
+  charts  (Icons.area_chart, 'Gráficas', false, false),
+  settings(Icons.settings  , 'Settings', true , false);
 
   final IconData icon;
   final String   label;
   final bool     bottom;
+  final bool     hasDrawer;
 
-  const SideNavItem(this.icon, this.label, this.bottom);
+  const SideNavItem(this.icon, this.label, this.bottom, this.hasDrawer);
 
   static List<IconData> get icons {
     return SideNavItem.values.map((item) => item.icon).toList();

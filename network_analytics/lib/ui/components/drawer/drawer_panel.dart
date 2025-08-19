@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
+import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/ui/components/drawer/device_listing_panel.dart';
 import 'package:network_analytics/ui/components/drawer/side_nav_item.dart';
@@ -13,6 +14,8 @@ class DrawerPanel extends StatelessWidget {
   final SideNavItem? selectedPanel;
   final AsyncValue<Topology> topology;
   final OnRetryCallback onRetry;
+
+  static Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_drawer_logging", false));
 
   const DrawerPanel({
     super.key,
@@ -36,7 +39,8 @@ class DrawerPanel extends StatelessWidget {
   }
 
   Widget createContainerFromSelection(AsyncValue<Topology> topology) {
-    Logger().d("5 Creating drawer panel from $selectedPanel, topology=$topology");
+    logger.d("5 Creating drawer panel from $selectedPanel, topology=$topology");
+
     switch (selectedPanel) {
       case SideNavItem.listado:
         return topology.when(
@@ -46,13 +50,24 @@ class DrawerPanel extends StatelessWidget {
         );
 
       default:
-        return Text("No one here but us chickens!");
+        if (selectedPanel?.hasDrawer == true) {
+          logger.w("Creating drawer panel with default text");
+          return Text("No one here but us chickens!");
+        } else {
+          logger.w("Creating drawer panel for side-nav menu which specified hasDrawer=false!");
+          return Text("ERROR, this panel doesn't have a drawer!");
+        }
 
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (selectedPanel?.hasDrawer == false) {
+      // force hiding of drawer
+      return SizedBox.shrink();
+    }
+
     return SizedBox(
       width: width,
       child: isVisible

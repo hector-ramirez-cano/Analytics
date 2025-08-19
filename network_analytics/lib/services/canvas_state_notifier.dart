@@ -40,8 +40,6 @@ class CanvasStateNotifierService extends StateNotifier<CanvasState> {
     if (changed) {
       state = state.copyWith(scale: scale, centerOffset: centerOffset);
       state.isModified = true;
-
-      Logger().d("isModified=${state.isModified}");
     }
   }
 

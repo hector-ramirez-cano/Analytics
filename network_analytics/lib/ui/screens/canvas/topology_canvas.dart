@@ -84,6 +84,7 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
                 heroTag: "zoom_in",
                 mini: true,
                 onPressed: () => canvasInteractionService.zoom(1.1, ref),
+                backgroundColor: Color.fromRGBO(0, 75, 134, 1),
                 child: Icon(Icons.zoom_in),
               ),
               SizedBox(height: 8),
@@ -91,6 +92,7 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
                 heroTag: "zoom_out",
                 mini: true,
                 onPressed: () => canvasInteractionService.zoom(0.9, ref),
+                backgroundColor: Color.fromRGBO(0, 75, 134, 1),
                 child: Icon(Icons.zoom_out),
               ),
               SizedBox(height: 8),
@@ -98,9 +100,10 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
                 heroTag: "center",
                 mini: true,
                 onPressed: () => canvasInteractionService.resetCanvasState(ref),
+                backgroundColor: Color.fromRGBO(0, 75, 134, 1),
                 child: Icon(Icons.center_focus_weak),
               ) : null
-            ],
+            ], 
           ),
         );
       }

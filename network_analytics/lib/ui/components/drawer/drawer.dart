@@ -22,8 +22,9 @@ class SideDrawer extends StatefulWidget {
 class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
   static Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_drawer_logging", false));
 
-  SideNavItem? selectedPanel;
+  SideNavItem? selectedPanel = SideNavItem.listado;
   Topology? topology;
+  bool isDrawerOpened = true;
 
   final double drawerTargetWidth = 250;
   late final AnimationController _drawerController;
@@ -61,20 +62,47 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
         _fadeController.reset();
       }
     });
+
+    _drawerController.forward();
   }
 
   void _handleNavClick(SideNavItem clickedItem) {
+    SideNavItem? selected;
+    bool setOpen;
     if (selectedPanel == clickedItem) {
-      _drawerController.reverse();
-      setState(() {
-        selectedPanel = null;
-      });
+      if (isDrawerOpened) {
+        // clicked the same, we gotta close
+        selected = null;
+        setOpen = false;
+      } else {
+        // clicked the same, but it was forcefully hidden, keep the same, but open the drawer
+        selected = selectedPanel;
+        setOpen = true;
+      }
     } else {
-      setState(() {
-        selectedPanel = clickedItem;
-      });
-      _drawerController.forward();
+      // clicked something else, switch to that
+      selected = clickedItem;
+      setOpen = true;
     }
+
+    // if the drawer doesn't have a drawer, force it to close
+    setOpen &= clickedItem.hasDrawer;
+
+    setState(() {
+      selectedPanel = selected;
+    });
+
+    _setDrawerState(setOpen);
+  }
+
+  void _setDrawerState(bool open) {
+    if (open) {
+      _drawerController.forward();
+    } else {
+      _drawerController.reverse();
+    }
+
+    isDrawerOpened = open;
   }
 
   SideNav _buildSideNav() {
