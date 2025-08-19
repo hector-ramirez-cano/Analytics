@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 // ignore: unused_import
 import 'package:logger/web.dart';
 
-import 'package:network_analytics/ui/components/drawer/side_nav_item.dart';
+import 'package:network_analytics/ui/components/enums/side_nav_item.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 
 class SideNav extends StatelessWidget {

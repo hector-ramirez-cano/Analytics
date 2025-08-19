@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 enum SideNavItem {
-  listado (Icons.segment   , 'Listado' , false, true),
+  items   (Icons.segment   , 'Listado' , false, true),
   search  (Icons.search    , 'Search'  , false, true),
   charts  (Icons.area_chart, 'Gráficas', false, true),
   settings(Icons.settings  , 'Settings', true , false);

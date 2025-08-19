@@ -1,11 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
+import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 import 'package:network_analytics/ui/screens/canvas/topology_canvas.dart';
+import 'package:network_analytics/ui/screens/charts/chart.dart';
+import 'package:network_analytics/ui/screens/settings/settings.dart';
 
 class ContentArea extends StatelessWidget {
-  const ContentArea({super.key});
+  final WorkplaceScreen screen;
+
+  const ContentArea({super.key, required this.screen});
 
   @override
   Widget build(BuildContext context) {
-    return TopologyCanvas();
+    switch (screen) {
+      case WorkplaceScreen.canvas:
+        return TopologyCanvas();
+
+      case WorkplaceScreen.charts:
+        return LineChartSample2();
+
+      case WorkplaceScreen.settings:
+        return SettingsScreen();
+
+      // ignore: unreachable_switch_default
+      default:
+        Logger().w("[ERROR]Displaying screen undefined on WorkplaceScreen!");
+        return Text("[ERROR]Displaying screen undefined on WorkplaceScreen!");
+    }
   }
 }

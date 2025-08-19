@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/ui/components/drawer/device_listing_panel.dart';
-import 'package:network_analytics/ui/components/drawer/side_nav_item.dart';
+import 'package:network_analytics/ui/components/drawer/listing_panel.dart';
+import 'package:network_analytics/ui/components/enums/side_nav_item.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 
 class DrawerPanel extends StatelessWidget {
@@ -27,9 +27,6 @@ class DrawerPanel extends StatelessWidget {
     required this.onRetry
   });
 
-  Widget createListingPanel(Topology? topology) {
-    return CollapsibleSection.createCollapsibleSections(topology!.groups);
-  }
 
   Widget _buildOnNotSuccessful(String? error, bool isLoading) {
     return Center(
@@ -42,12 +39,20 @@ class DrawerPanel extends StatelessWidget {
     logger.d("5 Creating drawer panel from $selectedPanel, topology=$topology");
 
     switch (selectedPanel) {
-      case SideNavItem.listado:
+      case SideNavItem.items:
         return topology.when(
-          data   : (topology)  => createListingPanel(topology),
+          data   : (topology)  => ListingPanel(topology: topology),
           error  : (error, st) => _buildOnNotSuccessful(error.toString(), topology.isLoading),
           loading: ()          => _buildOnNotSuccessful(null, true)
         );
+
+      case SideNavItem.charts:
+        return topology.when(
+          data   : (topology)  => ListingPanel(topology: topology),
+          error  : (error, st) => _buildOnNotSuccessful(error.toString(), topology.isLoading),
+          loading: ()          => _buildOnNotSuccessful(null, true)
+        );
+
 
       default:
         if (selectedPanel?.hasDrawer == true) {

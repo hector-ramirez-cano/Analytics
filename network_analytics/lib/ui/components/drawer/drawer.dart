@@ -6,7 +6,8 @@ import 'package:network_analytics/extensions/development_filter.dart';
 
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
-import 'package:network_analytics/ui/components/drawer/side_nav_item.dart';
+import 'package:network_analytics/ui/components/enums/side_nav_item.dart';
+import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/components/side_nav.dart';
 import 'package:network_analytics/ui/components/content_area.dart';
@@ -22,9 +23,10 @@ class SideDrawer extends StatefulWidget {
 class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
   static Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_drawer_logging", false));
 
-  SideNavItem? selectedPanel = SideNavItem.listado;
+  SideNavItem? selectedPanel = SideNavItem.items;
   Topology? topology;
   bool isDrawerOpened = true;
+  WorkplaceScreen screen = WorkplaceScreen.canvas;
 
   final double drawerTargetWidth = 250;
   late final AnimationController _drawerController;
@@ -93,6 +95,7 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     });
 
     _setDrawerState(setOpen);
+    _setScreen(selected);
   }
 
   void _setDrawerState(bool open) {
@@ -103,6 +106,30 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     }
 
     isDrawerOpened = open;
+  }
+
+  void _setScreen(SideNavItem? selected) {
+    WorkplaceScreen? selectedScreen;
+    switch (selected) {
+      case SideNavItem.items:
+      case SideNavItem.search:
+        selectedScreen = WorkplaceScreen.canvas;
+
+      case SideNavItem.charts:
+        selectedScreen = WorkplaceScreen.charts;
+
+      case SideNavItem.settings:
+        selectedScreen = WorkplaceScreen.settings;
+
+      default:
+        selectedScreen = null;
+    }
+
+    if (selectedScreen == null) { return; }
+
+    setState(() {
+      screen = selectedScreen!;
+    });
   }
 
   SideNav _buildSideNav() {
@@ -139,7 +166,7 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
               children: [
                 _buildSideNav(),
                 _buildDrawerPanel(topology, onRetry),
-                const Expanded(child: ContentArea()),
+                Expanded(child: ContentArea(screen: screen)),
               ],
             )
           );
