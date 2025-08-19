@@ -12,6 +12,8 @@ class UniversalDetector extends StatelessWidget {
   final void Function(PointerEvent)? onPointerUp;
   final void Function(PointerEvent)? onPointerMove;
 
+  final MouseCursor Function() setCursor;
+
   const UniversalDetector({
     super.key,
     required this.child,
@@ -23,6 +25,7 @@ class UniversalDetector extends StatelessWidget {
     this.onPointerDown,
     this.onPointerUp,
     this.onPointerMove,
+    required this.setCursor,
   });
 
   @override
@@ -37,6 +40,7 @@ class UniversalDetector extends StatelessWidget {
         onScaleUpdate: onScaleUpdate,
         onScaleStart: onScaleStart,
         child: MouseRegion(
+          cursor: setCursor(),
           onHover: onHover,
           child: child,
         ),

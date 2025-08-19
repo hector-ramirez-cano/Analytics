@@ -42,6 +42,7 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     var onPointerDown        = ((event)   => canvasInteractionService.onPointerDown(event));
     var onPointerUp          = ((event)   => canvasInteractionService.onPointerUp(event));
     var onPointerMove        = ((event)   => canvasInteractionService.onPointerMove(event, canvasActualSize, ref));
+    var setCursor            = (()        => canvasInteractionService.setCursor());
 
     return UniversalDetector(
       onTapUp        : onTapUp,
@@ -52,6 +53,7 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
       onPointerDown  : onPointerDown,
       onPointerUp    : onPointerUp,
       onPointerMove  : onPointerMove,
+      setCursor      : setCursor,
       
       child: CustomPaint(
         size: Size.infinite,

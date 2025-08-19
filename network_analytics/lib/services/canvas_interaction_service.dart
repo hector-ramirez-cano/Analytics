@@ -216,4 +216,11 @@ class CanvasInteractionService {
     logger.d("OnPointerMove, position=${event.localPosition}, delta=$delta, naturalScrolling=$naturalScrolling");
   }
 
+  MouseCursor setCursor() {
+    if (mouseMovingCanvas) {
+      return SystemMouseCursors.move;
+    }
+
+    return SystemMouseCursors.basic;
+  }
 } 
