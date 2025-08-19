@@ -67,6 +67,36 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     );
   }
 
+  Widget _makeFloatingButtons() {
+    return Consumer(builder: 
+      (context, ref, child) {
+        final canvasInteractionService = ref.watch(canvasInteractionServiceProvider);
+
+        return Positioned(
+          top: 16,
+          right: 16,
+          child: Column(
+            children: [
+              FloatingActionButton(
+                heroTag: "zoom_in",
+                mini: true,
+                onPressed: () => canvasInteractionService.zoom(1.1, ref),
+                child: Icon(Icons.zoom_in),
+              ),
+              SizedBox(height: 8),
+              FloatingActionButton(
+                heroTag: "zoom_out",
+                mini: true,
+                onPressed: () => canvasInteractionService.zoom(0.9, ref),
+                child: Icon(Icons.zoom_out),
+              ),
+            ],
+          ),
+        );
+      }
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -84,14 +114,16 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
         return topologyAsync.when(
           loading: () => RetryIndicator(onRetry: onRetry, isLoading: true),
           error: (error, stackTrace) => RetryIndicator(onRetry: onRetry, error: error.toString(), isLoading: topologyAsync.isLoading,),
-          data: (topology) => 
+          data: (topology) => Stack (children:[
             _makeCustomPaint(
               topology,
               canvasInteractionService,
               canvasState,
               canvasItemSelection,
               ref
-            )
+            ),
+            _makeFloatingButtons()
+          ])
         );
       }
     );

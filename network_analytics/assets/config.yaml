@@ -7,6 +7,7 @@ api:
 
 ui:
   natural_scrolling: false
+  move_canvas_with: "mouse1"
 
 
 debug:
