@@ -38,7 +38,6 @@ class TopologyCanvasPainter extends CustomPainter {
       double radius = 6;
 
       if (canvasInteractionService.hovered?.getId() == device.getId()) {
-        // Logger().d("Painting shadow");
         radius = 10;
       }
 

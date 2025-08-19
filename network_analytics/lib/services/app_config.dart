@@ -5,6 +5,7 @@ import 'package:yaml/yaml.dart';
 class AppConfig {
   static YamlMap? _config;
   static Map<String, dynamic> cache = {};
+  static Logger logger = Logger();
 
   static Future<void> load() async {
     final yamlString = await rootBundle.loadString('assets/config.yaml');
@@ -56,7 +57,7 @@ class AppConfig {
       } else {
         cache[path] = defaultVal;
 
-        Logger().w("Using undefined config value '$path', returning default value, $defaultVal");
+        logger.w("Using undefined config value '$path', returning default value, $defaultVal");
         return defaultVal;
       }
     }

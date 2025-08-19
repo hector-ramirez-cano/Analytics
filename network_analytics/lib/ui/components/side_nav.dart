@@ -23,8 +23,6 @@ class SideNav extends StatelessWidget {
     widgets.add(Spacer());
     widgets.addAll(List.generate(SideNavItem.bottomItems.length, (index) => _buildChild(SideNavItem.bottomItems[index])));
 
-    // Logger().d("Top =${SideNavItem.topItems}, Bottom=${SideNavItem.bottomItems}");
-
     return Container(
       width: 60,
       color: AppColors.sidebarColor,

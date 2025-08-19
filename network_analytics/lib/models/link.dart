@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 import 'package:path_drawing/path_drawing.dart';
@@ -15,6 +16,8 @@ class Link implements HoverTarget {
   final Device sideA;
   final Device sideB;
   final LinkType linkType;
+
+  static Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_canvas_link_class_logging", false));
 
   late double A, B, C;
 
@@ -41,8 +44,8 @@ class Link implements HoverTarget {
     B = -1;
     C = sideA.position.dy + 0.0001 - m * (sideA.position.dx + 0.0001);
 
-    Logger().d("A=$A, B=$B, C=$C");
-    Logger().d("sideA=${sideA.position}, sideB=${sideB.position}, m=$m");
+    logger.d("A=$A, B=$B, C=$C");
+    logger.d("sideA=${sideA.position}, sideB=${sideB.position}, m=$m");
   }
 
   factory Link.fromJson(Map<String, dynamic> json, Map<int, dynamic> devices) {
@@ -75,8 +78,8 @@ class Link implements HoverTarget {
     double numerator   = A * point.dx + B * point.dy + C;
     double denominator = A * A + B * B;
     
-    // Logger().d("A=$A, B=$B, C=$C, Point=$point");
-    // Logger().d("Numerator = $numerator, Denominator=$denominator");
+    logger.d("A=$A, B=$B, C=$C, Point=$point");
+    logger.d("Numerator = $numerator, Denominator=$denominator");
 
     if (denominator == 0) return 10e23;
 
@@ -92,7 +95,7 @@ class Link implements HoverTarget {
     final withinX = (point.dx - sideA.position.dx) * (point.dx - sideB.position.dx) <= 0.01;
     final withinY = (point.dy - sideA.position.dy) * (point.dy - sideB.position.dy) <= 0.01;
 
-    // Logger().d("Hit test, withinBounds $withinBounds, withinX=$withinX, withinY=$withinY, dist2=$dist");
+    logger.d("Hit test, withinBounds $withinBounds, withinX=$withinX, withinY=$withinY");
 
     return withinBounds && withinX && withinY;
   }

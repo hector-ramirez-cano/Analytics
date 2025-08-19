@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // ignore: unused_import
 import 'package:logger/web.dart';
+import 'package:network_analytics/extensions/development_filter.dart';
 
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
@@ -19,6 +20,8 @@ class SideDrawer extends StatefulWidget {
 }
 
 class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
+  static Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_drawer_logging", false));
+
   SideNavItem? selectedPanel;
   Topology? topology;
 
@@ -82,7 +85,7 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
   }
 
   AnimatedBuilder _buildDrawerPanel(AsyncValue<Topology> topology, OnRetryCallback onRetry) {
-    // Logger().d("3 _buildDrawerPanel called, selectedPanel=$selectedPanel, status=${_drawerController.status}");
+    logger.d("3 _buildDrawerPanel called, selectedPanel=$selectedPanel, status=${_drawerController.status}");
     bool isVisible = selectedPanel != null && (_drawerController.status == AnimationStatus.completed || _drawerController.isAnimating);
     
     return AnimatedBuilder(
@@ -102,7 +105,7 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
 
   Widget _buildContent(AsyncValue<Topology> topology, OnRetryCallback onRetry) {
 
-    // Logger().d("2 BuildContent called with topology=$topology");
+    logger.d("2 BuildContent called with topology=$topology");
     return Expanded(
             child: Row(
               children: [
@@ -127,13 +130,13 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    // Logger().d("Triggered drawer rebuild");
+    logger.d("Triggered drawer rebuild");
 
     return Consumer(builder: 
       (context, ref, child) {
         var topology = ref.watch(topologyProvider);
 
-        // Logger().d("1 Triggered a drawer rebuild with topology=$topology");
+        logger.d("1 Triggered a drawer rebuild with topology=$topology");
         Future<void> onRetry() async => _onRetry(ref);
         return _buildContent(topology, onRetry);
       }

@@ -11,3 +11,6 @@ ui:
 
 debug:
   enable_canvas_interaction_logging: true
+  enable_canvas_link_class_logging: false
+  enable_topology_service_logging: false
+  enable_drawer_logging: false

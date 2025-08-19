@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// ignore: unused_import
 import 'package:logger/web.dart';
 
 class CanvasState {

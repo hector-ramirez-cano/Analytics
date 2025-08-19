@@ -6,6 +6,7 @@ import 'dart:async';
 
 // ignore: unused_import
 import 'package:logger/web.dart';
+import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/extensions/offset.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/app_config.dart';
@@ -33,6 +34,7 @@ class CanvasInteractionService {
   Timer? _hoverTimer;
   double _lastScale = 1.0;
   bool mouseMovingCanvas = false;
+  final Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_canvas_interaction_logging", false));
 
 
   /// 
@@ -110,7 +112,7 @@ class CanvasInteractionService {
       var curr = getHoveredTarget(position);
 
       if (itemSelection != null && itemSelection.forced) {
-        // Logger().d("Skipped interaction, selection is forced");
+        logger.d("Skipped interaction, selection is forced");
         return;
       }
 
@@ -118,7 +120,7 @@ class CanvasInteractionService {
         onExit(event);
         onEnter(event, onChangeSelection);
 
-        // Logger().d("Currently Hovering over=$curr");
+        logger.d("Currently Hovering over=$curr");
       
         prevHovered = hovered;
         hovered = curr;
@@ -136,7 +138,7 @@ class CanvasInteractionService {
     bool forced = hovered != null;
     onChangeSelection(forced);
 
-    Logger().d("[INPUT]On TapUp, hovered=$hovered, hovered=$hovered");
+    logger.d("On TapUp, hovered=$hovered, hovered=$hovered");
   }
 
   void onScaleUpdate(ScaleUpdateDetails details, Size canvasActualSize, WidgetRef ref) {
@@ -147,7 +149,7 @@ class CanvasInteractionService {
 
     zoomAt(details.focalPoint, details.focalPointDelta, scaleDelta, canvasActualSize, ref);
     
-    Logger().d("[input]OnScaleUp, scaleDelta=$scaleDelta");
+    logger.d("OnScaleUp, scaleDelta=$scaleDelta");
   }
 
   void onPointerSignal(dynamic pointerSignal, Size canvasActualSize, WidgetRef ref) {
@@ -157,17 +159,20 @@ class CanvasInteractionService {
 
     zoomAt(pointerSignal.localPosition, Offset.zero, scaleDelta, canvasActualSize, ref);
 
-    Logger().d("OnPointerSignal");
+    logger.d("OnPointerSignal");
   }
 
   void onPointerDown(PointerEvent event) {
     if (event.buttons == kMiddleMouseButton) {
       mouseMovingCanvas = true;
     }
+    logger.d("OnPointerDown, button=${event.buttons}");
   }
 
   void onPointerUp(PointerEvent event) {
     mouseMovingCanvas = false;
+
+    logger.d("OnPointerUp, button=${event.buttons}");
   }
 
 
@@ -177,11 +182,14 @@ class CanvasInteractionService {
     }
 
     var delta = event.localDelta;
-    if (AppConfig.getOrDefault("ui/natural_scrolling", defaultVal: false)) {
+    var naturalScrolling = AppConfig.getOrDefault("ui/natural_scrolling", defaultVal: false);
+    if (naturalScrolling) {
       delta = -delta;
     }
 
     zoomAt(event.localPosition, delta, 1.0, canvasActualSize, ref);
+
+    logger.d("OnPointerMove, position=${event.localPosition}, delta=$delta, naturalScrolling=$naturalScrolling");
   }
 
 }

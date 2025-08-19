@@ -2,10 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 // ignore: unused_import
 import 'package:logger/web.dart';
+import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/app_config.dart';
 
 class TopologyService {
+  static Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_topology_service_logging", false));
+
   final Uri endpoint;
 
   TopologyService({required this.endpoint});
@@ -16,7 +19,7 @@ class TopologyService {
     Duration retryDelayS = Duration(seconds: AppConfig.getOrDefault("api/retry_delay_s", defaultVal: 5));
     Duration timeoutS = Duration(seconds: AppConfig.getOrDefault("api/timeout_s", defaultVal: 20));
 
-    Logger().d("Fetching items..., retries=$retries, retryAfter=$retryDelayS, timeout=$timeoutS");
+    logger.d("Fetching items..., retries=$retries, retryAfter=$retryDelayS, timeout=$timeoutS");
     while (true) {
       try {
         final response = await http
@@ -29,11 +32,11 @@ class TopologyService {
 
         return Topology.fromJson(json.decode(response.body));
       } catch (e) {
-        Logger().e("Failed to connect to endpoint, attempt $attempts, Error=${e.toString()}");
+        logger.e("Failed to connect to endpoint, attempt $attempts, Error=${e.toString()}");
         attempts++;
 
         if (attempts >= retries) { 
-          Logger().w("Returning Future with error for Exception handling!");
+          logger.w("Returning Future with error for Exception handling!");
           return Future.error(e.toString());
         }
 
