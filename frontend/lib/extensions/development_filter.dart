@@ -21,7 +21,7 @@ class ConfigFilter extends DevelopmentFilter{
 
   @override
   bool shouldLog(LogEvent event) {
-
-    return super.shouldLog(event) && configSaysShouldLog;
+    // Always log warning or higher, degardless of whether the config file says if should log
+    return super.shouldLog(event) && (event.level >= Level.warning || configSaysShouldLog);
   }
 }

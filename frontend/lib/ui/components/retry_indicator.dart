@@ -29,6 +29,7 @@ class _RetryIndicatorState extends State<RetryIndicator> {
     if (widget.error == null || widget.isLoading ) {
       return const CircularProgressIndicator();
     } else {
+      Logger().w("[WARN]An error ocurred, with the following message= '${widget.error.toString()}'");
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [

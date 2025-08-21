@@ -21,7 +21,7 @@ class DeviceGroup {
 
     int    id   = json['id'];
     String name = json['name'];
-    bool   isDisplayGroup = json['displayGroup'];
+    bool   isDisplayGroup = json['is-display-group'];
 
     return DeviceGroup(
       id: id, 
