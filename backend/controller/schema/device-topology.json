@@ -39,7 +39,7 @@
       "uniqueItems": true,
       "items": {
         "required": [
-          "name", "members", "id", "displayGroup"
+          "name", "members", "id", "is-display-group"
         ],
         "properties": {
           "name": {
@@ -50,7 +50,7 @@
             "type": "integer",
             "minimum": 0
           },
-          "displayGroup": {
+          "is-display-group": {
             "type": "boolean"
           },
           "members": {

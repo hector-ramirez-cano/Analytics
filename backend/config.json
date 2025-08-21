@@ -12,8 +12,11 @@
       }
     },
     "controller": {
-      "port": 5050
-
+      "port": 5050,
+      "db_hostname": "192.168.100.3",
+      "db_name": "AnalyticsDB",
+      "db_user": "myuser",
+      "db_password": "mypassword"
     }
   },
   "frontend": {

@@ -4,16 +4,16 @@ from logging import Logger
 
 class Config(object):
     __instance = None
-    
+
     config = None
 
     def __new__(cls):
         if cls.__instance is None:
             cls.__instance = super(Config, cls).__new__(cls)
 
-        with open("../config.json") as config_file:
+        with open("config.json", encoding="utf-8") as config_file:
             cls.__instance.config = json.load(config_file)
-            
+
             config_file.close()
 
         return cls.__instance
@@ -37,6 +37,9 @@ class Config(object):
 
         missing = AppConfig.get_config(data, "api/config/details/missing", default="not found") # -> "not found"
         """
+        if Config.__instance is None:
+            config = Config()
+
         keys = path.split(sep)
         current = Config.__instance.config
         try:

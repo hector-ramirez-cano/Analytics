@@ -1,2 +1,6 @@
 .vscode/settings.json
 trusted/*
+backend/controller/__pycache__/*
+backend/__pycache__/*
+backend/model/__pycache__/*
+backend/model/__pycache__/*

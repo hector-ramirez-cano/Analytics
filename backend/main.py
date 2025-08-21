@@ -1,6 +1,7 @@
 import os
 
 import Config
+from backend.model.db import init_db_pool
 from controller import server
 
 
@@ -12,7 +13,7 @@ def main():
     init()
 
     config = Config.Config()
-
+    init_db_pool()
     port = config.config["backend"]["controller"]["port"]
 
     server.app.run(debug=True, port=port)

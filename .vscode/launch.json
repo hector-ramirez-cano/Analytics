@@ -8,7 +8,8 @@
             "name": "network_analytics",
             "cwd": "network_analytics",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "program": "${cwd}/frontend/lib/main.dart"
         },
         {
             "name": "network_analytics (profile mode)",

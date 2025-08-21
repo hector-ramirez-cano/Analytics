@@ -1,11 +1,14 @@
 import asyncio
-from quart import Quart, send_from_directory
+import json
+
+from quart import Quart, send_from_directory, Response
 import os
 
-from backend.model.ansible_fact_gathering import query_facts_from_inventory
+from backend.model.db import get_topology_as_json
 
 static_dir = os.path.join(os.getcwd(), "../frontend/static")
 routes_dir = os.path.join(os.getcwd(), "../frontend")
+schema_dir = os.path.join(os.getcwd(), "../backend/controller/schema")
 print(os.getcwd())
 
 ansible_runner_event = asyncio.Event()
@@ -25,26 +28,22 @@ async def home():
 
 @app.route("/api/topology")
 async def api_get_topology():
-    return await send_from_directory(routes_dir, "test-data.json")
+    topology = await get_topology_as_json()
+    topology = json.dumps(topology)
+    return Response(topology, content_type="application/json")
+    # return await send_from_directory(routes_dir, "test-data.json")
 
-@app.route("/favicon.ico")
-async def get_favicon():
-    return await send_from_directory(routes_dir, "favicon.ico")
 
-
-@app.after_request
-async def disable_cache(response):
-    if app.debug:
-        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
-    return response
+@app.route("/api/schema/<selected>")
+async def api_get_schema(selected: str):
+    return await send_from_directory(schema_dir, selected)
 
 
 
 @app.before_serving
 async def startup():
-    app.add_background_task(query_facts_from_inventory)
+    #app.add_background_task(query_facts_from_inventory)
+    pass
 
 @app.after_serving
 async def shutdown():

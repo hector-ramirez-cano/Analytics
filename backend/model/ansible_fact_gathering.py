@@ -1,11 +1,6 @@
 import ansible_runner
-import backend.Config as Config
 
-async def insert_device_metadata(metrics):
-    """
-    Inserts data that might change infrequently into the Postgres database
-    :return: None
-    """
+import backend.Config as Config
 
 
 async def query_facts_from_inventory():
