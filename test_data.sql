@@ -10,16 +10,18 @@ INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, m
         (2, 'Tlatelolco-lan', 0.7, -0.2, '192.168.100.5'),
         (3, 'Obsidian-lan', -0.3, 0.3, '10.144.1.225');
 
-INSERT INTO Analytics.links (link_id, side_a, side_b)
+INSERT INTO Analytics.links (link_id, side_a, side_b, link_type)
     VALUES 
-        (100, 1, 2),
-        (101, 1, 3),
-        (102, 2, 3);
+        (100, 1, 2, 'copper'),
+        (101, 1, 3, 'copper'),
+        (102, 2, 3, 'wireless');
 
 INSERT INTO Analytics.groups (group_id, group_name, is_display_group) 
     VALUES
         (201, 'Routers', 0<>0),
-        (202, 'Hosts', 0<>0);
+        (202, 'Hosts', 0<>1);
+
+UPDATE Analytics.groups SET is_display_group=0<>1 WHERE group_id = 202;
 
 INSERT INTO Analytics.group_members(group_id, device_id)
     VALUES

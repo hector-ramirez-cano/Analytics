@@ -1,6 +1,7 @@
 CREATE SCHEMA IF NOT EXISTS Analytics;
 
 CREATE TYPE ItemType AS ENUM ('device', 'link', 'group');
+CREATE TYPE LinkType AS ENUM ('optical', 'copper', 'wireless');
 
 CREATE TABLE IF NOT EXISTS Analytics.items (
     id SERIAL PRIMARY KEY,
@@ -17,9 +18,11 @@ CREATE TABLE IF NOT EXISTS Analytics.devices (
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.links (
-    link_id INT PRIMARY KEY,
-    side_a  INT NOT NULL,
-    side_b  INT NOT NULL,
+    link_id   INT PRIMARY KEY,
+    side_a    INT NOT NULL,
+    side_b    INT NOT NULL,
+    link_type LinkType NOT NULL,
+    link_subtype VARCHAR(254),
 
     FOREIGN KEY (link_id) REFERENCES Analytics.items(id) ON DELETE CASCADE,
     FOREIGN KEY (side_a) REFERENCES Analytics.devices(device_id),
