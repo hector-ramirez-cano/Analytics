@@ -1,12 +1,12 @@
 import asyncio
-
 from quart import Quart, send_from_directory
 import os
 
-from src.backend.model.ansible_fact_gathering import query_facts_from_inventory
+from backend.model.ansible_fact_gathering import query_facts_from_inventory
 
-static_dir = os.path.join(os.getcwd(), "frontend/static")
-routes_dir = os.path.join(os.getcwd(), "frontend")
+static_dir = os.path.join(os.getcwd(), "../frontend/static")
+routes_dir = os.path.join(os.getcwd(), "../frontend")
+print(os.getcwd())
 
 ansible_runner_event = asyncio.Event()
 app = Quart(__name__, static_folder=static_dir)

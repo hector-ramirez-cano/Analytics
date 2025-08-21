@@ -1,6 +1,5 @@
 import ansible_runner
-
-import src.Config
+import backend.Config as Config
 
 async def insert_device_metadata(metrics):
     """
@@ -12,7 +11,7 @@ async def insert_device_metadata(metrics):
 async def query_facts_from_inventory():
 
     print("[INFO]Gathering facts")
-    config    = src.Config.Config()
+    config    = Config.Config()
     playbook  = config.get_or_default("backend/model/playbooks/fact_gathering")
     private   = config.get_or_default("backend/model/private_data_dir")
     inventory = config.get_or_default("backend/model/inventory")

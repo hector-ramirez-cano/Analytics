@@ -1,0 +1,22 @@
+{
+  "security": {
+    "vault_pass": "../trusted/.vault_pass.txt",
+    "vault": "../trusted/.vault.yml"
+  },
+  "backend": {
+    "model": {
+      "private_data_dir": "../trusted",
+      "inventory": "../ansible/hosts.ini",
+      "playbooks": {
+        "fact_gathering": "../ansible/playbooks/fact_gathering.yml"
+      }
+    },
+    "controller": {
+      "port": 5050
+
+    }
+  },
+  "frontend": {
+
+  }
+}
