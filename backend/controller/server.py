@@ -15,17 +15,10 @@ print(os.getcwd())
 ansible_runner_event = asyncio.Event()
 app = Quart(__name__, static_folder=static_dir)
 
-@app.route("/")
-async def home():
-    response = await send_from_directory(routes_dir, "test.html")
-    if app.debug:
-        response.headers.pop('ETag', None)
-        response.headers.pop('Last-Modified', None)
-        response.headers['Cache-Control'] = 'no-store'
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
-
-    return response
+@app.route("/heartbeat")
+async def heartbeat():
+    print("[DEBUG]Heartbeat!")
+    return "Bip bop"
 
 @app.route("/api/topology")
 async def api_get_topology():

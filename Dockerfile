@@ -21,7 +21,7 @@ COPY ansible/hosts.ini ./ansible/hosts.ini
 # Expose port, should be the same as in backend/config.json
 EXPOSE 5050
 
-ENV PYTHONUNBUFFERED=1 PYTHONPATH=/analytics ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_REMOTE_USER="zaph"
+ENV PYTHONUNBUFFERED=1 PYTHONPATH=/analytics ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_REMOTE_USER="zaph" DEBUG=0
 
 # Run application
 CMD ["python", "backend/main.py"]
