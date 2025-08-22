@@ -2,7 +2,7 @@ import os
 
 import Config
 from backend.model.db import init_db_pool
-from controller import server
+from backend.controller import server
 
 
 def init():
@@ -16,7 +16,7 @@ def main():
     init_db_pool()
     port = config.config["backend"]["controller"]["port"]
 
-    server.app.run(debug=True, port=port)
+    server.app.run(debug=True, port=port, host="0.0.0.0")
 
 
 if __name__ == "__main__":

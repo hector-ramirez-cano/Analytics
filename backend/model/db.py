@@ -25,7 +25,7 @@ def init_db_pool():
     db_pool = ConnectionPool(conninfo=conn_uri)
 
 
-def parse_devices(cur: ServerCursor):
+def __parse_devices(cur: ServerCursor):
     """
     Parses the output of a database call, into a dictionary of devices in dictionary form, with the device_id as the key
 
@@ -58,7 +58,7 @@ def parse_devices(cur: ServerCursor):
             devices[device_id].requested_metadata = ast.literal_eval(row[5])
 
 
-def parse_link(cur: ServerCursor) -> list:
+def __parse_link(cur: ServerCursor) -> list:
     """
     Parses the output of a database call, into a list of links in dictionary form
     :return: list of links
@@ -80,7 +80,7 @@ def parse_link(cur: ServerCursor) -> list:
     return links
 
 
-def parse_groups(cur: ServerCursor) -> list:
+def __parse_groups(cur: ServerCursor) -> list:
     """
     Parses the output of a database call, into a list of device groups in dictionary form
     :return: list of groups
@@ -120,25 +120,6 @@ def parse_groups(cur: ServerCursor) -> list:
     return group_list
 
 
-async def get_topology_as_json():
-    """
-    Acquires topology from database, and converts it into json
-    """
-    global devices
-
-    with db_pool.connection() as conn:
-        with conn.cursor() as cur:
-            parse_devices(cur)
-            links = parse_link(cur)
-            groups = parse_groups(cur)
-
-            return {
-                "devices": [devices[device_id].to_dict() for device_id in devices],
-                "links": links,
-                "groups": groups
-            }
-
-
 async def __extract_device_metadata(metrics):
     """
     Extracts from the returned ansible-metrics the fields requested for each device, and modifies the device metadata
@@ -155,6 +136,25 @@ async def __extract_device_metadata(metrics):
         for field in device.requested_metadata:
             value = metrics[hostname].get(field)
             device.metadata[field] = value
+
+
+async def get_topology_as_json():
+    """
+    Acquires topology from database, and converts it into json
+    """
+    global devices
+
+    with db_pool.connection() as conn:
+        with conn.cursor() as cur:
+            __parse_devices(cur)
+            links = __parse_link(cur)
+            groups = __parse_groups(cur)
+
+            return {
+                "devices": [devices[device_id].to_dict() for device_id in devices],
+                "links": links,
+                "groups": groups
+            }
 
 
 async def update_device_metadata(metrics, stats):

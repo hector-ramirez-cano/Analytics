@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  db:
+  postgres_db:
     image: postgres:13.22-trixie
     container_name: postgres_db
     restart: always
@@ -15,6 +15,14 @@ services:
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
       - ./initdb:/docker-entrypoint-initdb.d
+
+  influx_db:
+    image: influxdb:2.7
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./influxdb2:/var/lib/influxdb2
 
 volumes:
   postgres_data:

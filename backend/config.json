@@ -1,14 +1,14 @@
 {
   "security": {
-    "vault_pass": "../trusted/.vault_pass.txt",
-    "vault": "../trusted/.vault.yml"
+    "vault_pass": "ansible/.vault_pass.txt",
+    "vault": "ansible/.vault.yml"
   },
   "backend": {
     "model": {
-      "private_data_dir": "../trusted",
-      "inventory": "../ansible/hosts.ini",
+      "private_data_dir": "ansible",
+      "inventory": "ansible/hosts.ini",
       "playbooks": {
-        "fact_gathering": "../ansible/playbooks/fact_gathering.yml"
+        "fact_gathering": "playbooks/fact_gathering.yml"
       }
     },
     "controller": {

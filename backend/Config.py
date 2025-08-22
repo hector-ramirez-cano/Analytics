@@ -11,7 +11,7 @@ class Config(object):
         if cls.__instance is None:
             cls.__instance = super(Config, cls).__new__(cls)
 
-        with open("config.json", encoding="utf-8") as config_file:
+        with open("backend/config.json", encoding="utf-8") as config_file:
             cls.__instance.config = json.load(config_file)
 
             config_file.close()
