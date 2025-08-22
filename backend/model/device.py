@@ -13,10 +13,10 @@ class Device:
 
 
     @staticmethod
-    def find_by_management_hostname(devices: list, management_hostname :str) -> Optional["Device"]:
-        for device in devices:
-            if device.management_hostname == management_hostname:
-                return device
+    def find_by_management_hostname(devices: dict, management_hostname :str) -> Optional["Device"]:
+        for device_id in devices:
+            if devices[device_id].management_hostname == management_hostname:
+                return devices[device_id]
 
         return None
 

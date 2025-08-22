@@ -8,8 +8,9 @@ from psycopg_pool import ConnectionPool
 import backend.Config as Config
 from backend.model.device import Device
 
-db_pool : Optional[ConnectionPool] = None
-devices = []
+db_pool: Optional[ConnectionPool] = None
+devices = {}
+
 
 def init_db_pool():
     global db_pool
@@ -22,27 +23,39 @@ def init_db_pool():
     conn_uri = "postgresql://" + user + ":" + password + "@" + host + "/" + dbname
     db_pool = ConnectionPool(conninfo=conn_uri)
 
-def parse_devices(cur: ServerCursor) -> list :
+
+def parse_devices(cur: ServerCursor):
     """
-    Parses the output of a database call, into a list of devices in dictionary form
-    :return: list of devices
+    Parses the output of a database call, into a dictionary of devices in dictionary form, with the device_id as the key
+
+    If the device already exists, the data gets updated
+
+    :return: None
     """
-    extracted_devices = []
-    cur.execute("SELECT (device_id, device_name, position_x, position_y, management_hostname, requested_metadata) FROM Analytics.devices")
+    global devices
+    cur.execute(
+        "SELECT (device_id, device_name, position_x, position_y, management_hostname, requested_metadata) FROM Analytics.devices")
     for row in cur.fetchall():
         row = row[0]
-        extracted_devices.append(
-            Device(
-                device_id  = int(row[0]),
-                device_name= row[1],
-                position_x = float(row[2]),
-                position_y = float(row[3]),
-                management_hostname=row[4],
-                requested_metadata =ast.literal_eval(row[5]),
-            )
-        )
+        device_id = int(row[0])
 
-    return extracted_devices
+        if devices.get(device_id) is None:
+            devices[device_id] = Device(
+                device_id=int(row[0]),
+                device_name=row[1],
+                position_x=float(row[2]),
+                position_y=float(row[3]),
+                management_hostname=row[4],
+                requested_metadata=ast.literal_eval(row[5]),
+            )
+
+        else:
+            devices[device_id].device_name = row[1]
+            devices[device_id].position_x = float(row[2])
+            devices[device_id].position_y = float(row[3])
+            devices[device_id].management_hostname = row[4]
+            devices[device_id].requested_metadata = ast.literal_eval(row[5])
+
 
 def parse_link(cur: ServerCursor) -> list:
     """
@@ -65,6 +78,7 @@ def parse_link(cur: ServerCursor) -> list:
 
     return links
 
+
 def parse_groups(cur: ServerCursor) -> list:
     """
     Parses the output of a database call, into a list of device groups in dictionary form
@@ -78,7 +92,7 @@ def parse_groups(cur: ServerCursor) -> list:
         groups[gid] = {
             "id": gid,
             "name": row[1],
-            "is-display-group": row[2]=='t'
+            "is-display-group": row[2] == 't'
         }
 
     group_members = {}
@@ -104,6 +118,7 @@ def parse_groups(cur: ServerCursor) -> list:
 
     return group_list
 
+
 async def get_topology_as_json():
     """
     Acquires topology from database, and converts it into json
@@ -112,16 +127,16 @@ async def get_topology_as_json():
 
     with db_pool.connection() as conn:
         with conn.cursor() as cur:
-
-            devices = parse_devices(cur)
-            links   = parse_link(cur)
-            groups  = parse_groups(cur)
+            parse_devices(cur)
+            links = parse_link(cur)
+            groups = parse_groups(cur)
 
             return {
-                "devices": [device.to_dict() for device in devices],
+                "devices": [devices[device_id].to_dict() for device_id in devices],
                 "links": links,
                 "groups": groups
             }
+
 
 async def __extract_device_metadata(metrics):
     """
