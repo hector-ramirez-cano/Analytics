@@ -1,10 +1,15 @@
+import ast
+import json
+from typing import Optional
+
 from psycopg import ServerCursor
 from psycopg_pool import ConnectionPool
 
 import backend.Config as Config
+from backend.model.device import Device
 
-
-db_pool = None
+db_pool : Optional[ConnectionPool] = None
+devices = []
 
 def init_db_pool():
     global db_pool
@@ -22,18 +27,22 @@ def parse_devices(cur: ServerCursor) -> list :
     Parses the output of a database call, into a list of devices in dictionary form
     :return: list of devices
     """
-    devices = []
-    cur.execute("SELECT (device_id, device_name, position_x, position_y) FROM Analytics.devices")
+    extracted_devices = []
+    cur.execute("SELECT (device_id, device_name, position_x, position_y, management_hostname, requested_metadata) FROM Analytics.devices")
     for row in cur.fetchall():
         row = row[0]
-        devices.append({
-            "id": int(row[0]),
-            "name": row[1],
-            "coordinates": [ float(row[2]), float(row[3]) ]
-        })
+        extracted_devices.append(
+            Device(
+                device_id  = int(row[0]),
+                device_name= row[1],
+                position_x = float(row[2]),
+                position_y = float(row[3]),
+                management_hostname=row[4],
+                requested_metadata =ast.literal_eval(row[5]),
+            )
+        )
 
-    return devices
-
+    return extracted_devices
 
 def parse_link(cur: ServerCursor) -> list:
     """
@@ -55,7 +64,6 @@ def parse_link(cur: ServerCursor) -> list:
         links.append(link)
 
     return links
-
 
 def parse_groups(cur: ServerCursor) -> list:
     """
@@ -100,17 +108,60 @@ async def get_topology_as_json():
     """
     Acquires topology from database, and converts it into json
     """
+    global devices
 
     with db_pool.connection() as conn:
         with conn.cursor() as cur:
+
             devices = parse_devices(cur)
             links   = parse_link(cur)
             groups  = parse_groups(cur)
 
-            return {"devices": devices, "links": links, "groups": groups }
+            return {
+                "devices": [device.to_dict() for device in devices],
+                "links": links,
+                "groups": groups
+            }
 
-async def insert_device_metadata(metrics):
+async def __extract_device_metadata(metrics):
+    """
+    Extracts from the returned ansible-metrics the fields requested for each device, and modifies the device metadata
+    """
+    if len(devices) == 0:
+        await get_topology_as_json()
+
+    for hostname in metrics:
+        device = Device.find_by_management_hostname(devices, hostname)
+
+        if device is None:
+            continue
+
+        for field in device.requested_metadata:
+            value = metrics[hostname].get(field)
+            device.metadata[field] = value
+
+
+async def update_device_metadata(metrics):
     """
     Inserts data that might change infrequently into the Postgres database
     :return: None
     """
+    await __extract_device_metadata(metrics)
+    with db_pool.connection() as conn, conn.cursor() as cur:
+
+        for hostname in metrics:
+            device = Device.find_by_management_hostname(devices, hostname)
+
+            if device is None:
+                continue
+
+            cur.execute(
+                """
+                    UPDATE Analytics.devices SET metadata = %s WHERE device_id = %s
+                """,
+                (json.dumps(device.metadata), device.device_id)
+            )
+
+    conn.commit()
+
+    print("[INFO]Updated device metadata")

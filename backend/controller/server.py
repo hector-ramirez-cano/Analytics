@@ -4,6 +4,7 @@ import json
 from quart import Quart, send_from_directory, Response
 import os
 
+from backend.model.ansible_fact_gathering import query_facts_from_inventory
 from backend.model.db import get_topology_as_json
 
 static_dir = os.path.join(os.getcwd(), "../frontend/static")
@@ -42,8 +43,7 @@ async def api_get_schema(selected: str):
 
 @app.before_serving
 async def startup():
-    #app.add_background_task(query_facts_from_inventory)
-    pass
+    app.add_background_task(query_facts_from_inventory)
 
 @app.after_serving
 async def shutdown():

@@ -9,11 +9,13 @@ CREATE TABLE IF NOT EXISTS Analytics.items (
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.devices (
-    device_id   INT PRIMARY KEY,
-    device_name VARCHAR(254),
-    position_x  FLOAT NOT NULL,
-    position_y  FLOAT NOT NULL,
-    management_hostname varchar(254) NOT NULL,
+    device_id           INT PRIMARY KEY,
+    device_name         VARCHAR(254),
+    position_x          FLOAT        NOT NULL,
+    position_y          FLOAT        NOT NULL,
+    management_hostname VARCHAR(254) NOT NULL,
+    requested_metadata  JSONB        NOT NULL,
+    metadata            JSONB,
     FOREIGN KEY (device_id) REFERENCES Analytics.items(id) ON DELETE CASCADE
 );
 

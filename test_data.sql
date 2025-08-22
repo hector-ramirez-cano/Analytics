@@ -4,11 +4,16 @@ SELECT * FROM Analytics.links;
 SELECT * FROM Analytics.groups;
 SELECT * FROM Analytics.group_members;
 
-INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, management_hostname) 
+
+
+INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, management_hostname, requested_metadata) 
     VALUES 
-        (1, 'Xochimilco-lan', 0.5, 0.5 , '192.168.100.3'),
-        (2, 'Tlatelolco-lan', 0.7, -0.2, '192.168.100.5'),
-        (3, 'Obsidian-lan', -0.3, 0.3, '10.144.1.225');
+        (1, 'Xochimilco-lan', 0.5, 0.5 , '192.168.100.3', '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'),
+        (2, 'Tlatelolco-lan', 0.7, -0.2, '192.168.100.5', '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'),
+        (3, 'Obsidian-lan', -0.3, 0.3, '10.144.1.225'   , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]');
+
+UPDATE Analytics.devices SET requested_metadata = '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'; 
+UPDATE Analytics.devices SET metadata = NULL;
 
 INSERT INTO Analytics.links (link_id, side_a, side_b, link_type)
     VALUES 
