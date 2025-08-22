@@ -7,6 +7,7 @@ from psycopg_pool import ConnectionPool
 
 import backend.Config as Config
 from backend.model.device import Device
+from backend.model.device_state import DeviceState, DeviceStatus
 
 db_pool: Optional[ConnectionPool] = None
 devices = {}
@@ -156,14 +157,24 @@ async def __extract_device_metadata(metrics):
             device.metadata[field] = value
 
 
-async def update_device_metadata(metrics):
+async def update_device_metadata(metrics, stats):
     """
-    Inserts data that might change infrequently into the Postgres database
+    Inserts data that might change infrequently into the Postgres database, and updates local cache of devices
     :return: None
     """
     await __extract_device_metadata(metrics)
-    with db_pool.connection() as conn, conn.cursor() as cur:
 
+    # set state
+    for device_hostname in stats:
+        device = Device.find_by_management_hostname(devices, device_hostname)
+
+        if device is None:
+            continue
+
+        device.state = stats[device_hostname]
+
+    # Extract metrics
+    with db_pool.connection() as conn, conn.cursor() as cur:
         for hostname in metrics:
             device = Device.find_by_management_hostname(devices, hostname)
 

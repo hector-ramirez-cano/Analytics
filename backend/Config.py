@@ -38,7 +38,7 @@ class Config(object):
         missing = AppConfig.get_config(data, "api/config/details/missing", default="not found") # -> "not found"
         """
         if Config.__instance is None:
-            config = Config()
+            Config()
 
         keys = path.split(sep)
         current = Config.__instance.config

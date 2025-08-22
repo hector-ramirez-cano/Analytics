@@ -8,9 +8,12 @@
             <SchemaInfo>
               <option name="generatedName" value="New Schema" />
               <option name="name" value="device-topology" />
-              <option name="relativePathToSchema" value="src/backend/controller/schema/device-topology.json" />
+              <option name="relativePathToSchema" value="backend/controller/schema/device-topology.json" />
               <option name="patterns">
                 <list>
+                  <Item>
+                    <option name="path" value="frontend/test-data.json" />
+                  </Item>
                   <Item>
                     <option name="path" value="src/backend/controller/test-data.json" />
                   </Item>

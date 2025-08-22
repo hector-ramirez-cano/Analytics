@@ -1,6 +1,9 @@
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
 
+from backend.model.device_state import DeviceStatus
+
+
 @dataclass
 class Device:
     device_id: int
@@ -9,6 +12,7 @@ class Device:
     position_y: float
     management_hostname: str
     requested_metadata: list
+    state: DeviceStatus = field(default_factory=DeviceStatus)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -26,6 +30,7 @@ class Device:
             "name": self.device_name,
             "coordinates": [self.position_x, self.position_y],
             "management-hostname": self.management_hostname,
+            "status": self.state.to_json_str(),
             "metadata": self.metadata,
         }
 
