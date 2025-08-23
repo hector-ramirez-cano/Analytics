@@ -18,7 +18,7 @@ services:
 
   influx_db:
     image: influxdb:2.7
-    container_name: influxdb
+    container_name: influx_db
     ports:
       - "8086:8086"
     volumes:

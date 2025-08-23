@@ -1,0 +1,8 @@
+ansible/artifacts
+**/__pycache__/
+*.pyc
+
+# Identity files
+ansible/.vault_pass.txt
+ansible/.vault.yml
+identity

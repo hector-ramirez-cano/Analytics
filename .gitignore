@@ -1,13 +1,2 @@
-.vscode/settings.json
-ansible/artifacts
-backend/controller/__pycache__/*
-backend/__pycache__/*
-backend/model/__pycache__/*
-*.pyc
-backend/__pycache__/*
-
-
-# Identity files
-ansible/.vault_pass.txt
-ansible/.vault.yml
-ansible/identity
+.vscode/*
+.idea/*

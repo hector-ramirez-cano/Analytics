@@ -5,8 +5,8 @@
   },
   "backend": {
     "model": {
-      "private_data_dir": "ansible",
-      "inventory": "ansible/hosts.ini",
+      "private_data_dir": "backend/ansible",
+      "inventory": "backend/ansible/hosts.ini",
       "playbooks": {
         "fact_gathering": "playbooks/fact_gathering.yml"
       }
