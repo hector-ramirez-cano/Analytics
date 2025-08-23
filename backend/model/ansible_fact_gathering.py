@@ -8,7 +8,7 @@ from backend.model.device_state import DeviceStatus, DeviceState
 
 
 async def query_facts_from_inventory():
-    print("[INFO]Gathering facts")
+    print("[INFO ]Gathering facts")
     config    = Config.Config()
     playbook  = config.get_or_default("backend/model/playbooks/fact_gathering")
     private   = config.get_or_default("backend/model/private_data_dir")

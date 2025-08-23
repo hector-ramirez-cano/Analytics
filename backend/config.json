@@ -13,13 +13,17 @@
     },
     "controller": {
       "port": 5050,
-      "db_hostname": "192.168.100.3",
-      "db_name": "AnalyticsDB",
-      "db_user": "myuser",
-      "db_password": "mypassword"
+      "postgres": {
+        "port": 5432,
+        "hostname": "192.168.100.3",
+        "name": "AnalyticsDB",
+        "$ref": "backend/identity/postgres_db.json"
+      },
+      "influx": {
+        "port": 8086,
+        "hostname": "192.168.100.3",
+        "$ref": "backend/identity/influx_db.json"
+      }
     }
-  },
-  "frontend": {
-
   }
 }

@@ -7,7 +7,6 @@ from psycopg_pool import ConnectionPool
 
 import backend.Config as Config
 from backend.model.device import Device
-from backend.model.device_state import DeviceState, DeviceStatus
 
 db_pool: Optional[ConnectionPool] = None
 devices = {}
@@ -17,12 +16,13 @@ def init_db_pool():
     global db_pool
 
     # TODO: Remove access to password
-    host = Config.Config.get_or_default("backend/controller/db_hostname")
-    dbname = Config.Config.get_or_default("backend/controller/db_name")
-    user = Config.Config.get_or_default("backend/controller/db_user")
-    password = Config.Config.get_or_default("backend/controller/db_password")
-    conn_uri = "postgresql://" + user + ":" + password + "@" + host + "/" + dbname
-    db_pool = ConnectionPool(conninfo=conn_uri)
+    port     = Config.Config.get_or_default("backend/controller/postgres/port", 5432)
+    host     = Config.Config.get_or_default("backend/controller/postgres/hostname")
+    dbname   = Config.Config.get_or_default("backend/controller/postgres/name")
+    user     = Config.Config.get_or_default("backend/controller/postgres/user")
+    password = Config.Config.get_or_default("backend/controller/postgres/password")
+    conn_uri = "postgresql://" + user + ":" + password + "@" + host + ":" + str(port) + "/" + dbname
+    db_pool  = ConnectionPool(conninfo=conn_uri)
 
 
 def __parse_devices(cur: ServerCursor):
@@ -190,4 +190,4 @@ async def update_device_metadata(metrics, stats):
 
     conn.commit()
 
-    print("[INFO]Updated device metadata")
+    print("[INFO ]Updated device metadata")

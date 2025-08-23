@@ -7,14 +7,14 @@ from backend.controller import server
 
 def init():
     # TODO: Replace with Logger
-    print("[INFO]CWD=", os.getcwd())
+    print("[INFO ]CWD=", os.getcwd())
 
 def main():
     init()
 
     config = Config.Config()
     init_db_pool()
-    port = config.config["backend"]["controller"]["port"]
+    port = config.get_or_default("backend/controller/port", 5050)
 
     is_debug =os.environ.get("DEBUG") == "1"
     print("[DEBUG]is_debug=",is_debug)
