@@ -18,7 +18,13 @@ async def query_facts_from_inventory():
     with open(inventory) as inventory_file:
         inventory = inventory_file.read()
 
-    runner = ansible_runner.run(private_data_dir=private, playbook=playbook, inventory=inventory, quiet=True)
+    runner = ansible_runner.run(
+        private_data_dir= private,
+        playbook        = playbook,
+        inventory       = inventory,
+        artifact_dir    = None,
+        quiet           = True
+    )
 
     metrics = {}
     stats = {}
