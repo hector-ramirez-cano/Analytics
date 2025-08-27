@@ -12,9 +12,9 @@ def init():
 def main():
     init()
 
-    config = Config.Config()
+    config = Config.config
     init_db_pool()
-    port = config.get_or_default("backend/controller/port", 5050)
+    port = config.get_or_default("backend/controller/api/port", 5050)
 
     is_debug =os.environ.get("DEBUG") == "1"
     print("[DEBUG]is_debug=",is_debug)

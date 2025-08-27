@@ -2,18 +2,23 @@ import ast
 import json
 from typing import Optional
 
+from influxdb_client import InfluxDBClient, Point, WriteApi
+from influxdb_client.client.write_api import SYNCHRONOUS
+
 from psycopg import ServerCursor
 from psycopg_pool import ConnectionPool
 
 import backend.Config as Config
 from backend.model.device import Device
+from backend.model.cache import cache
 
-db_pool: Optional[ConnectionPool] = None
-devices = {}
+postgres_db_pool: Optional[ConnectionPool] = None
+influx_db_client: Optional[InfluxDBClient] = None
+influx_db_write_api : Optional[WriteApi]   = None
 
 
 def init_db_pool():
-    global db_pool
+    global postgres_db_pool, influx_db_client, influx_db_write_api
 
     # TODO: Remove access to password
     port     = Config.Config.get_or_default("backend/controller/postgres/port", 5432)
@@ -21,8 +26,20 @@ def init_db_pool():
     dbname   = Config.Config.get_or_default("backend/controller/postgres/name")
     user     = Config.Config.get_or_default("backend/controller/postgres/user")
     password = Config.Config.get_or_default("backend/controller/postgres/password")
-    conn_uri = "postgresql://" + user + ":" + password + "@" + host + ":" + str(port) + "/" + dbname
-    db_pool  = ConnectionPool(conninfo=conn_uri)
+    schema   = Config.Config.get_or_default("backend/controller/postgres/schema", "postgresql://")
+    conn_uri = schema + user + ":" + password + "@" + host + ":" + str(port) + "/" + dbname
+    postgres_db_pool  = ConnectionPool(conninfo=conn_uri)
+    print("[INFO ]Acquired DB pool for Postgresql at='"+schema+host+":"+str(port)+"'")
+
+    port     = Config.Config.get_or_default("backend/controller/influx/port", 8086)
+    host     = Config.Config.get_or_default("backend/controller/influx/hostname")
+    org      = Config.Config.get_or_default("backend/controller/influx/org")
+    schema   = Config.Config.get_or_default("backend/controller/influx/schema", "http://")
+    token    = Config.Config.get_or_default("backend/controller/influx/token")
+    conn_uri = schema + host + ":" + str(port)
+    influx_db_client = InfluxDBClient(url=conn_uri, token=token, org=org)
+    influx_db_write_api = influx_db_client.write_api(write_options=SYNCHRONOUS)
+    print("[INFO ]Acquired DB client for InfluxDB at='" + schema + host + ":" + str(port) + "'")
 
 
 def __parse_devices(cur: ServerCursor):
@@ -33,7 +50,7 @@ def __parse_devices(cur: ServerCursor):
 
     :return: None
     """
-    global devices
+    devices = cache.devices
     cur.execute(
         "SELECT (device_id, device_name, position_x, position_y, management_hostname, requested_metadata) FROM Analytics.devices")
     for row in cur.fetchall():
@@ -58,7 +75,7 @@ def __parse_devices(cur: ServerCursor):
             devices[device_id].requested_metadata = ast.literal_eval(row[5])
 
 
-def __parse_link(cur: ServerCursor) -> list:
+def __parse_link(cur: ServerCursor):
     """
     Parses the output of a database call, into a list of links in dictionary form
     :return: list of links
@@ -76,11 +93,10 @@ def __parse_link(cur: ServerCursor) -> list:
         if row[4] is not None:
             link["link-subtype"] = row[4]
         links.append(link)
+    cache.links = links
 
-    return links
 
-
-def __parse_groups(cur: ServerCursor) -> list:
+def __parse_groups(cur: ServerCursor):
     """
     Parses the output of a database call, into a list of device groups in dictionary form
     :return: list of groups
@@ -117,13 +133,14 @@ def __parse_groups(cur: ServerCursor) -> list:
 
         group_list.append(groups[group])
 
-    return group_list
+    cache.groups = group_list
 
 
 async def __extract_device_metadata(metrics):
     """
     Extracts from the returned ansible-metrics the fields requested for each device, and modifies the device metadata
     """
+    devices = cache.devices
     if len(devices) == 0:
         await get_topology_as_json()
 
@@ -138,23 +155,33 @@ async def __extract_device_metadata(metrics):
             device.metadata[field] = value
 
 
+async def update_topology_cache():
+    if not cache.should_update:
+        return
+
+    print("[INFO ]Updating topology cache")
+
+    with postgres_db_pool.connection() as conn:
+        with conn.cursor() as cur:
+            __parse_devices(cur)
+            __parse_link(cur)
+            __parse_groups(cur)
+
+
 async def get_topology_as_json():
     """
     Acquires topology from database, and converts it into json
     """
-    global devices
+    [devices, links, groups] = cache.topology
 
-    with db_pool.connection() as conn:
-        with conn.cursor() as cur:
-            __parse_devices(cur)
-            links = __parse_link(cur)
-            groups = __parse_groups(cur)
+    await update_topology_cache()
 
-            return {
-                "devices": [devices[device_id].to_dict() for device_id in devices],
-                "links": links,
-                "groups": groups
-            }
+
+    return {
+        "devices": [devices[device_id].to_dict() for device_id in devices],
+        "links": links,
+        "groups": groups
+    }
 
 
 async def update_device_metadata(metrics, stats):
@@ -163,6 +190,7 @@ async def update_device_metadata(metrics, stats):
     :return: None
     """
     await __extract_device_metadata(metrics)
+    devices = cache.devices
 
     # set state
     for device_hostname in stats:
@@ -174,7 +202,8 @@ async def update_device_metadata(metrics, stats):
         device.state = stats[device_hostname]
 
     # Extract metrics
-    with db_pool.connection() as conn, conn.cursor() as cur:
+    with postgres_db_pool.connection() as conn, conn.cursor() as cur:
+        # Metrics will contain only devices for which connection was successful
         for hostname in metrics:
             device = Device.find_by_management_hostname(devices, hostname)
 
@@ -191,3 +220,26 @@ async def update_device_metadata(metrics, stats):
     conn.commit()
 
     print("[INFO ]Updated device metadata")
+
+
+async def update_device_analytics(metrics):
+    """
+    Inserts datapoints into influxdb bucket
+    """
+    bucket = Config.Config.get_or_default("backend/controller/influx/bucket")
+    devices = cache.devices
+
+    # Metrics will contain only devices for which connection was successful
+    for hostname in metrics:
+        device = Device.find_by_management_hostname(devices, hostname)
+
+        if device is None:
+            continue
+
+        point = (
+            Point("avg_latency")
+            .tag("rtt-latency", hostname)
+            .field("rtt-latency", float(metrics[hostname]["avg_latency"][0]))
+        )
+
+        influx_db_write_api.write(bucket=bucket, org="C5i", record=point)

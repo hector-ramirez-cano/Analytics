@@ -6,22 +6,30 @@
   "backend": {
     "model": {
       "private_data_dir": "backend/ansible",
-      "inventory": "backend/ansible/hosts.ini",
       "playbooks": {
         "fact_gathering": "playbooks/fact_gathering.yml"
       }
     },
     "controller": {
-      "port": 5050,
+      "cache": {
+        "cache_invalidation_s": 60
+      },
+      "api": {
+        "port": 5050
+      },
       "postgres": {
         "port": 5432,
-        "hostname": "192.168.100.3",
+        "hostname": "10.144.1.222",
         "name": "AnalyticsDB",
+        "schema": "postgresql://",
         "$ref": "backend/identity/postgres_db.json"
       },
       "influx": {
         "port": 8086,
-        "hostname": "192.168.100.3",
+        "hostname": "10.144.1.222",
+        "org": "C5i",
+        "schema": "http://",
+        "bucket": "Analytics",
         "$ref": "backend/identity/influx_db.json"
       }
     }

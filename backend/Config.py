@@ -90,3 +90,5 @@ class Config(object):
         except (KeyError, TypeError):
             Logger(name="Config").error(msg="Using undefined config value '"+path+"', returning default value," + str(default))
             return default
+
+config = Config()

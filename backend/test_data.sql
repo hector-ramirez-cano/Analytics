@@ -13,6 +13,8 @@ INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, m
         (3, 'Obsidian-lan', -0.3, 0.3, '10.144.1.225'   , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]');
 
 UPDATE Analytics.devices SET requested_metadata = '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'; 
+UPDATE Analytics.devices SET management_hostname = '10.144.1.222' where device_id = 1;
+UPDATE Analytics.devices SET management_hostname = '10.144.1.1' where device_id = 2;
 UPDATE Analytics.devices SET metadata = NULL;
 
 INSERT INTO Analytics.links (link_id, side_a, side_b, link_type)
