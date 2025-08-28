@@ -9,6 +9,7 @@ def init():
     # TODO: Replace with Logger
     print("[INFO ]CWD=", os.getcwd())
 
+
 def main():
     init()
 

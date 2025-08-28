@@ -29,7 +29,7 @@
         "hostname": "10.144.1.222",
         "org": "C5i",
         "schema": "http://",
-        "bucket": "Analytics",
+        "bucket": "analytics",
         "$ref": "backend/identity/influx_db.json"
       }
     }

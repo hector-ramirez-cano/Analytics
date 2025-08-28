@@ -6,15 +6,16 @@ SELECT * FROM Analytics.group_members;
 
 
 
-INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, management_hostname, requested_metadata) 
+INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata) 
     VALUES 
-        (1, 'Xochimilco-lan', 0.5, 0.5 , '192.168.100.3', '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'),
-        (2, 'Tlatelolco-lan', 0.7, -0.2, '192.168.100.5', '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'),
-        (3, 'Obsidian-lan', -0.3, 0.3, '10.144.1.225'   , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]');
+        (1, 'Xochimilco-lan',  0.5,  0.5, 21.159425, -101.645852, '192.168.100.3', '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'),
+        (2, 'Tlatelolco-lan',  0.7, -0.2, 21.159425, -101.645852, '192.168.100.5', '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'),
+        (3, 'Obsidian-lan'  , -0.3 , 0.3, 21.159425, -101.645852, '10.144.1.225'   , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]');
 
 UPDATE Analytics.devices SET requested_metadata = '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'; 
 UPDATE Analytics.devices SET management_hostname = '10.144.1.222' where device_id = 1;
 UPDATE Analytics.devices SET management_hostname = '10.144.1.1' where device_id = 2;
+UPDATE Analytics.devices SET management_hostname = '10.144.1.1' where device_id = 3;
 UPDATE Analytics.devices SET metadata = NULL;
 
 INSERT INTO Analytics.links (link_id, side_a, side_b, link_type)

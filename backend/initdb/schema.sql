@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS Analytics.devices (
     device_name         VARCHAR(254),
     position_x          FLOAT        NOT NULL,
     position_y          FLOAT        NOT NULL,
+    latitude            FLOAT        NOT NULL,
+    longitude           FLOAT        NOT NULL,
     management_hostname VARCHAR(254) NOT NULL,
     requested_metadata  JSONB        NOT NULL,
     metadata            JSONB,
