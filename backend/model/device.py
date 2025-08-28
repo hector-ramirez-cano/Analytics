@@ -10,6 +10,8 @@ class Device:
     device_name: Optional[str]
     position_x: float
     position_y: float
+    latitude: float
+    longitude: float
     management_hostname: str
     requested_metadata: list
     state: DeviceStatus = field(default_factory=DeviceStatus)
@@ -25,10 +27,20 @@ class Device:
         return None
 
     def to_dict(self):
+        print({
+            "id": self.device_id,
+            "name": self.device_name,
+            "coordinates": [self.position_x, self.position_y],
+            "geocoordinates": [self.latitude, self.longitude],
+            "management-hostname": self.management_hostname,
+            "status": self.state.to_json_str(),
+            "metadata": self.metadata,
+        })
         return {
             "id": self.device_id,
             "name": self.device_name,
             "coordinates": [self.position_x, self.position_y],
+            "geocoordinates": [self.latitude, self.longitude],
             "management-hostname": self.management_hostname,
             "status": self.state.to_json_str(),
             "metadata": self.metadata,

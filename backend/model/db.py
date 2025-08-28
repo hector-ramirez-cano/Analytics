@@ -52,7 +52,7 @@ def __parse_devices(cur: ServerCursor):
     """
     devices = cache.devices
     cur.execute(
-        "SELECT (device_id, device_name, position_x, position_y, management_hostname, requested_metadata) FROM Analytics.devices")
+        "SELECT (device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata) FROM Analytics.devices")
     for row in cur.fetchall():
         row = row[0]
         device_id = int(row[0])
@@ -63,16 +63,20 @@ def __parse_devices(cur: ServerCursor):
                 device_name=row[1],
                 position_x=float(row[2]),
                 position_y=float(row[3]),
-                management_hostname=row[4],
-                requested_metadata=ast.literal_eval(row[5]),
+                latitude=float(row[4]),
+                longitude=float(row[5]),
+                management_hostname=row[6],
+                requested_metadata=ast.literal_eval(row[7]),
             )
 
         else:
             devices[device_id].device_name = row[1]
             devices[device_id].position_x = float(row[2])
             devices[device_id].position_y = float(row[3])
-            devices[device_id].management_hostname = row[4]
-            devices[device_id].requested_metadata = ast.literal_eval(row[5])
+            devices[device_id].latitude = float(row[4])
+            devices[device_id].longitude = float(row[5])
+            devices[device_id].management_hostname = row[6]
+            devices[device_id].requested_metadata = ast.literal_eval(row[7])
 
 
 def __parse_link(cur: ServerCursor):
