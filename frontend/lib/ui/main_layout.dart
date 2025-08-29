@@ -19,7 +19,7 @@ class MainLayout extends StatelessWidget {
             child: Row(
               children: const [
                 SideDrawer(),
-                Expanded(child: ContentArea()),
+                Expanded(child: SizedBox.expand(child: ContentArea())),
               ],
             ),
           ),

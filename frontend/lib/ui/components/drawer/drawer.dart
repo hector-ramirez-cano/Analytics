@@ -36,7 +36,7 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
   late final AnimationController _fadeController;
   late final Animation<double> _fadeAnimation;
 
-  late ScreenSelectionNotifier _screenSelectionNotifier;
+  late SideNavSelectionNotifier _screenSelectionNotifier;
 
   @override
   void initState() {
@@ -111,26 +111,11 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     isDrawerOpened = open;
   }
 
-  void _setScreen(SideNavItem? selected, ScreenSelectionNotifier screenSelectionNotifier) {
-    WorkplaceScreen? selectedScreen;
-    switch (selected) {
-      case SideNavItem.items:
-      case SideNavItem.search:
-        selectedScreen = WorkplaceScreen.canvas;
+  void _setScreen(SideNavItem? selected, SideNavSelectionNotifier screenSelectionNotifier) {
 
-      case SideNavItem.charts:
-        selectedScreen = WorkplaceScreen.charts;
+    if (selected == null) { return; }
 
-      case SideNavItem.settings:
-        selectedScreen = WorkplaceScreen.settings;
-
-      default:
-        selectedScreen = null;
-    }
-
-    if (selectedScreen == null) { return; }
-
-    screenSelectionNotifier.setSelected(selectedScreen);
+    screenSelectionNotifier.setSelected(selected);
   }
 
   SideNav _buildSideNav() {

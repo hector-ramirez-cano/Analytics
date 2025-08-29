@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:logger/web.dart';
+import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 
 enum SideNavItem {
   items   (Icons.segment   , 'Listado' , false, true),
@@ -31,5 +33,28 @@ enum SideNavItem {
 
   static int get length {
     return SideNavItem.values.length;
+  }
+
+  WorkplaceScreen getSelectedScreen() {
+    WorkplaceScreen selectedScreen;
+    switch (this) {
+      case SideNavItem.items:
+      case SideNavItem.search:
+        selectedScreen = WorkplaceScreen.canvas;
+
+      case SideNavItem.charts:
+        selectedScreen = WorkplaceScreen.charts;
+
+      case SideNavItem.settings:
+        selectedScreen = WorkplaceScreen.settings;
+
+      // keeping this in case new items are added
+      // ignore: unreachable_switch_default
+      default:
+        Logger().e("[ERROR]Selected Screen is null. This indicates a missing case for ContentArea Switching upon sidenav interaction!");
+        throw Exception("[ERROR]Selected Screen is null. This indicates a missing case for ContentArea Switching upon sidenav interaction!");
+    }
+
+    return selectedScreen;
   }
 }

@@ -1,16 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
+import 'package:network_analytics/ui/components/enums/side_nav_item.dart';
 
-class ScreenSelection {
-  final WorkplaceScreen? selected;
+class SideNavSelection {
+  final SideNavItem selected;
 
-  const ScreenSelection({
+  const SideNavSelection({
     required this.selected,
   });
 }
 
-class ScreenSelectionNotifier extends StateNotifier<ScreenSelection> {
-  ScreenSelectionNotifier() : super(ScreenSelection(selected: WorkplaceScreen.canvas));
+class SideNavSelectionNotifier extends StateNotifier<SideNavSelection> {
+  SideNavSelectionNotifier() : super(SideNavSelection(selected: SideNavItem.items));
 
-  void setSelected(WorkplaceScreen? selection) => state = ScreenSelection(selected: selection);
+  void setSelected(SideNavItem selection) => state = SideNavSelection(selected: selection);
 }

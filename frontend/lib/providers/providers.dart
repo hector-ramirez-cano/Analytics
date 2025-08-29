@@ -34,6 +34,6 @@ final itemSelectionNotifier = StateNotifierProvider<ItemSelectionNotifier, ItemS
   (ref) => ItemSelectionNotifier(),
 );
 
-final screenSelectionNotifier = StateNotifierProvider<ScreenSelectionNotifier, ScreenSelection>(
-  (ref) => ScreenSelectionNotifier()
+final screenSelectionNotifier = StateNotifierProvider<SideNavSelectionNotifier, SideNavSelection>(
+  (ref) => SideNavSelectionNotifier()
 );
