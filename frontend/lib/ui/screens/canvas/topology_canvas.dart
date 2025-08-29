@@ -87,9 +87,9 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     return Consumer(builder: 
       (context, ref, child) {
         final canvasInteractionService = ref.watch(canvasInteractionServiceProvider);
-        final canvasStateNotifier = ref.watch(canvasStateNotifierService);
+        final canvasState = ref.watch(canvasStateNotifier);
 
-        final isCenterButtonVisible = canvasStateNotifier.isModified;
+        final isCenterButtonVisible = canvasState.isModified;
 
         return Positioned(
           top: 16,
@@ -116,9 +116,9 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     return Consumer(builder:
       (context, ref, child) {
         final canvasInteractionService = ref.watch(canvasInteractionServiceProvider);
-        final canvasItemSelection = ref.watch(itemSelectionProvider);
+        final canvasItemSelection = ref.watch(itemSelectionNotifier);
         final topologyAsync = ref.watch(topologyProvider);
-        final canvasState = ref.watch(canvasStateNotifierService);
+        final canvasState = ref.watch(canvasStateNotifier);
 
         onRetry () async => {
           ref.refresh(topologyProvider.future)

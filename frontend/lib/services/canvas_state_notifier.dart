@@ -27,8 +27,8 @@ class CanvasState {
   }
 }
 
-class CanvasStateNotifierService extends StateNotifier<CanvasState> {
-  CanvasStateNotifierService() : super(CanvasState(scale: 1.0, centerOffset: Offset.zero));
+class CanvasStateNotifier extends StateNotifier<CanvasState> {
+  CanvasStateNotifier() : super(CanvasState(scale: 1.0, centerOffset: Offset.zero));
 
   double get scale => state.scale;
   Offset get centerOffset => state.centerOffset;

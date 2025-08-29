@@ -6,12 +6,14 @@ import 'package:network_analytics/extensions/development_filter.dart';
 
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/enums/side_nav_item.dart';
 import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/components/side_nav.dart';
 import 'package:network_analytics/ui/components/drawer/drawer_panel.dart';
 
+// TODO: Convert into stateless via Riverpod
 class SideDrawer extends StatefulWidget {
   const SideDrawer({super.key});
 
@@ -33,6 +35,8 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
 
   late final AnimationController _fadeController;
   late final Animation<double> _fadeAnimation;
+
+  late ScreenSelectionNotifier _screenSelectionNotifier;
 
   @override
   void initState() {
@@ -94,7 +98,7 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     });
 
     _setDrawerState(setOpen);
-    _setScreen(selected);
+    _setScreen(selected, _screenSelectionNotifier);
   }
 
   void _setDrawerState(bool open) {
@@ -107,7 +111,7 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     isDrawerOpened = open;
   }
 
-  void _setScreen(SideNavItem? selected) {
+  void _setScreen(SideNavItem? selected, ScreenSelectionNotifier screenSelectionNotifier) {
     WorkplaceScreen? selectedScreen;
     switch (selected) {
       case SideNavItem.items:
@@ -126,9 +130,7 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
 
     if (selectedScreen == null) { return; }
 
-    setState(() {
-      screen = selectedScreen!;
-    });
+    screenSelectionNotifier.setSelected(selectedScreen);
   }
 
   SideNav _buildSideNav() {
@@ -187,6 +189,7 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     return Consumer(builder: 
       (context, ref, child) {
         var topology = ref.watch(topologyProvider);
+        _screenSelectionNotifier = ref.read(screenSelectionNotifier.notifier);
 
         logger.d("1 Triggered a drawer rebuild with topology=$topology");
         Future<void> onRetry() async => _onRetry(ref);

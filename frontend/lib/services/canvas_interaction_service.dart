@@ -59,7 +59,7 @@ class CanvasInteractionService {
   /// 
   /// Example: If zooming-in to the canvas with the focalPoint on the top-left of the canvas, the center will be shifted towards the top-left
   void zoomAt(Offset focalPoint, Offset focalPointDelta, double scaleDelta, Size canvasSize, WidgetRef ref) {
-    var state = ref.read(canvasStateNotifierService.notifier);
+    var state = ref.read(canvasStateNotifier.notifier);
 
     final newScale = (state.scale * scaleDelta).clamp(0.1, 10.0);
 
@@ -84,14 +84,14 @@ class CanvasInteractionService {
   /// [scaleDelta] multiplicative zoom delta
   /// [ref] WidgetRef to ripple-notify state to other widgets via Riverpod
   void zoom(double scaleDelta, WidgetRef ref) {
-    var state = ref.read(canvasStateNotifierService.notifier);
+    var state = ref.read(canvasStateNotifier.notifier);
     final newScale = (state.scale * scaleDelta).clamp(0.1, 10.0);
 
     state.setState(newScale, null);
   }
 
   void resetCanvasState(WidgetRef ref) {
-    ref.read(canvasStateNotifierService.notifier).reset();
+    ref.read(canvasStateNotifier.notifier).reset();
   }
 
   void registerTarget(HoverTarget target) => targets.add(target);
@@ -99,11 +99,11 @@ class CanvasInteractionService {
   void onScaleStart() => _lastScale = 1.0;
 
   void onSelectTarget(bool forced, WidgetRef ref) {
-    ref.read(itemSelectionProvider.notifier).setSelected(hovered?.getId(), forced);
+    ref.read(itemSelectionNotifier.notifier).setSelected(hovered?.getId(), forced);
   }
 
   void onCanvasStateChanged(double? scale, Offset? center, WidgetRef ref) {
-    ref.read(canvasStateNotifierService.notifier).setState(scale, center);
+    ref.read(canvasStateNotifier.notifier).setState(scale, center);
   }
   
   void onEnter(PointerEvent event, ItemChangedCallback onChangeSelection) {

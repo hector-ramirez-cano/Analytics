@@ -1,31 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 import 'package:network_analytics/ui/screens/canvas/topology_tab_view.dart';
 import 'package:network_analytics/ui/screens/charts/chart.dart';
 import 'package:network_analytics/ui/screens/settings/settings.dart';
 
 class ContentArea extends StatelessWidget {
-  final WorkplaceScreen screen;
 
-  const ContentArea({super.key, required this.screen});
+  const ContentArea({super.key});
 
   @override
   Widget build(BuildContext context) {
-    switch (screen) {
-      case WorkplaceScreen.canvas:
-        return TopologyTabView();
+    return Consumer(builder: 
+      (context, ref, child) {
+        final screen = ref.watch(screenSelectionNotifier).selected;
 
-      case WorkplaceScreen.charts:
-        return LineChartSample2();
+        switch (screen) {
+          case WorkplaceScreen.canvas:
+            return TopologyTabView();
 
-      case WorkplaceScreen.settings:
-        return SettingsScreen();
+          case WorkplaceScreen.charts:
+            return LineChartSample2();
 
-      // ignore: unreachable_switch_default
-      default:
-        Logger().w("[ERROR]Displaying screen undefined on WorkplaceScreen!");
-        return Text("[ERROR]Displaying screen undefined on WorkplaceScreen!");
-    }
+          case WorkplaceScreen.settings:
+            return SettingsScreen();
+
+          // ignore: unreachable_switch_default
+          default:
+            Logger().w("[ERROR]Displaying screen undefined on WorkplaceScreen!");
+            return Text("[ERROR]Displaying screen undefined on WorkplaceScreen!");
+        }
+      }
+    );
+    
   }
 }
