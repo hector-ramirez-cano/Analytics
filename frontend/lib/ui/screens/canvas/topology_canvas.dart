@@ -70,6 +70,20 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
   }
 
   Widget _makeFloatingButtons() {
+    Widget makeFab(String heroTag, Icon icon, VoidCallback onPressed) {
+      return FloatingActionButton(
+                heroTag: heroTag,
+                mini: true,
+                onPressed: onPressed,
+                backgroundColor: Color.fromRGBO(237, 244, 250, 1),
+                foregroundColor: Color.fromRGBO(49, 49, 49, 1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(32), // fixed shape
+                ),
+                child: icon,
+              );
+    }
+
     return Consumer(builder: 
       (context, ref, child) {
         final canvasInteractionService = ref.watch(canvasInteractionServiceProvider);
@@ -82,29 +96,13 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
           right: 16,
           child: Column(
             children: [
-              FloatingActionButton(
-                heroTag: "zoom_in",
-                mini: true,
-                onPressed: () => canvasInteractionService.zoom(1.1, ref),
-                backgroundColor: Color.fromRGBO(0, 75, 134, 1),
-                child: Icon(Icons.zoom_in),
-              ),
+              makeFab("zoom_in", Icon(Icons.zoom_in), () => canvasInteractionService.zoom(1.1, ref)),
               SizedBox(height: 8),
-              FloatingActionButton(
-                heroTag: "zoom_out",
-                mini: true,
-                onPressed: () => canvasInteractionService.zoom(0.9, ref),
-                backgroundColor: Color.fromRGBO(0, 75, 134, 1),
-                child: Icon(Icons.zoom_out),
-              ),
+              makeFab("zoom_out", Icon(Icons.zoom_out), () => canvasInteractionService.zoom(0.9, ref)),
               SizedBox(height: 8),
-              ?isCenterButtonVisible ? FloatingActionButton(
-                heroTag: "center",
-                mini: true,
-                onPressed: () => canvasInteractionService.resetCanvasState(ref),
-                backgroundColor: Color.fromRGBO(0, 75, 134, 1),
-                child: Icon(Icons.center_focus_weak),
-              ) : null
+              ?isCenterButtonVisible ? 
+                makeFab("center", Icon(Icons.center_focus_weak), () => canvasInteractionService.resetCanvasState(ref)) 
+                : null
             ], 
           ),
         );

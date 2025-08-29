@@ -6,12 +6,14 @@ import 'package:network_analytics/theme/app_colors.dart';
 class Device implements HoverTarget {
   final int id;
   final String name;
-  final Offset position;
+  final Offset position;    // x, y
+  final Offset geoPosition; // Lat , Long
 
   Device({
     required this.id,
     required this.position,
     required this.name,
+    required this.geoPosition,
   });
 
   factory Device.fromJson(Map<String, dynamic> json) {
@@ -21,6 +23,10 @@ class Device implements HoverTarget {
       position: Offset(
         json['coordinates'][0] as double,
         json['coordinates'][1] as double,
+      ),
+      geoPosition: Offset(
+        json['geocoordinates'][0] as double,
+        json['geocoordinates'][1] as double,
       )
     );
   }
