@@ -10,7 +10,6 @@ import 'package:network_analytics/ui/components/enums/side_nav_item.dart';
 import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/components/side_nav.dart';
-import 'package:network_analytics/ui/components/content_area.dart';
 import 'package:network_analytics/ui/components/drawer/drawer_panel.dart';
 
 class SideDrawer extends StatefulWidget {
@@ -161,15 +160,13 @@ class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
   Widget _buildContent(AsyncValue<Topology> topology, OnRetryCallback onRetry) {
 
     logger.d("2 BuildContent called with topology=$topology");
-    return Expanded(
-            child: Row(
-              children: [
-                _buildSideNav(),
-                _buildDrawerPanel(topology, onRetry),
-                Expanded(child: ContentArea(screen: screen)),
-              ],
-            )
-          );
+    return 
+      Row(
+        children: [
+          _buildSideNav(),
+          _buildDrawerPanel(topology, onRetry),
+        ],
+      );
   }
 
   void _onRetry(WidgetRef ref) {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/services/app_config.dart' show AppConfig;
 
-import 'ui/components/topology_map_layout.dart';
+import 'ui/main_layout.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: TopologyMapLayout(),
+      home: MainLayout(),
 
       theme: ThemeData(
         colorScheme:
