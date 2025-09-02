@@ -118,7 +118,7 @@ def __parse_groups(cur: ServerCursor):
         }
 
     group_members = {}
-    cur.execute("SELECT (group_id, device_id) FROM Analytics.group_members")
+    cur.execute("SELECT (group_id, item_id) FROM Analytics.group_members")
     for row in cur.fetchall():
         row = row[0]
         gid = int(row[0])

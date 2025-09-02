@@ -19,14 +19,14 @@
       },
       "postgres": {
         "port": 5432,
-        "hostname": "10.144.1.222",
+        "hostname": "localhost",
         "name": "AnalyticsDB",
         "schema": "postgresql://",
         "$ref": "backend/identity/postgres_db.json"
       },
       "influx": {
         "port": 8086,
-        "hostname": "10.144.1.222",
+        "hostname": "localhost",
         "org": "C5i",
         "schema": "http://",
         "bucket": "analytics",
