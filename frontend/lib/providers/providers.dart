@@ -5,6 +5,7 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/app_config.dart';
 import 'package:network_analytics/services/canvas_interaction_service.dart';
 import 'package:network_analytics/services/canvas_state_notifier.dart';
+import 'package:network_analytics/services/canvas_tab_notifier.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
 import 'package:network_analytics/services/screen_selection_notifier.dart';
 
@@ -36,4 +37,8 @@ final itemSelectionNotifier = StateNotifierProvider<ItemSelectionNotifier, ItemS
 
 final screenSelectionNotifier = StateNotifierProvider<SideNavSelectionNotifier, SideNavSelection>(
   (ref) => SideNavSelectionNotifier()
+);
+
+final canvasTabNotifier = StateNotifierProvider<CanvasTabNotifier, CanvasTab>(
+  (ref) => CanvasTabNotifier()
 );
