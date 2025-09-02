@@ -3,17 +3,18 @@ import 'package:logger/web.dart';
 import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 
 enum SideNavItem {
-  items   (Icons.segment   , 'Listado' , false, true),
-  search  (Icons.search    , 'Search'  , false, true),
-  charts  (Icons.area_chart, 'Gráficas', false, true),
-  settings(Icons.settings  , 'Settings', true , false);
+  canvas   (Icons.segment   , 'Topología'      , bottom: false, hasDrawer: true ),
+  search   (Icons.search    , 'Búsqueda'       , bottom: false, hasDrawer: true ),
+  charts   (Icons.area_chart, 'Gráficas'       , bottom: false, hasDrawer: true ),
+  edit     (Icons.edit      , "Editar datos"   , bottom: true , hasDrawer: true ),
+  settings (Icons.settings  , 'Configuraciones', bottom: true , hasDrawer: false);
 
   final IconData icon;
   final String   label;
   final bool     bottom;
   final bool     hasDrawer;
 
-  const SideNavItem(this.icon, this.label, this.bottom, this.hasDrawer);
+  const SideNavItem(this.icon, this.label, {required this.bottom, required this.hasDrawer});
 
   static List<IconData> get icons {
     return SideNavItem.values.map((item) => item.icon).toList();
@@ -38,7 +39,7 @@ enum SideNavItem {
   WorkplaceScreen getSelectedScreen() {
     WorkplaceScreen selectedScreen;
     switch (this) {
-      case SideNavItem.items:
+      case SideNavItem.canvas:
       case SideNavItem.search:
         selectedScreen = WorkplaceScreen.canvas;
 
@@ -47,6 +48,9 @@ enum SideNavItem {
 
       case SideNavItem.settings:
         selectedScreen = WorkplaceScreen.settings;
+
+      case SideNavItem.edit:
+        selectedScreen = WorkplaceScreen.edit;
 
       // keeping this in case new items are added
       // ignore: unreachable_switch_default

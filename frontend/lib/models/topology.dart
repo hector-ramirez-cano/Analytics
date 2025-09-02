@@ -1,12 +1,12 @@
 // ignore: unused_import
 import 'package:logger/web.dart';
 import 'package:network_analytics/models/device.dart';
-import 'package:network_analytics/models/device_group.dart';
+import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/link.dart';
 
 class Topology {
   Map<int, dynamic> items;
-  List<DeviceGroup> groups;
+  List<Group> groups;
 
   Topology({
     required this.items,
@@ -26,7 +26,7 @@ class Topology {
       itemsLocal[link.id] = link;
     }
 
-    List<DeviceGroup> groups = DeviceGroup.deviceGroupFromJson(json['groups'], itemsLocal);
+    List<Group> groups = Group.deviceGroupFromJson(json['groups'], itemsLocal);
 
     return Topology(items: itemsLocal, groups: groups);
   }

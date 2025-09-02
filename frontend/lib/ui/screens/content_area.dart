@@ -6,6 +6,7 @@ import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 import 'package:network_analytics/ui/screens/canvas/topology_tab_view.dart';
 import 'package:network_analytics/ui/screens/charts/chart.dart';
+import 'package:network_analytics/ui/screens/edit/item_edit_view.dart';
 import 'package:network_analytics/ui/screens/settings/settings.dart';
 
 class ContentArea extends StatelessWidget {
@@ -28,6 +29,9 @@ class ContentArea extends StatelessWidget {
 
           case WorkplaceScreen.settings:
             return SettingsScreen();
+
+          case WorkplaceScreen.edit:
+            return ItemEditView();
 
           // ignore: unreachable_switch_default
           default:

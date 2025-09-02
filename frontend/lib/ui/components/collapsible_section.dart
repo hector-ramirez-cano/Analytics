@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:network_analytics/models/device_group.dart';
+import 'package:network_analytics/models/group.dart';
 
 class CollapsibleSection extends StatefulWidget {
   final String title;
@@ -10,7 +10,7 @@ class CollapsibleSection extends StatefulWidget {
     required this.items,
   });
 
-  static Widget createCollapsibleSections(List<DeviceGroup> groups) {
+  static Widget createCollapsibleSections(List<Group> groups) {
     List<CollapsibleSection> sections = [];
 
     for (var group in groups) {
@@ -20,10 +20,10 @@ class CollapsibleSection extends StatefulWidget {
     return Column(children: sections);
   }
 
-  static CollapsibleSection fromDeviceGroup(DeviceGroup group) {
+  static CollapsibleSection fromDeviceGroup(Group group) {
     List<String> items = [];
 
-    for (var device in group.devices) {
+    for (var device in group.members) {
       items.add(device.name);
     }
 

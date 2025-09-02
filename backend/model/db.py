@@ -12,6 +12,7 @@ import backend.Config as Config
 from backend.model.device import Device
 from backend.model.cache import cache
 
+# TODO: Check when DB handle is no longer valid
 postgres_db_pool: Optional[ConnectionPool] = None
 influx_db_client: Optional[InfluxDBClient] = None
 influx_db_write_api : Optional[WriteApi]   = None

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/ui/components/drawer/item_edit_panel.dart';
 import 'package:network_analytics/ui/components/drawer/listing_panel.dart';
 import 'package:network_analytics/ui/components/enums/side_nav_item.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
@@ -38,8 +39,9 @@ class DrawerPanel extends StatelessWidget {
   Widget createContainerFromSelection(AsyncValue<Topology> topology) {
     logger.d("5 Creating drawer panel from $selectedPanel, topology=$topology");
 
+    // TODO: Handle on at least one successful load, don't completely change the layout to a error layout if it fails
     switch (selectedPanel) {
-      case SideNavItem.items:
+      case SideNavItem.canvas:
         return topology.when(
           data   : (topology)  => ListingPanel(topology: topology),
           error  : (error, st) => _buildOnNotSuccessful(error.toString(), topology.isLoading),
@@ -49,6 +51,13 @@ class DrawerPanel extends StatelessWidget {
       case SideNavItem.charts:
         return topology.when(
           data   : (topology)  => ListingPanel(topology: topology),
+          error  : (error, st) => _buildOnNotSuccessful(error.toString(), topology.isLoading),
+          loading: ()          => _buildOnNotSuccessful(null, true)
+        );
+
+      case SideNavItem.edit:
+        return topology.when(
+          data   : (topology) => ItemEditPanel(topology: topology),
           error  : (error, st) => _buildOnNotSuccessful(error.toString(), topology.isLoading),
           loading: ()          => _buildOnNotSuccessful(null, true)
         );

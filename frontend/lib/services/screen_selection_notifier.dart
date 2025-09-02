@@ -10,7 +10,7 @@ class SideNavSelection {
 }
 
 class SideNavSelectionNotifier extends StateNotifier<SideNavSelection> {
-  SideNavSelectionNotifier() : super(SideNavSelection(selected: SideNavItem.items));
+  SideNavSelectionNotifier() : super(SideNavSelection(selected: SideNavItem.canvas));
 
   void setSelected(SideNavItem selection) => state = SideNavSelection(selected: selection);
 }

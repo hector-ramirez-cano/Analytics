@@ -24,7 +24,7 @@ class SideDrawer extends StatefulWidget {
 class _DrawerState extends State<SideDrawer> with TickerProviderStateMixin {
   static Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_drawer_logging", false));
 
-  SideNavItem? selectedPanel = SideNavItem.items;
+  SideNavItem? selectedPanel = SideNavItem.canvas;
   Topology? topology;
   bool isDrawerOpened = true;
   WorkplaceScreen screen = WorkplaceScreen.canvas;
