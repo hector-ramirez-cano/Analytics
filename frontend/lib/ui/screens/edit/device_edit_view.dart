@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:network_analytics/ui/screens/edit/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
-class DeviceEditView extends StatelessWidget {
+class DeviceEditView extends StatefulWidget {
   
   final String deviceName;
   final String managementHostname;
   final Offset geoPosition;
+
 
   const DeviceEditView({
     super.key,
@@ -15,35 +16,60 @@ class DeviceEditView extends StatelessWidget {
     required this.geoPosition,
   });
 
+  @override
+  State<DeviceEditView> createState() => _DeviceEditViewState();
+}
+
+class _DeviceEditViewState extends State<DeviceEditView> {
+
+  bool editingDeviceName = false;
+  bool editingHostname = false;
 
   AbstractSettingsTile _makeDeviceInput() {
-    var child = makeTrailingInput(deviceName);
+    var child = makeTrailingInput(widget.deviceName, editingDeviceName);
+
+    onEdit() {
+      setState(() {
+        editingDeviceName = !editingDeviceName;
+        editingHostname = false;
+      });
+    }
 
     return SettingsTile(
-      title: Text(deviceName),
+      title: Text("Nombre"),
       leading: const Icon(Icons.computer),
-      trailing: makeTrailing(child),
+      trailing: makeTrailing(child, onEdit),
       onPressed: null
     );
   }
 
   AbstractSettingsTile _makeGeopositionInput() {
-    var child = Text("${geoPosition.dx}, ${geoPosition.dy}");
+    var child = Text("${widget.geoPosition.dx}, ${widget.geoPosition.dy}");
+
+    onEdit() {}
 
     return SettingsTile(
       title: const Text("Geoposition"),
       leading: const Icon(Icons.map),
-      trailing: makeTrailing(child),
+      trailing: makeTrailing(child, onEdit),
       onPressed: null
     );
   }
 
   AbstractSettingsTile _makeHostnameInput() {
-    var child = makeTrailingInput(managementHostname);
+    var child = makeTrailingInput(widget.managementHostname, editingHostname);
+
+    onEdit() {
+      setState(() {
+        editingHostname = !editingHostname;
+        editingDeviceName = false;
+      });
+    }
+
     return SettingsTile(
-      title: Text(managementHostname),
+      title: Text("Hostname"),
       leading: const Icon(Icons.dns),
-      trailing: makeTrailing(child),
+      trailing: makeTrailing(child, onEdit),
       onPressed: null
     );
   }
@@ -61,7 +87,7 @@ class DeviceEditView extends StatelessWidget {
     return Column(
       children: [ Expanded( child: SettingsList( sections: [
               SettingsSection(
-                title: Text(deviceName),
+                title: Text(widget.deviceName),
                 tiles: [
                   _makeDeviceInput(),
                   _makeHostnameInput(),
@@ -78,5 +104,4 @@ class DeviceEditView extends StatelessWidget {
       ],
     );
   }
-
 }

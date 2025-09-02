@@ -5,16 +5,13 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/ui/screens/edit/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
-class LinkEditView extends StatelessWidget {
+class LinkEditView extends StatefulWidget {
   final Device deviceA;
   final Device deviceB;
   final LinkType linkType;
   final Topology topology;
 
-  final String deviceAIface = "eth0";
-  final String deviceBIface = "eth1";
 
-  // TODO: Device Interface
   const LinkEditView({
     super.key,
     required this.deviceA,
@@ -23,13 +20,25 @@ class LinkEditView extends StatelessWidget {
     required this.topology, 
   });
 
+  @override
+  State<LinkEditView> createState() => _LinkEditViewState();
+}
+
+class _LinkEditViewState extends State<LinkEditView> {
+  final String deviceAIface = "eth0";
+  final String deviceBIface = "eth1";
+  
+  bool editingIfaceA = false;
+  bool editingIFaceB = false;
+
   DropdownButton _makeDeviceDropdown(Device device, String hint) {
+    // TODO: dropdown with search
     return DropdownButton<String>(
-      value: (topology.getDevices().any((d) => d.name == device.name))
+      value: (widget.topology.getDevices().any((d) => d.name == device.name))
           ? device.name
           : null,
       hint: Text(hint),
-      items: topology.getDevices()
+      items: widget.topology.getDevices()
           .map((dev) =>
               DropdownMenuItem(value: dev.name, child: Text(dev.name)))
           .toList(),
@@ -51,15 +60,15 @@ class LinkEditView extends StatelessWidget {
     );
   }
 
+  AbstractSettingsTile _makeInterfaceInput(String title, String ifaceName, VoidCallback onEdit, bool editing) {
+    var child = makeTrailingInput(ifaceName, editing);
 
-  AbstractSettingsTile _makeInterfaceInput(String title, String ifaceName) {
-    var child = makeTrailingInput(ifaceName);
-
+    
     // TODO: Change icon to FontAwesome ethernet icon
     return SettingsTile(
       title: Text(title),
       leading: const Icon(Icons.settings_ethernet),
-      trailing: makeTrailing(child),
+      trailing: makeTrailing(child, onEdit),
       onPressed: null
     );
   }
@@ -70,38 +79,52 @@ class LinkEditView extends StatelessWidget {
     return SettingsTile(
       title: Text(title),
       leading: const Icon(Icons.dns),
-      trailing: makeTrailing(child, showEditIcon: false),
+      trailing: makeTrailing(child, (){}, showEditIcon: false),
       onPressed: null
     );
   }
 
   AbstractSettingsTile _makeLinkSelection() {
-    var child = _makeLinkTypeDropdown(linkType);
+    var child = _makeLinkTypeDropdown(widget.linkType);
 
     return SettingsTile(
       title: const Text("Link Type"),
       leading: const Icon(Icons.cable),
-      trailing: makeTrailing(child, showEditIcon: false),
+      trailing: makeTrailing(child, (){}, showEditIcon: false),
       onPressed: null
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    onEditA () {
+      setState(() {  
+        editingIfaceA = !editingIfaceA;
+        editingIFaceB = false;
+      });
+    }
+
+    onEditB() {
+      setState(() {  
+        editingIfaceA = false;
+        editingIFaceB = !editingIFaceB;
+      });
+    }
+
     return Column(
       children: [ Expanded( child: SettingsList( sections: [
               SettingsSection(
                 title: Text("Device A"),
                 tiles: [
-                  _makeDeviceSelection("Device", deviceA),
-                  _makeInterfaceInput("Interface", deviceAIface),
+                  _makeDeviceSelection("Device", widget.deviceA),
+                  _makeInterfaceInput("Interface", deviceAIface, onEditA, editingIfaceA),
                 ],
               ),
               SettingsSection(
                 title: Text("Device B"),
                 tiles: [
-                  _makeDeviceSelection("Device", deviceB),
-                  _makeInterfaceInput("Interface", deviceBIface),
+                  _makeDeviceSelection("Device", widget.deviceB),
+                  _makeInterfaceInput("Interface", deviceBIface, onEditB, editingIFaceB),
                 ],
               ),
               SettingsSection(
@@ -119,6 +142,4 @@ class LinkEditView extends StatelessWidget {
       ],
     );
   }
-
-
 }

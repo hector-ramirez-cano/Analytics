@@ -22,6 +22,7 @@ class ItemEditView extends StatelessWidget {
     Device deviceB = Device(id: -1, position: Offset.zero, name: "Tlatelolco-lan", geoPosition: Offset.zero);
     LinkType linkType = LinkType.copper;
 
+    // TODO: show change resume before applying to DB
     switch (type) {
       case ItemType.device:
         return DeviceEditView(deviceName: "Nombre", managementHostname: "hostname", geoPosition: Offset(-21.54315, 54.455143),);

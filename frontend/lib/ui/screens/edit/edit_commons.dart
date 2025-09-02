@@ -1,6 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:network_analytics/ui/components/universal_detector.dart';
 
-Widget makeTrailing(Widget child, {bool showEditIcon = true}) {
+Widget _makeTrailingIcon(VoidCallback onEdit) {
+  return 
+    UniversalDetector(
+      setCursor: () => SystemMouseCursors.click,
+      onTapUp: (_) => onEdit(),
+      child: Icon(
+            Icons.edit,
+            size: 20,
+            color: Colors.black54,
+          )
+    ); 
+}
+
+Widget makeTrailing(Widget child, VoidCallback onEdit, {bool showEditIcon = true}) {
   return SizedBox(
     width: 220, // adjust to accommodate icon
     child: Row(
@@ -10,18 +24,14 @@ Widget makeTrailing(Widget child, {bool showEditIcon = true}) {
         ),
         const SizedBox(width: 4),
         showEditIcon ? 
-          Icon(
-            Icons.edit,
-            size: 20,
-            color: Colors.black54,
-          )
+          _makeTrailingIcon(onEdit)
           : SizedBox.shrink()
       ],
     ),
   );
 }
 
-Widget makeTrailingInput(String text, {bool enabled = false}) {
+Widget makeTrailingInput(String text, bool enabled) {
   return TextField(
     enabled: enabled,
     controller: TextEditingController(text: text),
