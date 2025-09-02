@@ -53,9 +53,8 @@ def __parse_devices(cur: ServerCursor):
     """
     devices = cache.devices
     cur.execute(
-        "SELECT (device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata) FROM Analytics.devices")
+        "SELECT device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata FROM Analytics.devices")
     for row in cur.fetchall():
-        row = row[0]
         device_id = int(row[0])
 
         if devices.get(device_id) is None:
@@ -67,7 +66,7 @@ def __parse_devices(cur: ServerCursor):
                 latitude=float(row[4]),
                 longitude=float(row[5]),
                 management_hostname=row[6],
-                requested_metadata=ast.literal_eval(row[7]),
+                requested_metadata=row[7],
                 data_sources=set()
             )
 
@@ -78,7 +77,7 @@ def __parse_devices(cur: ServerCursor):
             devices[device_id].latitude = float(row[4])
             devices[device_id].longitude = float(row[5])
             devices[device_id].management_hostname = row[6]
-            devices[device_id].requested_metadata = ast.literal_eval(row[7])
+            devices[device_id].requested_metadata = row[7]
             devices[device_id].data_sources = set()
 
 
@@ -105,9 +104,8 @@ def __parse_link(cur: ServerCursor):
     :return: list of links
     """
     links = []
-    cur.execute("SELECT (link_id, side_a, side_b, link_type, link_subtype) FROM Analytics.links")
+    cur.execute("SELECT link_id, side_a, side_b, link_type, link_subtype FROM Analytics.links")
     for row in cur.fetchall():
-        row = row[0]
         link = {
             "id": int(row[0]),
             "side-a": int(row[1]),
@@ -126,9 +124,8 @@ def __parse_groups(cur: ServerCursor):
     :return: list of groups
     """
     groups = {}
-    cur.execute("SELECT (group_id, group_name, is_display_group) FROM Analytics.groups")
+    cur.execute("SELECT group_id, group_name, is_display_group FROM Analytics.groups")
     for row in cur.fetchall():
-        row = row[0]
         gid = int(row[0])
         groups[gid] = {
             "id": gid,
