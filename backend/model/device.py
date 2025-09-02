@@ -14,6 +14,7 @@ class Device:
     longitude: float
     management_hostname: str
     requested_metadata: list
+    data_sources: set
     state: DeviceStatus = field(default_factory=DeviceStatus)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -35,6 +36,7 @@ class Device:
             "management-hostname": self.management_hostname,
             "status": self.state.to_json_str(),
             "metadata": self.metadata,
+            "data-sources": list(self.data_sources),
         })
         return {
             "id": self.device_id,
@@ -44,5 +46,6 @@ class Device:
             "management-hostname": self.management_hostname,
             "status": self.state.to_json_str(),
             "metadata": self.metadata,
+            "data-sources": list(self.data_sources),
         }
 

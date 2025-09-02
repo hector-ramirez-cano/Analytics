@@ -17,7 +17,7 @@ async def query_facts_from_inventory():
         playbook  = config.get_or_default("backend/model/playbooks/fact_gathering")
         private   = config.get_or_default("backend/model/private_data_dir")
 
-        inventory = "[servers]\n"+cache.inventory
+        inventory = "[servers]\n"+cache.ansible_inventory
 
         runner = ansible_runner.run(
             private_data_dir= private,

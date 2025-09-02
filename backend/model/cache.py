@@ -12,12 +12,14 @@ class Cache(object):
     __last_update = 0 # Epoch
 
     @property
-    def inventory(self) -> str:
+    def ansible_inventory(self) -> str:
         """
         Converts the device dictionary into an ansible compliant inventory, without the header
         Currently, it only returns a management_hostname per line only
         """
-        return "\n".join([self.devices[device_id].management_hostname for device_id in self.devices])
+        ansible_devices = [device_id for device_id in self.devices if "ssh" in self.devices[device_id].data_sources]
+        return "\n".join([self.devices[device_id].management_hostname for device_id in ansible_devices])
+
 
     @property
     def devices(self):

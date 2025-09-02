@@ -2,6 +2,7 @@ CREATE SCHEMA IF NOT EXISTS Analytics;
 
 CREATE TYPE ItemType AS ENUM ('device', 'link', 'group');
 CREATE TYPE LinkType AS ENUM ('optical', 'copper', 'wireless');
+CREATE TYPE DataSource AS ENUM('ssh', 'snmp', 'icmp');
 
 CREATE TABLE IF NOT EXISTS Analytics.items (
     id SERIAL PRIMARY KEY,
@@ -19,6 +20,13 @@ CREATE TABLE IF NOT EXISTS Analytics.devices (
     requested_metadata  JSONB        NOT NULL,
     metadata            JSONB,
     FOREIGN KEY (device_id) REFERENCES Analytics.items(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS Analytics.device_data_sources(
+    device_id           INT        NOT NULL,
+    data_source         DataSource NOT NULL,
+
+    FOREIGN KEY (device_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.links (

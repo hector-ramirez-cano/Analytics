@@ -68,6 +68,7 @@ def __parse_devices(cur: ServerCursor):
                 longitude=float(row[5]),
                 management_hostname=row[6],
                 requested_metadata=ast.literal_eval(row[7]),
+                data_sources=set()
             )
 
         else:
@@ -78,6 +79,24 @@ def __parse_devices(cur: ServerCursor):
             devices[device_id].longitude = float(row[5])
             devices[device_id].management_hostname = row[6]
             devices[device_id].requested_metadata = ast.literal_eval(row[7])
+            devices[device_id].data_sources = set()
+
+
+def __parse_device_datasource(cur: ServerCursor):
+    """
+    Parses the output of a database call, reading which data sources are used for each device
+
+    If the device already exists, the data gets updated
+
+    :return: None
+    """
+    devices = cache.devices
+    cur.execute("SELECT device_id, data_source FROM Analytics.device_data_sources")
+    for row in cur.fetchall():
+        device_id = int(row[0])
+
+        source : set = devices[device_id].data_sources
+        source.add(row[1])
 
 
 def __parse_link(cur: ServerCursor):
@@ -169,6 +188,7 @@ async def update_topology_cache():
     with postgres_db_pool.connection() as conn:
         with conn.cursor() as cur:
             __parse_devices(cur)
+            __parse_device_datasource(cur)
             __parse_link(cur)
             __parse_groups(cur)
 
