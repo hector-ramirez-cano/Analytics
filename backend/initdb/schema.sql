@@ -49,10 +49,12 @@ CREATE TABLE IF NOT EXISTS Analytics.groups (
 
 CREATE TABLE IF NOT EXISTS Analytics.group_members (
     group_id INT NOT NULL,
-    device_id INT NOT NULL,
+    item_id INT NOT NULL,
 
     FOREIGN KEY (group_id) REFERENCES Analytics.groups(group_id),
-    FOREIGN KEY (device_id) REFERENCES Analytics.devices(device_id)
+    FOREIGN KEY (item_id) REFERENCES Analytics.items(id),
+
+    CONSTRAINT chk_group_no_recurse CHECK (group_id <> item_id)
 );
 
 -- Trigger functions

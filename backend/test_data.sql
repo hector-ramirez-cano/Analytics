@@ -28,12 +28,23 @@ INSERT INTO Analytics.groups (group_id, group_name, is_display_group)
     VALUES
         (201, 'Routers', 0<>0),
         (202, 'Hosts', 0<>1);
+INSERT INTO Analytics.groups (group_id, group_name, is_display_group) 
+    VALUES
+        (203, 'Raíz', 0<>1);
 
 UPDATE Analytics.groups SET is_display_group=0<>1 WHERE group_id = 202;
 
-INSERT INTO Analytics.group_members(group_id, device_id)
+INSERT INTO Analytics.group_members(group_id, item_id)
     VALUES
         (201, 1),
         (201, 2),
         (202, 3);
 
+INSERT INTO Analytics.group_members(group_id, item_id)
+    VALUES
+        (203, 201),
+        (203, 202);
+
+// Should fail, a group cant contain itself
+// TODO: Handle actual parent-child recursion
+// INSERT INTO Analytics.group_members(group_id, item_id) VALUES (203, 203);

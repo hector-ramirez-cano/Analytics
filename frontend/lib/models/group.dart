@@ -1,4 +1,3 @@
-import 'package:network_analytics/models/device.dart';
 
 // TODO: Make generic, to also hold groups and links
 class Group {
@@ -15,10 +14,7 @@ class Group {
   });
 
   factory Group.fromJson(Map<String, dynamic> json, Map<int, dynamic> items) {
-    List<Device> members = [];
-    for (int device in json['members']) {
-      members.add(items[device]);
-    }
+    List<dynamic> members = [];
 
     int    id   = json['id'];
     String name = json['name'];
@@ -26,7 +22,7 @@ class Group {
 
     return Group(
       id: id, 
-      members: members, 
+      members: members,
       name: name, 
       isDisplayGroup: isDisplayGroup
     );
@@ -36,9 +32,21 @@ class Group {
     List<Group> members = [];
 
     for (var group in json) {
-      members.add(Group.fromJson(group, items));
+      var created = Group.fromJson(group, items);
+      members.add(created);
+      items[created.id] = created;
     }
 
     return members;
+  }
+
+  static void fillGroupMembers(List<dynamic> json, Map<int, dynamic> items) {
+    for (var group in json) {
+      int id = group["id"];
+      
+      for (var member in group['members']) {
+        (items[id] as Group).members.add(items[member]);
+      }
+    }
   }
 }
