@@ -20,6 +20,15 @@ class Cache(object):
         ansible_devices = [device_id for device_id in self.devices if "ssh" in self.devices[device_id].data_sources]
         return "\n".join([self.devices[device_id].management_hostname for device_id in ansible_devices])
 
+    @property
+    def icmp_inventory(self) -> list:
+        """
+        Converts the device dictionary into an ansible compliant inventory, without the header
+        Currently, it only returns a management_hostname per line only
+        """
+        icmp_devices = [device_id for device_id in self.devices if "icmp" in self.devices[device_id].data_sources]
+        return [self.devices[device_id].management_hostname for device_id in icmp_devices]
+
 
     @property
     def devices(self):

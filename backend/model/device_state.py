@@ -1,5 +1,8 @@
 from enum import Enum
 
+from backend.model.ansible_status import AnsibleStatus
+
+
 class DeviceState(Enum):
     SKIPPED   = 0,
     REACHABLE = 1,
@@ -8,22 +11,22 @@ class DeviceState(Enum):
     UNKNOWN = -1
 
 class DeviceStatus:
-    def __init__(self, state : DeviceState = DeviceState.UNKNOWN, msg : str =""):
-        self.state = state
+    def __init__(self, ansible_status : AnsibleStatus = AnsibleStatus.UNKNOWN, msg : str =""):
+        self.ansible_status = ansible_status
         self.msg = msg
 
 
     def __eq__(self, other):
         if isinstance(other, DeviceState):
-            return self.state == other
+            return self.ansible_status == other
 
         if isinstance(other, DeviceStatus):
-            return self.state == other.state
+            return self.ansible_status == other.ansible_status
 
         return False
 
     def __str__(self):
-        return self.state.name + ", " + self.msg
+        return self.ansible_status.name + ", " + self.msg
 
     def to_json_str(self):
-        return { "state" : self.state.name, "msg": self.msg }
+        return { "ansible_status" : self.ansible_status.name, "msg": self.msg }
