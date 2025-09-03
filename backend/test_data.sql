@@ -7,11 +7,11 @@ SELECT device_id, data_source FROM Analytics.device_data_sources;
 
 
 
-INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata) 
+INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, requested_metrics) 
     VALUES 
-        (1, 'Xochimilco-lan',  0.5,  0.5, 21.159425, -101.645852, '192.168.100.3', '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'),
-        (2, 'Tlatelolco-lan',  0.7, -0.2, 21.159425, -101.645852, '192.168.100.5', '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'),
-        (3, 'Obsidian-lan'  , -0.3 , 0.3, 21.159425, -101.645852, '10.144.1.225'   , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]');
+        (1, 'Xochimilco-lan',  0.5,  0.5, 21.159425, -101.645852, '192.168.100.3', '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'  , '[]'),
+        (2, 'Tlatelolco-lan',  0.7, -0.2, 21.159425, -101.645852, '192.168.100.5', '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'  , '[]'),
+        (3, 'Obsidian-lan'  , -0.3 , 0.3, 21.159425, -101.645852, '10.144.1.225'   , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]', '[]');
 
 INSERT INTO Analytics.device_data_sources (device_id, data_source)
     VALUES

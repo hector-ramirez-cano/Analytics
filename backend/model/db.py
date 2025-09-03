@@ -53,7 +53,7 @@ def __parse_devices(cur: ServerCursor):
     """
     devices = cache.devices
     cur.execute(
-        "SELECT device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata FROM Analytics.devices")
+        "SELECT device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, available_values FROM Analytics.devices")
     for row in cur.fetchall():
         device_id = int(row[0])
 
@@ -67,7 +67,8 @@ def __parse_devices(cur: ServerCursor):
                 longitude=float(row[5]),
                 management_hostname=row[6],
                 requested_metadata=row[7],
-                data_sources=set()
+                data_sources=set(),
+                available_values=row[8],
             )
 
         else:
@@ -79,6 +80,7 @@ def __parse_devices(cur: ServerCursor):
             devices[device_id].management_hostname = row[6]
             devices[device_id].requested_metadata = row[7]
             devices[device_id].data_sources = set()
+            devices[device_id].available_values = row[8]
 
 
 def __parse_device_datasource(cur: ServerCursor):
@@ -206,7 +208,7 @@ async def get_topology_as_json():
     }
 
 
-async def update_device_metadata(metrics, stats):
+async def update_device_metadata(exposed_metrics: dict, metrics : dict, stats: dict):
     """
     Inserts data that might change infrequently into the Postgres database, and updates local cache of devices
     :return: None
@@ -214,14 +216,19 @@ async def update_device_metadata(metrics, stats):
     await __extract_device_metadata(metrics)
     devices = cache.devices
 
-    # set state
     for device_hostname in stats:
         device = Device.find_by_management_hostname(devices, device_hostname)
 
         if device is None:
             continue
 
+        # set state
         device.state = stats[device_hostname]
+
+        # set available_values, but only if it was not null since last call
+        available_values = exposed_metrics.get(device_hostname)
+        if available_values is not None:
+            device.available_values = available_values
 
     # Extract metrics
     with postgres_db_pool.connection() as conn, conn.cursor() as cur:
@@ -234,9 +241,9 @@ async def update_device_metadata(metrics, stats):
 
             cur.execute(
                 """
-                    UPDATE Analytics.devices SET metadata = %s WHERE device_id = %s
+                    UPDATE Analytics.devices SET metadata = %s, available_values = %s WHERE device_id = %s
                 """,
-                (json.dumps(device.metadata), device.device_id)
+                (json.dumps(device.metadata), json.dumps(device.available_values), device.device_id)
             )
 
     conn.commit()

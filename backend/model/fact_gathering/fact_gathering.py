@@ -1,7 +1,8 @@
 import asyncio
 
-from backend.model.db import update_topology_cache
-from backend.model.fact_gathering import ansible_backend, icmp_backend, snmp_backend
+from backend.model import db
+from backend.model.fact_gathering import snmp_backend, icmp_backend, ansible_backend
+
 
 def __recursive_merge(dict1, dict2):
     for key, value in dict2.items():
@@ -13,33 +14,55 @@ def __recursive_merge(dict1, dict2):
             dict1[key] = value
     return dict1
 
-def __merge_results(results):
-    merged_metrics, merged_stats = {}, {}
+def __merge_results(results) -> tuple[dict, dict]:
+    """
+    Merges metrics and status from a list of results, with correspondence of information among different data sources
+
+    return exposed_metrics, metrics, status
+    """
+    merged_metrics, merged_status = {}, {}
 
     for result in results:
         if result is None:
             continue
 
         merged_metrics = __recursive_merge(merged_metrics, result[0])
-        merged_stats = __recursive_merge(merged_stats, result[1])
+        merged_status = __recursive_merge(merged_status, result[1])
 
-    return merged_metrics, merged_stats
+    return merged_metrics, merged_status
+
+
+def __get_exposed_fields(metrics: dict) -> dict:
+    exposed_metrics = {}
+    for key, value in metrics.items():
+        exposed_metrics [key] = list(value)
+
+    return exposed_metrics
 
 
 async def gather_all_facts():
 
-    await update_topology_cache()
+    await db.update_topology_cache()
     print("[INFO ]Gathering facts")
 
     tasks = [
-        # icmp_backend.gather_facts(),
+        icmp_backend.gather_facts(),
         snmp_backend.gather_facts(),
-        # ansible_backend.gather_facts(),
+        ansible_backend.gather_facts(),
     ]
 
     results = await asyncio.gather(*tasks)
 
     # merge results and stats
-    merged_metrics, merged_stats = __merge_results(results)
+    metrics, status = __merge_results(results)
+    exposed_fields = __get_exposed_fields(metrics)
 
-    return merged_metrics, merged_stats
+
+    # Update database
+    metadata  = db.update_device_metadata(exposed_fields, metrics, status)
+    analytics = db.update_device_analytics(metrics)
+
+    await metadata
+    await analytics
+
+    return metrics, status

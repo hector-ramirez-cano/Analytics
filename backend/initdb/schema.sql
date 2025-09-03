@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS Analytics.devices (
     longitude           FLOAT        NOT NULL,
     management_hostname VARCHAR(254) NOT NULL,
     requested_metadata  JSONB        NOT NULL,
+    requested_metrics   JSONB        NOT NULL,
     metadata            JSONB,
+    available_values    JSONB,
     FOREIGN KEY (device_id) REFERENCES Analytics.items(id) ON DELETE CASCADE
 );
 

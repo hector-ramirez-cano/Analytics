@@ -2,7 +2,6 @@ import ansible_runner
 
 import backend.Config as Config
 from backend.model.ansible_status import AnsibleStatus
-from backend.model.db import update_device_metadata, update_device_analytics
 from backend.model.device_state import DeviceStatus
 from backend.model.cache import cache
 
@@ -10,10 +9,10 @@ def __extract_facts_from_playbook(runner) -> tuple[dict, dict]:
     """
     Extracts metadata acquired from devices after executing the gather facts playbook
 
-    :returns metrics, stats
+    :returns metrics, status
     """
     metrics = {}
-    stats = {}
+    status = {}
     # Extract metrics into dictionary, for easy access
     for event in runner.events:
         if event['event'] == 'runner_on_ok':
@@ -24,24 +23,24 @@ def __extract_facts_from_playbook(runner) -> tuple[dict, dict]:
                 metrics.setdefault(host, {}).update(res['ansible_facts'])
 
             # Set status only if it hasn't failed
-            if stats.get(host) is None:
-                stats[host] = DeviceStatus(ansible_status=AnsibleStatus.REACHABLE, msg="")
+            if status.get(host) is None:
+                status[host] = DeviceStatus(ansible_status=AnsibleStatus.REACHABLE, msg="")
 
         if event['event'] == 'runner_on_unreachable':
             host = event['event_data']['host']
             res = event['event_data']['res']
 
             # Override status
-            stats[host] = DeviceStatus(ansible_status=AnsibleStatus.DARK, msg=res['msg'])
+            status[host] = DeviceStatus(ansible_status=AnsibleStatus.DARK, msg=res['msg'])
 
-    return metrics, stats
+    return metrics, status
 
 
 def __run_fact_gathering_playbook() -> tuple[dict, dict]:
     """
     Calls to execution the gather_facts playbook
 
-    :returns metric, stats
+    :returns exposed_metrics, metric, status
     """
     config = Config.config
     playbook = config.get_or_default("backend/model/playbooks/fact_gathering")
@@ -72,12 +71,6 @@ async def gather_facts():
 
     # TODO: Make this function faster
 
-    metrics, stats = __run_fact_gathering_playbook()
+    metrics, status = __run_fact_gathering_playbook()
 
-    metadata = update_device_metadata(metrics, stats)
-    analytics = update_device_analytics(metrics)
-
-    await metadata
-    await analytics
-
-    return metrics, stats
+    return metrics, status

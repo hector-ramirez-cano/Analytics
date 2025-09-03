@@ -15,7 +15,8 @@ class Device:
     management_hostname: str
     requested_metadata: list
     data_sources: set
-    state: DeviceStatus = field(default_factory=DeviceStatus)
+    available_values: set[str]
+    state: DeviceStatus = field(default_factory=DeviceStatus) # TODO: DeviceStatus mixin
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -37,6 +38,7 @@ class Device:
             "status": self.state.to_json_str(),
             "metadata": self.metadata,
             "data-sources": list(self.data_sources),
+            "available-values": self.available_values,
         })
         return {
             "id": self.device_id,
@@ -47,5 +49,6 @@ class Device:
             "status": self.state.to_json_str(),
             "metadata": self.metadata,
             "data-sources": list(self.data_sources),
+            "available-values": self.available_values
         }
 

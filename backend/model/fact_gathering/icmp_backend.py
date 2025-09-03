@@ -4,10 +4,8 @@ import subprocess
 from backend.model.Icmp_status import IcmpStatus
 from backend.model.cache import cache
 
-import pythonping
 import asyncio
 
-from backend.model.db import update_topology_cache
 
 RTT_PATTERN = re.compile(r"rtt min/avg/max/mdev = .*/(.*)/.*/.*? ms")
 LOSS_PATTERN = re.compile(r"(\d\d?\d?)% packet loss")
@@ -15,7 +13,6 @@ UNREACHABLE_PATTERN = "Destination Host Unreachable"
 NAME_RESOLUTION_ERROR_PATTERN = "Temporary failure in name resolution"
 TIMEOUT_ERROR_PATTERN = "Request Timed Out"
 HOST_NOT_FOUND_PATTERN = "Could Not Find Host"
-
 
 
 async def __ping_host_once(host: str):
@@ -52,24 +49,29 @@ async def __ping_host_once(host: str):
     return result.returncode, host, status, rtt, loss
 
 
-async def __ping_devices(hosts):
+async def __ping_devices(hosts) -> tuple[dict, dict]:
+    """
+    Pings devices via ICMP ECHO requests, and gathers avg_rtt and packet loss count
+
+    return metrics_ status
+    """
     tasks = [__ping_host_once(host) for host in hosts]
     results = await asyncio.gather(*tasks)
 
     metrics = {}
-    stats = {}
-    for (rc, host, status, rtt, loss) in results:
+    status = {}
+    for (rc, host, icmp_status, rtt, loss) in results:
         metrics[host] = {
-            "icmp_status" : status,
+            "icmp_status" : icmp_status,
             "icmp_rtt": rtt,
             "icmp_loss_percent": loss
         }
 
-        stats[host] = {
-            "icmp_status": status
+        status[host] = {
+            "icmp_status": icmp_status.name
         }
 
-    return metrics, stats
+    return metrics, status
 
 
 async def gather_facts():
