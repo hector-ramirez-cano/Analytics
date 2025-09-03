@@ -17,7 +17,7 @@ class Cache(object):
         Converts the device dictionary into an ansible compliant inventory, without the header
         Currently, it only returns a management_hostname per line only
         """
-        ansible_devices = [device_id for device_id in self.devices if "ssh" in self.devices[device_id].data_sources]
+        ansible_devices = [device_id for device_id in self.devices if "ssh" in self.devices[device_id].configuration.data_sources]
         return "\n".join([self.devices[device_id].management_hostname for device_id in ansible_devices])
 
     @property
@@ -26,7 +26,7 @@ class Cache(object):
         Converts the device dictionary into an ansible compliant inventory, without the header
         Currently, it only returns a management_hostname per line only
         """
-        icmp_devices = [device_id for device_id in self.devices if "icmp" in self.devices[device_id].data_sources]
+        icmp_devices = [device_id for device_id in self.devices if "icmp" in self.devices[device_id].configuration.data_sources]
         return [self.devices[device_id].management_hostname for device_id in icmp_devices]
 
 

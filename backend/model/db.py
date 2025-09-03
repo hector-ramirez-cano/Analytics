@@ -1,4 +1,3 @@
-import ast
 import json
 from typing import Optional
 
@@ -11,6 +10,7 @@ from psycopg_pool import ConnectionPool
 import backend.Config as Config
 from backend.model.device import Device
 from backend.model.cache import cache
+from backend.model.device_configuration import DeviceConfiguration
 
 # TODO: Check when DB handle is no longer valid
 postgres_db_pool: Optional[ConnectionPool] = None
@@ -53,7 +53,11 @@ def __parse_devices(cur: ServerCursor):
     """
     devices = cache.devices
     cur.execute(
-        "SELECT device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, available_values FROM Analytics.devices")
+        """
+            SELECT Analytics.devices.device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, available_values 
+                FROM Analytics.devices
+                JOIN Analytics.device_configuration ON Analytics.devices.device_id = Analytics.device_configuration.device_id;
+        """)
     for row in cur.fetchall():
         device_id = int(row[0])
 
@@ -66,9 +70,11 @@ def __parse_devices(cur: ServerCursor):
                 latitude=float(row[4]),
                 longitude=float(row[5]),
                 management_hostname=row[6],
-                requested_metadata=row[7],
-                data_sources=set(),
-                available_values=row[8],
+                configuration=DeviceConfiguration(
+                    requested_metadata=row[7],
+                    data_sources=set(),
+                    available_values=row[8],
+                )
             )
 
         else:
@@ -78,9 +84,11 @@ def __parse_devices(cur: ServerCursor):
             devices[device_id].latitude = float(row[4])
             devices[device_id].longitude = float(row[5])
             devices[device_id].management_hostname = row[6]
-            devices[device_id].requested_metadata = row[7]
-            devices[device_id].data_sources = set()
-            devices[device_id].available_values = row[8]
+            devices[device_id].configuration = DeviceConfiguration(
+                requested_metadata=row[7],
+                data_sources=set(),
+                available_values = row[8],
+            )
 
 
 def __parse_device_datasource(cur: ServerCursor):
@@ -96,7 +104,7 @@ def __parse_device_datasource(cur: ServerCursor):
     for row in cur.fetchall():
         device_id = int(row[0])
 
-        source : set = devices[device_id].data_sources
+        source : set = devices[device_id].configuration.data_sources
         source.add(row[1])
 
 
@@ -173,7 +181,7 @@ async def __extract_device_metadata(metrics):
         if device is None:
             continue
 
-        for field in device.requested_metadata:
+        for field in device.configuration.requested_metadata:
             value = metrics[hostname].get(field)
             device.metadata[field] = value
 
@@ -241,9 +249,16 @@ async def update_device_metadata(exposed_metrics: dict, metrics : dict, stats: d
 
             cur.execute(
                 """
-                    UPDATE Analytics.devices SET metadata = %s, available_values = %s WHERE device_id = %s
+                    UPDATE Analytics.devices SET metadata = %s WHERE device_id = %s
                 """,
-                (json.dumps(device.metadata), json.dumps(device.available_values), device.device_id)
+                (json.dumps(device.available_values), device.device_id)
+            )
+
+            cur.execute(
+                """
+                    UPDATE Analytics.device_configuration SET available_values = %s WHERE device_id = %s
+                """,
+                (json.dumps(device.available_values), device.device_id)
             )
 
     conn.commit()

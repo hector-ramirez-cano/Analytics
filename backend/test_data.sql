@@ -5,13 +5,23 @@ SELECT * FROM Analytics.groups;
 SELECT * FROM Analytics.group_members;
 SELECT device_id, data_source FROM Analytics.device_data_sources;
 
+SELECT * FROM Analytics.devices JOIN Analytics.device_configuration ON Analytics.devices.device_id = Analytics.device_configuration.device_id;
 
+SELECT Analytics.devices.device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, available_values 
+                FROM Analytics.devices
+                JOIN Analytics.device_configuration ON Analytics.devices.device_id = Analytics.device_configuration.device_id;
 
-INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, requested_metrics) 
+INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, latitude, longitude, management_hostname) 
     VALUES 
-        (1, 'Xochimilco-lan',  0.5,  0.5, 21.159425, -101.645852, '192.168.100.3', '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'  , '[]'),
-        (2, 'Tlatelolco-lan',  0.7, -0.2, 21.159425, -101.645852, '192.168.100.5', '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'  , '[]'),
-        (3, 'Obsidian-lan'  , -0.3 , 0.3, 21.159425, -101.645852, '10.144.1.225'   , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]', '[]');
+        (1, 'Xochimilco-lan',  0.5,  0.5, 21.159425, -101.645852, '192.168.100.3'),
+        (2, 'Tlatelolco-lan',  0.7, -0.2, 21.159425, -101.645852, '192.168.100.5'),
+        (3, 'Obsidian-lan'  , -0.3 , 0.3, 21.159425, -101.645852, '10.144.1.225' );
+
+INSERT INTO Analytics.device_configuration (device_id, requested_metadata, requested_metrics)
+    VALUES
+        (1, '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]'),
+        (2, '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]'),
+        (3, '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]');
 
 INSERT INTO Analytics.device_data_sources (device_id, data_source)
     VALUES
@@ -22,9 +32,6 @@ INSERT INTO Analytics.device_data_sources (device_id, data_source)
         (2, 'snmp'),
         (3, 'icmp');
 
-
-
-UPDATE Analytics.devices SET requested_metadata = '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]'; 
 UPDATE Analytics.devices SET management_hostname = '10.144.1.222' where device_id = 1;
 UPDATE Analytics.devices SET management_hostname = '10.144.1.1' where device_id = 2;
 UPDATE Analytics.devices SET management_hostname = '10.144.1.1' where device_id = 3;

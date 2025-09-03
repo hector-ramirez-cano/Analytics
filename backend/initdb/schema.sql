@@ -17,11 +17,19 @@ CREATE TABLE IF NOT EXISTS Analytics.devices (
     latitude            FLOAT        NOT NULL,
     longitude           FLOAT        NOT NULL,
     management_hostname VARCHAR(254) NOT NULL,
+    metadata            JSONB,
+    FOREIGN KEY (device_id) REFERENCES Analytics.items(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS Analytics.device_configuration (
+    device_id           INT          NOT NULL,
     requested_metadata  JSONB        NOT NULL,
     requested_metrics   JSONB        NOT NULL,
-    metadata            JSONB,
     available_values    JSONB,
-    FOREIGN KEY (device_id) REFERENCES Analytics.items(id) ON DELETE CASCADE
+    
+    snmp_configuration  JSONB,
+
+    FOREIGN KEY (device_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.device_data_sources(
