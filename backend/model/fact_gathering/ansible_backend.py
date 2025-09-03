@@ -2,7 +2,6 @@ import ansible_runner
 
 import backend.Config as Config
 from backend.model.ansible_status import AnsibleStatus
-from backend.model.device_state import DeviceStatus
 from backend.model.cache import cache
 
 def __extract_facts_from_playbook(runner) -> tuple[dict, dict]:
@@ -24,14 +23,14 @@ def __extract_facts_from_playbook(runner) -> tuple[dict, dict]:
 
             # Set status only if it hasn't failed
             if status.get(host) is None:
-                status[host] = DeviceStatus(ansible_status=AnsibleStatus.REACHABLE, msg="")
+                status[host] = { "ansible_status": {"status": AnsibleStatus.REACHABLE, "msg": ""} }
 
         if event['event'] == 'runner_on_unreachable':
             host = event['event_data']['host']
             res = event['event_data']['res']
 
             # Override status
-            status[host] = DeviceStatus(ansible_status=AnsibleStatus.DARK, msg=res['msg'])
+            status[host] = {"ansible_status": {"status": AnsibleStatus.DARK, "msg": res['msg']}}
 
     return metrics, status
 

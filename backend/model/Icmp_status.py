@@ -6,3 +6,5 @@ class IcmpStatus (Enum):
     TIMEOUT = 2,
     HOST_NOT_FOUND = 3,
     NAME_RESOLUTION_ERROR = 4,
+
+    UNKNOWN = -1

@@ -67,9 +67,7 @@ async def __ping_devices(hosts) -> tuple[dict, dict]:
             "icmp_loss_percent": loss
         }
 
-        status[host] = {
-            "icmp_status": icmp_status.name
-        }
+        status[host] = {"icmp_status": {"status": icmp_status, "msg": ""}}
 
     return metrics, status
 

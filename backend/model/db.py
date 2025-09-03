@@ -11,6 +11,7 @@ import backend.Config as Config
 from backend.model.device import Device
 from backend.model.cache import cache
 from backend.model.device_configuration import DeviceConfiguration
+from backend.model.device_state import DeviceStatus
 
 # TODO: Check when DB handle is no longer valid
 postgres_db_pool: Optional[ConnectionPool] = None
@@ -216,7 +217,7 @@ async def get_topology_as_json():
     }
 
 
-async def update_device_metadata(exposed_metrics: dict, metrics : dict, stats: dict):
+async def update_device_metadata(exposed_metrics: dict, metrics : dict, status: dict):
     """
     Inserts data that might change infrequently into the Postgres database, and updates local cache of devices
     :return: None
@@ -224,14 +225,14 @@ async def update_device_metadata(exposed_metrics: dict, metrics : dict, stats: d
     await __extract_device_metadata(metrics)
     devices = cache.devices
 
-    for device_hostname in stats:
+    for device_hostname in status:
         device = Device.find_by_management_hostname(devices, device_hostname)
 
         if device is None:
             continue
 
         # set state
-        device.state = stats[device_hostname]
+        device.state = DeviceStatus.make_from_dict(status[device_hostname])
 
         # set available_values, but only if it was not null since last call
         available_values = exposed_metrics.get(device_hostname)
