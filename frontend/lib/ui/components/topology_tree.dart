@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/ui/components/universal_detector.dart';
 
 class Section {
   final String name;
@@ -20,7 +21,7 @@ class Section {
 
 
 extension on TreeNode {
-  Icon get icon {
+  Widget get icon {
     const double iconSize = 16;
     if (isRoot) return const Icon(Icons.account_tree);
 
@@ -34,7 +35,10 @@ extension on TreeNode {
     }
 
     if (this is TreeNode<Device>) {
-      return const Icon(Icons.dns, size: iconSize,);
+      return UniversalDetector(
+        child: const Icon(Icons.dns, size: iconSize,),
+        setCursor: () => SystemMouseCursors.progress,
+      );
     }
 
     return const Icon(Icons.insert_drive_file, size: iconSize);
@@ -59,7 +63,6 @@ class TopologyTree extends StatelessWidget {
   TreeNode _makeDeviceTreeBranch(Group group) {
     var node = TreeNode<Group>(key: UniqueKey().toString(), data: group);
 
-
     for (Group subgroup in group.groups) {
       // if it doesn't contain devices, no point on showing it here
       if (!group.hasDevices()) {
@@ -76,21 +79,26 @@ class TopologyTree extends StatelessWidget {
     return node;
   }
 
-  TreeNode _makeGroupTreeBranch(Group group) {
-    var node = TreeNode<Group>(key: UniqueKey().toString(), data: group);
-
-    final groupOrder = List.generate(group.groups.length, (i) => i)
-      ..sort((a, b) =>
-          group.groups[b].childrenCount().compareTo(group.groups[a].childrenCount()));
-
-
-    for (final int index in groupOrder) {
-      var subgroup = group.groups[index];
-
-      node.add(_makeGroupTreeBranch(subgroup));
+  void _makeGroupsBranch(List<Group> groups, TreeNode root) {
+    groupOrder(List<Group> list) {
+      return List.generate(list.length, (i) => i)
+        ..sort((a, b) =>
+            list[b].childrenCount().compareTo(list[a].childrenCount()));
     }
 
-    return node;
+    makeGroupTreeBranch(group) {
+      var node = TreeNode<Group>(key: UniqueKey().toString(), data: group);
+      for (final int index in groupOrder(group.groups)) {
+        node.add(makeGroupTreeBranch(group.groups[index]));
+      }
+
+      return node;
+    }
+
+    for (final int index in groupOrder(groups)) {
+      root.add(makeGroupTreeBranch(groups[index]));
+    }
+
   }
 
   TreeNode _makeTree() {
@@ -103,13 +111,8 @@ class TopologyTree extends StatelessWidget {
       devices.add(_makeDeviceTreeBranch(group));
     }
 
-    final groupOrder = List.generate(topology.groups.length, (i) => i)
-      ..sort((a, b) => topology.groups[b].childrenCount().compareTo(topology.groups[a].childrenCount()));
-    for (final int index in groupOrder) {
-      var subgroup = topology.groups[index];
-
-      groups.add(_makeGroupTreeBranch(subgroup));
-    }
+    _makeGroupsBranch(topology.groups, groups);
+    
 
     root.addAll([devices, groups]);
     return root;
