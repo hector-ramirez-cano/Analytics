@@ -8,12 +8,14 @@ class Device implements HoverTarget {
   final String name;
   final Offset position;    // x, y
   final Offset geoPosition; // Lat , Long
+  final String mgmtHostname;
 
   Device({
     required this.id,
     required this.position,
     required this.name,
     required this.geoPosition,
+    required this.mgmtHostname,
   });
 
   factory Device.fromJson(Map<String, dynamic> json) {
@@ -27,7 +29,8 @@ class Device implements HoverTarget {
       geoPosition: Offset(
         json['geocoordinates'][0] as double,
         json['geocoordinates'][1] as double,
-      )
+      ),
+      mgmtHostname: json['management-hostname']
     );
   }
 

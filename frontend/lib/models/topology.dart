@@ -27,10 +27,7 @@ class Topology {
     }
 
     List<Group> groups = Group.deviceGroupFromJson(json['groups'], itemsLocal);
-
-    
     Group.fillGroupMembers(json['groups'], itemsLocal);
-    
 
     return Topology(items: itemsLocal, groups: groups);
   }

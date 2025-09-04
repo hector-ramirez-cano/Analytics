@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/ui/screens/edit/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class DeviceEditView extends StatefulWidget {
-  
-  final String deviceName;
-  final String managementHostname;
-  final Offset geoPosition;
+  final Device device;
 
 
   const DeviceEditView({
     super.key,
-    required this.deviceName,
-    required this.managementHostname,
-    required this.geoPosition,
+    required this.device
   });
 
   @override
@@ -26,7 +22,7 @@ class _DeviceEditViewState extends State<DeviceEditView> {
   bool editingHostname = false;
 
   AbstractSettingsTile _makeDeviceInput() {
-    var child = makeTrailingInput(widget.deviceName, editingDeviceName);
+    var child = makeTrailingInput(widget.device.name, editingDeviceName);
 
     onEdit() {
       setState(() {
@@ -44,7 +40,7 @@ class _DeviceEditViewState extends State<DeviceEditView> {
   }
 
   AbstractSettingsTile _makeGeopositionInput() {
-    var child = Text("${widget.geoPosition.dx}, ${widget.geoPosition.dy}");
+    var child = Text("${widget.device.geoPosition.dx}, ${widget.device.geoPosition.dy}");
 
     onEdit() {}
 
@@ -57,7 +53,7 @@ class _DeviceEditViewState extends State<DeviceEditView> {
   }
 
   AbstractSettingsTile _makeHostnameInput() {
-    var child = makeTrailingInput(widget.managementHostname, editingHostname);
+    var child = makeTrailingInput(widget.device.mgmtHostname, editingHostname);
 
     onEdit() {
       setState(() {
@@ -87,7 +83,7 @@ class _DeviceEditViewState extends State<DeviceEditView> {
     return Column(
       children: [ Expanded( child: SettingsList( sections: [
               SettingsSection(
-                title: Text(widget.deviceName),
+                title: Text(widget.device.name),
                 tiles: [
                   _makeDeviceInput(),
                   _makeHostnameInput(),

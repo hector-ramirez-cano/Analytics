@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:network_analytics/models/device.dart';
+import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/ui/screens/edit/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class LinkEditView extends StatefulWidget {
-  final Device deviceA;
-  final Device deviceB;
-  final LinkType linkType;
+  final Link link;
   final Topology topology;
 
 
   const LinkEditView({
     super.key,
-    required this.deviceA,
-    required this.deviceB,
-    required this.linkType,
+    required this.link,
     required this.topology, 
   });
 
@@ -49,7 +46,7 @@ class _LinkEditViewState extends State<LinkEditView> {
 
   DropdownButton _makeLinkTypeDropdown(LinkType linkType) {
     return DropdownButton<String>(
-      value: linkType.name,
+    value: linkType.name,
       hint: const Text("Link type"),
       items: LinkType.values
           .map((type) =>
@@ -85,7 +82,7 @@ class _LinkEditViewState extends State<LinkEditView> {
   }
 
   AbstractSettingsTile _makeLinkSelection() {
-    var child = _makeLinkTypeDropdown(widget.linkType);
+    var child = _makeLinkTypeDropdown(widget.link.linkType);
 
     return SettingsTile(
       title: const Text("Link Type"),
@@ -116,14 +113,14 @@ class _LinkEditViewState extends State<LinkEditView> {
               SettingsSection(
                 title: Text("Device A"),
                 tiles: [
-                  _makeDeviceSelection("Device", widget.deviceA),
+                  _makeDeviceSelection("Device", widget.link.sideA),
                   _makeInterfaceInput("Interface", deviceAIface, onEditA, editingIfaceA),
                 ],
               ),
               SettingsSection(
                 title: Text("Device B"),
                 tiles: [
-                  _makeDeviceSelection("Device", widget.deviceB),
+                  _makeDeviceSelection("Device", widget.link.sideB),
                   _makeInterfaceInput("Interface", deviceBIface, onEditB, editingIFaceB),
                 ],
               ),

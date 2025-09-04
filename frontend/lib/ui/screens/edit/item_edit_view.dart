@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/models/device.dart';
-import 'package:network_analytics/models/link_type.dart';
+import 'package:network_analytics/models/group.dart';
+import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
-import 'package:network_analytics/ui/components/enums/item_type.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/screens/edit/device_edit_view.dart';
+import 'package:network_analytics/ui/screens/edit/empty_edit_view.dart';
 import 'package:network_analytics/ui/screens/edit/link_edit_view.dart';
 
 class ItemEditView extends StatelessWidget {
@@ -16,25 +17,27 @@ class ItemEditView extends StatelessWidget {
   });
 
 
-  Widget _makeSettingsView(Topology topology) {
-    var type = ItemType.link;
-    Device deviceA = Device(id: -1, position: Offset.zero, name: "Xochimilco-lan", geoPosition: Offset.zero);
-    Device deviceB = Device(id: -1, position: Offset.zero, name: "Tlatelolco-lan", geoPosition: Offset.zero);
-    LinkType linkType = LinkType.copper;
+  Widget _makeSettingsView(Topology topology, dynamic selected) {
+    var type = selected.runtimeType;
+
+    if (selected == null) {
+      return EmptyEditView();
+    }
 
     // TODO: show change resume before applying to DB
     switch (type) {
-      case ItemType.device:
-        return DeviceEditView(deviceName: "Nombre", managementHostname: "hostname", geoPosition: Offset(-21.54315, 54.455143),);
+      case const (Device):
 
-      case ItemType.link:
-        return LinkEditView(deviceA: deviceA, deviceB: deviceB, linkType: linkType, topology: topology);
+        return DeviceEditView(device: selected);
+
+      case const (Link):
+        return LinkEditView(link: selected, topology: topology);
         
-      case ItemType.group:
+      case const (Group):
         // TODO: Handle this case.
         throw UnimplementedError();
+        
 
-      
       // Keep it, in case new type are added
       // ignore: unreachable_switch_default
       default:
@@ -48,6 +51,7 @@ class ItemEditView extends StatelessWidget {
     return Consumer (builder: 
       (context, ref, child) {
         final topologyAsync = ref.watch(topologyProvider);
+        final itemEditSelection = ref.watch(itemEditSelectionNotifier);
 
         onRetry () async => {
           ref.refresh(topologyProvider.future)
@@ -56,7 +60,7 @@ class ItemEditView extends StatelessWidget {
         return topologyAsync.when(
           loading: () => RetryIndicator(onRetry: onRetry, isLoading: true),
           error: (error, st) => RetryIndicator(onRetry: onRetry, isLoading: false, error: error.toString(),),
-          data: (topology) => _makeSettingsView(topology),
+          data: (topology) => _makeSettingsView(topology, itemEditSelection.selected),
         );
       },
     );
