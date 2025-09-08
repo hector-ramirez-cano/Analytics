@@ -17,7 +17,12 @@ class ItemEditView extends StatelessWidget {
     super.key,
   });
 
+  Widget _makeAnimatedSettings(Topology topology, dynamic selected) {
+    return AnimatedSwitcher(duration: const Duration (milliseconds: 300), child: _makeSettingsView(topology, selected),);
+  }
 
+
+  // TODO: Possibly remove selected
   Widget _makeSettingsView(Topology topology, dynamic selected) {
     var type = selected.runtimeType;
 
@@ -59,7 +64,7 @@ class ItemEditView extends StatelessWidget {
         return topologyAsync.when(
           loading: () => RetryIndicator(onRetry: onRetry, isLoading: true),
           error: (error, st) => RetryIndicator(onRetry: onRetry, isLoading: false, error: error.toString(),),
-          data: (topology) => _makeSettingsView(topology, itemEditSelection.selected),
+          data: (topology) => _makeAnimatedSettings(topology, itemEditSelection.selected),
         );
       },
     );

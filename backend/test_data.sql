@@ -1,5 +1,6 @@
 SELECT * FROM Analytics.items;
 SELECT * FROM Analytics.devices;
+SELECT * FROM Analytics.device_configuration;
 SELECT * FROM Analytics.links;
 SELECT * FROM Analytics.groups;
 SELECT * FROM Analytics.group_members;
