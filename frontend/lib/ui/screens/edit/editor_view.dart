@@ -28,8 +28,7 @@ class ItemEditView extends StatelessWidget {
     // TODO: show change resume before applying to DB
     switch (type) {
       case const (Device):
-
-        return DeviceEditView(device: selected);
+        return DeviceEditView(device: selected, topology: topology,);
 
       case const (Link):
         return LinkEditView(link: selected, topology: topology);

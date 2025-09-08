@@ -39,4 +39,16 @@ class Topology {
   List<Link> getLinks() {
     return items.values.whereType<Link>().toList();
   }
+
+  List<Group> getGroups() {
+    return items.values.whereType<Group>().toList();
+  }
+
+  List<Link> getDeviceLinks(Device device) {
+    return getLinks().where((link) => link.sideA.id == device.id || link.sideB.id == device.id).toList();
+  }
+
+  List<Group> getDeviceGroups(Device device) {
+    return getGroups().where((group) => group.hasDevice(device)).toList();
+  }
 }

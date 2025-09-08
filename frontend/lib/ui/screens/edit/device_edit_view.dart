@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/device.dart';
+import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/screens/edit/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class DeviceEditView extends ConsumerStatefulWidget {
   final Device device;
+  final Topology topology;
 
   static const Icon nameIcon         = Icon(Icons.label);
   static const Icon mgmtHostnameIcon = Icon(Icons.dns);
   static const Icon geoPositionIcon  = Icon(Icons.map);
   static const Icon metadataIcon     = Icon(Icons.list);
+  static const Icon linksIcon        = Icon(Icons.settings_ethernet);
+  static const Icon groupsIcon       = Icon(Icons.folder);
 
   const DeviceEditView({
     super.key,
-    required this.device
+    required this.device,
+    required this.topology,
   });
 
   @override
@@ -111,7 +116,6 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
       onContentEdit: onEditDeviceMgmtHostnameContent,
     );
 
-
     return SettingsTile(
       title: Text("Hostname"),
       leading: const Icon(Icons.dns),
@@ -122,10 +126,36 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
 
   AbstractSettingsTile _makeMetadataInput() {
     return SettingsTile(
-      title: const Text("Requested Metadata"),
+      title: const Text("Metadata recolectada"),
       leading: DeviceEditView.metadataIcon,
       onPressed: null
     );
+  }
+
+  List<AbstractSettingsTile> _makeLinks(WidgetRef ref) {
+    List<AbstractSettingsTile> list = [];
+    for (var link in widget.topology.getDeviceLinks(widget.device)) {
+      list.add(SettingsTile(
+        title: Text(link.sideB.name),
+        leading: DeviceEditView.linksIcon,
+        onPressed: (_) => ref.read(itemEditSelectionNotifier.notifier).setSelected(link),
+      ));
+    }
+
+    return list;
+  }
+
+  List<AbstractSettingsTile> _makeGroups(WidgetRef ref) {
+    List<AbstractSettingsTile> list = [];
+    for (var group in widget.topology.getDeviceGroups(widget.device)) {
+      list.add(SettingsTile(
+        title: Text(group.name),
+        leading: DeviceEditView.groupsIcon,
+        onPressed: (_) => ref.read(itemEditSelectionNotifier.notifier).setSelected(group),
+      ));
+    }
+
+    return list;
   }
 
   @override
@@ -134,7 +164,7 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
 
     // if item changed, reset the text fields
       ref.listen(itemEditSelectionNotifier, (previous, next) {
-        if (previous?.selected != next.selected) {
+        if (previous?.selected != next.selected && next.selected is Device) {
           _nameInputController.text = next.selected.name;
           _hostnameInputController.text = next.selected.mgmtHostname;
         }
@@ -151,6 +181,16 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
                   _makeMetadataInput(),
                 ],
               ),
+
+              SettingsSection(
+                title: Text("Links"),
+                tiles: _makeLinks(ref),
+              ),
+
+              SettingsSection(
+                title: Text("Grupos"),
+                tiles: _makeGroups(ref)
+              )
             ],
           ),
         ) ,

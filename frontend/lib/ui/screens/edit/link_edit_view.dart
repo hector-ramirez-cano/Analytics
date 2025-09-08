@@ -63,17 +63,21 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   }
 
 
-  DropdownButton _makeDeviceDropdown(Device device, String hint) {
+  DropdownButton _makeDeviceDropdown(Device device, Device other, String hint) {
     // TODO: dropdown with search
-    return DropdownButton<String>(
-      value: (widget.topology.getDevices().any((d) => d.name == device.name))
+    final initialValue = (widget.topology.getDevices().any((d) => d.name == device.name))
           ? device.name
-          : null,
+          : null;
+
+    final options = widget.topology.getDevices()
+          .where((dev) => dev.id != other.id)
+          .map((dev) => DropdownMenuItem(value: dev.name, child: Text(dev.name)))
+          .toList();
+
+    return DropdownButton<String>(
+      value: initialValue,
       hint: Text(hint),
-      items: widget.topology.getDevices()
-          .map((dev) =>
-              DropdownMenuItem(value: dev.name, child: Text(dev.name)))
-          .toList(),
+      items: options,
       onChanged: (val) {}, // TODO: Functionality
       isExpanded: true,
     );
@@ -100,6 +104,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
       initialText: notifier.selected.sideAIface,
       enabled: itemEditSelection.editingLinkIfaceA,
       controller: _sideAIfaceInputController,
+      showEditIcon: true,
       onEditToggle: onEditSideAIface,
       onContentEdit: onEditSideAIfaceContent,
     );
@@ -120,6 +125,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
       initialText: notifier.selected.sideBIface,
       enabled: itemEditSelection.editingLinkIfaceB,
       controller: _sideBIfaceInputController,
+      showEditIcon: true,
       onEditToggle: onEditSideBIface,
       onContentEdit: onEditSideBIfaceContent,
     );
@@ -132,8 +138,8 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     );
   }
 
-  AbstractSettingsTile _makeDeviceSelection(String title, Device device) {
-    var child = _makeDeviceDropdown(device, "Select device $title");
+  AbstractSettingsTile _makeDeviceSelection(String title, Device device, Device other) {
+    var child = _makeDeviceDropdown(device, other, "Select device $title");
 
     return SettingsTile(
       title: Text(title),
@@ -158,19 +164,28 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
 
   @override
   Widget build(BuildContext context) {
+
+    // if item changed, reset the text fields
+      ref.listen(itemEditSelectionNotifier, (previous, next) {
+        if (previous?.selected != next.selected && next.selected is Link) {
+          _sideAIfaceInputController.text = next.selected.sideAIface;
+          _sideBIfaceInputController.text = next.selected.sideBIface;
+        }
+      });
+
     return Column(
       children: [ Expanded( child: SettingsList( sections: [
               SettingsSection(
                 title: Text("Device A"),
                 tiles: [
-                  _makeDeviceSelection("Device", widget.link.sideA),
+                  _makeDeviceSelection("Device", widget.link.sideA, widget.link.sideB),
                   _makeInterfaceAInput(),
                 ],
               ),
               SettingsSection(
                 title: Text("Device B"),
                 tiles: [
-                  _makeDeviceSelection("Device", widget.link.sideB),
+                  _makeDeviceSelection("Device", widget.link.sideB, widget.link.sideA),
                   _makeInterfaceBInput(),
                 ],
               ),

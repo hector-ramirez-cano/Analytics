@@ -41,6 +41,7 @@ class Group {
     );
   }
 
+  /// Creates a list of groups from a given [json] array. Queries the items from an [items] map of {int -> dynamic}
   static List<Group> deviceGroupFromJson(List<dynamic> json, Map<int, dynamic> items) {
     List<Group> members = [];
 
@@ -53,6 +54,7 @@ class Group {
     return members;
   }
 
+  /// Populates the members of a group, with a given [json] array. Queries the items from an [items] map of {int -> dynamic}
   static void fillGroupMembers(List<dynamic> json, Map<int, dynamic> items) {
     for (var group in json) {
       int id = group["id"];
@@ -63,10 +65,18 @@ class Group {
     }
   }
 
+  /// Returns whether this group, or any nested groups contain at least one device. Short circuits once at least one is found
   bool hasDevices() {
     return devices.isNotEmpty || groups.any((group) => group.hasDevices());
   }
 
+  /// Looks for the device in this group, or any nested groups by ID, regardless of whether the instance is the same.
+  bool hasDevice(Device device) {
+    // O(n), but can't use raw container 'contains', because instances might be different, but the same id
+    return devices.any((dev) => dev.id == device.id) || groups.any((group) => group.hasDevice(device));
+  }
+
+  /// Returns the count of children only in this group
   num childrenCount() {
     return members.length +
       groups.fold<num>(0, (sum, group) => sum + group.childrenCount());

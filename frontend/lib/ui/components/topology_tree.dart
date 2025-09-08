@@ -106,15 +106,21 @@ class TopologyTree extends StatelessWidget {
 
     var devices = TreeNode<Section>(key: UniqueKey().toString(), data: Section(name: "Dispositivos", icon: Icons.dns));
     var groups  = TreeNode<Section>(key: UniqueKey().toString(), data: Section(name: "Grupos", icon: Icons.folder));
+    
+    if (includeDevices) {
+      for (Group group in topology.groups) {
+        devices.add(_makeDeviceTreeBranch(group));
+      }
 
-    for (Group group in topology.groups) {
-      devices.add(_makeDeviceTreeBranch(group));
+      root.add(devices);
     }
 
-    _makeGroupsBranch(topology.groups, groups);
-    
+    if (includeGroups) {
+      _makeGroupsBranch(topology.groups, groups);
 
-    root.addAll([devices, groups]);
+      root.add(groups);
+    }
+
     return root;
   }
 
