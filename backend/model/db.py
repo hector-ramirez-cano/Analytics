@@ -115,16 +115,18 @@ def __parse_link(cur: ServerCursor):
     :return: list of links
     """
     links = []
-    cur.execute("SELECT link_id, side_a, side_b, link_type, link_subtype FROM Analytics.links")
+    cur.execute("SELECT link_id, side_a, side_b, side_a_iface, side_b_iface, link_type, link_subtype FROM Analytics.links")
     for row in cur.fetchall():
         link = {
             "id": int(row[0]),
             "side-a": int(row[1]),
             "side-b": int(row[2]),
-            "link-type": row[3]
+            "side-a-iface": row[3],
+            "side-b-iface": row[4],
+            "link-type": row[5]
         }
-        if row[4] is not None:
-            link["link-subtype"] = row[4]
+        if row[6] is not None:
+            link["link-subtype"] = row[6]
         links.append(link)
     cache.links = links
 
@@ -284,7 +286,7 @@ async def update_device_analytics(metrics):
         point = (
             Point("avg_latency")
             .tag("rtt-latency", hostname)
-            .field("rtt-latency", float(metrics[hostname]["avg_latency"][0]))
+            .field("rtt-latency", float(metrics[hostname].get("avg_latency", [0])[0]))
         )
 
         influx_db_write_api.write(bucket=bucket, org="C5i", record=point)

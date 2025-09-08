@@ -43,6 +43,8 @@ CREATE TABLE IF NOT EXISTS Analytics.links (
     link_id   INT PRIMARY KEY,
     side_a    INT NOT NULL,
     side_b    INT NOT NULL,
+    side_a_iface VARCHAR(254) NOT NULL,
+    side_b_iface VARCHAR(254) NOT NULL,
     link_type LinkType NOT NULL,
     link_subtype VARCHAR(254),
 
