@@ -81,4 +81,13 @@ class Group {
     return members.length +
       groups.fold<num>(0, (sum, group) => sum + group.childrenCount());
   }
+
+  @override
+  String toString() {
+    return members.map((member) => {
+      if (member is Device) { member.name }
+      else if (member is Group) { member.name }
+      else ""
+    }).toList().toString();
+  }
 }

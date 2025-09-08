@@ -34,7 +34,7 @@ class ItemEditView extends StatelessWidget {
         return LinkEditView(link: selected, topology: topology);
         
       case const (Group):
-        return GroupEditView(topology: topology,);
+        return GroupEditView(group: selected, topology: topology,);
         
 
       // Keep it, in case new type are added

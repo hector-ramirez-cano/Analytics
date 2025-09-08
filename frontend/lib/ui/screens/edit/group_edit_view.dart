@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/ui/components/badge_button.dart';
 import 'package:network_analytics/ui/screens/edit/device_edit_view.dart';
 import 'package:network_analytics/ui/screens/edit/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class GroupEditView extends ConsumerStatefulWidget {
+  final Group group;
   final Topology topology;
 
   static const Icon nameIcon = Icon(Icons.label);
@@ -15,6 +18,7 @@ class GroupEditView extends ConsumerStatefulWidget {
 
   const GroupEditView({
     super.key,
+    required this.group,
     required this.topology,
   });
 
@@ -48,25 +52,22 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   }
 
   void onChangedMembers(int id, bool status) {
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
-
     var item = widget.topology.items[id];
-    var members = notifier.selected.members;
+    var members = widget.group.members;
 
     if (status) { members.add(item); } 
     else        { members.remove(item); }
 
-    var group = notifier.selected.cloneWith(members: members);
+    var group = widget.group.cloneWith(members: members);
 
     ref.read(itemEditSelectionNotifier.notifier).changeItem(group);
   }
 
   AbstractSettingsTile _makeNameInput() {
     final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
 
     var editInput = EditTextField(
-      initialText: notifier.selected.name,
+      initialText: widget.group.name,
       enabled: itemEditSelection.editingGroupName,
       controller: _nameInputController,
       showEditIcon: true,
@@ -84,24 +85,40 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   }
 
   AbstractSettingsTile _makeMembersInput() {
+    List<BadgeButton> members = [];
+    final notifier = ref.watch(itemEditSelectionNotifier.notifier); 
+
+    for (var member in widget.group.members) {
+      if (member is! Device && member is! Group) { continue; }
+
+      Color backgroundColor = member is Device ? Colors.blueGrey : Colors.teal;
+      TextStyle style = TextStyle(color: Colors.white);
+      BadgeButton button = BadgeButton(
+        backgroundColor: backgroundColor,
+        text: member.name,
+        textStyle: style,
+        onPressed: () => {notifier.setSelected(member)}
+      );
+      members.add(button);
+    }
+    
     return SettingsTile(
       title: Text("Miembros"),
       leading: GroupEditView.membersIcon,
-      trailing: makeTrailing(Text(""), onEditMembers),
+      trailing: makeTrailing(Wrap(children: members,), onEditMembers),
       onPressed: null
     );
   }
 
   Widget _makeMembersSelectionInput() {
     var itemEditSelection = ref.watch(itemEditSelectionNotifier); 
-    var notifier = ref.read(itemEditSelectionNotifier.notifier);
 
     if (!itemEditSelection.editingGroupMembers) { return SizedBox.shrink(); }
 
     var options = widget.topology.getDevices();
     var checkboxes = options.map((option) {
           return CheckboxListTile(
-            value: notifier.selected.memberKeys.contains(option.id),
+            value: widget.group.memberKeys.contains(option.id),
             onChanged: (state) => onChangedMembers(option.id, state ?? false),
             title: Text(option.name),
           );
@@ -120,11 +137,10 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   }
 
   Widget _makeSettingsView() {
-    var notifier = ref.read(itemEditSelectionNotifier.notifier);
     return Column(
       children: [ Expanded( child: SettingsList( sections: [
               SettingsSection(
-                title: Text(notifier.selected.name),
+                title: Text(widget.group.name),
                 tiles: [ _makeNameInput(), _makeMembersInput() ]
               )])),
         // Save button and cancel button
