@@ -1,42 +1,125 @@
 import 'package:flutter/material.dart';
+import 'package:string_similarity/string_similarity.dart';
 
-class CheckboxSelectDialog extends StatelessWidget {
-  final Set<dynamic> options;
-  final Function(dynamic) isSelected;
-  final Function(dynamic, bool?) onChanged;
-  final Function(dynamic) title;
+class CheckboxSelectDialog<T> extends StatefulWidget {
+  final Set<T> options;
+  final Function(T) isSelected;
+  final Function(T, bool?) onChanged;
+  final String Function(T) toText;
+  final VoidCallback onClose;
 
   const CheckboxSelectDialog({
     super.key,
     required this.options,
     required this.isSelected,
     required this.onChanged,
-    required this.title
+    required this.onClose,
+    required this.toText,
   });
-  
 
   @override
-  Widget build(BuildContext context) {
-    var checkboxes = options.map((option) {
-          return CheckboxListTile(
-            value: isSelected(option),
-            onChanged: (state) => onChanged(option, state),
-            title: Text(title(option)),
-          );
-        }).toList();
+  State<CheckboxSelectDialog> createState() => _CheckboxSelectDialogState<T>();
+}
 
-    return Container(
-      color: Color.fromRGBO(100, 100, 100, 0.5),
-        child: Padding(
-          padding: EdgeInsetsGeometry.directional(start: 50, end: 50, top: 50, bottom: 150),
-          child: SingleChildScrollView( 
-            child: Container(
-              color: Colors.white,
-              child: Column(children: checkboxes),
-            )
-          )
+class _CheckboxSelectDialogState<T> extends State<CheckboxSelectDialog> {
+  String filterText = "";
+
+  List<T> fuzzySearch(String query, List<T> items) {
+    final List<MapEntry<T, double>> ratings = items.map((item) {
+      final score = query.similarityTo(widget.toText(item));
+      return MapEntry(item, score);
+    }).toList();
+
+    // Sort by score descending
+    ratings.sort((a, b) => b.value.compareTo(a.value));
+
+    // Return just the items, ordered
+    return ratings.map((entry) => entry.key).toList();
+  }
+
+
+  Widget _makeSearchBar() {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: TextField(
+          decoration: const InputDecoration(
+            hintText: "Filtrar...",
+            prefixIcon: Icon(Icons.search),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8.0)),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          onChanged: (text) {
+            setState(() {
+              filterText = text;
+            });
+          },
         ),
+      ),
     );
   }
 
+  Widget _makeCloseButton() {
+    return IconButton(
+      icon: const Icon(Icons.close),
+      onPressed: widget.onClose,
+    );
+  }
+
+  Widget _makeScrollList() {
+    List<T> list = widget.options.toList() as List<T>;
+    if (filterText.isNotEmpty) {
+      List<T> options = widget.options.toList() as List<T>;
+      list = fuzzySearch(filterText, options);
+    }
+
+    var checkboxes = list.map((option) {
+      return CheckboxListTile(
+        value: widget.isSelected(option),
+        onChanged: (state) => widget.onChanged(option, state),
+        title: Text(widget.toText(option)),
+      );
+    }).toList();
+
+    
+
+    return Expanded(
+      child: SingleChildScrollView(
+        child: Column(
+          children: checkboxes,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    
+    return Container(
+      color: const Color.fromRGBO(100, 100, 100, 0.5),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(50, 50, 50, 150),
+        child: Center(
+          child: Container(
+            color: Colors.white,
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    _makeSearchBar(),
+                    _makeCloseButton(),
+                  ],
+                ),
+                // Scrollable list
+                _makeScrollList()
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+  }
 }

@@ -121,11 +121,13 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
 
     
     var options = widget.topology.getDevices().toSet();
+
     isSelected(option) => notifier.selected.memberKeys.contains(option.id);
     onChanged(option, state) => onChangedMembers(option.id, state ?? false);
-    title(option) => option.name;
+    onClose() => notifier.set(editingGroupMembers: false);
+    toText(device) => (device as Device).name;
     
-    return CheckboxSelectDialog(options: options, isSelected: isSelected, onChanged: onChanged, title: title);
+    return CheckboxSelectDialog(options: options, isSelected: isSelected, onChanged: onChanged, onClose: onClose, toText: toText,);
   }
 
   Widget _makeSettingsView() {

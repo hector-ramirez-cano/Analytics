@@ -10,9 +10,9 @@ class Device implements HoverTarget {
   final Offset geoPosition; // Lat , Long
   final String mgmtHostname;
 
-  final Set requestedMetadata;
-  final Set requestedMetrics;
-  final Set availableValues;
+  final Set<String> requestedMetadata;
+  final Set<String> requestedMetrics;
+  final Set<String> availableValues;
 
   Device({
     required this.id,
@@ -20,9 +20,9 @@ class Device implements HoverTarget {
     required this.name,
     required this.geoPosition,
     required this.mgmtHostname,
-    required requestedMetadata,
-    required requestedMetrics,
-    required availableValues,
+    required Set<String> requestedMetadata,
+    required Set<String> requestedMetrics,
+    required Set<String> availableValues,
     
   }): 
     requestedMetadata = Set.unmodifiable(requestedMetadata),
@@ -55,9 +55,9 @@ class Device implements HoverTarget {
         json['geocoordinates'][1] as double,
       ),
       mgmtHostname: json['management-hostname'],
-      requestedMetadata: Set.from(json['configuration']['requested-metadata']),
-      requestedMetrics:  Set.from(json['configuration']['requested-metrics']),
-      availableValues:   Set.from(json['configuration']['available-values']),
+      requestedMetadata: Set<String>.from(json['configuration']['requested-metadata']),
+      requestedMetrics:  Set<String>.from(json['configuration']['requested-metrics']),
+      availableValues:   Set<String>.from(json['configuration']['available-values']),
     );
   }
 

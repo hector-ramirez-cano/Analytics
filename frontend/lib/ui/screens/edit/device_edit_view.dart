@@ -195,17 +195,21 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
 
 
   Widget _buildValueSelectionInput() {
-    var itemEditSelection = ref.watch(itemEditSelectionNotifier); 
+    final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
+    final notifier = ref.watch(itemEditSelectionNotifier.notifier); 
     bool enabled = itemEditSelection.editingDeviceMetrics || itemEditSelection.editingDeviceMetadata;
 
     if (!enabled) { return SizedBox.shrink(); }
 
-    isSelected (option) => widget.device.availableValues.contains(option);
+    var pool = itemEditSelection.editingDeviceMetrics ? widget.device.requestedMetrics : widget.device.requestedMetadata;
+
+    isSelected (option) => pool.contains(option);
     onChanged (option, state) => {}; // TODO: Functionality
-    title(option) => title;
+    onClose () => notifier.set(editingDeviceMetadata: false, editingDeviceMetrics: false); 
+    toText(option) => option as String;
     var options = widget.device.availableValues;
 
-    return CheckboxSelectDialog(options: options, isSelected: isSelected, onChanged: onChanged, title: title,);
+    return CheckboxSelectDialog(options: options, isSelected: isSelected, onChanged: onChanged, onClose: onClose, toText: toText,);
   }
 
   Widget _buildConfigurationPage() {

@@ -1,12 +1,10 @@
-
-// TODO: Make generic, to also hold groups and links
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link.dart';
 
 class Group {
   final int id;
   final String name;
-  final List<dynamic> members;
+  final Set<dynamic> members;
   final bool isDisplayGroup;
 
   Group({
@@ -14,12 +12,12 @@ class Group {
     required members,
     required this.name,
     required this.isDisplayGroup,
-  }): members = List.unmodifiable(members);
+  }): members = Set.unmodifiable(members);
   
-  Group cloneWith({int? id, String? name, List<dynamic>? members, bool? isDisplayGroup}) {
+  Group cloneWith({int? id, String? name, Set<dynamic>? members, bool? isDisplayGroup}) {
     return Group(
       id: id ?? this.id,
-      members: List.from(members ?? this.members), // Deep copy of the list, so it doesn't modify the original
+      members: Set.from(members ?? this.members), // Deep copy of the set, so it doesn't modify the original
       name: name ?? this.name,
       isDisplayGroup: isDisplayGroup ?? this.isDisplayGroup
     );
@@ -59,7 +57,7 @@ class Group {
         members.add(items[member]);
       }
 
-      items[id] = (items[id] as Group).cloneWith(members: [...oldMembers, ...members]);
+      items[id] = (items[id] as Group).cloneWith(members: {...oldMembers, ...members});
     }
   }
 
