@@ -94,10 +94,6 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     }
   }
 
-  void setEditingGroupMembers(bool editing) {
-    set(editingGroupMembers: editing);
-  }
-
   void changeItem(dynamic item) {
     var topology = state.changes;
     topology.items[item.id] = item;
@@ -105,6 +101,13 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     set(changes: topology, keepState: true);
   }
 
+  void discard() {
+    set(changes: Topology(items: {}, groups: []));
+  }
+
+  bool get hasChanges {
+    return state.changes.items.isNotEmpty;
+  }
 
   dynamic get selected {
     var changed = state.changes.items[state.selected.id];

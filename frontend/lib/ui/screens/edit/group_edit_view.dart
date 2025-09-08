@@ -28,11 +28,13 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   @override
   void initState() {
     super.initState();
-    _nameInputController = TextEditingController(text: ref.read(itemEditSelectionNotifier).selected.name);
+    final selected = ref.read(itemEditSelectionNotifier).selected;
+
+    _nameInputController = TextEditingController(text: selected.name);
   }
 
   void onEditName   () => ref.read(itemEditSelectionNotifier.notifier).toggleEditingGroupName();
-  void onEditMembers() => ref.read(itemEditSelectionNotifier.notifier).setEditingGroupMembers(true);
+  void onEditMembers() => ref.read(itemEditSelectionNotifier.notifier).set(editingGroupMembers: true);
 
   void onContentEdit(String text) {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
@@ -126,19 +128,23 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
                 tiles: [ _makeNameInput(), _makeMembersInput() ]
               )])),
         // Save button and cancel button
-        makeFooter(),
+        makeFooter(ref),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer (builder:
-      (context, ref, child) {
-        return Stack(children: [
-          _makeSettingsView(),
-          _makeMembersSelectionInput()
-        ],);
-    });
+      // if item changed, reset the text fields
+      ref.listen(itemEditSelectionNotifier, (previous, next) {
+        if (previous?.selected != next.selected) {
+          _nameInputController.text = next.selected.name;
+        }
+      });
+
+      return Stack(children: [
+        _makeSettingsView(),
+        _makeMembersSelectionInput()
+      ],);    
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
 
 class EditTextField extends StatelessWidget {
@@ -104,22 +106,27 @@ Widget makeTrailing(Widget child, VoidCallback onEdit, {bool showEditIcon = true
   );
 }
 
-Widget makeFooter() {
+Widget makeFooter(WidgetRef ref) {
   ButtonStyle saveStyle = ElevatedButton.styleFrom(backgroundColor: Colors.blue,);
   const TextStyle saveLabelStyle = TextStyle(color: Colors.white);
 
-  onCancel() => {};
-  onSave() => {};
+  final notifier = ref.read(itemEditSelectionNotifier.notifier);
+
+  onCancel() => {
+    notifier.discard()
+  }; // TODO: Funcionality
+  onSave() => {}; // TODO: Funcionality
 
   var cancelButton = ElevatedButton(
     onPressed: () => onCancel(),
-    child: const Text("Cancel"),
+    child: const Text("Descartar"),
   );
 
   var saveButton = ElevatedButton(
-    onPressed: () => onSave,
+    onPressed: notifier.hasChanges ? onSave : null ,
     style: saveStyle,
-    child: const Text("Save", style: saveLabelStyle,),
+
+    child: const Text("Guardar cambios", style: saveLabelStyle,),
   );
 
   return SizedBox(

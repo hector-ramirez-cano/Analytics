@@ -30,9 +30,12 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
   @override
   void initState() {
     super.initState();
-    _nameInputController = TextEditingController(text: ref.read(itemEditSelectionNotifier).selected.name);
-    _hostnameInputController = TextEditingController(text: ref.read(itemEditSelectionNotifier).selected.mgmtHostname);
+    
+    var selected = ref.read(itemEditSelectionNotifier).selected;
+    _nameInputController = TextEditingController(text: selected.name);
+    _hostnameInputController = TextEditingController(text: selected.mgmtHostname);
   }
+
 
   void onEditDeviceName() => ref.read(itemEditSelectionNotifier.notifier).set(editingDeviceName: true);
   void onEditDeviceHostname() => ref.read(itemEditSelectionNotifier.notifier).set(editingHostname: true);
@@ -129,6 +132,14 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
   Widget build(BuildContext context) {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
 
+    // if item changed, reset the text fields
+      ref.listen(itemEditSelectionNotifier, (previous, next) {
+        if (previous?.selected != next.selected) {
+          _nameInputController.text = next.selected.name;
+          _hostnameInputController.text = next.selected.mgmtHostname;
+        }
+      });
+
     return Column(
       children: [ Expanded( child: SettingsList( sections: [
               SettingsSection(
@@ -144,7 +155,7 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
           ),
         ) ,
         // Save button and cancel button
-        makeFooter(),
+        makeFooter(ref),
       ],
     );
   }

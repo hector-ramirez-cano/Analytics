@@ -92,7 +92,6 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     );
   }
 
-
   AbstractSettingsTile _makeInterfaceAInput() {
     final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
@@ -186,7 +185,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
         ),
 
         // Save button and cancel button
-        makeFooter(),
+        makeFooter(ref),
       ],
     );
   }
