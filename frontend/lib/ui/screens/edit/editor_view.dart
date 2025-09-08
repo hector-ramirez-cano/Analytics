@@ -9,6 +9,7 @@ import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/screens/edit/device_edit_view.dart';
 import 'package:network_analytics/ui/screens/edit/empty_edit_view.dart';
+import 'package:network_analytics/ui/screens/edit/group_edit_view.dart';
 import 'package:network_analytics/ui/screens/edit/link_edit_view.dart';
 
 class ItemEditView extends StatelessWidget {
@@ -34,8 +35,7 @@ class ItemEditView extends StatelessWidget {
         return LinkEditView(link: selected, topology: topology);
         
       case const (Group):
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        return GroupEditView(topology: topology,);
         
 
       // Keep it, in case new type are added

@@ -13,6 +13,7 @@ class Group {
   late final List<Device> devices = members.whereType<Device>().toList();
   late final List<Group> groups   = members.whereType<Group>().toList();
   late final List<Link> links     = members.whereType<Link>().toList(); 
+  late final Set<int> memberKeys  = members.map((member) => member.id as int).toSet();
 
   Group({
     required this.id,
@@ -21,6 +22,9 @@ class Group {
     required this.isDisplayGroup,
   });
   
+  Group cloneWith({int? id, String? name, List<dynamic>? members, bool? isDisplayGroup}) {
+    return Group(id: id ?? this.id, members: members ?? this.members, name: name ?? this.name, isDisplayGroup: isDisplayGroup ?? this.isDisplayGroup);
+  }
 
   factory Group.fromJson(Map<String, dynamic> json, Map<int, dynamic> items) {
     List<dynamic> members = [];

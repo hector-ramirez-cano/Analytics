@@ -16,6 +16,8 @@ class Link implements HoverTarget {
   final Device sideA;
   final Device sideB;
   final LinkType linkType;
+  final String sideAIface;
+  final String sideBIface;
 
   static Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_canvas_link_class_logging", false));
 
@@ -25,10 +27,10 @@ class Link implements HoverTarget {
     required this.id,
     required this.sideA,
     required this.sideB,
-    required this.linkType
-  })
-    
-  {
+    required this.linkType,
+    required this.sideAIface,
+    required this.sideBIface,
+  }) {
 
     // equation of a line given two points
     // m = (y2 - y1) / (x2 - x1) 
@@ -48,6 +50,16 @@ class Link implements HoverTarget {
     logger.d("sideA=${sideA.position}, sideB=${sideB.position}, m=$m");
   }
 
+  Link cloneWith({int? id, Device? sideA, Device? sideB, LinkType? linkType, String? sideAIface, String? sideBIface}) {
+    return Link(id: id ?? this.id,
+      sideA: sideA ?? this.sideA,
+      sideB: sideB ?? this.sideB,
+      linkType: linkType ?? this.linkType,
+      sideAIface: sideAIface ?? this.sideAIface,
+      sideBIface: sideBIface ?? this.sideBIface
+    ,);
+  }
+
   factory Link.fromJson(Map<String, dynamic> json, Map<int, dynamic> devices) {
     Device sideA = devices[json['side-a'] as int];
     Device sideB = devices[json['side-b'] as int];
@@ -57,7 +69,9 @@ class Link implements HoverTarget {
       id   : json['id'] as int,
       sideA: sideA,
       sideB: sideB,
-      linkType: LinkType.values.byName(linkType)
+      linkType: LinkType.values.byName(linkType),
+      sideAIface: "eth0", // TODO: Implement on database and backend
+      sideBIface: "eth0", // TODO: Implement on database and backend 
     );
   }
 

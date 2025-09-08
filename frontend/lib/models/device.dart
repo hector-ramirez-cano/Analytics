@@ -18,6 +18,16 @@ class Device implements HoverTarget {
     required this.mgmtHostname,
   });
 
+  Device cloneWith({int? id, Offset? position, String? name, Offset? geoPosition, String? mgmtHostname}) {
+    return Device(
+      id: id ?? this.id,
+      position: position ?? this.position,
+      name: name ?? this.name,
+      geoPosition: geoPosition ?? this.geoPosition,
+      mgmtHostname: mgmtHostname ?? this.mgmtHostname
+    );
+  }
+
   factory Device.fromJson(Map<String, dynamic> json) {
     return Device(
       id  : json['id'] as int,

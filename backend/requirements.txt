@@ -3,3 +3,4 @@ psycopg[binary]
 psycopg_pool
 ansible-runner
 influxdb-client
+pysnmp

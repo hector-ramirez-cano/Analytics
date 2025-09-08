@@ -16,7 +16,7 @@ class Device:
     management_hostname: str
     configuration: DeviceConfiguration
 
-    state: DeviceStatus = field(default_factory=DeviceStatus) # TODO: DeviceStatus mixin
+    state: DeviceStatus = field(default_factory=DeviceStatus)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 

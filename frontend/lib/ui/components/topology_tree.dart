@@ -61,7 +61,7 @@ class TopologyTree extends StatelessWidget {
 
   
   TreeNode _makeDeviceTreeBranch(Group group) {
-    var node = TreeNode<Group>(key: UniqueKey().toString(), data: group);
+    var node = TreeNode<Section>(key: UniqueKey().toString(), data: Section(name: group.name, icon: Icons.folder));
 
     for (Group subgroup in group.groups) {
       // if it doesn't contain devices, no point on showing it here
