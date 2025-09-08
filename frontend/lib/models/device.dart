@@ -10,21 +10,35 @@ class Device implements HoverTarget {
   final Offset geoPosition; // Lat , Long
   final String mgmtHostname;
 
+  final Set requestedMetadata;
+  final Set requestedMetrics;
+  final Set availableValues;
+
   Device({
     required this.id,
     required this.position,
     required this.name,
     required this.geoPosition,
     required this.mgmtHostname,
-  });
+    required requestedMetadata,
+    required requestedMetrics,
+    required availableValues,
+    
+  }): 
+    requestedMetadata = Set.unmodifiable(requestedMetadata),
+    requestedMetrics = Set.unmodifiable(requestedMetrics),
+    availableValues = Set.unmodifiable(availableValues);
 
-  Device cloneWith({int? id, Offset? position, String? name, Offset? geoPosition, String? mgmtHostname}) {
+  Device cloneWith({int? id, Offset? position, String? name, Offset? geoPosition, String? mgmtHostname, Set? requestedMetadata, Set? requestedMetrics, Set? availableValues}) {
     return Device(
-      id: id ?? this.id,
-      position: position ?? this.position,
-      name: name ?? this.name,
-      geoPosition: geoPosition ?? this.geoPosition,
-      mgmtHostname: mgmtHostname ?? this.mgmtHostname
+      id               : id ?? this.id,
+      position         : position ?? this.position,
+      name             : name ?? this.name,
+      geoPosition      : geoPosition ?? this.geoPosition,
+      mgmtHostname     : mgmtHostname ?? this.mgmtHostname,
+      requestedMetadata: Set.from(requestedMetadata ?? this.requestedMetadata),
+      requestedMetrics : Set.from(requestedMetrics ?? this.requestedMetrics),
+      availableValues  : Set.from(availableValues ?? this.availableValues),
     );
   }
 
@@ -40,7 +54,10 @@ class Device implements HoverTarget {
         json['geocoordinates'][0] as double,
         json['geocoordinates'][1] as double,
       ),
-      mgmtHostname: json['management-hostname']
+      mgmtHostname: json['management-hostname'],
+      requestedMetadata: Set.from(json['configuration']['requested-metadata']),
+      requestedMetrics:  Set.from(json['configuration']['requested-metrics']),
+      availableValues:   Set.from(json['configuration']['available-values']),
     );
   }
 

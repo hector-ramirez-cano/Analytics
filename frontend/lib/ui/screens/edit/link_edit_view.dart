@@ -200,7 +200,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
         ),
 
         // Save button and cancel button
-        makeFooter(ref),
+        makeFooter(ref, widget.topology),
       ],
     );
   }

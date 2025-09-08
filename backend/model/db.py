@@ -55,7 +55,7 @@ def __parse_devices(cur: ServerCursor):
     devices = cache.devices
     cur.execute(
         """
-            SELECT Analytics.devices.device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, available_values 
+            SELECT Analytics.devices.device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values 
                 FROM Analytics.devices
                 JOIN Analytics.device_configuration ON Analytics.devices.device_id = Analytics.device_configuration.device_id;
         """)
@@ -73,8 +73,9 @@ def __parse_devices(cur: ServerCursor):
                 management_hostname=row[6],
                 configuration=DeviceConfiguration(
                     requested_metadata=row[7],
-                    data_sources=set(),
-                    available_values=row[8],
+                    requested_metrics=row[8],
+                    available_values=row[9],
+                    data_sources=set(), # TODO: Data sources from DB
                 )
             )
 
@@ -87,8 +88,9 @@ def __parse_devices(cur: ServerCursor):
             devices[device_id].management_hostname = row[6]
             devices[device_id].configuration = DeviceConfiguration(
                 requested_metadata=row[7],
-                data_sources=set(),
-                available_values = row[8],
+                requested_metrics=row[8],
+                available_values=row[9],
+                data_sources=set(),  # TODO: Data sources from DB
             )
 
 

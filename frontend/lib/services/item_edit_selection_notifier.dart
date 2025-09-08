@@ -10,6 +10,8 @@ class ItemEditSelection {
   final bool editingDeviceHostname;
   final bool editingLinkIfaceA;
   final bool editingLinkIfaceB;
+  final bool editingDeviceMetadata;
+  final bool editingDeviceMetrics;
 
   const ItemEditSelection({
     required this.selected,
@@ -20,6 +22,8 @@ class ItemEditSelection {
     required this.editingDeviceHostname,
     required this.editingLinkIfaceA,
     required this.editingLinkIfaceB,
+    required this.editingDeviceMetadata,
+    required this.editingDeviceMetrics,
   });
 }
 
@@ -28,27 +32,19 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   : super(
     ItemEditSelection(
       selected: null,
-      changes: Topology(items: {}, groups: []),
+      changes: Topology(items: {}),
       editingGroupName: false,
       editingGroupMembers: false,
       editingDeviceName: false,
       editingDeviceHostname: false,
       editingLinkIfaceA: false,
       editingLinkIfaceB: false,
+      editingDeviceMetadata: false,
+      editingDeviceMetrics: false,
       )
     );
 
-  void setSelected(dynamic selected) => 
-      state = ItemEditSelection(
-        selected: selected,
-        changes: state.changes,
-        editingGroupName: false,
-        editingGroupMembers: false,
-        editingDeviceName: false,
-        editingDeviceHostname: false,
-        editingLinkIfaceA: false,
-        editingLinkIfaceB: false,
-      );
+  void setSelected(dynamic selected) =>  set(selected: selected.cloneWith());
 
   bool toggleEditingGroupName() {
     bool editing = !state.editingGroupName;
@@ -66,43 +62,59 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     bool editingHostname = false,
     bool editingLinkIfaceA = false,
     bool editingLinkIfaceB = false,
+    bool editingDeviceMetadata = false,
+    bool editingDeviceMetrics = false,
 
     bool keepState = false,
   }) {
     if (keepState) {
       state = ItemEditSelection(
-        selected: selected ?? state.selected,
-        changes: changes ?? state.changes,
+        selected              : selected ?? state.selected,
+        changes               : changes ?? state.changes,
         editingGroupName      : state.editingGroupName,
         editingGroupMembers   : state.editingGroupMembers,
         editingDeviceName     : state.editingDeviceName,
         editingDeviceHostname : state.editingDeviceHostname,
         editingLinkIfaceA     : state.editingLinkIfaceA,
         editingLinkIfaceB     : state.editingLinkIfaceB,
+        editingDeviceMetadata : state.editingDeviceMetadata,
+        editingDeviceMetrics  : state.editingDeviceMetrics,
       );
     } else {
       state = ItemEditSelection(
-        selected: selected ?? state.selected,
-        changes: changes ?? state.changes,
+        selected              : selected ?? state.selected,
+        changes               : changes ?? state.changes,
         editingGroupName      : editingGroupName,
         editingGroupMembers   : editingGroupMembers,
         editingDeviceName     : editingDeviceName,
         editingDeviceHostname : editingHostname,
         editingLinkIfaceA     : editingLinkIfaceA,
         editingLinkIfaceB     : editingLinkIfaceB,
+        editingDeviceMetadata : editingDeviceMetadata,
+        editingDeviceMetrics  : editingDeviceMetrics,
       );
     }
   }
 
   void changeItem(dynamic item) {
-    var topology = state.changes;
-    topology.items[item.id] = item;
+    final topology = state.changes.cloneWith(items: {...state.changes.items, item.id : item});
 
     set(changes: topology, keepState: true);
   }
 
   void discard() {
-    set(changes: Topology(items: {}, groups: []));
+    state = ItemEditSelection(
+        selected              : null,
+        changes               : Topology(items: {}),
+        editingGroupName      : state.editingGroupName,
+        editingGroupMembers   : state.editingGroupMembers,
+        editingDeviceName     : state.editingDeviceName,
+        editingDeviceHostname : state.editingDeviceHostname,
+        editingLinkIfaceA     : state.editingLinkIfaceA,
+        editingLinkIfaceB     : state.editingLinkIfaceB,
+        editingDeviceMetadata : state.editingDeviceMetadata,
+        editingDeviceMetrics  : state.editingDeviceMetrics,
+      );
   }
 
   bool get hasChanges {

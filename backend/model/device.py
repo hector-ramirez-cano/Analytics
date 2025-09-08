@@ -20,6 +20,7 @@ class Device:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
+
     @staticmethod
     def find_by_management_hostname(devices: dict, management_hostname :str) -> Optional["Device"]:
         for device_id in devices:
@@ -35,8 +36,9 @@ class Device:
             "coordinates": [self.position_x, self.position_y],
             "geocoordinates": [self.latitude, self.longitude],
             "management-hostname": self.management_hostname,
-            "status": self.state.to_json_str(),
-            "metadata": self.metadata,
+            # "status": self.state.to_json_str(),
+            # "metadata": self.metadata,
+            "configuration": self.configuration.to_dict()
         })
         return {
             "id": self.device_id,
@@ -44,7 +46,8 @@ class Device:
             "coordinates": [self.position_x, self.position_y],
             "geocoordinates": [self.latitude, self.longitude],
             "management-hostname": self.management_hostname,
-            "status": self.state.to_json_str(),
-            "metadata": self.metadata,
+            # "status": self.state.to_json_str(),
+            # "metadata": self.metadata,
+            "configuration": self.configuration.to_dict()
         }
 

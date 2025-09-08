@@ -6,7 +6,6 @@ class TopologyView extends Topology {
   TopologyView({
     required this.filter,
     required super.items,
-    required super.groups,
   });
 
   List<T> get<T>() {
@@ -22,6 +21,6 @@ class TopologyView extends Topology {
   }
 
   factory TopologyView.fromTopology(Topology topology, Set<int> filter) {
-    return TopologyView(filter: filter, items: topology.items, groups: topology.groups);
+    return TopologyView(filter: filter, items: topology.items);
   }
 }

@@ -9,21 +9,20 @@ class Group {
   final List<dynamic> members;
   final bool isDisplayGroup;
 
-  late final int groupCount       = members.whereType<Group>().toList().length;
-  late final List<Device> devices = members.whereType<Device>().toList();
-  late final List<Group> groups   = members.whereType<Group>().toList();
-  late final List<Link> links     = members.whereType<Link>().toList(); 
-  late final Set<int> memberKeys  = members.map((member) => member.id as int).toSet();
-
   Group({
     required this.id,
-    required this.members,
+    required members,
     required this.name,
     required this.isDisplayGroup,
-  });
+  }): members = List.unmodifiable(members);
   
   Group cloneWith({int? id, String? name, List<dynamic>? members, bool? isDisplayGroup}) {
-    return Group(id: id ?? this.id, members: members ?? this.members, name: name ?? this.name, isDisplayGroup: isDisplayGroup ?? this.isDisplayGroup);
+    return Group(
+      id: id ?? this.id,
+      members: List.from(members ?? this.members), // Deep copy of the list, so it doesn't modify the original
+      name: name ?? this.name,
+      isDisplayGroup: isDisplayGroup ?? this.isDisplayGroup
+    );
   }
 
   factory Group.fromJson(Map<String, dynamic> json, Map<int, dynamic> items) {
@@ -42,16 +41,11 @@ class Group {
   }
 
   /// Creates a list of groups from a given [json] array. Queries the items from an [items] map of {int -> dynamic}
-  static List<Group> deviceGroupFromJson(List<dynamic> json, Map<int, dynamic> items) {
-    List<Group> members = [];
-
+  static void deviceGroupFromJson(List<dynamic> json, Map<int, dynamic> items) {
     for (var group in json) {
       var created = Group.fromJson(group, items);
-      members.add(created);
       items[created.id] = created;
     }
-
-    return members;
   }
 
   /// Populates the members of a group, with a given [json] array. Queries the items from an [items] map of {int -> dynamic}
@@ -59,11 +53,21 @@ class Group {
     for (var group in json) {
       int id = group["id"];
       
+      var members = [];
+      var oldMembers = (items[id] as Group).members;
       for (var member in group['members']) {
-        (items[id] as Group).members.add(items[member]);
+        members.add(items[member]);
       }
+
+      items[id] = (items[id] as Group).cloneWith(members: [...oldMembers, ...members]);
     }
   }
+
+  int          get groupCount  => members.whereType<Group>().toList().length;
+  List<Device> get devices     => members.whereType<Device>().toList();
+  List<Group>  get groups      => members.whereType<Group>().toList();
+  List<Link>   get links       => members.whereType<Link>().toList(); 
+  Set<int>     get memberKeys  => members.map((member) => member.id as int).toSet();
 
   /// Returns whether this group, or any nested groups contain at least one device. Short circuits once at least one is found
   bool hasDevices() {

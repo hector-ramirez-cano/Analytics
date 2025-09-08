@@ -52,9 +52,9 @@ class Link implements HoverTarget {
 
   Link cloneWith({int? id, Device? sideA, Device? sideB, LinkType? linkType, String? sideAIface, String? sideBIface}) {
     return Link(id: id ?? this.id,
-      sideA: sideA ?? this.sideA,
-      sideB: sideB ?? this.sideB,
-      linkType: linkType ?? this.linkType,
+      sideA     : sideA ?? this.sideA,
+      sideB     : sideB ?? this.sideB,
+      linkType  : linkType ?? this.linkType,
       sideAIface: sideAIface ?? this.sideAIface,
       sideBIface: sideBIface ?? this.sideBIface
     ,);

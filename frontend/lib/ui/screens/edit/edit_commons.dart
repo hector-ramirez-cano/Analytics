@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
 
@@ -89,9 +90,9 @@ Widget _makeTrailingIcon(VoidCallback onEdit) {
     ); 
 }
 
-Widget makeTrailing(Widget child, VoidCallback onEdit, {bool showEditIcon = true}) {
+Widget makeTrailing(Widget child, VoidCallback onEdit, {bool showEditIcon = true, double width = 220}) {
   return SizedBox(
-    width: 220, // adjust to accommodate icon
+    width: width,
     child: Row(
       children: [
         Expanded(
@@ -106,7 +107,7 @@ Widget makeTrailing(Widget child, VoidCallback onEdit, {bool showEditIcon = true
   );
 }
 
-Widget makeFooter(WidgetRef ref) {
+Widget makeFooter(WidgetRef ref, Topology topology) {
   ButtonStyle saveStyle = ElevatedButton.styleFrom(backgroundColor: Colors.blue,);
   const TextStyle saveLabelStyle = TextStyle(color: Colors.white);
 

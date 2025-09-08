@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/ui/components/badge_button.dart';
+import 'package:network_analytics/ui/screens/edit/checkbox_select_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
@@ -14,6 +16,7 @@ class DeviceEditView extends ConsumerStatefulWidget {
   static const Icon mgmtHostnameIcon = Icon(Icons.dns);
   static const Icon geoPositionIcon  = Icon(Icons.map);
   static const Icon metadataIcon     = Icon(Icons.list);
+  static const Icon metricsIcon      = Icon(Icons.list_alt);
   static const Icon linksIcon        = Icon(Icons.settings_ethernet);
   static const Icon groupsIcon       = Icon(Icons.folder);
 
@@ -93,7 +96,7 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
   AbstractSettingsTile _makeGeopositionInput() {
     var child = Text("${widget.device.geoPosition.dx}, ${widget.device.geoPosition.dy}");
 
-    onEdit() {}
+    onEdit() {} // TODO: Functionality
 
     return SettingsTile(
       title: const Text("Geoposition"),
@@ -125,9 +128,41 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
   }
 
   AbstractSettingsTile _makeMetadataInput() {
+    List<BadgeButton> list = [];
+    Color backgroundColor = Colors.white;
+    for (var item in widget.device.requestedMetadata) {
+      list.add(BadgeButton(backgroundColor: backgroundColor, text: item));
+    }
+
+    var metadata = Wrap(spacing: 4, runSpacing: 4, children: list,);
+
+    onEdit() => ref.read(itemEditSelectionNotifier.notifier).set(editingDeviceMetadata: true);
+
     return SettingsTile(
-      title: const Text("Metadata recolectada"),
+      title: const Text("Metadatos a recabar"),
+      description: const Text("Útil para valores que no cambian frecuentemente"),
       leading: DeviceEditView.metadataIcon,
+      trailing: makeTrailing(metadata, onEdit, width: 440),
+      onPressed: null
+    );
+  }
+
+  AbstractSettingsTile _makeMetricInput() {
+    List<BadgeButton> list = [];
+    Color backgroundColor = Colors.white;
+    for (var item in widget.device.requestedMetrics) {
+      list.add(BadgeButton(backgroundColor: backgroundColor, text: item));
+    }
+
+    var metadata = Wrap(spacing: 4, runSpacing: 4, children: list,);
+
+    onEdit() => ref.read(itemEditSelectionNotifier.notifier).set(editingDeviceMetrics: true);
+
+    return SettingsTile(
+      title: const Text("Métricas a recabar"),
+      description: const Text("Útil para valores que fluctúan frecuentemente"),
+      leading: DeviceEditView.metricsIcon,
+      trailing: makeTrailing(metadata, onEdit, width: 440),
       onPressed: null
     );
   }
@@ -158,17 +193,23 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
     return list;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
 
-    // if item changed, reset the text fields
-      ref.listen(itemEditSelectionNotifier, (previous, next) {
-        if (previous?.selected != next.selected && next.selected is Device) {
-          _nameInputController.text = next.selected.name;
-          _hostnameInputController.text = next.selected.mgmtHostname;
-        }
-      });
+  Widget _buildValueSelectionInput() {
+    var itemEditSelection = ref.watch(itemEditSelectionNotifier); 
+    bool enabled = itemEditSelection.editingDeviceMetrics || itemEditSelection.editingDeviceMetadata;
+
+    if (!enabled) { return SizedBox.shrink(); }
+
+    isSelected (option) => widget.device.availableValues.contains(option);
+    onChanged (option, state) => {}; // TODO: Functionality
+    title(option) => title;
+    var options = widget.device.availableValues;
+
+    return CheckboxSelectDialog(options: options, isSelected: isSelected, onChanged: onChanged, title: title,);
+  }
+
+  Widget _buildConfigurationPage() {
+    final notifier = ref.read(itemEditSelectionNotifier.notifier);
 
     return Column(
       children: [ Expanded( child: SettingsList( sections: [
@@ -179,6 +220,7 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
                   _makeHostnameInput(),
                   _makeGeopositionInput(),
                   _makeMetadataInput(),
+                  _makeMetricInput()
                 ],
               ),
 
@@ -195,7 +237,26 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
           ),
         ) ,
         // Save button and cancel button
-        makeFooter(ref),
+        makeFooter(ref, widget.topology),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    
+    // if item changed, reset the text fields
+      ref.listen(itemEditSelectionNotifier, (previous, next) {
+        if (previous?.selected != next.selected && next.selected is Device) {
+          _nameInputController.text = next.selected.name;
+          _hostnameInputController.text = next.selected.mgmtHostname;
+        }
+      });
+
+    return Stack(
+      children: [
+        _buildConfigurationPage(),
+        _buildValueSelectionInput(),
       ],
     );
   }

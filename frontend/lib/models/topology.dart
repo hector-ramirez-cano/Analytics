@@ -6,12 +6,14 @@ import 'package:network_analytics/models/link.dart';
 
 class Topology {
   Map<int, dynamic> items;
-  List<Group> groups;
 
   Topology({
-    required this.items,
-    required this.groups,
-  });
+    required Map<int, dynamic> items,
+  }) : items = Map.unmodifiable(items);
+
+  Topology cloneWith({Map<int, dynamic>? items, List<Group>? groups}) {
+    return Topology(items: items ?? this.items);
+  }
 
   factory Topology.fromJson(Map<String, dynamic> json) {
     Map<int, dynamic> itemsLocal = {};
@@ -26,10 +28,10 @@ class Topology {
       itemsLocal[link.id] = link;
     }
 
-    List<Group> groups = Group.deviceGroupFromJson(json['groups'], itemsLocal);
+    Group.deviceGroupFromJson(json['groups'], itemsLocal);
     Group.fillGroupMembers(json['groups'], itemsLocal);
 
-    return Topology(items: itemsLocal, groups: groups);
+    return Topology(items: itemsLocal);
   }
 
   List<Device> getDevices() {
@@ -40,7 +42,7 @@ class Topology {
     return items.values.whereType<Link>().toList();
   }
 
-  List<Group> getGroups() {
+  List<Group> get groups {
     return items.values.whereType<Group>().toList();
   }
 
@@ -49,6 +51,6 @@ class Topology {
   }
 
   List<Group> getDeviceGroups(Device device) {
-    return getGroups().where((group) => group.hasDevice(device)).toList();
+    return groups.where((group) => group.hasDevice(device)).toList();
   }
 }
