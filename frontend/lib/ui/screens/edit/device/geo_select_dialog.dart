@@ -44,7 +44,6 @@ class _GeoSelectDialogState extends ConsumerState<GeoSelectDialog> {
   }
 
   Widget _makeGeoLocator() {
-
     return Flexible(
       child: Expanded(
         child: UniversalDetector(
@@ -71,6 +70,12 @@ class _GeoSelectDialogState extends ConsumerState<GeoSelectDialog> {
         )
       ),
     );
+  }
+
+  Widget _makeLatLongInput() {
+    return Row(children: [
+
+    ],)
   }
 
   @override

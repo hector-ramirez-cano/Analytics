@@ -1,7 +1,11 @@
+
 import asyncio
 
 from backend.model import db
-from backend.model.fact_gathering import snmp_backend, icmp_backend, ansible_backend
+from backend.model.fact_gathering.ansible import ansible_backend
+from backend.model.fact_gathering.snmp import snmp_backend
+from backend.model.fact_gathering.icmp import icmp_backend
+from backend.model.fact_gathering.syslog import syslog_backend
 
 
 def __recursive_merge(dict1, dict2):
