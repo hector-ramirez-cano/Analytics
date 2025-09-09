@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:free_map/free_map.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/screens/edit/commons/checkbox_select_dialog.dart';
@@ -24,6 +25,7 @@ class DeviceEditView extends ConsumerStatefulWidget {
 
 class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
 
+  void onGeoPositionChanged(LatLng p) => ref.read(itemEditSelectionNotifier.notifier).onChangeDeviceGeoPosition(p);
 
   Widget _buildValueSelectionInput() {
     final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
@@ -52,14 +54,20 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
   }
 
   Widget _buildGeoInputDialog() {
-    final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
+    final itemEditSelection = ref.read(itemEditSelectionNotifier); 
+    final notifier = ref.read(itemEditSelectionNotifier.notifier); 
     bool enabled = itemEditSelection.editingDeviceGeoPosition;
+    LatLng initial = notifier.device.geoPosition;
 
     if (!enabled) { return SizedBox.shrink(); }
 
     onClose() => ref.read(itemEditSelectionNotifier.notifier).set(editingDeviceGeoPosition: false);
 
-    return GeoSelectDialog(onClose: onClose);
+    return GeoSelectDialog(
+      onClose: onClose,
+      initialPosition: initial,
+      onSelect: onGeoPositionChanged,
+    );
   }
 
   Widget _buildConfigurationPage() {

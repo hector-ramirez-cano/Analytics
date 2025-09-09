@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:free_map/free_map.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
@@ -171,6 +172,13 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     else { Logger().d("Warning, selected metadata with tri-state. Tri-states on metadata aren't supported"); return; }
 
     changeItem(selected.cloneWith(requestedMetadata: metadata));
+  }
+
+  void onChangeDeviceGeoPosition(LatLng newPosition) {
+    if (selected is! Device) { Logger().w("Changed geoposition on a device, where device isn't selected"); return; }
+    
+    Device dev = device;
+    changeItem(dev.cloneWith(geoPosition: newPosition));
   }
 
   bool get hasChanges {

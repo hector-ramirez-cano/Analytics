@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
@@ -11,19 +12,26 @@ class EditTextField extends StatelessWidget {
   final bool showEditIcon;
   final Color backgroundColor;
   final bool enabled;
-  final Function(String) onContentEdit;
-  final VoidCallback onEditToggle;
+  final Function(String)? onContentEdit;
+  final VoidCallback? onEditToggle;
+  final VoidCallback? onEditingComplete;
   final TextEditingController? controller;
+  final TextInputType? keyboardType;
+  final List<FilteringTextInputFormatter>? formatters;
+
   
   const EditTextField({
     super.key,
     required this.enabled,
     required this.initialText,
-    required this.onContentEdit,
-    required this.onEditToggle,
     required this.backgroundColor,
 
+    this.onContentEdit,
     this.controller,
+    this.keyboardType,
+    this.formatters,
+    this.onEditToggle,
+    this.onEditingComplete,
     this.showEditIcon = false,
   });
 
@@ -31,8 +39,9 @@ class EditTextField extends StatelessWidget {
     return TextField(
       enabled: enabled,
       autocorrect: false,
-
+      keyboardType: keyboardType, 
       controller: controller ?? TextEditingController(text: initialText),
+      inputFormatters: formatters,
       decoration: InputDecoration(
         filled: true,
         fillColor: backgroundColor,
@@ -41,6 +50,7 @@ class EditTextField extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       ),
       onChanged: onContentEdit,
+      onEditingComplete: onEditingComplete,
     );
   }
 
@@ -48,7 +58,7 @@ class EditTextField extends StatelessWidget {
     return 
       UniversalDetector(
         setCursor: () => SystemMouseCursors.click,
-        onTapUp: (_) => onEditToggle(),
+        onTapUp: (_) => onEditToggle != null ? onEditToggle!() : () => {},
         child: Icon(
               Icons.edit,
               size: 20,

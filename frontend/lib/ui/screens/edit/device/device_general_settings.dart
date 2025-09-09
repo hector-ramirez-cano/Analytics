@@ -87,10 +87,18 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
 
 AbstractSettingsTile _makeGeopositionInput(Device device) {
-    var child = Text("${device.geoPosition.latitude}, ${device.geoPosition.longitude}");
+    bool modified = device.isModifiedGeoLocation(widget.topology);
+    TextStyle? style = modified ? TextStyle(backgroundColor: modifiedColor, color: Colors.white) : null;
 
+    double lat = device.geoPosition.latitude;
+    double lng = device.geoPosition.longitude;
+    var child = Text(
+      "${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}",
+      style: style,
+    );
+    
     return SettingsTile(
-      title: const Text("Geoposition"),
+      title: Text("Geoposition"),
       leading: DeviceGeneralSettings.geoPositionIcon,
       trailing: makeTrailing(child, onEditGeoposition),
       onPressed: null
@@ -132,7 +140,7 @@ AbstractSettingsTile _makeGeopositionInput(Device device) {
     for (var item in device.requestedMetrics) {
       bool modified = device.isModifiedMetric(item, topology);
 
-      Color backgroundColor = modified ? Colors.green : Color.fromRGBO(214, 214, 214, 1);
+      Color backgroundColor = modified ? modifiedColor : Color.fromRGBO(214, 214, 214, 1);
       Color textColor = modified ? Colors.white : Colors.black;
 
       list.add(
