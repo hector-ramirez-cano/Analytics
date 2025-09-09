@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:free_map/free_map.dart';
+import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/canvas_interaction_service.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 
@@ -7,7 +9,7 @@ class Device implements HoverTarget {
   final int id;
   final String name;
   final Offset position;    // x, y
-  final Offset geoPosition; // Lat , Long
+  final LatLng geoPosition; // Lat , Long
   final String mgmtHostname;
 
   final Set<String> requestedMetadata;
@@ -29,7 +31,7 @@ class Device implements HoverTarget {
     requestedMetrics = Set.unmodifiable(requestedMetrics),
     availableValues = Set.unmodifiable(availableValues);
 
-  Device cloneWith({int? id, Offset? position, String? name, Offset? geoPosition, String? mgmtHostname, Set? requestedMetadata, Set? requestedMetrics, Set? availableValues}) {
+  Device cloneWith({int? id, Offset? position, String? name, LatLng? geoPosition, String? mgmtHostname, Set? requestedMetadata, Set? requestedMetrics, Set? availableValues}) {
     return Device(
       id               : id ?? this.id,
       position         : position ?? this.position,
@@ -50,7 +52,7 @@ class Device implements HoverTarget {
         json['coordinates'][0] as double,
         json['coordinates'][1] as double,
       ),
-      geoPosition: Offset(
+      geoPosition: LatLng(
         json['geocoordinates'][0] as double,
         json['geocoordinates'][1] as double,
       ),
@@ -87,5 +89,30 @@ class Device implements HoverTarget {
     return Paint()
       ..shader = AppColors.deviceGradient.createShader(rect);
 
+  }
+
+
+  bool isModifiedMetric(String metric, Topology topology) {
+    return requestedMetrics.contains(metric) != (topology.items[id] as Device).requestedMetrics.contains(metric);
+  }
+
+  bool isModifiedMetadata(String metadata, Topology topology) {
+    return requestedMetadata.contains(metadata) != (topology.items[id] as Device).requestedMetadata.contains(metadata);
+  }
+
+  bool isModifiedName(Topology topology) {
+    return name != (topology.items[id] as Device).name;
+  }
+
+  bool isModifiedHostname(Topology topology) {
+    return mgmtHostname != (topology.items[id] as Device).mgmtHostname;
+  }
+
+  bool isModifiedGeoLocation(Topology topology) {
+    return geoPosition != (topology.items[id] as Device).geoPosition; 
+  }
+
+  bool isModifiedPosition(Topology topology) {
+    return position != (topology.items[id] as Device).position; 
   }
 }

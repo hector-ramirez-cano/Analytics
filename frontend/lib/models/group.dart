@@ -1,5 +1,6 @@
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link.dart';
+import 'package:network_analytics/models/topology.dart';
 
 class Group {
   final int id;
@@ -83,6 +84,11 @@ class Group {
     return members.length +
       groups.fold<num>(0, (sum, group) => sum + group.childrenCount());
   }
+
+  bool isModifiedName(Topology topology) {
+    return name != (topology.items[id] as Group).name;
+  }
+
 
   @override
   String toString() {

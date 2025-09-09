@@ -5,17 +5,15 @@ import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
-import 'package:network_analytics/ui/screens/edit/edit_commons.dart';
+import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class LinkEditView extends ConsumerStatefulWidget {
-  final Link link;
   final Topology topology;
 
 
   const LinkEditView({
     super.key,
-    required this.link,
     required this.topology, 
   });
 
@@ -31,8 +29,8 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   @override
   void initState() {
     super.initState();
-    _sideAIfaceInputController = TextEditingController(text: ref.read(itemEditSelectionNotifier).selected.sideAIface);
-    _sideBIfaceInputController = TextEditingController(text: ref.read(itemEditSelectionNotifier).selected.sideBIface);
+    _sideAIfaceInputController = TextEditingController(text: ref.read(itemEditSelectionNotifier.notifier).link.sideAIface);
+    _sideBIfaceInputController = TextEditingController(text: ref.read(itemEditSelectionNotifier.notifier).link.sideBIface);
   }
 
   void onEditSideAIface() => ref.read(itemEditSelectionNotifier.notifier).set(editingLinkIfaceA: true);
@@ -40,24 +38,20 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
 
   void onEditSideAIfaceContent(String text) {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
-    final itemEditSelection = ref.read(itemEditSelectionNotifier);
 
-    if (itemEditSelection.selected is! Link)     { return; }
-    if (itemEditSelection.selected.name == text) { return; }
+    if (notifier.link.sideAIface == text) { return; }
 
-    var link = itemEditSelection.selected;
+    var link = notifier.link;
     var modified = link.cloneWith(sideAIface: text);
     notifier.changeItem(modified);
   }
 
   void onEditSideBIfaceContent(String text) {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
-    final itemEditSelection = ref.read(itemEditSelectionNotifier);
+  
+    if (notifier.link.sideBIface == text) { return; }
 
-    if (itemEditSelection.selected is! Link)     { return; }
-    if (itemEditSelection.selected.name == text) { return; }
-
-    var link = itemEditSelection.selected;
+    var link = notifier.link;
     var modified = link.cloneWith(sideBIface: text);
     notifier.changeItem(modified);
   }
@@ -96,13 +90,16 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     );
   }
 
-  AbstractSettingsTile _makeInterfaceAInput() {
-    final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+  AbstractSettingsTile _makeInterfaceAInput(Link link, bool enabled, Topology topology) {
+    
+    bool modified = link.isModifiedAIface(topology);
+    Color backgroundColor = modified ? modifiedColor : Colors.transparent;
+
 
     var editInput = EditTextField(
-      initialText: notifier.selected.sideAIface,
-      enabled: itemEditSelection.editingLinkIfaceA,
+      initialText: link.sideAIface,
+      enabled: enabled,
+      backgroundColor: backgroundColor,
       controller: _sideAIfaceInputController,
       showEditIcon: true,
       onEditToggle: onEditSideAIface,
@@ -117,13 +114,14 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     );
   }
 
-  AbstractSettingsTile _makeInterfaceBInput() {
-    final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+  AbstractSettingsTile _makeInterfaceBInput(Link link, bool enabled, Topology topology) {
+    bool modified = link.isModifiedBIface(topology);
+    Color backgroundColor = modified ? modifiedColor : Colors.transparent;
 
     var editInput = EditTextField(
-      initialText: notifier.selected.sideBIface,
-      enabled: itemEditSelection.editingLinkIfaceB,
+      initialText: link.sideBIface,
+      enabled: enabled,
+      backgroundColor: backgroundColor,
       controller: _sideBIfaceInputController,
       showEditIcon: true,
       onEditToggle: onEditSideBIface,
@@ -146,13 +144,11 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
       leading: const Icon(Icons.dns),
       trailing: makeTrailing(child, (){}, showEditIcon: false),
       onPressed: null
-    );
-
-    
+    ); 
   }
 
-  AbstractSettingsTile _makeLinkSelection() {
-    var child = _makeLinkTypeDropdown(widget.link.linkType);
+  AbstractSettingsTile _makeLinkSelection(Link link) {
+    var child = _makeLinkTypeDropdown(link.linkType);
 
     return SettingsTile(
       title: const Text("Link Type"),
@@ -173,26 +169,33 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
         }
       });
 
+    final itemSelection = ref.read(itemEditSelectionNotifier);
+    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+
+    Link link = notifier.link;
+    bool editingAIface = itemSelection.editingLinkIfaceA;
+    bool editingBIface = itemSelection.editingLinkIfaceA;
+
     return Column(
       children: [ Expanded( child: SettingsList( sections: [
               SettingsSection(
                 title: Text("Device A"),
                 tiles: [
-                  _makeDeviceSelection("Device", widget.link.sideA, widget.link.sideB),
-                  _makeInterfaceAInput(),
+                  _makeDeviceSelection("Device", link.sideA, link.sideB),
+                  _makeInterfaceAInput(link, editingAIface , widget.topology),
                 ],
               ),
               SettingsSection(
                 title: Text("Device B"),
                 tiles: [
-                  _makeDeviceSelection("Device", widget.link.sideB, widget.link.sideA),
-                  _makeInterfaceBInput(),
+                  _makeDeviceSelection("Device", link.sideB, link.sideA),
+                  _makeInterfaceBInput(link, editingBIface , widget.topology),
                 ],
               ),
               SettingsSection(
                 title: Text("Link type"),
                 tiles: [
-                  _makeLinkSelection()
+                  _makeLinkSelection(link)
                 ],
               ),
             ],

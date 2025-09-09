@@ -4,9 +4,12 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
 
+const Color modifiedColor = Colors.green;
+
 class EditTextField extends StatelessWidget {
   final String initialText;
   final bool showEditIcon;
+  final Color backgroundColor;
   final bool enabled;
   final Function(String) onContentEdit;
   final VoidCallback onEditToggle;
@@ -18,6 +21,7 @@ class EditTextField extends StatelessWidget {
     required this.initialText,
     required this.onContentEdit,
     required this.onEditToggle,
+    required this.backgroundColor,
 
     this.controller,
     this.showEditIcon = false,
@@ -26,11 +30,15 @@ class EditTextField extends StatelessWidget {
   Widget makeTrailingInput() {
     return TextField(
       enabled: enabled,
+      autocorrect: false,
+
       controller: controller ?? TextEditingController(text: initialText),
-      decoration: const InputDecoration(
-        border: OutlineInputBorder(),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: backgroundColor,
+        border: const OutlineInputBorder(),
         isDense: true,
-        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       ),
       onChanged: onContentEdit,
     );
@@ -53,6 +61,7 @@ class EditTextField extends StatelessWidget {
     return SizedBox(
       width: 220, // adjust to accommodate icon
       child: Row(
+        
         children: [
           Expanded(
             child: child,

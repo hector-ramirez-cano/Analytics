@@ -6,9 +6,8 @@ import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
-import 'package:network_analytics/ui/screens/edit/checkbox_select_dialog.dart';
-import 'package:network_analytics/ui/screens/edit/device_edit_view.dart';
-import 'package:network_analytics/ui/screens/edit/edit_commons.dart';
+import 'package:network_analytics/ui/screens/edit/commons/checkbox_select_dialog.dart';
+import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class GroupEditView extends ConsumerStatefulWidget {
@@ -32,7 +31,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   @override
   void initState() {
     super.initState();
-    final selected = ref.read(itemEditSelectionNotifier).selected;
+    final selected = ref.read(itemEditSelectionNotifier.notifier).group;
 
     _nameInputController = TextEditingController(text: selected.name);
   }
@@ -42,11 +41,10 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
 
   void onContentEdit(String text) {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
-    final itemEditSelection = ref.read(itemEditSelectionNotifier);
 
-    if (itemEditSelection.selected.name == text) { return; }
+    if (notifier.group.name == text) { return; }
 
-    var group = itemEditSelection.selected;
+    var group = notifier.group;
     var modified = group.cloneWith(name: text);
     notifier.changeItem(modified);
   }
@@ -55,25 +53,28 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     final notifier = ref.watch(itemEditSelectionNotifier.notifier);
 
     var item = widget.topology.items[id];
-    var members = List.from(notifier.selected.members);
+    var members = Set.from(notifier.group.members);
 
     if (status) { members.add(item); } 
     else        { members.remove(item); }
 
     Logger().d("Changed members of Group, id=$id, status=$status, members=$members");
 
-    var group = notifier.selected.cloneWith(members: members);
+    var group = notifier.group.cloneWith(members: members);
 
     ref.read(itemEditSelectionNotifier.notifier).changeItem(group);
   }
 
-  AbstractSettingsTile _makeNameInput() {
-    final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
-    final notifier = ref.watch(itemEditSelectionNotifier.notifier);
+  AbstractSettingsTile _makeNameInput(Group group, bool enabled, Topology topology) {
+    
+    bool modified = group.isModifiedName(topology);
+    Color backgroundColor = modified ? modifiedColor : Colors.transparent;
+
 
     var editInput = EditTextField(
-      initialText: notifier.selected.name,
-      enabled: itemEditSelection.editingGroupName,
+      initialText: group.name,
+      enabled: enabled,
+      backgroundColor: backgroundColor,
       controller: _nameInputController,
       showEditIcon: true,
       onEditToggle: onEditName,
@@ -82,7 +83,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
 
 
     return SettingsTile(
-      title: Text("Nombre"), leading: DeviceEditView.nameIcon, trailing: editInput, onPressed: null
+      title: Text("Nombre"), leading: GroupEditView.nameIcon, trailing: editInput, onPressed: null
     );
   }
 
@@ -90,7 +91,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     List<BadgeButton> list = [];
     final notifier = ref.watch(itemEditSelectionNotifier.notifier); 
 
-    for (var member in notifier.selected.members) {
+    for (var member in notifier.group.members) {
       if (member is! Device && member is! Group) { continue; }
 
       Color backgroundColor = member is Device ? Colors.blueGrey : Colors.teal;
@@ -122,7 +123,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     
     var options = widget.topology.getDevices().toSet();
 
-    isSelected(option) => notifier.selected.memberKeys.contains(option.id);
+    isSelected(option) => notifier.group.memberKeys.contains(option.id);
     onChanged(option, state) => onChangedMembers(option.id, state ?? false);
     onClose() => notifier.set(editingGroupMembers: false);
     toText(device) => (device as Device).name;
@@ -131,12 +132,20 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   }
 
   Widget _makeSettingsView() {
-    final notifier = ref.watch(itemEditSelectionNotifier.notifier);
+    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+    final itemSelection = ref.read(itemEditSelectionNotifier);
+
+    Group group = notifier.group;
+    bool editingName = itemSelection.editingGroupName;
+
     return Column(
       children: [ Expanded( child: SettingsList( sections: [
               SettingsSection(
-                title: Text(notifier.selected.name),
-                tiles: [ _makeNameInput(), _makeMembersInput() ]
+                title: Text(notifier.group.name),
+                tiles: [ 
+                  _makeNameInput(group, editingName, widget.topology),
+                  _makeMembersInput()
+                ]
               )])),
         // Save button and cancel button
         makeFooter(ref, widget.topology),

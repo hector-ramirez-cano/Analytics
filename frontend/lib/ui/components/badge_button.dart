@@ -18,13 +18,13 @@ class BadgeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return 
         ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: backgroundColor,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            shape: RoundedRectangleBorder(
+          style: ButtonStyle(
+            backgroundColor: WidgetStateProperty.all<Color>(backgroundColor),
+            padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+            shape: WidgetStatePropertyAll(RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
-            ),
-            minimumSize: Size.zero, // removes default min constraints
+            )),
+            minimumSize: WidgetStateProperty.all(Size.zero), // removes default min constraints
             tapTargetSize: MaterialTapTargetSize.shrinkWrap, // keeps it small
           ),
           onPressed: onPressed,

@@ -1,4 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/web.dart';
+import 'package:network_analytics/models/device.dart';
+import 'package:network_analytics/models/group.dart';
+import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/topology.dart';
 
 class ItemEditSelection {
@@ -12,6 +16,8 @@ class ItemEditSelection {
   final bool editingLinkIfaceB;
   final bool editingDeviceMetadata;
   final bool editingDeviceMetrics;
+  final bool editingDeviceGeoPosition;
+  
 
   const ItemEditSelection({
     required this.selected,
@@ -24,6 +30,7 @@ class ItemEditSelection {
     required this.editingLinkIfaceB,
     required this.editingDeviceMetadata,
     required this.editingDeviceMetrics,
+    required this.editingDeviceGeoPosition,
   });
 }
 
@@ -41,6 +48,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
       editingLinkIfaceB: false,
       editingDeviceMetadata: false,
       editingDeviceMetrics: false,
+      editingDeviceGeoPosition: false,
       )
     );
 
@@ -64,6 +72,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     bool editingLinkIfaceB = false,
     bool editingDeviceMetadata = false,
     bool editingDeviceMetrics = false,
+    bool editingDeviceGeoPosition = false,
 
     bool keepState = false,
   }) {
@@ -79,6 +88,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
         editingLinkIfaceB     : state.editingLinkIfaceB,
         editingDeviceMetadata : state.editingDeviceMetadata,
         editingDeviceMetrics  : state.editingDeviceMetrics,
+        editingDeviceGeoPosition: state.editingDeviceGeoPosition,
       );
     } else {
       state = ItemEditSelection(
@@ -92,6 +102,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
         editingLinkIfaceB     : editingLinkIfaceB,
         editingDeviceMetadata : editingDeviceMetadata,
         editingDeviceMetrics  : editingDeviceMetrics,
+        editingDeviceGeoPosition: editingDeviceGeoPosition,
       );
     }
   }
@@ -114,7 +125,52 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
         editingLinkIfaceB     : state.editingLinkIfaceB,
         editingDeviceMetadata : state.editingDeviceMetadata,
         editingDeviceMetrics  : state.editingDeviceMetrics,
+        editingDeviceGeoPosition: state.editingDeviceGeoPosition,
       );
+  }
+
+  void onEditDeviceHostname()    => set(editingHostname: true);
+  void onEditDeviceName()        => set(editingDeviceName: true);
+  void onEditDeviceGeoposition() => set(editingDeviceGeoPosition: true);
+  void onEditMetadata()          => set(editingDeviceMetadata: true);
+  void onEditMetrics()           => set(editingDeviceMetrics: true);
+
+  void onChangeDeviceMgmtHostname(String text) {
+    if (selected is! Device || selected.name == text) { return; }
+
+    var device = selected;
+    var modified = device.cloneWith(mgmtHostname: text);
+    changeItem(modified);
+  }
+
+  void onChangeDeviceNameContent(String text) {
+    if (selected is! Device || selected.name == text) { return; }
+
+    var device = selected;
+    var modified = device.cloneWith(name: text);
+    changeItem(modified);
+  }
+
+  void onChangeSelectedMetric(String option, bool? state) {
+    if (selected is! Device) { Logger().w("Changed metric on a device, where device isn't selected"); return; }
+    
+    var metrics = Set.from((selected as Device).requestedMetrics);
+    if (state == false)     { metrics.remove(option); }
+    else if (state == true) { metrics.add(option);    }
+    else { Logger().d("Warning, selected metric with tri-state. Tri-states on metrics aren't supported"); return; }
+
+    changeItem(selected.cloneWith(requestedMetrics: metrics));
+  }
+
+  void onChangeSelectedMetadata(String option, bool? state) {
+    if (selected is! Device) { Logger().w("Changed metadata on a device, where device isn't selected"); return; }
+    
+    var metadata = Set.from((selected as Device).requestedMetadata);
+    if (state == false)     { metadata.remove(option); }
+    else if (state == true) { metadata.add(option);    }
+    else { Logger().d("Warning, selected metadata with tri-state. Tri-states on metadata aren't supported"); return; }
+
+    changeItem(selected.cloneWith(requestedMetadata: metadata));
   }
 
   bool get hasChanges {
@@ -131,5 +187,35 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
 
     // has been modified, return as modified
     return changed;
+  }
+
+  Device get device {
+    dynamic curr = selected;
+
+    if (curr is! Device) {
+      Logger().e("Accessed item for edit, where item isn't a Device. SelectedItem = $curr");
+    }
+
+    return curr as Device;
+  }
+
+  Group get group {
+    dynamic curr = selected;
+
+    if (curr is! Group) {
+      Logger().e("Accessed item for edit, where item isn't a Group. SelectedItem = $curr");
+    }
+
+    return curr as Group;
+  }
+
+  Link get link {
+    dynamic curr = selected;
+
+    if (curr is! Link) {
+      Logger().e("Accessed item for edit, where item isn't a Link. SelectedItem = $curr");
+    }
+
+    return curr as Link;
   }
 }

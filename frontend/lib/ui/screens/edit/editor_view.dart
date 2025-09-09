@@ -7,10 +7,10 @@ import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
-import 'package:network_analytics/ui/screens/edit/device_edit_view.dart';
+import 'package:network_analytics/ui/screens/edit/device/device_edit_view.dart';
 import 'package:network_analytics/ui/screens/edit/empty_edit_view.dart';
-import 'package:network_analytics/ui/screens/edit/group_edit_view.dart';
-import 'package:network_analytics/ui/screens/edit/link_edit_view.dart';
+import 'package:network_analytics/ui/screens/edit/group/group_edit_view.dart';
+import 'package:network_analytics/ui/screens/edit/link/link_edit_view.dart';
 
 class ItemEditView extends StatelessWidget {
   const ItemEditView({
@@ -33,14 +33,13 @@ class ItemEditView extends StatelessWidget {
     // TODO: show change resume before applying to DB
     switch (type) {
       case const (Device):
-        return DeviceEditView(device: selected, topology: topology,);
+        return DeviceEditView(topology: topology);
 
       case const (Link):
-        return LinkEditView(link: selected, topology: topology);
+        return LinkEditView(topology: topology);
         
       case const (Group):
-        return GroupEditView(topology: topology,);
-        
+        return GroupEditView(topology: topology);
 
       // Keep it, in case new type are added
       // ignore: unreachable_switch_default

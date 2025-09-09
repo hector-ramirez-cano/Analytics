@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
+import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 import 'package:path_drawing/path_drawing.dart';
@@ -98,6 +99,14 @@ class Link implements HoverTarget {
     if (denominator == 0) return 10e23;
 
     return numerator * numerator / denominator;
+  }
+
+  bool isModifiedAIface(Topology topology) {
+    return sideAIface != (topology.items[id] as Link).sideAIface;
+  }
+
+  bool isModifiedBIface(Topology topology) {
+    return sideBIface != (topology.items[id] as Link).sideBIface;
   }
 
   @override
