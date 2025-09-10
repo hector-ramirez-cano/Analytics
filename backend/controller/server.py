@@ -1,6 +1,7 @@
 import asyncio
 import json
 
+from aiohttp.web_fileresponse import content_type
 from quart import Quart, send_from_directory, Response
 import os
 
@@ -26,7 +27,6 @@ async def api_get_topology():
     topology = json.dumps(topology)
     return Response(topology, content_type="application/json")
     # return await send_from_directory(routes_dir, "test-data.json")
-
 
 @app.route("/api/schema/<selected>")
 async def api_get_schema(selected: str):

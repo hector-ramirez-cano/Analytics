@@ -11,12 +11,13 @@ class ItemEditSelection {
   final Topology changes;
   final bool editingGroupName;
   final bool editingGroupMembers;
-  final bool editingDeviceName;
-  final bool editingDeviceHostname;
   final bool editingLinkIfaceA;
   final bool editingLinkIfaceB;
+  final bool editingDeviceName;
+  final bool editingDeviceHostname;
   final bool editingDeviceMetadata;
   final bool editingDeviceMetrics;
+  final bool editingDeviceDataSources;
   final bool editingDeviceGeoPosition;
   
 
@@ -26,11 +27,12 @@ class ItemEditSelection {
     required this.editingGroupName,
     required this.editingGroupMembers,
     required this.editingDeviceName,
-    required this.editingDeviceHostname,
-    required this.editingLinkIfaceA,
     required this.editingLinkIfaceB,
+    required this.editingLinkIfaceA,
+    required this.editingDeviceHostname,
     required this.editingDeviceMetadata,
     required this.editingDeviceMetrics,
+    required this.editingDeviceDataSources,
     required this.editingDeviceGeoPosition,
   });
 }
@@ -49,6 +51,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
       editingLinkIfaceB: false,
       editingDeviceMetadata: false,
       editingDeviceMetrics: false,
+      editingDeviceDataSources: false,
       editingDeviceGeoPosition: false,
       )
     );
@@ -74,6 +77,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     bool editingDeviceMetadata = false,
     bool editingDeviceMetrics = false,
     bool editingDeviceGeoPosition = false,
+    bool editingDeviceDataSources = false,
 
     bool keepState = false,
   }) {
@@ -89,6 +93,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
         editingLinkIfaceB     : state.editingLinkIfaceB,
         editingDeviceMetadata : state.editingDeviceMetadata,
         editingDeviceMetrics  : state.editingDeviceMetrics,
+        editingDeviceDataSources: state.editingDeviceDataSources,
         editingDeviceGeoPosition: state.editingDeviceGeoPosition,
       );
     } else {
@@ -103,6 +108,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
         editingLinkIfaceB     : editingLinkIfaceB,
         editingDeviceMetadata : editingDeviceMetadata,
         editingDeviceMetrics  : editingDeviceMetrics,
+        editingDeviceDataSources: editingDeviceDataSources,
         editingDeviceGeoPosition: editingDeviceGeoPosition,
       );
     }
@@ -126,6 +132,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
         editingLinkIfaceB     : state.editingLinkIfaceB,
         editingDeviceMetadata : state.editingDeviceMetadata,
         editingDeviceMetrics  : state.editingDeviceMetrics,
+        editingDeviceDataSources: state.editingDeviceDataSources,
         editingDeviceGeoPosition: state.editingDeviceGeoPosition,
       );
   }
@@ -135,6 +142,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   void onEditDeviceGeoposition() => set(editingDeviceGeoPosition: true);
   void onEditMetadata()          => set(editingDeviceMetadata: true);
   void onEditMetrics()           => set(editingDeviceMetrics: true);
+  void onEditDataSources()       => set(editingDeviceDataSources: true);
 
   void onChangeDeviceMgmtHostname(String text) {
     if (selected is! Device || selected.name == text) { return; }
@@ -172,6 +180,17 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     else { Logger().d("Warning, selected metadata with tri-state. Tri-states on metadata aren't supported"); return; }
 
     changeItem(selected.cloneWith(requestedMetadata: metadata));
+  }
+
+  void onChangeSelectedDatasource(String option, bool? state) {
+    if (selected is! Device) { Logger().w("Changed datasource on a device, where device isn't selected"); return; }
+    
+    var datasource = Set.from((selected as Device).dataSources);
+    if (state == false)     { datasource.remove(option); }
+    else if (state == true) { datasource.add(option);    }
+    else { Logger().d("Warning, selected datasource with tri-state. Tri-states on datasource aren't supported"); return; }
+
+    changeItem(device.cloneWith(dataSources: datasource));
   }
 
   void onChangeDeviceGeoPosition(LatLng newPosition) {

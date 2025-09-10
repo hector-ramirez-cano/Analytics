@@ -21,6 +21,7 @@ class DeviceGeneralSettings extends ConsumerStatefulWidget {
   static const Icon geoPositionIcon  = Icon(Icons.map);
   static const Icon metadataIcon     = Icon(Icons.list);
   static const Icon metricsIcon      = Icon(Icons.list_alt);
+  static const Icon dataSourcesIcon  = Icon(Icons.dataset_linked);
 
   @override
   ConsumerState<DeviceGeneralSettings> createState() => _DeviceGeneralSettingsState();
@@ -35,10 +36,10 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
   void onEditGeoposition()    => ref.read(itemEditSelectionNotifier.notifier).onEditDeviceGeoposition();
   void onEditMetadata()       => ref.read(itemEditSelectionNotifier.notifier).onEditMetadata();
   void onEditMetrics()        => ref.read(itemEditSelectionNotifier.notifier).onEditMetrics();
+  void onEditDataSources()    => ref.read(itemEditSelectionNotifier.notifier).onEditDataSources();
 
   void onEditDeviceMgmtHostnameContent(String text) => ref.read(itemEditSelectionNotifier.notifier).onChangeDeviceMgmtHostname(text);
   void onEditDeviceNameContent(String text) => ref.read(itemEditSelectionNotifier.notifier).onChangeDeviceNameContent(text);
-
 
   AbstractSettingsTile _makeDeviceInput(Device device, bool editing, Topology topology) {
     bool modified = device.isModifiedName(topology);
@@ -58,10 +59,8 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
       title: Text("Nombre"),
       leading: DeviceGeneralSettings.nameIcon,
       trailing: editInput,
-      onPressed: null
     );
   }
-
 
   AbstractSettingsTile _makeHostnameInput(Device device, bool enabled, Topology topology) {
     bool modified = device.isModifiedHostname(topology);
@@ -81,12 +80,10 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
       title: Text("Hostname"),
       leading: const Icon(Icons.dns),
       trailing: editInput,
-      onPressed: null
     );
   }
 
-
-AbstractSettingsTile _makeGeopositionInput(Device device) {
+  AbstractSettingsTile _makeGeopositionInput(Device device) {
     bool modified = device.isModifiedGeoLocation(widget.topology);
     TextStyle? style = modified ? TextStyle(backgroundColor: modifiedColor, color: Colors.white) : null;
 
@@ -101,15 +98,13 @@ AbstractSettingsTile _makeGeopositionInput(Device device) {
       title: Text("Geoposition"),
       leading: DeviceGeneralSettings.geoPositionIcon,
       trailing: makeTrailing(child, onEditGeoposition),
-      onPressed: null
     );
   }
 
-  
-  AbstractSettingsTile _makeMetadataInput(Device device, Topology topology) {
+  List<BadgeButton> _makeBadgeList(Set<String> values, Topology topology, bool Function(String, Topology) isModifiedFn) {
     List<BadgeButton> list = [];
-    for (var item in device.requestedMetadata) {
-      bool modified = device.isModifiedMetadata(item, topology);
+    for (var item in values) {
+      bool modified = isModifiedFn(item, topology);
 
       Color backgroundColor = modified ? modifiedColor : Color.fromRGBO(214, 214, 214, 1);
       Color textColor = modified ? Colors.white : Colors.black;
@@ -122,35 +117,24 @@ AbstractSettingsTile _makeGeopositionInput(Device device) {
         ));
     }
 
-    var metadata = Wrap(spacing: 4, runSpacing: 4, children: list,);
+    return list;
+  }
 
+  AbstractSettingsTile _makeMetadataInput(Device device, Topology topology) {
+    List<BadgeButton> list = _makeBadgeList(device.requestedMetadata, topology, device.isModifiedMetadata);
     
+    var metadata = Wrap(spacing: 4, runSpacing: 4, children: list,);
 
     return SettingsTile(
       title: const Text("Metadatos a recabar"),
       description: const Text("Útil para valores que no cambian frecuentemente"),
       leading: DeviceGeneralSettings.metadataIcon,
       trailing: makeTrailing(metadata, onEditMetadata, width: 440),
-      onPressed: null
     );
   }
 
   AbstractSettingsTile _makeMetricInput(Device device, Topology topology) {
-    List<BadgeButton> list = [];
-    for (var item in device.requestedMetrics) {
-      bool modified = device.isModifiedMetric(item, topology);
-
-      Color backgroundColor = modified ? modifiedColor : Color.fromRGBO(214, 214, 214, 1);
-      Color textColor = modified ? Colors.white : Colors.black;
-
-      list.add(
-        BadgeButton(
-          backgroundColor: backgroundColor,
-          textStyle: TextStyle(color: textColor),
-          text: item
-        ));
-    }
-
+    List<BadgeButton> list = _makeBadgeList(device.requestedMetrics, topology, device.isModifiedMetric);
     var metadata = Wrap(spacing: 4, runSpacing: 4, children: list,);
 
     return SettingsTile(
@@ -158,7 +142,19 @@ AbstractSettingsTile _makeGeopositionInput(Device device) {
       description: const Text("Útil para valores que fluctúan frecuentemente"),
       leading: DeviceGeneralSettings.metricsIcon,
       trailing: makeTrailing(metadata, onEditMetrics, width: 440),
-      onPressed: null
+    );
+  }
+
+  AbstractSettingsTile _makeDataSourceInput(Device device, Topology topology) {
+    List<BadgeButton> list = _makeBadgeList(device.dataSources, topology, device.isModifiedDataSources);
+    var dataSources = Wrap(spacing: 4, runSpacing: 4, children: list,);
+
+    // TODO: make options and functionality
+    return SettingsTile(
+      title: const Text("Fuentes de datos"),
+      description: const Text("Fuentes de métricas y metadatos"),
+      leading: DeviceGeneralSettings.dataSourcesIcon,
+      trailing: makeTrailing(dataSources, onEditDataSources, width: 440),
     );
   }
 
@@ -204,8 +200,9 @@ AbstractSettingsTile _makeGeopositionInput(Device device) {
           _makeDeviceInput(device, enableDeviceName, widget.topology),
           _makeHostnameInput(device, enableHostname, widget.topology),
           _makeGeopositionInput(device),
+          _makeDataSourceInput(device, widget.topology),
           _makeMetadataInput(device, widget.topology),
-          _makeMetricInput(device, widget.topology)
+          _makeMetricInput(device, widget.topology),
         ],
       );
   }

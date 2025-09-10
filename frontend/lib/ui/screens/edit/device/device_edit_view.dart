@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:free_map/free_map.dart';
+import 'package:network_analytics/models/data_sources.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/screens/edit/commons/checkbox_select_dialog.dart';
@@ -29,26 +30,33 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
 
   Widget _buildValueSelectionInput() {
     final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
-    final notifier = ref.watch(itemEditSelectionNotifier.notifier); 
-    bool enabled = itemEditSelection.editingDeviceMetrics || itemEditSelection.editingDeviceMetadata;
+    final notif = ref.watch(itemEditSelectionNotifier.notifier); 
+    bool metrics = itemEditSelection.editingDeviceMetrics;
+    bool metadata = itemEditSelection.editingDeviceMetadata;
+    bool datasources = itemEditSelection.editingDeviceDataSources;
+
+    bool enabled = metrics || metadata || datasources;
 
     if (!enabled) { return SizedBox.shrink(); }
 
-    var pool = itemEditSelection.editingDeviceMetrics ? notifier.device.requestedMetrics : notifier.device.requestedMetadata;
+    Set<String> selectedOptions;
+    Set<String> options;
+    if (metrics)     { selectedOptions = notif.device.requestedMetrics   ; options = notif.device.availableValues; }
+    if (metadata)    { selectedOptions = notif.device.requestedMetadata  ; options = notif.device.availableValues; }
+    if (datasources) { selectedOptions = notif.device.dataSources        ; options = DataSources.values.map((i) => i.name).toSet(); }
+    else { return SizedBox.shrink(); }
 
     onChanged (option, state) => {
-      if (itemEditSelection.editingDeviceMetrics) {
-        notifier.onChangeSelectedMetric(option, state)
-      } else if (itemEditSelection.editingDeviceMetadata) {
-        notifier.onChangeSelectedMetadata(option, state)
-      } else {
+      if      (metrics)  { notif.onChangeSelectedMetric(option, state) } 
+      else if (metadata) { notif.onChangeSelectedMetadata(option, state) }
+      else if (datasources) {notif.onChangeSelectedDatasource(option, state) }
+      else {
         throw Exception("Unreachable code reached! Logic is faulty!")
       }
     }; 
-    isSelected (option) => pool.contains(option);
-    onClose () => notifier.set(editingDeviceMetadata: false, editingDeviceMetrics: false); 
+    isSelected (option) => selectedOptions.contains(option);
+    onClose () => notif.set(editingDeviceMetadata: false, editingDeviceMetrics: false, editingDeviceDataSources: false); 
     toText(option) => option as String;
-    var options = notifier.device.availableValues;
 
     return CheckboxSelectDialog(options: options, isSelected: isSelected, onChanged: onChanged, onClose: onClose, toText: toText,);
   }

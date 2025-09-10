@@ -15,6 +15,7 @@ class Device implements HoverTarget {
   final Set<String> requestedMetadata;
   final Set<String> requestedMetrics;
   final Set<String> availableValues;
+  final Set<String> dataSources;
 
   Device({
     required this.id,
@@ -25,13 +26,25 @@ class Device implements HoverTarget {
     required Set<String> requestedMetadata,
     required Set<String> requestedMetrics,
     required Set<String> availableValues,
+    required Set<String> dataSources,
     
   }): 
     requestedMetadata = Set.unmodifiable(requestedMetadata),
     requestedMetrics = Set.unmodifiable(requestedMetrics),
-    availableValues = Set.unmodifiable(availableValues);
+    availableValues = Set.unmodifiable(availableValues),
+    dataSources = Set.unmodifiable(dataSources);
 
-  Device cloneWith({int? id, Offset? position, String? name, LatLng? geoPosition, String? mgmtHostname, Set? requestedMetadata, Set? requestedMetrics, Set? availableValues}) {
+  Device cloneWith({
+    int? id,
+    Offset? position,
+    String? name,
+    LatLng? geoPosition,
+    String? mgmtHostname,
+    Set? requestedMetadata,
+    Set? requestedMetrics,
+    Set? availableValues,
+    Set? dataSources,
+  }) {
     return Device(
       id               : id ?? this.id,
       position         : position ?? this.position,
@@ -41,6 +54,7 @@ class Device implements HoverTarget {
       requestedMetadata: Set.from(requestedMetadata ?? this.requestedMetadata),
       requestedMetrics : Set.from(requestedMetrics ?? this.requestedMetrics),
       availableValues  : Set.from(availableValues ?? this.availableValues),
+      dataSources      : Set.from(dataSources ?? this.dataSources),
     );
   }
 
@@ -60,6 +74,7 @@ class Device implements HoverTarget {
       requestedMetadata: Set<String>.from(json['configuration']['requested-metadata']),
       requestedMetrics:  Set<String>.from(json['configuration']['requested-metrics']),
       availableValues:   Set<String>.from(json['configuration']['available-values']),
+      dataSources:       Set<String>.from(json['configuration']['data-sources']),
     );
   }
 
@@ -100,6 +115,10 @@ class Device implements HoverTarget {
     return requestedMetadata.contains(metadata) != (topology.items[id] as Device).requestedMetadata.contains(metadata);
   }
 
+  bool isModifiedDataSources(String dataSource, Topology topology) {
+    return dataSources.contains(dataSource) != (topology.items[id] as Device).dataSources.contains(dataSource);
+  }
+
   bool isModifiedName(Topology topology) {
     return name != (topology.items[id] as Device).name;
   }
@@ -115,4 +134,5 @@ class Device implements HoverTarget {
   bool isModifiedPosition(Topology topology) {
     return position != (topology.items[id] as Device).position; 
   }
+
 }

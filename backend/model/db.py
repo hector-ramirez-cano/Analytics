@@ -72,9 +72,9 @@ def __parse_devices(cur: ServerCursor):
                 longitude=float(row[5]),
                 management_hostname=row[6],
                 configuration=DeviceConfiguration(
-                    requested_metadata=row[7],
-                    requested_metrics=row[8],
-                    available_values=row[9],
+                    requested_metadata=set(row[7]),
+                    requested_metrics=set(row[8]),
+                    available_values=set(row[9]),
                     data_sources=set(), # TODO: Data sources from DB
                 )
             )
@@ -87,11 +87,21 @@ def __parse_devices(cur: ServerCursor):
             devices[device_id].longitude = float(row[5])
             devices[device_id].management_hostname = row[6]
             devices[device_id].configuration = DeviceConfiguration(
-                requested_metadata=row[7],
-                requested_metrics=row[8],
-                available_values=row[9],
+                requested_metadata=set(row[7]),
+                requested_metrics=set(row[8]),
+                available_values=set(row[9]),
                 data_sources=set(),  # TODO: Data sources from DB
             )
+
+    cur.execute(
+        """
+            SELECT device_id, data_source FROM Analytics.device_data_sources;
+        """)
+    for row in cur.fetchall():
+        device_id = int(row[0])
+
+        if devices.get(device_id) is not None:
+            devices[device_id].configuration.data_sources.add(row[1])
 
 
 def __parse_device_datasource(cur: ServerCursor):
