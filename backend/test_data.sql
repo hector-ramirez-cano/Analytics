@@ -14,8 +14,8 @@ SELECT Analytics.devices.device_id, device_name, position_x, position_y, latitud
 
 INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, latitude, longitude, management_hostname) 
     VALUES 
-        (1, 'Xochimilco-lan',  0.5,  0.5, 21.159425, -101.645852, '192.168.100.3'),
-        (2, 'Tlatelolco-lan',  0.7, -0.2, 21.159425, -101.645852, '192.168.100.5'),
+        (1, 'Xochimilco-lan',  0.5,  0.5, 21.159425, -101.645852, '10.144.1.222'),
+        (2, 'Tlatelolco-lan',  0.7, -0.2, 21.159425, -101.645852, '10.144.1.1'),
         (3, 'Obsidian-lan'  , -0.3 , 0.3, 21.159425, -101.645852, '10.144.1.225' );
 
 INSERT INTO Analytics.device_configuration (device_id, requested_metadata, requested_metrics)
@@ -65,6 +65,6 @@ INSERT INTO Analytics.group_members(group_id, item_id)
         (203, 201),
         (203, 202);
 
-// Should fail, a group cant contain itself
-// TODO: Handle actual parent-child recursion
-// INSERT INTO Analytics.group_members(group_id, item_id) VALUES (203, 203);
+-- Should fail, a group cant contain itself
+-- TODO: Handle actual parent-child recursion
+-- INSERT INTO Analytics.group_members(group_id, item_id) VALUES (203, 203);
