@@ -292,8 +292,8 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     // if item changed, reset the text fields
       ref.listen(itemEditSelectionNotifier, (previous, next) {
         if (previous?.selectedStack != next.selectedStack && next.selectedStack is Link) {
-          _sideAIfaceInputController.text = next.selectedStack.last.sideAIface;
-          _sideBIfaceInputController.text = next.selectedStack.last.sideBIface;
+          _sideAIfaceInputController.text = (next.selectedStack.last as Link).sideAIface;
+          _sideBIfaceInputController.text = (next.selectedStack.last as Link).sideBIface;
         }
       });
 

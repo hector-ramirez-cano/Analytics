@@ -1,12 +1,12 @@
 import 'dart:ui';
 
 import 'package:free_map/free_map.dart';
+import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/canvas_interaction_service.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 
-class Device implements HoverTarget{
-  final int id;
+class Device extends AnalyticsItem<Device> implements HoverTarget{
   final String name;
   final Offset position;    // x, y
   final LatLng geoPosition; // Lat , Long
@@ -18,7 +18,7 @@ class Device implements HoverTarget{
   final Set<String> dataSources;
 
   Device({
-    required this.id,
+    required super.id,
     required this.position,
     required this.name,
     required this.geoPosition,
@@ -58,6 +58,7 @@ class Device implements HoverTarget{
     );
   }
 
+  @override
   Device mergeWith(Device other){
     var requestedMetadata = Set.from(other.requestedMetadata)..addAll(this.requestedMetadata);
     var requestedMetrics  = Set.from(other.requestedMetrics )..addAll(this.requestedMetrics );

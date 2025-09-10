@@ -1,19 +1,20 @@
+import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/topology.dart';
 
-class Group {
-  final int id;
+class Group extends AnalyticsItem<Group>{
   final String name;
   final Set<dynamic> members;
   final bool isDisplayGroup;
 
   Group({
-    required this.id,
+    required super.id,
     required members,
     required this.name,
     required this.isDisplayGroup,
-  }): members = Set.unmodifiable(members);
+  })
+    : members = Set.unmodifiable(members);
   
   Group cloneWith({int? id, String? name, Set<dynamic>? members, bool? isDisplayGroup}) {
     return Group(
@@ -24,6 +25,7 @@ class Group {
     );
   }
 
+  @override
   Group mergeWith(Group other) {
     var members = Set.from(other.members)..addAll(this.members);
 

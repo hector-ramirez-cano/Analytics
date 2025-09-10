@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
+import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
 import 'package:network_analytics/theme/app_colors.dart';
@@ -12,8 +13,7 @@ import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/services/canvas_interaction_service.dart';
 import 'package:network_analytics/extensions/offset.dart';
 
-class Link implements HoverTarget {
-  final int id;
+class Link extends AnalyticsItem<Link> implements HoverTarget {
   final Device sideA;
   final Device sideB;
   final LinkType linkType;
@@ -25,7 +25,7 @@ class Link implements HoverTarget {
   late double A, B, C;
 
   Link ({
-    required this.id,
+    required super.id,
     required this.sideA,
     required this.sideB,
     required this.linkType,
@@ -61,6 +61,7 @@ class Link implements HoverTarget {
     ,);
   }
 
+  @override
   Link mergeWith(Link other) {
     return other.cloneWith();
   }

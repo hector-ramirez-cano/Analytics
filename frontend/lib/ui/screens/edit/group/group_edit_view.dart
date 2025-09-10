@@ -166,7 +166,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
       // if item changed, reset the text fields
       ref.listen(itemEditSelectionNotifier, (previous, next) {
         if (previous?.selectedStack != next.selectedStack) {
-          _nameInputController.text = next.selectedStack.last.name;
+          _nameInputController.text = (next.selectedStack.last as Group).name;
         }
       });
 

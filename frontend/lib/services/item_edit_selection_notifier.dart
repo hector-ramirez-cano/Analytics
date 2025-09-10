@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:free_map/free_map.dart';
 import 'package:logger/web.dart';
+import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/link.dart';
@@ -8,7 +9,7 @@ import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
 
 class ItemEditSelection {
-  final List<dynamic> selectedStack;
+  final List<AnalyticsItem> selectedStack;
   final Topology changes;
   final Topology deleted;
   final bool editingGroupName;
@@ -86,7 +87,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   }
 
   void set({
-    List<dynamic>? selected,
+    List<AnalyticsItem>? selected,
     Topology? changes,
     Topology? deleted,
     bool requestedConfirmDeletion = false,
@@ -108,7 +109,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   }) {
     if (keepState) {
       state = ItemEditSelection(
-        selectedStack              : selected ?? state.selectedStack,
+        selectedStack         : selected ?? state.selectedStack,
         deleted               : deleted ?? state.deleted,
         changes               : changes ?? state.changes,
         confirmDeletion       : state.confirmDeletion,
@@ -168,13 +169,13 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   void onRequestDeletion()       => set(requestedConfirmDeletion: true);
 
   void onChangeDeviceMgmtHostname(String text) {
-    if (selected is! Device || selected.name == text) { return; }
+    if (selected is! Device || (selected as Device).name == text) { return; }
 
     changeItem(device.cloneWith(mgmtHostname: text));
   }
 
   void onChangeDeviceNameContent(String text) {
-    if (selected is! Device || selected.name == text) { return; }
+    if (selected is! Device || (selected as Device).name == text) { return; }
 
     changeItem(device.cloneWith(name: text));
   }
@@ -187,7 +188,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     else if (state == true) { metrics.add(option);    }
     else { Logger().d("Warning, selected metric with tri-state. Tri-states on metrics aren't supported"); return; }
 
-    changeItem(selected.cloneWith(requestedMetrics: metrics));
+    changeItem((selected as Device).cloneWith(requestedMetrics: metrics));
   }
 
   void onChangeSelectedMetadata(String option, bool? state) {
@@ -198,7 +199,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     else if (state == true) { metadata.add(option);    }
     else { Logger().d("Warning, selected metadata with tri-state. Tri-states on metadata aren't supported"); return; }
 
-    changeItem(selected.cloneWith(requestedMetadata: metadata));
+    changeItem((selected as Device).cloneWith(requestedMetadata: metadata));
   }
 
   void onChangeSelectedDatasource(String option, bool? state) {
@@ -254,7 +255,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     return state.changes.items.isNotEmpty && state.deleted.items.isNotEmpty;
   }
 
-  dynamic get selected {
+  AnalyticsItem get selected {
     dynamic changed = state.changes.items[state.selectedStack.last.id];
 
     // no changes have been made, return as is
@@ -279,7 +280,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   }
 
   Device get device {
-    dynamic curr = selected;
+    AnalyticsItem curr = selected;
 
     if (curr is! Device) {
       Logger().e("Accessed item for edit, where item isn't a Device. SelectedItem = $curr");
@@ -289,7 +290,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   }
 
   Device get deviceMerged {
-    return device.mergeWith(state.selectedStack.last);
+    return device.mergeWith(state.selectedStack.last as Device);
   }
 
   Group get group {
