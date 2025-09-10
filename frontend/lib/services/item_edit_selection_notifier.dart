@@ -247,6 +247,13 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     set(deleted: state.deleted.cloneWith(items: items), selected: selectedStack);
   }
 
+  void onRestoreSelected() {
+    Map<int, dynamic> items = Map.from(state.deleted.items);
+    items.remove(selected.id);
+
+    set(deleted: state.deleted.cloneWith(items: items));
+  }
+
   bool isDeleted(dynamic item) {
     return state.deleted.items.containsKey(item.id);
   }

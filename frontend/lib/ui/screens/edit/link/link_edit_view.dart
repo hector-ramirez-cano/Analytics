@@ -44,6 +44,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   void onRequestedDelete()=> ref.read(itemEditSelectionNotifier.notifier).onRequestDeletion();
   void onCancelDelete()   => ref.read(itemEditSelectionNotifier.notifier).set(requestedConfirmDeletion: false);
   void onConfirmedDelete()=> ref.read(itemEditSelectionNotifier.notifier).onDeleteSelected();
+  void onConfirmRestore() => ref.read(itemEditSelectionNotifier.notifier).onRestoreSelected();
 
   void onEditSideAIfaceContent(String text) {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
@@ -169,27 +170,37 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   }
 
   SettingsSection _makeDeleteSection() {
+    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+    bool deleted = notifier.isDeleted(notifier.link);
+    String label = deleted ? "Restaurar" : "Eliminar";
+    var onAction = deleted ? onConfirmRestore : onRequestedDelete;
+
     resolveColor (states) {
+      if (deleted) {
+        if (states.contains(WidgetState.hovered)) {
+        return const Color.fromRGBO(111, 170, 88, 1);
+        } 
+        return Colors.grey;
+      }
+
+
       if (states.contains(WidgetState.hovered)) {
         return const Color.fromRGBO(226, 71, 71, 1);
       } 
-      return Colors.blueGrey;
+      return Colors.grey;
     }
 
     return SettingsSection(
       title: Text(""), tiles: [
         SettingsTile(title: SizedBox(
           width: double.infinity, 
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 600),
-            child: ElevatedButton(
-              style: ButtonStyle(
-                foregroundColor: WidgetStatePropertyAll(Colors.white),
-                backgroundColor: WidgetStateProperty.resolveWith<Color?>(resolveColor)
-              ),
-              onPressed: onRequestedDelete,
-              child: const Text("Eliminar", ),
+          child: ElevatedButton(
+            style: ButtonStyle(
+              foregroundColor: WidgetStatePropertyAll(Colors.white),
+              backgroundColor: WidgetStateProperty.resolveWith<Color?>(resolveColor)
             ),
+            onPressed: onAction,
+            child: Text(label, ),
           ),))
       ]
     );
