@@ -51,7 +51,7 @@ class _SelectDialogState<T> extends State<SelectDialog> {
         padding: const EdgeInsets.all(8.0),
         child: TextField(
           decoration: const InputDecoration(
-            hintText: "Filtrar...",
+            hintText: "Buscar...",
             prefixIcon: Icon(Icons.search),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(8.0)),
@@ -75,13 +75,7 @@ class _SelectDialogState<T> extends State<SelectDialog> {
     );
   }
 
-  Widget _makeScrollList() {
-    List<T> list = widget.options.toList() as List<T>;
-    if (filterText.isNotEmpty) {
-      List<T> options = widget.options.toList() as List<T>;
-      list = fuzzySearch(filterText, options);
-    }
-
+  Widget _makeChecklist(List<T> list) {
     var checkboxes = list.map((option) {
       return CheckboxListTile(
         value: widget.isSelectedFn(option),
@@ -90,8 +84,6 @@ class _SelectDialogState<T> extends State<SelectDialog> {
       );
     }).toList();
 
-    
-
     return Expanded(
       child: SingleChildScrollView(
         child: Column(
@@ -99,6 +91,43 @@ class _SelectDialogState<T> extends State<SelectDialog> {
         ),
       ),
     );
+  }
+
+  Widget _makeRadioList(List<T> list) {
+    var radioButtons = list.map((option) {
+      return ListTile(
+        title: Text(widget.toText(option)),
+        trailing: Radio(value: option,),
+      );
+    }).toList();
+
+    var selected = list.where((item) => widget.isSelectedFn(item)).toList();
+
+    return RadioGroup(
+      onChanged: (option) => widget.onChanged(option, null),
+      groupValue: selected[0],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: radioButtons
+        ,
+      ),
+    );
+  }
+
+  Widget _makeScrollList() {
+    List<T> list = widget.options.toList() as List<T>;
+    if (filterText.isNotEmpty) {
+      List<T> options = widget.options.toList() as List<T>;
+      list = fuzzySearch(filterText, options);
+    }
+
+    switch (widget.dialogType) {
+      case SelectDialogType.checkbox:
+        return _makeChecklist(list);
+
+      case SelectDialogType.radio:
+        return _makeRadioList(list);
+    }
   }
 
   @override

@@ -41,9 +41,9 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
 
     Set<String> selectedOptions;
     Set<String> options;
-    if (metrics)     { selectedOptions = notif.device.requestedMetrics   ; options = notif.device.availableValues; }
-    if (metadata)    { selectedOptions = notif.device.requestedMetadata  ; options = notif.device.availableValues; }
-    if (datasources) { selectedOptions = notif.device.dataSources        ; options = DataSources.values.map((i) => i.name).toSet(); }
+    if      (metrics)     { selectedOptions = notif.device.requestedMetrics   ; options = notif.device.availableValues; }
+    else if (metadata)    { selectedOptions = notif.device.requestedMetadata  ; options = notif.device.availableValues; }
+    else if (datasources) { selectedOptions = notif.device.dataSources        ; options = DataSources.values.map((i) => i.name).toSet(); }
     else { return SizedBox.shrink(); }
 
     onChanged (option, state) => {

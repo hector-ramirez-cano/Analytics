@@ -5,6 +5,7 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
+import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 
@@ -149,7 +150,6 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     List<BadgeButton> list = _makeBadgeList(device.dataSources, topology, device.isModifiedDataSources);
     var dataSources = Wrap(spacing: 4, runSpacing: 4, children: list,);
 
-    // TODO: make options and functionality
     return SettingsTile(
       title: const Text("Fuentes de datos"),
       description: const Text("Fuentes de métricas y metadatos"),

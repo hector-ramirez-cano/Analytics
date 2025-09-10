@@ -21,7 +21,6 @@ class ItemEditView extends StatelessWidget {
     return AnimatedSwitcher(duration: const Duration (milliseconds: 300), child: _makeSettingsView(topology, selected),);
   }
 
-
   // TODO: Possibly remove selected
   Widget _makeSettingsView(Topology topology, dynamic selected) {
     var type = selected.runtimeType;

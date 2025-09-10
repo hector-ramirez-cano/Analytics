@@ -4,6 +4,7 @@ import 'package:logger/web.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/link.dart';
+import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
 
 class ItemEditSelection {
@@ -13,6 +14,9 @@ class ItemEditSelection {
   final bool editingGroupMembers;
   final bool editingLinkIfaceA;
   final bool editingLinkIfaceB;
+  final bool editingLinkDeviceA;
+  final bool editingLinkDeviceB;
+  final bool editingLinkType;
   final bool editingDeviceName;
   final bool editingDeviceHostname;
   final bool editingDeviceMetadata;
@@ -29,6 +33,9 @@ class ItemEditSelection {
     required this.editingDeviceName,
     required this.editingLinkIfaceB,
     required this.editingLinkIfaceA,
+    required this.editingLinkDeviceA,
+    required this.editingLinkDeviceB,
+    required this.editingLinkType,
     required this.editingDeviceHostname,
     required this.editingDeviceMetadata,
     required this.editingDeviceMetrics,
@@ -49,6 +56,9 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
       editingDeviceHostname: false,
       editingLinkIfaceA: false,
       editingLinkIfaceB: false,
+      editingLinkDeviceA: false,
+      editingLinkDeviceB: false,
+      editingLinkType: false,
       editingDeviceMetadata: false,
       editingDeviceMetrics: false,
       editingDeviceDataSources: false,
@@ -74,6 +84,9 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     bool editingHostname = false,
     bool editingLinkIfaceA = false,
     bool editingLinkIfaceB = false,
+    bool editingLinkDeviceA = false,
+    bool editingLinkDeviceB = false,
+    bool editingLinkType = false,
     bool editingDeviceMetadata = false,
     bool editingDeviceMetrics = false,
     bool editingDeviceGeoPosition = false,
@@ -93,6 +106,9 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
         editingLinkIfaceB     : state.editingLinkIfaceB,
         editingDeviceMetadata : state.editingDeviceMetadata,
         editingDeviceMetrics  : state.editingDeviceMetrics,
+        editingLinkDeviceA    : state.editingLinkDeviceA,
+        editingLinkDeviceB    : state.editingLinkDeviceB,
+        editingLinkType       : state.editingLinkType,
         editingDeviceDataSources: state.editingDeviceDataSources,
         editingDeviceGeoPosition: state.editingDeviceGeoPosition,
       );
@@ -108,6 +124,9 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
         editingLinkIfaceB     : editingLinkIfaceB,
         editingDeviceMetadata : editingDeviceMetadata,
         editingDeviceMetrics  : editingDeviceMetrics,
+        editingLinkDeviceA    : editingLinkDeviceA,
+        editingLinkDeviceB    : editingLinkDeviceB,
+        editingLinkType       : editingLinkType,
         editingDeviceDataSources: editingDeviceDataSources,
         editingDeviceGeoPosition: editingDeviceGeoPosition,
       );
@@ -130,6 +149,9 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
         editingDeviceHostname : state.editingDeviceHostname,
         editingLinkIfaceA     : state.editingLinkIfaceA,
         editingLinkIfaceB     : state.editingLinkIfaceB,
+        editingLinkDeviceA    : state.editingLinkDeviceA,
+        editingLinkDeviceB    : state.editingLinkDeviceB,
+        editingLinkType       : state.editingLinkType,
         editingDeviceMetadata : state.editingDeviceMetadata,
         editingDeviceMetrics  : state.editingDeviceMetrics,
         editingDeviceDataSources: state.editingDeviceDataSources,
@@ -198,6 +220,24 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     
     Device dev = device;
     changeItem(dev.cloneWith(geoPosition: newPosition));
+  }
+
+  void onChangeLinkDeviceA(Device newDevice) {
+    if (selected is! Link) { Logger().w("Changed device in link, where link isn't selected"); return; }
+    
+    changeItem(link.cloneWith(sideA: newDevice));
+  }
+
+  void onChangeLinkDeviceB(Device newDevice) {
+    if (selected is! Link) { Logger().w("Changed device in link, where link isn't selected"); return; }
+    
+    changeItem(link.cloneWith(sideB: newDevice));
+  }
+
+  void onChangeLinkType(LinkType type) {
+    if (selected is! Link) { Logger().w("Changed link type in link, where link isn't selected"); return; }
+    
+    changeItem(link.cloneWith(linkType: type));
   }
 
   bool get hasChanges {

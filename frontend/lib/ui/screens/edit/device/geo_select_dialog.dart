@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:free_map/free_map.dart';
 import 'package:logger/logger.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
-import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
+import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
 
 class GeoSelectDialog extends ConsumerStatefulWidget {
 
@@ -165,7 +165,7 @@ class _GeoSelectDialogState extends ConsumerState<GeoSelectDialog> {
       backgroundColor: Colors.white
     );
 
-    var button = ElevatedButton.icon(onPressed: onTextChange, label: Text("Buscar")); // TODO: Functionality
+    var button = ElevatedButton.icon(onPressed: onTextChange, label: Text("Buscar"));
 
     return Row(
       mainAxisSize: MainAxisSize.min,

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
+import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
+import 'package:network_analytics/ui/screens/edit/commons/select_dialog.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class LinkEditView extends ConsumerStatefulWidget {
@@ -36,46 +38,30 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
 
   void onEditSideAIface() => ref.read(itemEditSelectionNotifier.notifier).set(editingLinkIfaceA: true);
   void onEditSideBIface() => ref.read(itemEditSelectionNotifier.notifier).set(editingLinkIfaceB: true);
+  void onEditSideA()      => ref.read(itemEditSelectionNotifier.notifier).set(editingLinkDeviceA: true);
+  void onEditSideB()      => ref.read(itemEditSelectionNotifier.notifier).set(editingLinkDeviceB: true);
 
   void onEditSideAIfaceContent(String text) {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
-
-    if (notifier.link.sideAIface == text) { return; }
-
     var link = notifier.link;
-    var modified = link.cloneWith(sideAIface: text);
-    notifier.changeItem(modified);
+  
+    onEditIFaceContent(text, notifier.link.sideAIface, (text) => link.cloneWith(sideAIface: text));
   }
 
   void onEditSideBIfaceContent(String text) {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
-  
-    if (notifier.link.sideBIface == text) { return; }
-
     var link = notifier.link;
-    var modified = link.cloneWith(sideBIface: text);
-    notifier.changeItem(modified);
+  
+    onEditIFaceContent(text, notifier.link.sideBIface, (text) => link.cloneWith(sideBIface: text));
   }
 
+  void onEditIFaceContent(String text, String currentText, Link Function(String) modifyFn) {
+    final notifier = ref.read(itemEditSelectionNotifier.notifier);
 
-  DropdownButton _makeDeviceDropdown(Device device, Device other, String hint) {
-    // TODO: dropdown with search
-    final initialValue = (widget.topology.getDevices().any((d) => d.name == device.name))
-          ? device.name
-          : null;
+    if (currentText == text) { return; }
 
-    final options = widget.topology.getDevices()
-          .where((dev) => dev.id != other.id)
-          .map((dev) => DropdownMenuItem(value: dev.name, child: Text(dev.name)))
-          .toList();
-
-    return DropdownButton<String>(
-      value: initialValue,
-      hint: Text(hint),
-      items: options,
-      onChanged: (val) {}, // TODO: Functionality
-      isExpanded: true,
-    );
+    var modified = modifyFn(text);
+    notifier.changeItem(modified);
   }
 
   DropdownButton _makeLinkTypeDropdown(LinkType linkType) {
@@ -129,13 +115,14 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     return _makeInterfaceInput(link, enabled, link.sideBIface, _sideBIfaceInputController, topology, link.isModifiedBIface, onEditSideBIface, onEditSideBIfaceContent);
   }
 
-  AbstractSettingsTile _makeDeviceSelection(String title, Device device, Device other) {
-    var child = _makeDeviceDropdown(device, other, "Select device $title");
+  AbstractSettingsTile _makeDeviceSelection(String title, Device device, Device other, Function() onEdit) {
+    // var child = _makeDeviceDropdown(device, other, "Select device $title");
+    var child = EditTextField(enabled: false, initialText: device.name, showEditIcon: true, onEditToggle: onEdit,);
 
     return SettingsTile(
       title: Text(title),
       leading: const Icon(Icons.dns),
-      trailing: makeTrailing(child, (){}, showEditIcon: false),
+      trailing: child,
       onPressed: null
     ); 
   }
@@ -155,28 +142,94 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
       );
   }
 
-  SettingsSection _makeDeviceSection(String title, Device device, Device other, Link link, bool editing, Function(Link, bool, Topology) makeInput) {
+  SettingsSection _makeDeviceSection(String title, Link link, {required bool sideA}) {
+
+    final itemSelection = ref.read(itemEditSelectionNotifier);
+
+    bool editingAIface = itemSelection.editingLinkIfaceA;
+    bool editingBIface = itemSelection.editingLinkIfaceB;
+
+    var makeInput = sideA ? _makeInterfaceAInput : _makeInterfaceBInput;
+    var onEdit    = sideA ? onEditSideA : onEditSideB;
+    Device device = sideA ? link.sideA : link.sideB;
+    Device other  = sideA ? link.sideB : link.sideA;
+    bool editing  = sideA ? editingAIface : editingBIface;
+
     return SettingsSection(
         title: Text(title),
         tiles: [
-          _makeDeviceSelection("Device", link.sideA, link.sideB),
+          _makeDeviceSelection("Device", device, other, onEdit),
           makeInput(link, editing , widget.topology),
         ],
       );
   }
 
+
+  Widget _buildSelectionDialog() {
+    final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
+    final notif = ref.watch(itemEditSelectionNotifier.notifier);
+
+    bool deviceA = itemEditSelection.editingLinkDeviceA;
+    bool deviceB = itemEditSelection.editingLinkDeviceB;
+    bool linkType= itemEditSelection.editingLinkType;
+    Link link    = notif.link;
+
+    bool enabled = deviceA || deviceB || linkType;
+
+    if (!enabled) { return SizedBox.shrink(); }
+
+    getOptions(Device device) {
+      Logger().d("Filtering out device with ID ${device.id}");
+      return widget.topology.getDevices().where((item) => item.id != device.id).toSet();
+    }
+
+    Set<Device> selectedOptions;
+    Set<Device> options;
+    if (deviceA)  { 
+      Logger().d("Input for device A");
+      selectedOptions = {link.sideA};
+      options = getOptions(link.sideB);
+    }
+    else if (deviceB) {
+      Logger().d("Input for device B");
+      selectedOptions = {link.sideB};
+      options = getOptions(link.sideA);
+    }
+    else {
+      return SizedBox.shrink();
+    }
+
+    onChanged (option, state) => {
+      if      (deviceA)  { notif.onChangeLinkDeviceA(option) } 
+      else if (deviceB)  { notif.onChangeLinkDeviceB(option) }
+      else {
+        throw Exception("Unreachable code reached! Logic is faulty!")
+      }
+    }; 
+    isSelectedFn (option) => selectedOptions.contains(option);
+    onClose () => notif.set(editingDeviceMetadata: false, editingDeviceMetrics: false, editingDeviceDataSources: false); 
+    toText(option) => (option as Device).name;
+
+    return SelectDialog(
+      options: options,
+      dialogType: SelectDialogType.radio,
+      isSelectedFn: isSelectedFn,
+      onChanged: onChanged,
+      onClose: onClose,
+      toText: toText,
+    );
+  }
+
+
   Widget _buildConfigurationPage() {
-    final itemSelection = ref.read(itemEditSelectionNotifier);
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
 
     Link link = notifier.link;
-    bool editingAIface = itemSelection.editingLinkIfaceA;
-    bool editingBIface = itemSelection.editingLinkIfaceB;
 
     return Column(
       children: [ Expanded( child: SettingsList( sections: [
-              CustomSettingsSection(child: _makeDeviceSection("Device A", link.sideA, link.sideB, link, editingAIface, _makeInterfaceAInput)),
-              CustomSettingsSection(child: _makeDeviceSection("Device B", link.sideB, link.sideA, link, editingBIface, _makeInterfaceBInput)),
+              CustomSettingsSection(child: _makeDeviceSection("Device A", link, sideA: true)),
+              CustomSettingsSection(child: _makeDeviceSection("Device B", link, sideA: false)),
               CustomSettingsSection(child: _makeLinkSelection(link))
             ],),),
         // Save button and cancel button
@@ -199,7 +252,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     return Stack(
       children: [
         _buildConfigurationPage(),
-
+        _buildSelectionDialog(),
       ],
     );
   }
