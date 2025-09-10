@@ -44,7 +44,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
   AbstractSettingsTile _makeDeviceInput(Device device, bool editing, Topology topology) {
     bool modified = device.isModifiedName(topology);
-    Color backgroundColor = modified ? modifiedColor : Colors.transparent;
+    Color backgroundColor = modified ? addedItemColor : Colors.transparent;
 
     var editInput = EditTextField(
       initialText: device.name,
@@ -65,7 +65,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
   AbstractSettingsTile _makeHostnameInput(Device device, bool enabled, Topology topology) {
     bool modified = device.isModifiedHostname(topology);
-    Color backgroundColor = modified ? modifiedColor : Colors.transparent;
+    Color backgroundColor = modified ? addedItemColor : Colors.transparent;
 
     final editInput = EditTextField(
       initialText: device.name,
@@ -86,7 +86,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
   AbstractSettingsTile _makeGeopositionInput(Device device) {
     bool modified = device.isModifiedGeoLocation(widget.topology);
-    TextStyle? style = modified ? TextStyle(backgroundColor: modifiedColor, color: Colors.white) : null;
+    TextStyle? style = modified ? TextStyle(backgroundColor: addedItemColor, color: Colors.white) : null;
 
     double lat = device.geoPosition.latitude;
     double lng = device.geoPosition.longitude;
@@ -102,12 +102,20 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     );
   }
 
-  List<BadgeButton> _makeBadgeList(Set<String> values, Topology topology, bool Function(String, Topology) isModifiedFn) {
+  List<BadgeButton> _makeBadgeList(
+    Set<String> values,
+    Topology topology,
+    bool Function(String, Topology) isModifiedFn,
+    bool Function(String, Topology) isDeletedFn
+  ) {
     List<BadgeButton> list = [];
     for (var item in values) {
       bool modified = isModifiedFn(item, topology);
+      bool deleted = isDeletedFn(item, topology);
 
-      Color backgroundColor = modified ? modifiedColor : Color.fromRGBO(214, 214, 214, 1);
+      Color backgroundColor = modified ? addedItemColor : Color.fromRGBO(214, 214, 214, 1);
+      backgroundColor = deleted ? deletedItemColor : backgroundColor;
+      
       Color textColor = modified ? Colors.white : Colors.black;
 
       list.add(
@@ -121,8 +129,9 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     return list;
   }
 
-  AbstractSettingsTile _makeMetadataInput(Device device, Topology topology) {
-    List<BadgeButton> list = _makeBadgeList(device.requestedMetadata, topology, device.isModifiedMetadata);
+  AbstractSettingsTile _makeMetadataInput(Device device, Device merged, Topology topology) {
+
+    List<BadgeButton> list = _makeBadgeList(merged.requestedMetadata, topology, device.isModifiedMetadata, device.isDeletedMetadata);
     
     var metadata = Wrap(spacing: 4, runSpacing: 4, children: list,);
 
@@ -134,8 +143,8 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     );
   }
 
-  AbstractSettingsTile _makeMetricInput(Device device, Topology topology) {
-    List<BadgeButton> list = _makeBadgeList(device.requestedMetrics, topology, device.isModifiedMetric);
+  AbstractSettingsTile _makeMetricInput(Device device, Device merged, Topology topology) {
+    List<BadgeButton> list = _makeBadgeList(merged.requestedMetrics, topology, device.isModifiedMetric, device.isDeletedMetric);
     var metadata = Wrap(spacing: 4, runSpacing: 4, children: list,);
 
     return SettingsTile(
@@ -146,8 +155,8 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     );
   }
 
-  AbstractSettingsTile _makeDataSourceInput(Device device, Topology topology) {
-    List<BadgeButton> list = _makeBadgeList(device.dataSources, topology, device.isModifiedDataSources);
+  AbstractSettingsTile _makeDataSourceInput(Device device, Device merged, Topology topology) {
+    List<BadgeButton> list = _makeBadgeList(merged.dataSources, topology, device.isModifiedDataSources, device.isDeletedDataSource);
     var dataSources = Wrap(spacing: 4, runSpacing: 4, children: list,);
 
     return SettingsTile(
@@ -162,11 +171,10 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
   void initState() {
     super.initState();
     
-    var selected = ref.read(itemEditSelectionNotifier).selected;
-    _hostnameInputController = TextEditingController(text: selected.mgmtHostname);
-    _nameInputController = TextEditingController(text: selected.name);
+    var device = ref.read(itemEditSelectionNotifier.notifier).device;
+    _hostnameInputController = TextEditingController(text: device.mgmtHostname);
+    _nameInputController = TextEditingController(text: device.name);
   }
-
 
   @override
   void dispose() {
@@ -182,7 +190,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
     // If item changed, reset the text fiel controller's text to the initial value of the selected
     ref.listen(itemEditSelectionNotifier, (previous, next) {
-        if (previous?.selected != next.selected && next.selected is Device) {
+        if (previous?.selectedStack != next.selectedStack && next.selectedStack is Device) {
           Device device = notifier.device;
           _hostnameInputController.text = device.mgmtHostname;
           _nameInputController.text = device.name;
@@ -191,6 +199,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
     
     Device device = notifier.device;
+    Device merged = notifier.deviceMerged;
     bool enableDeviceName = itemSelectionService.editingDeviceName;
     bool enableHostname = itemSelectionService.editingDeviceHostname;
 
@@ -200,9 +209,9 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
           _makeDeviceInput(device, enableDeviceName, widget.topology),
           _makeHostnameInput(device, enableHostname, widget.topology),
           _makeGeopositionInput(device),
-          _makeDataSourceInput(device, widget.topology),
-          _makeMetadataInput(device, widget.topology),
-          _makeMetricInput(device, widget.topology),
+          _makeDataSourceInput(device, merged, widget.topology),
+          _makeMetadataInput(device, merged, widget.topology),
+          _makeMetricInput(device, merged, widget.topology),
         ],
       );
   }

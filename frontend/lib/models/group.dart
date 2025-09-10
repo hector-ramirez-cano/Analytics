@@ -18,10 +18,16 @@ class Group {
   Group cloneWith({int? id, String? name, Set<dynamic>? members, bool? isDisplayGroup}) {
     return Group(
       id: id ?? this.id,
-      members: Set.from(members ?? this.members), // Deep copy of the set, so it doesn't modify the original
+      members: Set.from(members ?? this.members),
       name: name ?? this.name,
       isDisplayGroup: isDisplayGroup ?? this.isDisplayGroup
     );
+  }
+
+  Group mergeWith(Group other) {
+    var members = Set.from(other.members)..addAll(this.members);
+
+    return cloneWith(members: members);
   }
 
   factory Group.fromJson(Map<String, dynamic> json, Map<int, dynamic> items) {

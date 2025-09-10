@@ -8,7 +8,7 @@ import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
 
 class ItemEditSelection {
-  final dynamic selected;
+  final List<dynamic> selectedStack;
   final Topology changes;
   final Topology deleted;
   final bool editingGroupName;
@@ -28,7 +28,7 @@ class ItemEditSelection {
   
 
   const ItemEditSelection({
-    required this.selected,
+    required this.selectedStack,
     required this.changes,
     required this.deleted,
     required this.editingGroupName,
@@ -52,7 +52,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   ItemEditSelectionNotifier() 
   : super(
     ItemEditSelection(
-      selected: null,
+      selectedStack: [],
       changes: Topology(items: {}),
       deleted: Topology(items: {}),
       confirmDeletion: false,
@@ -72,7 +72,11 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
       )
     );
 
-  void setSelected(dynamic selected) =>  set(selected: selected.cloneWith());
+  void setSelected(dynamic item) {
+    var newStack = state.selectedStack..add(item);
+
+    set(selected: newStack);
+  }
 
   bool toggleEditingGroupName() {
     bool editing = !state.editingGroupName;
@@ -82,7 +86,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   }
 
   void set({
-    dynamic selected,
+    List<dynamic>? selected,
     Topology? changes,
     Topology? deleted,
     bool requestedConfirmDeletion = false,
@@ -101,11 +105,10 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     bool editingDeviceDataSources = false,
 
     bool keepState = false,
-    bool nullableSelected = false,
   }) {
     if (keepState) {
       state = ItemEditSelection(
-        selected              : nullableSelected ? selected : selected ?? state.selected,
+        selectedStack              : selected ?? state.selectedStack,
         deleted               : deleted ?? state.deleted,
         changes               : changes ?? state.changes,
         confirmDeletion       : state.confirmDeletion,
@@ -125,7 +128,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
       );
     } else {
       state = ItemEditSelection(
-        selected              : nullableSelected ? selected : selected ?? state.selected,
+        selectedStack              : selected ?? state.selectedStack,
         changes               : changes ?? state.changes,
         deleted               : deleted ?? state.deleted,
         confirmDeletion       : requestedConfirmDeletion,
@@ -153,7 +156,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   }
 
   void discard() {
-    set(changes: Topology(items: {}), deleted: Topology(items: {}), selected: null, nullableSelected: true);
+    set(changes: Topology(items: {}), deleted: Topology(items: {}), selected: [], );
   }
 
   void onEditDeviceHostname()    => set(editingHostname: true);
@@ -237,8 +240,14 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     Map<int, dynamic> items = Map.from(state.deleted.items);
     items[selected.id] = selected;
 
+    var selectedStack = state.selectedStack..removeLast();
+
     // add selected to deleted
-    set(deleted: state.deleted.cloneWith(items: items), selected: null, nullableSelected: true);
+    set(deleted: state.deleted.cloneWith(items: items), selected: selectedStack);
+  }
+
+  bool isDeleted(dynamic item) {
+    return state.deleted.items.containsKey(item.id);
   }
 
   bool get hasChanges {
@@ -246,15 +255,27 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   }
 
   dynamic get selected {
-    var changed = state.changes.items[state.selected.id];
+    dynamic changed = state.changes.items[state.selectedStack.last.id];
 
     // no changes have been made, return as is
     if (changed == null) {
-      return state.selected;
+      return state.selectedStack.last;
     }
 
-    // has been modified, return as modified
+    // has been modified, return as is
     return changed;
+  }
+
+  dynamic get selectedMerged {
+    var changed = state.changes.items[state.selectedStack.last.id];
+
+    // no changes have been made, return as is
+    if (changed == null) {
+      return state.selectedStack;
+    }
+
+    // has been modified, return as original+changed
+    return changed.mergeWith(state.selectedStack);
   }
 
   Device get device {
@@ -265,6 +286,10 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     }
 
     return curr as Device;
+  }
+
+  Device get deviceMerged {
+    return device.mergeWith(state.selectedStack.last);
   }
 
   Group get group {

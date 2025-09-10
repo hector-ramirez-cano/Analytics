@@ -62,7 +62,7 @@ class ItemEditView extends StatelessWidget {
         return topologyAsync.when(
           loading: () => RetryIndicator(onRetry: onRetry, isLoading: true),
           error: (error, st) => RetryIndicator(onRetry: onRetry, isLoading: false, error: error.toString(),),
-          data: (topology) => _makeAnimatedSettings(topology, itemEditSelection.selected),
+          data: (topology) => _makeAnimatedSettings(topology, itemEditSelection.selectedStack.lastOrNull),
         );
       },
     );

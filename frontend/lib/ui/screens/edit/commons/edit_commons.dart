@@ -4,7 +4,8 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
 
-const Color modifiedColor = Colors.green;
+const Color addedItemColor = Colors.green;
+const Color deletedItemColor = Color.fromRGBO(233, 104, 95, 1);
 
 Widget _makeTrailingIcon(VoidCallback onEdit) {
   return 

@@ -92,7 +92,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     Function(String) onContentEdit
   ) {
     bool modified = isModified(topology);
-    Color backgroundColor = modified ? modifiedColor : Colors.transparent;
+    Color backgroundColor = modified ? addedItemColor : Colors.transparent;
 
     var editInput = EditTextField(
       initialText: startingText,
@@ -291,9 +291,9 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
 
     // if item changed, reset the text fields
       ref.listen(itemEditSelectionNotifier, (previous, next) {
-        if (previous?.selected != next.selected && next.selected is Link) {
-          _sideAIfaceInputController.text = next.selected.sideAIface;
-          _sideBIfaceInputController.text = next.selected.sideBIface;
+        if (previous?.selectedStack != next.selectedStack && next.selectedStack is Link) {
+          _sideAIfaceInputController.text = next.selectedStack.last.sideAIface;
+          _sideBIfaceInputController.text = next.selectedStack.last.sideBIface;
         }
       });
 

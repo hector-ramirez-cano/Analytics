@@ -69,7 +69,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   AbstractSettingsTile _makeNameInput(Group group, bool enabled, Topology topology) {
     
     bool modified = group.isModifiedName(topology);
-    Color backgroundColor = modified ? modifiedColor : Colors.transparent;
+    Color backgroundColor = modified ? addedItemColor : Colors.transparent;
 
 
     var editInput = EditTextField(
@@ -165,8 +165,8 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   Widget build(BuildContext context) {
       // if item changed, reset the text fields
       ref.listen(itemEditSelectionNotifier, (previous, next) {
-        if (previous?.selected != next.selected && next.selected != null) {
-          _nameInputController.text = next.selected.name;
+        if (previous?.selectedStack != next.selectedStack) {
+          _nameInputController.text = next.selectedStack.last.name;
         }
       });
 

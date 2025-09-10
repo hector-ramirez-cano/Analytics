@@ -5,7 +5,7 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/canvas_interaction_service.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 
-class Device implements HoverTarget {
+class Device implements HoverTarget{
   final int id;
   final String name;
   final Offset position;    // x, y
@@ -58,6 +58,20 @@ class Device implements HoverTarget {
     );
   }
 
+  Device mergeWith(Device other){
+    var requestedMetadata = Set.from(other.requestedMetadata)..addAll(this.requestedMetadata);
+    var requestedMetrics  = Set.from(other.requestedMetrics )..addAll(this.requestedMetrics );
+    var availableValues   = Set.from(other.availableValues  )..addAll(this.availableValues  );
+    var dataSources       = Set.from(other.dataSources      )..addAll(this.dataSources      );
+
+    return cloneWith(
+      requestedMetadata: requestedMetadata, 
+      requestedMetrics : requestedMetrics,  
+      availableValues  : availableValues,   
+      dataSources      : dataSources,       
+    );
+  }
+
   factory Device.fromJson(Map<String, dynamic> json) {
     return Device(
       id  : json['id'] as int,
@@ -107,16 +121,34 @@ class Device implements HoverTarget {
   }
 
 
+  /// Returns whether a given [metric] is modified in the current instance, in reference to the original [topology]
   bool isModifiedMetric(String metric, Topology topology) {
     return requestedMetrics.contains(metric) != (topology.items[id] as Device).requestedMetrics.contains(metric);
   }
 
+  /// Returns whether a given [metric] is deleted in the current instance, aka is not found on the instance, but found on the original [topology]
+  bool isDeletedMetric(String metric, Topology topology) {
+    return !requestedMetrics.contains(metric) && (topology.items[id] as Device).requestedMetrics.contains(metric);
+  }
+
+  /// Returns whether a given [metadata] is modified in the current instance, in reference to the original [topology]
   bool isModifiedMetadata(String metadata, Topology topology) {
     return requestedMetadata.contains(metadata) != (topology.items[id] as Device).requestedMetadata.contains(metadata);
   }
 
+  /// Returns whether a given [metadata] is deleted in the current instance, aka is not found on the instance, but found on the original [topology]
+  bool isDeletedMetadata(String metadata, Topology topology) {
+    return !requestedMetadata.contains(metadata) && (topology.items[id] as Device).requestedMetadata.contains(metadata);
+  }
+
+  /// Returns whether a given [dataSource] is modified in the current instance, in reference to the original [topology]
   bool isModifiedDataSources(String dataSource, Topology topology) {
     return dataSources.contains(dataSource) != (topology.items[id] as Device).dataSources.contains(dataSource);
+  }
+
+  /// Returns whether a given [dataSource] is deleted in the current instance, aka is not found on the instance, but found on the original [topology]
+  bool isDeletedDataSource(String dataSource, Topology topology) {
+    return !dataSources.contains(dataSource) && (topology.items[id] as Device).dataSources.contains(dataSource);
   }
 
   bool isModifiedName(Topology topology) {
@@ -134,5 +166,4 @@ class Device implements HoverTarget {
   bool isModifiedPosition(Topology topology) {
     return position != (topology.items[id] as Device).position; 
   }
-
 }

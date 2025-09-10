@@ -61,6 +61,10 @@ class Link implements HoverTarget {
     ,);
   }
 
+  Link mergeWith(Link other) {
+    return other.cloneWith();
+  }
+
   factory Link.fromJson(Map<String, dynamic> json, Map<int, dynamic> devices) {
     Device sideA = devices[json['side-a'] as int];
     Device sideB = devices[json['side-b'] as int];
