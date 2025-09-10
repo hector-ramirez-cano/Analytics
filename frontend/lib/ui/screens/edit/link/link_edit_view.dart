@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link.dart';
@@ -90,50 +91,42 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     );
   }
 
-  AbstractSettingsTile _makeInterfaceAInput(Link link, bool enabled, Topology topology) {
-    
-    bool modified = link.isModifiedAIface(topology);
+  AbstractSettingsTile _makeInterfaceInput(
+    Link link,
+    bool enabled,
+    String startingText,
+    TextEditingController inputController,
+    Topology topology,
+    bool Function(Topology) isModified,
+    Function() onEdit,
+    Function(String) onContentEdit
+  ) {
+    bool modified = isModified(topology);
     Color backgroundColor = modified ? modifiedColor : Colors.transparent;
 
-
     var editInput = EditTextField(
-      initialText: link.sideAIface,
+      initialText: startingText,
       enabled: enabled,
       backgroundColor: backgroundColor,
-      controller: _sideAIfaceInputController,
+      controller: inputController,
       showEditIcon: true,
-      onEditToggle: onEditSideAIface,
-      onContentEdit: onEditSideAIfaceContent,
+      onEditToggle: onEdit,
+      onContentEdit: onContentEdit,
     );
 
     return SettingsTile(
       title: Text("Interface"),
       leading: const Icon(Icons.settings_ethernet),
       trailing: editInput,
-      onPressed: null
     );
   }
 
+  AbstractSettingsTile _makeInterfaceAInput(Link link, bool enabled, Topology topology) {
+    return _makeInterfaceInput(link, enabled, link.sideAIface, _sideAIfaceInputController, topology, link.isModifiedAIface, onEditSideAIface, onEditSideAIfaceContent);
+  }
+
   AbstractSettingsTile _makeInterfaceBInput(Link link, bool enabled, Topology topology) {
-    bool modified = link.isModifiedBIface(topology);
-    Color backgroundColor = modified ? modifiedColor : Colors.transparent;
-
-    var editInput = EditTextField(
-      initialText: link.sideBIface,
-      enabled: enabled,
-      backgroundColor: backgroundColor,
-      controller: _sideBIfaceInputController,
-      showEditIcon: true,
-      onEditToggle: onEditSideBIface,
-      onContentEdit: onEditSideBIfaceContent,
-    );
-
-    return SettingsTile(
-      title: Text("Interface"),
-      leading: const Icon(Icons.settings_ethernet),
-      trailing: editInput,
-      onPressed: null
-    );
+    return _makeInterfaceInput(link, enabled, link.sideBIface, _sideBIfaceInputController, topology, link.isModifiedBIface, onEditSideBIface, onEditSideBIfaceContent);
   }
 
   AbstractSettingsTile _makeDeviceSelection(String title, Device device, Device other) {
@@ -147,14 +140,48 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     ); 
   }
 
-  AbstractSettingsTile _makeLinkSelection(Link link) {
+  SettingsSection _makeLinkSelection(Link link) {
     var child = _makeLinkTypeDropdown(link.linkType);
 
-    return SettingsTile(
-      title: const Text("Link Type"),
-      leading: const Icon(Icons.cable),
-      trailing: makeTrailing(child, (){}, showEditIcon: false),
-      onPressed: null
+    return SettingsSection(
+        title: Text("Link type"),
+        tiles: [
+          SettingsTile(
+            title: const Text("Link Type"),
+            leading: const Icon(Icons.cable),
+            trailing: makeTrailing(child, (){}, showEditIcon: false),
+          )
+        ],
+      );
+  }
+
+  SettingsSection _makeDeviceSection(String title, Device device, Device other, Link link, bool editing, Function(Link, bool, Topology) makeInput) {
+    return SettingsSection(
+        title: Text(title),
+        tiles: [
+          _makeDeviceSelection("Device", link.sideA, link.sideB),
+          makeInput(link, editing , widget.topology),
+        ],
+      );
+  }
+
+  Widget _buildConfigurationPage() {
+    final itemSelection = ref.read(itemEditSelectionNotifier);
+    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+
+    Link link = notifier.link;
+    bool editingAIface = itemSelection.editingLinkIfaceA;
+    bool editingBIface = itemSelection.editingLinkIfaceB;
+
+    return Column(
+      children: [ Expanded( child: SettingsList( sections: [
+              CustomSettingsSection(child: _makeDeviceSection("Device A", link.sideA, link.sideB, link, editingAIface, _makeInterfaceAInput)),
+              CustomSettingsSection(child: _makeDeviceSection("Device B", link.sideB, link.sideA, link, editingBIface, _makeInterfaceBInput)),
+              CustomSettingsSection(child: _makeLinkSelection(link))
+            ],),),
+        // Save button and cancel button
+        makeFooter(ref, widget.topology),
+      ],
     );
   }
 
@@ -169,41 +196,10 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
         }
       });
 
-    final itemSelection = ref.read(itemEditSelectionNotifier);
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+    return Stack(
+      children: [
+        _buildConfigurationPage(),
 
-    Link link = notifier.link;
-    bool editingAIface = itemSelection.editingLinkIfaceA;
-    bool editingBIface = itemSelection.editingLinkIfaceA;
-
-    return Column(
-      children: [ Expanded( child: SettingsList( sections: [
-              SettingsSection(
-                title: Text("Device A"),
-                tiles: [
-                  _makeDeviceSelection("Device", link.sideA, link.sideB),
-                  _makeInterfaceAInput(link, editingAIface , widget.topology),
-                ],
-              ),
-              SettingsSection(
-                title: Text("Device B"),
-                tiles: [
-                  _makeDeviceSelection("Device", link.sideB, link.sideA),
-                  _makeInterfaceBInput(link, editingBIface , widget.topology),
-                ],
-              ),
-              SettingsSection(
-                title: Text("Link type"),
-                tiles: [
-                  _makeLinkSelection(link)
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        // Save button and cancel button
-        makeFooter(ref, widget.topology),
       ],
     );
   }

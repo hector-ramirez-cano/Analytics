@@ -4,7 +4,7 @@ import 'package:free_map/free_map.dart';
 import 'package:network_analytics/models/data_sources.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
-import 'package:network_analytics/ui/screens/edit/commons/checkbox_select_dialog.dart';
+import 'package:network_analytics/ui/screens/edit/commons/select_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:network_analytics/ui/screens/edit/device/device_general_settings.dart';
 import 'package:network_analytics/ui/screens/edit/device/device_group_settings.dart';
@@ -28,7 +28,7 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
 
   void onGeoPositionChanged(LatLng p) => ref.read(itemEditSelectionNotifier.notifier).onChangeDeviceGeoPosition(p);
 
-  Widget _buildValueSelectionInput() {
+  Widget _buildSelectionDialog() {
     final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
     final notif = ref.watch(itemEditSelectionNotifier.notifier); 
     bool metrics = itemEditSelection.editingDeviceMetrics;
@@ -54,11 +54,18 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
         throw Exception("Unreachable code reached! Logic is faulty!")
       }
     }; 
-    isSelected (option) => selectedOptions.contains(option);
+    isSelectedFn (option) => selectedOptions.contains(option);
     onClose () => notif.set(editingDeviceMetadata: false, editingDeviceMetrics: false, editingDeviceDataSources: false); 
     toText(option) => option as String;
 
-    return CheckboxSelectDialog(options: options, isSelected: isSelected, onChanged: onChanged, onClose: onClose, toText: toText,);
+    return SelectDialog(
+      options: options,
+      dialogType: SelectDialogType.checkbox,
+      isSelectedFn: isSelectedFn,
+      onChanged: onChanged,
+      onClose: onClose,
+      toText: toText,
+    );
   }
 
   Widget _buildGeoInputDialog() {
@@ -99,7 +106,7 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
     return Stack(
       children: [
         _buildConfigurationPage(),
-        _buildValueSelectionInput(),
+        _buildSelectionDialog(),
         _buildGeoInputDialog(),
       ],
     );

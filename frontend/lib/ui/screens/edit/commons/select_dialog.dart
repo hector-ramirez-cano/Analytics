@@ -1,27 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:string_similarity/string_similarity.dart';
 
-class CheckboxSelectDialog<T> extends StatefulWidget {
+enum SelectDialogType {
+  checkbox,
+  radio
+}
+
+class SelectDialog<T, U> extends StatefulWidget {
   final Set<T> options;
-  final Function(T) isSelected;
-  final Function(T, bool?) onChanged;
+  final SelectDialogType dialogType;
+  final bool Function(T) isSelectedFn;
+  final void Function(T, bool?) onChanged;
   final String Function(T) toText;
   final VoidCallback onClose;
 
-  const CheckboxSelectDialog({
+  const SelectDialog({
     super.key,
     required this.options,
-    required this.isSelected,
+    required this.dialogType,
+    required this.isSelectedFn,
     required this.onChanged,
     required this.onClose,
     required this.toText,
   });
 
   @override
-  State<CheckboxSelectDialog> createState() => _CheckboxSelectDialogState<T>();
+  State<SelectDialog> createState() => _SelectDialogState<T>();
 }
 
-class _CheckboxSelectDialogState<T> extends State<CheckboxSelectDialog> {
+class _SelectDialogState<T> extends State<SelectDialog> {
   String filterText = "";
 
   List<T> fuzzySearch(String query, List<T> items) {
@@ -77,7 +84,7 @@ class _CheckboxSelectDialogState<T> extends State<CheckboxSelectDialog> {
 
     var checkboxes = list.map((option) {
       return CheckboxListTile(
-        value: widget.isSelected(option),
+        value: widget.isSelectedFn(option),
         onChanged: (state) => widget.onChanged(option, state),
         title: Text(widget.toText(option)),
       );
@@ -96,7 +103,6 @@ class _CheckboxSelectDialogState<T> extends State<CheckboxSelectDialog> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Container(
       color: const Color.fromRGBO(100, 100, 100, 0.5),
       child: Padding(

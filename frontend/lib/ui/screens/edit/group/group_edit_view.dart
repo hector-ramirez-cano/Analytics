@@ -6,7 +6,7 @@ import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
-import 'package:network_analytics/ui/screens/edit/commons/checkbox_select_dialog.dart';
+import 'package:network_analytics/ui/screens/edit/commons/select_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
@@ -123,12 +123,19 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     
     var options = widget.topology.getDevices().toSet();
 
-    isSelected(option) => notifier.group.memberKeys.contains(option.id);
+    isSelectedFn(option) => notifier.group.memberKeys.contains(option.id);
     onChanged(option, state) => onChangedMembers(option.id, state ?? false);
     onClose() => notifier.set(editingGroupMembers: false);
     toText(device) => (device as Device).name;
     
-    return CheckboxSelectDialog(options: options, isSelected: isSelected, onChanged: onChanged, onClose: onClose, toText: toText,);
+    return SelectDialog(
+      options: options,
+      dialogType: SelectDialogType.checkbox,
+      isSelectedFn: isSelectedFn,
+      onChanged: onChanged,
+      onClose: onClose,
+      toText: toText,
+    );
   }
 
   Widget _makeSettingsView() {
