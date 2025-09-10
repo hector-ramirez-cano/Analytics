@@ -73,8 +73,18 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
       )
     );
 
-  void setSelected(dynamic item) {
-    var newStack = state.selectedStack..add(item);
+  void setSelected(dynamic item, {bool appendState = false, bool clearStack = false}) {
+    var newStack = state.selectedStack;
+
+    if (clearStack) {
+      newStack = [];
+    }
+
+    if (appendState || newStack.isEmpty) {
+      newStack.add(item);
+    }
+
+
 
     set(selected: newStack);
   }

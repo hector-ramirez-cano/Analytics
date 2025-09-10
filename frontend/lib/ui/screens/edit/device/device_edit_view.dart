@@ -4,6 +4,8 @@ import 'package:free_map/free_map.dart';
 import 'package:network_analytics/models/data_sources.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
+import 'package:network_analytics/ui/screens/edit/commons/option_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/select_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:network_analytics/ui/screens/edit/device/device_general_settings.dart';
@@ -27,6 +29,10 @@ class DeviceEditView extends ConsumerStatefulWidget {
 class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
 
   void onGeoPositionChanged(LatLng p) => ref.read(itemEditSelectionNotifier.notifier).onChangeDeviceGeoPosition(p);
+  void onRequestedDelete()   => ref.read(itemEditSelectionNotifier.notifier).onRequestDeletion();
+  void onCancelDelete()      => ref.read(itemEditSelectionNotifier.notifier).set(requestedConfirmDeletion: false);
+  void onConfirmedDelete()   => ref.read(itemEditSelectionNotifier.notifier).onDeleteSelected();
+  void onConfirmRestore()    => ref.read(itemEditSelectionNotifier.notifier).onRestoreSelected();
 
   Widget _buildSelectionDialog() {
     final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
@@ -85,12 +91,29 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
     );
   }
 
+    Widget _makeDeleteConfirmDialog() {
+    final itemSelection = ref.read(itemEditSelectionNotifier);
+
+    bool showConfirmDialog = itemSelection.confirmDeletion;
+
+    if (!showConfirmDialog) { return SizedBox.shrink(); }
+
+    return OptionDialog(
+        dialogType: OptionDialogType.cancelDelete,
+        title: Text("Confirmar acción"),
+        confirmMessage: Text("(Los cambios no serán apliacados todavía)"),
+        onCancel: onCancelDelete,
+        onDelete: onConfirmedDelete,
+      );
+  }
+
   Widget _buildConfigurationPage() {
     return Column(
       children: [ Expanded(child: SettingsList( sections: [
               CustomSettingsSection(child: DeviceGeneralSettings(widget.topology,)),
               CustomSettingsSection(child: DeviceLinkSettings   (widget.topology)),
               CustomSettingsSection(child: DeviceGroupSettings  (widget.topology)),
+              CustomSettingsSection(child: DeleteSection(onDelete: onRequestedDelete, onRestore: onConfirmRestore))
             ],
           ),
         ) ,
@@ -100,6 +123,7 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
 
@@ -108,6 +132,7 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
         _buildConfigurationPage(),
         _buildSelectionDialog(),
         _buildGeoInputDialog(),
+        _makeDeleteConfirmDialog(),
       ],
     );
   }

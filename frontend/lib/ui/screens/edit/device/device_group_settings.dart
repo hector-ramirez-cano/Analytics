@@ -27,7 +27,7 @@ class DeviceGroupSettings extends StatelessWidget{
       list.add(SettingsTile(
         title: Text(group.name, style: TextStyle(backgroundColor: backgroundColor)),
         leading: groupsIcon,
-        onPressed: (_) => ref.read(itemEditSelectionNotifier.notifier).setSelected(group),
+        onPressed: (_) => ref.read(itemEditSelectionNotifier.notifier).setSelected(group, appendState: true),
       ));
     }
 

@@ -6,9 +6,9 @@ import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
-import 'package:network_analytics/ui/screens/edit/commons/option_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/select_dialog.dart';
 import 'package:settings_ui/settings_ui.dart';
 
@@ -263,19 +263,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   }
 
   Widget _buildDeleteConfirmDialog() {
-    final itemSelection = ref.read(itemEditSelectionNotifier);
-
-    bool showConfirmDialog = itemSelection.confirmDeletion;
-
-    if (!showConfirmDialog) { return SizedBox.shrink(); }
-
-    return OptionDialog(
-        dialogType: OptionDialogType.cancelDelete,
-        title: Text("Confirmar acción"),
-        confirmMessage: Text("(Los cambios no serán apliacados todavía)"),
-        onCancel: onCancelDelete,
-        onDelete: onConfirmedDelete,
-      );
+    return DeleteSection(onDelete: onRequestedDelete, onRestore: onConfirmRestore);
   }
 
 

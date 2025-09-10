@@ -188,9 +188,9 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
     final itemSelectionService = ref.read(itemEditSelectionNotifier);
 
-    // If item changed, reset the text fiel controller's text to the initial value of the selected
+    // If item changed, reset the text field controller's text to the initial value of the selected
     ref.listen(itemEditSelectionNotifier, (previous, next) {
-        if (previous?.selectedStack != next.selectedStack && next.selectedStack is Device) {
+        if (next.selectedStack.lastOrNull is Device) {
           Device device = notifier.device;
           _hostnameInputController.text = device.mgmtHostname;
           _nameInputController.text = device.name;

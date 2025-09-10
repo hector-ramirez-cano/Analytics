@@ -22,10 +22,12 @@ class DeviceLinkSettings extends StatelessWidget {
       bool deleted = notifier.isDeleted(link);
       Color backgroundColor = deleted ? deletedItemColor : Colors.transparent;
 
+      Device other = link.sideA.id != device.id ? link.sideA : link.sideB;
+
       list.add(SettingsTile(
-        title: Text(link.sideB.name, style: TextStyle(backgroundColor: backgroundColor),),
+        title: Text(other.name, style: TextStyle(backgroundColor: backgroundColor),),
         leading: linksIcon,
-        onPressed: (_) => notifier.setSelected(link),
+        onPressed: (_) => notifier.setSelected(link, appendState: true),
       ));
     }
 

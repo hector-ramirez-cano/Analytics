@@ -6,6 +6,7 @@ import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
+import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
 import 'package:network_analytics/ui/screens/edit/commons/option_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/select_dialog.dart';
@@ -40,7 +41,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
 
   void onEditName   ()       => ref.read(itemEditSelectionNotifier.notifier).toggleEditingGroupName();
   void onEditMembers()       => ref.read(itemEditSelectionNotifier.notifier).set(editingGroupMembers: true);
-    void onRequestedDelete() => ref.read(itemEditSelectionNotifier.notifier).onRequestDeletion();
+  void onRequestedDelete()   => ref.read(itemEditSelectionNotifier.notifier).onRequestDeletion();
   void onCancelDelete()      => ref.read(itemEditSelectionNotifier.notifier).set(requestedConfirmDeletion: false);
   void onConfirmedDelete()   => ref.read(itemEditSelectionNotifier.notifier).onDeleteSelected();
   void onConfirmRestore()    => ref.read(itemEditSelectionNotifier.notifier).onRestoreSelected();
@@ -106,7 +107,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
         backgroundColor: backgroundColor,
         text: member.name,
         textStyle: style,
-        onPressed: () => {notifier.setSelected(member)}
+        onPressed: () => {notifier.setSelected(member, appendState: true)}
       );
       list.add(button);
     }
@@ -144,41 +145,8 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     );
   }
 
-  SettingsSection _makeDeleteSection() {
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
-    bool deleted = notifier.isDeleted(notifier.group);
-    String label = deleted ? "Restaurar" : "Eliminar";
-    var onAction = deleted ? onConfirmRestore : onRequestedDelete;
-
-    resolveColor (states) {
-      if (deleted) {
-        if (states.contains(WidgetState.hovered)) {
-          return const Color.fromRGBO(111, 170, 88, 1);
-        } 
-        return Colors.grey;
-      }
-
-
-      if (states.contains(WidgetState.hovered)) {
-        return const Color.fromRGBO(226, 71, 71, 1);
-      } 
-      return Colors.grey;
-    }
-
-    return SettingsSection(
-      title: Text(""), tiles: [
-        SettingsTile(title: SizedBox(
-          width: double.infinity, 
-          child: ElevatedButton(
-            style: ButtonStyle(
-              foregroundColor: WidgetStatePropertyAll(Colors.white),
-              backgroundColor: WidgetStateProperty.resolveWith<Color?>(resolveColor)
-            ),
-            onPressed: onAction,
-            child: Text(label, ),
-          ),))
-      ]
-    );
+  Widget _makeDeleteSection() {
+    return DeleteSection(onDelete: onRequestedDelete, onRestore: onConfirmRestore);
   }
 
 

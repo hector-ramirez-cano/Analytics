@@ -23,11 +23,11 @@ class ItemEditPanel extends StatelessWidget {
     }
 
     if(value.data is Device) {
-      ref.read(itemEditSelectionNotifier.notifier).setSelected(value.data);
+      ref.read(itemEditSelectionNotifier.notifier).setSelected(value.data, clearStack: true);
     }
 
     if(value.data is Group) {
-      ref.read(itemEditSelectionNotifier.notifier).setSelected(value.data);
+      ref.read(itemEditSelectionNotifier.notifier).setSelected(value.data, clearStack: true);
     }
   }
 
