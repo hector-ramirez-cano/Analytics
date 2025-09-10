@@ -8,6 +8,7 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
+import 'package:network_analytics/ui/screens/edit/commons/option_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/select_dialog.dart';
 import 'package:settings_ui/settings_ui.dart';
 
@@ -40,6 +41,9 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   void onEditSideBIface() => ref.read(itemEditSelectionNotifier.notifier).set(editingLinkIfaceB: true);
   void onEditSideA()      => ref.read(itemEditSelectionNotifier.notifier).set(editingLinkDeviceA: true);
   void onEditSideB()      => ref.read(itemEditSelectionNotifier.notifier).set(editingLinkDeviceB: true);
+  void onRequestedDelete()=> ref.read(itemEditSelectionNotifier.notifier).onRequestDeletion();
+  void onCancelDelete()   => ref.read(itemEditSelectionNotifier.notifier).set(requestedConfirmDeletion: false);
+  void onConfirmedDelete()=> ref.read(itemEditSelectionNotifier.notifier).onDeleteSelected();
 
   void onEditSideAIfaceContent(String text) {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
@@ -164,6 +168,33 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
       );
   }
 
+  SettingsSection _makeDeleteSection() {
+    resolveColor (states) {
+      if (states.contains(WidgetState.hovered)) {
+        return const Color.fromRGBO(226, 71, 71, 1);
+      } 
+      return Colors.blueGrey;
+    }
+
+    return SettingsSection(
+      title: Text(""), tiles: [
+        SettingsTile(title: SizedBox(
+          width: double.infinity, 
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 600),
+            child: ElevatedButton(
+              style: ButtonStyle(
+                foregroundColor: WidgetStatePropertyAll(Colors.white),
+                backgroundColor: WidgetStateProperty.resolveWith<Color?>(resolveColor)
+              ),
+              onPressed: onRequestedDelete,
+              child: const Text("Eliminar", ),
+            ),
+          ),))
+      ]
+    );
+  }
+
 
   Widget _buildSelectionDialog() {
     final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
@@ -220,6 +251,22 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     );
   }
 
+  Widget _buildDeleteConfirmDialog() {
+    final itemSelection = ref.read(itemEditSelectionNotifier);
+
+    bool showConfirmDialog = itemSelection.confirmDeletion;
+
+    if (!showConfirmDialog) { return SizedBox.shrink(); }
+
+    return OptionDialog(
+        dialogType: OptionDialogType.cancelDelete,
+        title: Text("Confirmar acción"),
+        confirmMessage: Text("(Los cambios no serán apliacados todavía)"),
+        onCancel: onCancelDelete,
+        onDelete: onConfirmedDelete,
+      );
+  }
+
 
   Widget _buildConfigurationPage() {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
@@ -230,7 +277,8 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
       children: [ Expanded( child: SettingsList( sections: [
               CustomSettingsSection(child: _makeDeviceSection("Device A", link, sideA: true)),
               CustomSettingsSection(child: _makeDeviceSection("Device B", link, sideA: false)),
-              CustomSettingsSection(child: _makeLinkSelection(link))
+              CustomSettingsSection(child: _makeLinkSelection(link)),
+              CustomSettingsSection(child: _makeDeleteSection()),
             ],),),
         // Save button and cancel button
         makeFooter(ref, widget.topology),
@@ -253,6 +301,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
       children: [
         _buildConfigurationPage(),
         _buildSelectionDialog(),
+        _buildDeleteConfirmDialog(),
       ],
     );
   }

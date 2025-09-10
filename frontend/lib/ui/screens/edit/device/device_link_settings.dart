@@ -8,6 +8,7 @@ import 'package:settings_ui/settings_ui.dart';
 class DeviceLinkSettings extends StatelessWidget {
 
   static const Icon linksIcon = Icon(Icons.settings_ethernet);
+
   final Topology topology;
 
   const DeviceLinkSettings(this.topology, {super.key});
@@ -18,7 +19,7 @@ class DeviceLinkSettings extends StatelessWidget {
     List<AbstractSettingsTile> list = [];
     for (var link in topology.getDeviceLinks(device)) {
       list.add(SettingsTile(
-        title: Text(link.sideB.name),
+        title: Text(link.sideB.name, ),
         leading: linksIcon,
         onPressed: (_) => notifier.setSelected(link),
       ));

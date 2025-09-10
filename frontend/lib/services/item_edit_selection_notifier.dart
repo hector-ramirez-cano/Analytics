@@ -10,6 +10,7 @@ import 'package:network_analytics/models/topology.dart';
 class ItemEditSelection {
   final dynamic selected;
   final Topology changes;
+  final Topology deleted;
   final bool editingGroupName;
   final bool editingGroupMembers;
   final bool editingLinkIfaceA;
@@ -23,11 +24,13 @@ class ItemEditSelection {
   final bool editingDeviceMetrics;
   final bool editingDeviceDataSources;
   final bool editingDeviceGeoPosition;
+  final bool confirmDeletion;
   
 
   const ItemEditSelection({
     required this.selected,
     required this.changes,
+    required this.deleted,
     required this.editingGroupName,
     required this.editingGroupMembers,
     required this.editingDeviceName,
@@ -41,6 +44,7 @@ class ItemEditSelection {
     required this.editingDeviceMetrics,
     required this.editingDeviceDataSources,
     required this.editingDeviceGeoPosition,
+    required this.confirmDeletion,
   });
 }
 
@@ -50,6 +54,8 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     ItemEditSelection(
       selected: null,
       changes: Topology(items: {}),
+      deleted: Topology(items: {}),
+      confirmDeletion: false,
       editingGroupName: false,
       editingGroupMembers: false,
       editingDeviceName: false,
@@ -78,6 +84,8 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   void set({
     dynamic selected,
     Topology? changes,
+    Topology? deleted,
+    bool requestedConfirmDeletion = false,
     bool editingGroupMembers = false,
     bool editingGroupName = false,
     bool editingDeviceName = false,
@@ -93,11 +101,14 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     bool editingDeviceDataSources = false,
 
     bool keepState = false,
+    bool nullableSelected = false,
   }) {
     if (keepState) {
       state = ItemEditSelection(
-        selected              : selected ?? state.selected,
+        selected              : nullableSelected ? selected : selected ?? state.selected,
+        deleted               : deleted ?? state.deleted,
         changes               : changes ?? state.changes,
+        confirmDeletion       : state.confirmDeletion,
         editingGroupName      : state.editingGroupName,
         editingGroupMembers   : state.editingGroupMembers,
         editingDeviceName     : state.editingDeviceName,
@@ -114,8 +125,10 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
       );
     } else {
       state = ItemEditSelection(
-        selected              : selected ?? state.selected,
+        selected              : nullableSelected ? selected : selected ?? state.selected,
         changes               : changes ?? state.changes,
+        deleted               : deleted ?? state.deleted,
+        confirmDeletion       : requestedConfirmDeletion,
         editingGroupName      : editingGroupName,
         editingGroupMembers   : editingGroupMembers,
         editingDeviceName     : editingDeviceName,
@@ -140,23 +153,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   }
 
   void discard() {
-    state = ItemEditSelection(
-        selected              : null,
-        changes               : Topology(items: {}),
-        editingGroupName      : state.editingGroupName,
-        editingGroupMembers   : state.editingGroupMembers,
-        editingDeviceName     : state.editingDeviceName,
-        editingDeviceHostname : state.editingDeviceHostname,
-        editingLinkIfaceA     : state.editingLinkIfaceA,
-        editingLinkIfaceB     : state.editingLinkIfaceB,
-        editingLinkDeviceA    : state.editingLinkDeviceA,
-        editingLinkDeviceB    : state.editingLinkDeviceB,
-        editingLinkType       : state.editingLinkType,
-        editingDeviceMetadata : state.editingDeviceMetadata,
-        editingDeviceMetrics  : state.editingDeviceMetrics,
-        editingDeviceDataSources: state.editingDeviceDataSources,
-        editingDeviceGeoPosition: state.editingDeviceGeoPosition,
-      );
+    set(changes: Topology(items: {}), deleted: Topology(items: {}), selected: null, nullableSelected: true);
   }
 
   void onEditDeviceHostname()    => set(editingHostname: true);
@@ -165,21 +162,18 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   void onEditMetadata()          => set(editingDeviceMetadata: true);
   void onEditMetrics()           => set(editingDeviceMetrics: true);
   void onEditDataSources()       => set(editingDeviceDataSources: true);
+  void onRequestDeletion()       => set(requestedConfirmDeletion: true);
 
   void onChangeDeviceMgmtHostname(String text) {
     if (selected is! Device || selected.name == text) { return; }
 
-    var device = selected;
-    var modified = device.cloneWith(mgmtHostname: text);
-    changeItem(modified);
+    changeItem(device.cloneWith(mgmtHostname: text));
   }
 
   void onChangeDeviceNameContent(String text) {
     if (selected is! Device || selected.name == text) { return; }
 
-    var device = selected;
-    var modified = device.cloneWith(name: text);
-    changeItem(modified);
+    changeItem(device.cloneWith(name: text));
   }
 
   void onChangeSelectedMetric(String option, bool? state) {
@@ -218,8 +212,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   void onChangeDeviceGeoPosition(LatLng newPosition) {
     if (selected is! Device) { Logger().w("Changed geoposition on a device, where device isn't selected"); return; }
     
-    Device dev = device;
-    changeItem(dev.cloneWith(geoPosition: newPosition));
+    changeItem(device.cloneWith(geoPosition: newPosition));
   }
 
   void onChangeLinkDeviceA(Device newDevice) {
@@ -240,8 +233,16 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     changeItem(link.cloneWith(linkType: type));
   }
 
+  void onDeleteSelected() {
+    Map<int, dynamic> items = Map.from(state.deleted.items);
+    items[selected.id] = selected;
+
+    // add selected to deleted
+    set(deleted: state.deleted.cloneWith(items: items), selected: null, nullableSelected: true);
+  }
+
   bool get hasChanges {
-    return state.changes.items.isNotEmpty;
+    return state.changes.items.isNotEmpty && state.deleted.items.isNotEmpty;
   }
 
   dynamic get selected {

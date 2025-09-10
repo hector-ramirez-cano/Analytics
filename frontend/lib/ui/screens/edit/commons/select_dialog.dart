@@ -3,10 +3,10 @@ import 'package:string_similarity/string_similarity.dart';
 
 enum SelectDialogType {
   checkbox,
-  radio
+  radio,
 }
 
-class SelectDialog<T, U> extends StatefulWidget {
+class SelectDialog<T> extends StatefulWidget {
   final Set<T> options;
   final SelectDialogType dialogType;
   final bool Function(T) isSelectedFn;
@@ -155,6 +155,6 @@ class _SelectDialogState<T> extends State<SelectDialog> {
         ),
       ),
     );
-
   }
 }
+
