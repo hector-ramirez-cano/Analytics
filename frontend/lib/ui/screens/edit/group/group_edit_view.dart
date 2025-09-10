@@ -7,6 +7,7 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
+import 'package:network_analytics/ui/screens/edit/commons/option_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/select_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
@@ -37,8 +38,12 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     _nameInputController = TextEditingController(text: selected.name);
   }
 
-  void onEditName   () => ref.read(itemEditSelectionNotifier.notifier).toggleEditingGroupName();
-  void onEditMembers() => ref.read(itemEditSelectionNotifier.notifier).set(editingGroupMembers: true);
+  void onEditName   ()       => ref.read(itemEditSelectionNotifier.notifier).toggleEditingGroupName();
+  void onEditMembers()       => ref.read(itemEditSelectionNotifier.notifier).set(editingGroupMembers: true);
+    void onRequestedDelete() => ref.read(itemEditSelectionNotifier.notifier).onRequestDeletion();
+  void onCancelDelete()      => ref.read(itemEditSelectionNotifier.notifier).set(requestedConfirmDeletion: false);
+  void onConfirmedDelete()   => ref.read(itemEditSelectionNotifier.notifier).onDeleteSelected();
+  void onConfirmRestore()    => ref.read(itemEditSelectionNotifier.notifier).onRestoreSelected();
 
   void onContentEdit(String text) {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
@@ -116,7 +121,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     );
   }
 
-  Widget _makeMembersSelectionInput() {
+  Widget _buildMembersSelectionInput() {
     var itemEditSelection = ref.watch(itemEditSelectionNotifier); 
     final notifier = ref.watch(itemEditSelectionNotifier.notifier);
     if (!itemEditSelection.editingGroupMembers) { return SizedBox.shrink(); }
@@ -139,7 +144,45 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     );
   }
 
-  Widget _makeSettingsView() {
+  SettingsSection _makeDeleteSection() {
+    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+    bool deleted = notifier.isDeleted(notifier.group);
+    String label = deleted ? "Restaurar" : "Eliminar";
+    var onAction = deleted ? onConfirmRestore : onRequestedDelete;
+
+    resolveColor (states) {
+      if (deleted) {
+        if (states.contains(WidgetState.hovered)) {
+          return const Color.fromRGBO(111, 170, 88, 1);
+        } 
+        return Colors.grey;
+      }
+
+
+      if (states.contains(WidgetState.hovered)) {
+        return const Color.fromRGBO(226, 71, 71, 1);
+      } 
+      return Colors.grey;
+    }
+
+    return SettingsSection(
+      title: Text(""), tiles: [
+        SettingsTile(title: SizedBox(
+          width: double.infinity, 
+          child: ElevatedButton(
+            style: ButtonStyle(
+              foregroundColor: WidgetStatePropertyAll(Colors.white),
+              backgroundColor: WidgetStateProperty.resolveWith<Color?>(resolveColor)
+            ),
+            onPressed: onAction,
+            child: Text(label, ),
+          ),))
+      ]
+    );
+  }
+
+
+  Widget _buildSettingsView() {
     final notifier = ref.read(itemEditSelectionNotifier.notifier);
     final itemSelection = ref.read(itemEditSelectionNotifier);
 
@@ -152,13 +195,31 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
                 title: Text(notifier.group.name),
                 tiles: [ 
                   _makeNameInput(group, editingName, widget.topology),
-                  _makeMembersInput()
+                  _makeMembersInput(),
                 ]
-              )])),
+              ),
+              CustomSettingsSection(child: _makeDeleteSection(),)
+              ])),
         // Save button and cancel button
         makeFooter(ref, widget.topology),
       ],
     );
+  }
+
+  Widget _buildDeleteConfirmDialog() {
+    final itemSelection = ref.read(itemEditSelectionNotifier);
+
+    bool showConfirmDialog = itemSelection.confirmDeletion;
+
+    if (!showConfirmDialog) { return SizedBox.shrink(); }
+
+    return OptionDialog(
+        dialogType: OptionDialogType.cancelDelete,
+        title: Text("Confirmar acción"),
+        confirmMessage: Text("(Los cambios no serán apliacados todavía)"),
+        onCancel: onCancelDelete,
+        onDelete: onConfirmedDelete,
+      );
   }
 
   @override
@@ -171,8 +232,9 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
       });
 
       return Stack(children: [
-        _makeSettingsView(),
-        _makeMembersSelectionInput()
+        _buildSettingsView(),
+        _buildMembersSelectionInput(),
+        _buildDeleteConfirmDialog(),
       ],);    
   }
 }

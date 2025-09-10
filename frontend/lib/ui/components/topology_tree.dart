@@ -3,10 +3,13 @@ import 'package:animated_tree_view/tree_view/tree_view.dart';
 import 'package:animated_tree_view/tree_view/widgets/expansion_indicator.dart';
 import 'package:animated_tree_view/tree_view/widgets/indent.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
+import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 
 class Section {
   final String name;
@@ -80,6 +83,8 @@ class TopologyTree extends StatelessWidget {
   }
 
   void _makeGroupsBranch(List<Group> groups, TreeNode root) {
+
+    // Order groups, so those that contain children (and are thus able to be opened) appear first
     groupOrder(List<Group> list) {
       return List.generate(list.length, (i) => i)
         ..sort((a, b) =>
@@ -87,6 +92,7 @@ class TopologyTree extends StatelessWidget {
     }
 
     makeGroupTreeBranch(group) {
+      // Create current node, and recursively add it's children to the created node
       var node = TreeNode<Group>(key: UniqueKey().toString(), data: group);
       for (final int index in groupOrder(group.groups)) {
         node.add(makeGroupTreeBranch(group.groups[index]));
@@ -95,6 +101,7 @@ class TopologyTree extends StatelessWidget {
       return node;
     }
 
+    // Recursively all the groups (in their children) to the root
     for (final int index in groupOrder(groups)) {
       root.add(makeGroupTreeBranch(groups[index]));
     }
@@ -124,8 +131,19 @@ class TopologyTree extends StatelessWidget {
     return root;
   }
 
-  Widget _makeTile(TreeNode node) {
+  Widget _makeTile(TreeNode node, WidgetRef ref) {
+
     String title = node.key;
+    Widget text = Consumer(builder: (contex, ref, _)  {
+      var _ = ref.watch(itemEditSelectionNotifier);
+
+      bool canBeDeleted = node.data is Device || node.data is Group;
+      bool deleted = canBeDeleted ? ref.read(itemEditSelectionNotifier.notifier).isDeleted(node.data) : false;
+      Color backgroundColor = deleted ? deletedItemColor : Colors.transparent;
+
+      return Text(title, style: TextStyle(backgroundColor: backgroundColor),);
+    });
+
     if (node is TreeNode<Device>) {
       title = node.data?.name ?? "";
     } 
@@ -139,13 +157,13 @@ class TopologyTree extends StatelessWidget {
     var iconPadding = node.isLeaf ? EdgeInsets.only(left: 0) : EdgeInsets.only(left: 8);
 
     return ListTile(
-          title: Text(title),
+          title: text,
           visualDensity: VisualDensity(horizontal: -4, vertical: -4),
           leading: Padding(padding: iconPadding, child: node.icon,)
       );
   }
 
-  Widget _makeTreeView() {
+  Widget _makeTreeView(WidgetRef ref) {
     return TreeView.simple(
       tree: _makeTree(),
       showRootNode: false,
@@ -159,7 +177,7 @@ class TopologyTree extends StatelessWidget {
       },
       padding: EdgeInsets.all(0),
       expansionBehavior: ExpansionBehavior.snapToTop,
-      builder: (context, node) => _makeTile(node),
+      builder: (context, node) => _makeTile(node, ref),
 
       onItemTap: onItemTap,
     );
@@ -168,6 +186,8 @@ class TopologyTree extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _makeTreeView();
+    return Consumer(builder: (context, ref, _) {
+      return _makeTreeView(ref);
+    });
   }
 }

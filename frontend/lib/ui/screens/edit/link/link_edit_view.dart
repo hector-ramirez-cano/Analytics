@@ -178,7 +178,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     resolveColor (states) {
       if (deleted) {
         if (states.contains(WidgetState.hovered)) {
-        return const Color.fromRGBO(111, 170, 88, 1);
+          return const Color.fromRGBO(111, 170, 88, 1);
         } 
         return Colors.grey;
       }

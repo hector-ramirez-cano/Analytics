@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class DeviceGroupSettings extends StatelessWidget{
@@ -17,9 +18,14 @@ class DeviceGroupSettings extends StatelessWidget{
 
   List<AbstractSettingsTile> _makeGroups(WidgetRef ref, Device device) {
     List<AbstractSettingsTile> list = [];
+    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+
     for (var group in topology.getDeviceGroups(device)) {
+      bool deleted = notifier.isDeleted(group);
+      Color backgroundColor = deleted ? deletedItemColor : Colors.transparent;
+
       list.add(SettingsTile(
-        title: Text(group.name),
+        title: Text(group.name, style: TextStyle(backgroundColor: backgroundColor)),
         leading: groupsIcon,
         onPressed: (_) => ref.read(itemEditSelectionNotifier.notifier).setSelected(group),
       ));
