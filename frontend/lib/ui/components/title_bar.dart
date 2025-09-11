@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:network_analytics/ui/components/badge_icon.dart';
 import '../../theme/app_colors.dart';
 
 class TitleBar extends StatelessWidget {
@@ -24,28 +25,21 @@ class TitleBar extends StatelessWidget {
 
   Widget _buildTitle() {
     return const Text(
-      'Flutter IDE UI',
+      'Analytics',
       style: TextStyle(fontSize: 20, color: Colors.white),
     );
   }
 
   Widget _buildSearchBar() {
+    String? badgeContent = "1";
+
     return Expanded(
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: 'Search...',
-          hintStyle: const TextStyle(color: Colors.white70),
-          filled: true,
-          fillColor: Colors.grey.shade700,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
-          suffixIcon: const Icon(Icons.search, color: Colors.white),
-        ),
-        style: const TextStyle(color: Colors.white),
-      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          BadgeIcon(icon: Icon(Icons.notifications, size: 32, color: Colors.white,), badgeContent: badgeContent, tooltip: "Notificaciones",)
+        ],),
     );
   }
 }

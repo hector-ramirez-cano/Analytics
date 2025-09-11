@@ -16,7 +16,7 @@ class UniversalDetector extends StatelessWidget {
   final PointerMoveEventListener? onPointerMove;
   final HitTestBehavior behavior;
 
-  final MouseCursor Function() setCursor;
+  final MouseCursor Function()? setCursor;
 
   const UniversalDetector({
     super.key,
@@ -31,30 +31,55 @@ class UniversalDetector extends StatelessWidget {
     this.onPointerUp,
     this.onPointerMove,
     this.behavior = HitTestBehavior.deferToChild,
-    required this.setCursor,
+    this.setCursor,
     required this.child,
   });
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _makeGestureDetector({required Widget child}) {
+    // if there are not functions defined, return child as is
+    if (onTapUp == null && onScaleUpdate == null && onScaleStart == null) { return child; }
+
+    return GestureDetector(
+        onTapUp: onTapUp,
+        onScaleUpdate: onScaleUpdate,
+        onScaleStart: onScaleStart,
+        child: child,
+      );
+  }
+
+  Widget _makeMouseRegion({required Widget child}) {
+    if (onHover == null && onEnter == null && onExit == null && setCursor == null) { return child; }
+
+    return MouseRegion(
+          cursor: setCursor != null ? setCursor!() : SystemMouseCursors.basic,
+          onHover: onHover,
+          onEnter: onEnter,
+          onExit: onExit,
+          child: child,
+        );
+  }
+
+  Widget _makeListener({required Widget child}) {
+    if (onPointerSignal == null && onPointerDown == null && onPointerUp == null && onPointerMove == null) { return child; }
+
     return Listener(
       behavior: behavior,
       onPointerSignal: onPointerSignal,
       onPointerDown: onPointerDown,
       onPointerUp: onPointerUp,
       onPointerMove: onPointerMove,
-      child: GestureDetector(
-        onTapUp: onTapUp,
-        onScaleUpdate: onScaleUpdate,
-        onScaleStart: onScaleStart,
-        child: MouseRegion(
-          cursor: setCursor(),
-          onHover: onHover,
-          onEnter: onEnter,
-          onExit: onExit,
-          child: child,
-        ),
-      ),
+      child: child
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _makeListener(
+      child: _makeGestureDetector(
+        child: _makeMouseRegion(
+          child: child
+        )
+      )
     );
   }
 }
