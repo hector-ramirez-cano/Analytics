@@ -157,6 +157,8 @@ class CanvasInteractionService {
   }
 
   void onScaleUpdate(ScaleUpdateDetails details, BuildContext context, Size canvasActualSize, WidgetRef ref) {
+    if (details.pointerCount < 2) { return; }
+    
     final scaleDelta = details.scale / _lastScale;
     _lastScale = details.scale;
 
@@ -170,17 +172,17 @@ class CanvasInteractionService {
   }
 
   void onPointerSignal(dynamic pointerSignal, Size canvasActualSize, WidgetRef ref) {
+    logger.d("OnPointerSignal");
+    
     if (pointerSignal is! PointerScrollEvent) { return; }
 
     final scaleDelta = pointerSignal.scrollDelta.dy > 0 ? 0.9 : 1.1;
 
     zoomAt(pointerSignal.localPosition, Offset.zero, scaleDelta, canvasActualSize, ref);
-
-    logger.d("OnPointerSignal");
   }
 
   void onPointerDown(PointerEvent event) {
-    var inputButtonConfig = AppConfig.getOrDefault("ui/move_canvas_with", defaultVal: "mouse1");
+    var inputButtonConfig = AppConfig.getOrDefault("ui/move_canvas_with", defaultVal: "mouse3");
 
     const inputButtonMap = {
       "mouse1": kPrimaryMouseButton,
@@ -190,9 +192,21 @@ class CanvasInteractionService {
 
     var inputButton = inputButtonMap[inputButtonConfig] ?? kTertiaryButton;
 
-    if (event.buttons == inputButton) {
+    // Desktop
+    if (event.buttons == inputButton && event.kind == PointerDeviceKind.mouse) {
       mouseMovingCanvas = true;
     }
+
+    // Mobile
+    if (event.buttons == kPrimaryButton && event.kind == PointerDeviceKind.touch) {
+      mouseMovingCanvas = true;
+    }
+
+    // Stylus
+    if (event.buttons == kPrimaryStylusButton && event.kind == PointerDeviceKind.stylus) {
+      mouseMovingCanvas = true;
+    }
+
     logger.d("OnPointerDown, button=${event.buttons}");
   }
 
@@ -203,6 +217,7 @@ class CanvasInteractionService {
   }
 
   void onPointerMove(PointerEvent event, Size canvasActualSize, WidgetRef ref) {
+    logger.d("OnPointerMove");
     if (!mouseMovingCanvas) {
       return;
     }
