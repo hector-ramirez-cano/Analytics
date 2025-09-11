@@ -2,10 +2,14 @@ import json
 from logging import Logger
 
 
-def __resolve_imports__(config: dict):
-    pending_dicts_stack = [config]
+def __resolve_imports__(config_dict: dict, depth_limit: int = 5):
+    """
+    Resolves imports inside json documents, where a $ref field references another json document.
+    :param config_dict dict representation of the json file
+    :param depth_limit int depth limit in resolve nesting
+    """
+    pending_dicts_stack = [config_dict]
     depth = 0
-    depth_limit = 5
 
     while len(pending_dicts_stack) > 0 and depth < depth_limit:
         current = pending_dicts_stack.pop()
@@ -25,7 +29,7 @@ def __resolve_imports__(config: dict):
             pending_dicts_stack += [current[key] for key in current if isinstance(current[key], dict)]
 
     if depth < depth_limit:
-        return config
+        return config_dict
 
     else:
         Logger(name="Config").critical(msg=("[CRITICAL]Config file exceeds import depth. depth_limit="+str(depth_limit)))
@@ -47,20 +51,20 @@ class Config(object):
 
     @staticmethod
     def __parse__(path: str, resolve_imports = True):
-        config = None
+        tmp = None
         with open(path, encoding="utf-8") as config_file:
-            config = json.load(config_file)
+            tmp = json.load(config_file)
 
             config_file.close()
 
         if resolve_imports:
-            __resolve_imports__(config)
+            __resolve_imports__(tmp)
 
-        return config
+        return tmp
 
 
     @staticmethod
-    def get_or_default(path, default=None, sep="/"):
+    def get(path, default=None, sep="/"):
         """
         Get a nested value from a dict using a path string.
 
@@ -74,9 +78,9 @@ class Config(object):
         "api": { "config": { "details": { "value": 42 } } }
         }
 
-        value = AppConfig.get_config(data, "api/config/details/value") # -> 42
+        value = get(data, "api/config/details/value") # -> 42
 
-        missing = AppConfig.get_config(data, "api/config/details/missing", default="not found") # -> "not found"
+        missing = get(data, "api/config/details/missing", default="not found") # -> "not found"
         """
         if Config.__instance is None:
             Config()

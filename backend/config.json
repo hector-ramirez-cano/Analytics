@@ -17,6 +17,12 @@
       "api": {
         "port": 5050
       },
+      "syslog": {
+        "RFC5424-port":1514
+      },
+      "fact-gathering":{
+        "polling_time_s": 5
+      },
       "postgres": {
         "port": 5432,
         "hostname": "localhost",

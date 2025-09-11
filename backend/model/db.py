@@ -23,21 +23,21 @@ def init_db_pool():
     global postgres_db_pool, influx_db_client, influx_db_write_api
 
     # TODO: Remove access to password
-    port     = Config.Config.get_or_default("backend/controller/postgres/port", 5432)
-    host     = Config.Config.get_or_default("backend/controller/postgres/hostname")
-    dbname   = Config.Config.get_or_default("backend/controller/postgres/name")
-    user     = Config.Config.get_or_default("backend/controller/postgres/user")
-    password = Config.Config.get_or_default("backend/controller/postgres/password")
-    schema   = Config.Config.get_or_default("backend/controller/postgres/schema", "postgresql://")
+    port     = Config.Config.get("backend/controller/postgres/port", 5432)
+    host     = Config.Config.get("backend/controller/postgres/hostname")
+    dbname   = Config.Config.get("backend/controller/postgres/name")
+    user     = Config.Config.get("backend/controller/postgres/user")
+    password = Config.Config.get("backend/controller/postgres/password")
+    schema   = Config.Config.get("backend/controller/postgres/schema", "postgresql://")
     conn_uri = schema + user + ":" + password + "@" + host + ":" + str(port) + "/" + dbname
     postgres_db_pool  = ConnectionPool(conninfo=conn_uri)
     print("[INFO ]Acquired DB pool for Postgresql at='"+schema+host+":"+str(port)+"'")
 
-    port     = Config.Config.get_or_default("backend/controller/influx/port", 8086)
-    host     = Config.Config.get_or_default("backend/controller/influx/hostname")
-    org      = Config.Config.get_or_default("backend/controller/influx/org")
-    schema   = Config.Config.get_or_default("backend/controller/influx/schema", "http://")
-    token    = Config.Config.get_or_default("backend/controller/influx/token")
+    port     = Config.Config.get("backend/controller/influx/port", 8086)
+    host     = Config.Config.get("backend/controller/influx/hostname")
+    org      = Config.Config.get("backend/controller/influx/org")
+    schema   = Config.Config.get("backend/controller/influx/schema", "http://")
+    token    = Config.Config.get("backend/controller/influx/token")
     conn_uri = schema + host + ":" + str(port)
     influx_db_client = InfluxDBClient(url=conn_uri, token=token, org=org)
     influx_db_write_api = influx_db_client.write_api(write_options=SYNCHRONOUS)
@@ -182,13 +182,11 @@ def __parse_groups(cur: ServerCursor):
     cache.groups = group_list
 
 
-async def __extract_device_metadata(metrics):
+def __extract_device_metadata(metrics):
     """
     Extracts from the returned ansible-metrics the fields requested for each device, and modifies the device metadata
     """
     devices = cache.devices
-    if len(devices) == 0:
-        await get_topology_as_json()
 
     for hostname in metrics:
         device = Device.find_by_management_hostname(devices, hostname)
@@ -201,7 +199,7 @@ async def __extract_device_metadata(metrics):
             device.metadata[field] = value
 
 
-async def update_topology_cache():
+def update_topology_cache():
     if not cache.should_update:
         return
 
@@ -215,14 +213,13 @@ async def update_topology_cache():
             __parse_groups(cur)
 
 
-async def get_topology_as_json():
+def get_topology_as_json():
     """
     Acquires topology from database, and converts it into json
     """
     [devices, links, groups] = cache.topology
 
-    await update_topology_cache()
-
+    update_topology_cache()
 
     return {
         "devices": [devices[device_id].to_dict() for device_id in devices],
@@ -231,12 +228,12 @@ async def get_topology_as_json():
     }
 
 
-async def update_device_metadata(exposed_metrics: dict, metrics : dict, status: dict):
+def update_device_metadata(exposed_metrics: dict, metrics : dict, status: dict):
     """
     Inserts data that might change infrequently into the Postgres database, and updates local cache of devices
     :return: None
     """
-    await __extract_device_metadata(metrics)
+    __extract_device_metadata(metrics)
     devices = cache.devices
 
     for device_hostname in status:
@@ -281,11 +278,11 @@ async def update_device_metadata(exposed_metrics: dict, metrics : dict, status: 
     print("[INFO ]Updated device metadata")
 
 
-async def update_device_analytics(metrics):
+def update_device_analytics(metrics):
     """
     Inserts datapoints into influxdb bucket
     """
-    bucket = Config.Config.get_or_default("backend/controller/influx/bucket")
+    bucket = Config.Config.get("backend/controller/influx/bucket")
     devices = cache.devices
 
     # Metrics will contain only devices for which connection was successful

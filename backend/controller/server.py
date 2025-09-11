@@ -1,12 +1,10 @@
 import asyncio
 import json
 
-from aiohttp.web_fileresponse import content_type
 from quart import Quart, send_from_directory, Response
 import os
 
 from backend.model.db import get_topology_as_json
-from backend.model.fact_gathering.fact_gathering import gather_all_facts
 
 static_dir = os.path.join(os.getcwd(), "../frontend/static")
 routes_dir = os.path.join(os.getcwd(), "../frontend")
@@ -36,7 +34,8 @@ async def api_get_schema(selected: str):
 
 @app.before_serving
 async def startup():
-    app.add_background_task(gather_all_facts)
+    pass
+
 
 @app.after_serving
 async def shutdown():

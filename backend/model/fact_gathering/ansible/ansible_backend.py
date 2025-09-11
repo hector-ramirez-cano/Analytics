@@ -1,3 +1,5 @@
+import asyncio
+
 import ansible_runner
 
 import backend.Config as Config
@@ -42,11 +44,12 @@ def __run_fact_gathering_playbook() -> tuple[dict, dict]:
     :returns exposed_metrics, metric, status
     """
     config = Config.config
-    playbook = config.get_or_default("backend/model/playbooks/fact_gathering")
-    private = config.get_or_default("backend/model/private_data_dir")
+    playbook = config.get("backend/model/playbooks/fact_gathering")
+    private = config.get("backend/model/private_data_dir")
 
     inventory = "[servers]\n" + cache.ansible_inventory
 
+    print("[INFO ][FACTS][ANSIBLE]Starting playbook execution")
     runner = ansible_runner.run(
         private_data_dir=private,
         playbook=playbook,
@@ -55,11 +58,10 @@ def __run_fact_gathering_playbook() -> tuple[dict, dict]:
         quiet=True
     )
 
-    print("[INFO ]Ansible playbook finished with the following stats: ", runner.stats)
+    print("[INFO ][FACTS][ANSIBLE]Ansible playbook finished with the following stats: ", runner.stats)
     return __extract_facts_from_playbook(runner)
 
 
-# TODO: Refactor this function into multiple smaller functions for readability
 async def gather_facts():
     """
     Calls to ansible ro execute the gather_facts playbook upon the devices found on cache that match
@@ -67,9 +69,11 @@ async def gather_facts():
 
     Calls to update metadata and analytics to PostgresDB and InfluxDB respectively
     """
+    loop = asyncio.get_running_loop()
 
-    # TODO: Make this function faster
+    print("[INFO ][FACTS][ANSIBLE]Starting ansible fact gathering")
 
-    metrics, status = __run_fact_gathering_playbook()
+    # noinspection PyArgumentList
+    metrics, status = await loop.run_in_executor(None, __run_fact_gathering_playbook)
 
     return metrics, status

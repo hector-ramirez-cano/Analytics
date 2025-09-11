@@ -48,7 +48,7 @@ class Cache(object):
 
     @property
     def should_update(self):
-        return time.time() - self.__last_update > Config.get_or_default("backend/controller/cache/cache_invalidation_s", 60)
+        return time.time() - self.__last_update > Config.get("backend/controller/cache/cache_invalidation_s", 60)
 
     @property
     def last_update(self):

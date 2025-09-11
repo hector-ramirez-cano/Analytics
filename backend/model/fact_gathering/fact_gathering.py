@@ -1,12 +1,11 @@
 
 import asyncio
 
+from backend.Config import Config
 from backend.model import db
 from backend.model.fact_gathering.ansible import ansible_backend
 from backend.model.fact_gathering.snmp import snmp_backend
 from backend.model.fact_gathering.icmp import icmp_backend
-from backend.model.fact_gathering.syslog import syslog_backend
-
 
 def __recursive_merge(dict1, dict2):
     for key, value in dict2.items():
@@ -17,6 +16,7 @@ def __recursive_merge(dict1, dict2):
             # Merge non-dictionary values
             dict1[key] = value
     return dict1
+
 
 def __merge_results(results) -> tuple[dict, dict]:
     """
@@ -44,9 +44,10 @@ def __get_exposed_fields(metrics: dict) -> dict:
     return exposed_metrics
 
 
-async def gather_all_facts():
+async def __gather_all_facts():
+    loop = asyncio.get_running_loop()
 
-    await db.update_topology_cache()
+    loop.run_in_executor(None, db.update_topology_cache)
     print("[INFO ]Gathering facts")
 
     tasks = [
@@ -55,18 +56,38 @@ async def gather_all_facts():
         ansible_backend.gather_facts(),
     ]
 
+    # Non-blocking tasks
     results = await asyncio.gather(*tasks)
 
     # merge results and stats
-    metrics, status = __merge_results(results)
-    exposed_fields = __get_exposed_fields(metrics)
+    metrics, status = await loop.run_in_executor(None, __merge_results, results)
+    exposed_fields  = await loop.run_in_executor(None, __get_exposed_fields, metrics)
 
+    return exposed_fields, metrics, status
+
+
+async def __update_db_with_facts(exposed_fields, metrics, status):
+    loop = asyncio.get_running_loop()
 
     # Update database
-    metadata  = db.update_device_metadata(exposed_fields, metrics, status)
-    analytics = db.update_device_analytics(metrics)
+    await  loop.run_in_executor(None, db.update_topology_cache, )
+
+    metadata  = loop.run_in_executor(None, db.update_device_metadata, exposed_fields, metrics, status)
+    analytics = loop.run_in_executor(None, db.update_device_analytics, metrics)
 
     await metadata
     await analytics
 
-    return metrics, status
+
+async def gather_facts_task(stop_event: asyncio.Event):
+
+    while not stop_event.is_set():
+        # Gather facts - non-blocking
+        exposed_fields, metrics, status = await __gather_all_facts()
+
+        # Update the database
+        await __update_db_with_facts(exposed_fields, metrics, status)
+
+        # timeout
+        timeout = Config.get("backend/controller/fact-gathering/polling_time_s", 5)
+        await asyncio.sleep(timeout)

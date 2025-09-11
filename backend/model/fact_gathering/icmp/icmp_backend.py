@@ -15,7 +15,7 @@ TIMEOUT_ERROR_PATTERN = "Request Timed Out"
 HOST_NOT_FOUND_PATTERN = "Could Not Find Host"
 
 
-async def __ping_host_once(host: str):
+def __ping_host_once(host: str):
     # TODO: Switch to raw ICMP sockets for faster throughput
     result = subprocess.run(
         ['ping', '-A', '-c', '1', host],
@@ -55,7 +55,9 @@ async def __ping_devices(hosts) -> tuple[dict, dict]:
 
     return metrics_ status
     """
-    tasks = [__ping_host_once(host) for host in hosts]
+    loop = asyncio.get_running_loop()
+
+    tasks = [loop.run_in_executor(None, __ping_host_once, host) for host in hosts]
     results = await asyncio.gather(*tasks)
 
     metrics = {}
@@ -80,5 +82,7 @@ async def gather_facts():
 
     targets = cache.icmp_inventory
     results = await __ping_devices(targets)
+
+    print("[INFO ][FACTS][ICMP   ]ICMP Echo finished with the following results: ", results)
 
     return results
