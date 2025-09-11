@@ -15,6 +15,10 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
+  // Force fullscreen
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  
+
   runApp(ProviderScope(child: const MyApp()));
 }
 

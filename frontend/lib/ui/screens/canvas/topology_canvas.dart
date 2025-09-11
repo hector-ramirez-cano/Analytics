@@ -29,13 +29,14 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     CanvasInteractionService canvasInteractionService,
     CanvasState canvasState,
     ItemSelection? itemSelection,
+    BuildContext context,
     WidgetRef ref,
   ) {
     var onCanvasStateChanged = ((scale, center) => canvasInteractionService.onCanvasStateChanged(scale, center, ref));
     var onChangeSelection    = ((forced)  => canvasInteractionService.onSelectTarget(forced, ref));
     var onSizeChanged        = ((size)    => canvasActualSize = size);
     var onScaleStart         = ((_)       => canvasInteractionService.onScaleStart());
-    var onScaleUpdate        = ((details) => canvasInteractionService.onScaleUpdate(details, canvasActualSize, ref));
+    var onScaleUpdate        = ((details) => canvasInteractionService.onScaleUpdate(details, context, canvasActualSize, ref));
     var onTapUp              = ((details) => canvasInteractionService.onTapUp(details, onChangeSelection, itemSelection, canvasActualSize, canvasState));
     var onHover              = ((event)   => canvasInteractionService.onHover(event, onChangeSelection, itemSelection, canvasActualSize, canvasState, event.localPosition));
     var onPointerSignal      = ((signal)  => canvasInteractionService.onPointerSignal(signal, canvasActualSize, ref));
@@ -133,6 +134,7 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
               canvasInteractionService,
               canvasState,
               canvasItemSelection,
+              context,
               ref
             ),
             _makeFloatingButtons()

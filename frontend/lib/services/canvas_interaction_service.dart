@@ -156,15 +156,17 @@ class CanvasInteractionService {
     logger.d("On TapUp, hovered=$hovered, hovered=$hovered");
   }
 
-  void onScaleUpdate(ScaleUpdateDetails details, Size canvasActualSize, WidgetRef ref) {
-    if (details.pointerCount < 2) { return; }
-      final scaleDelta = details.scale / _lastScale;
-      _lastScale = details.scale;
+  void onScaleUpdate(ScaleUpdateDetails details, BuildContext context, Size canvasActualSize, WidgetRef ref) {
+    final scaleDelta = details.scale / _lastScale;
+    _lastScale = details.scale;
 
+    // Convert focalPoint (global) → local (inside canvas)
+    final RenderBox box = context.findRenderObject() as RenderBox;
+    final localFocalPoint = box.globalToLocal(details.focalPoint);
 
-    zoomAt(details.focalPoint, details.focalPointDelta, scaleDelta, canvasActualSize, ref);
+    zoomAt(localFocalPoint, details.focalPointDelta, scaleDelta, canvasActualSize, ref);
     
-    logger.d("OnScaleUp, scaleDelta=$scaleDelta");
+    logger.d("OnScaleUpdate, scaleDelta=$scaleDelta");
   }
 
   void onPointerSignal(dynamic pointerSignal, Size canvasActualSize, WidgetRef ref) {
