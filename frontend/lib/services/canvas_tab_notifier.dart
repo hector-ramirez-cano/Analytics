@@ -3,8 +3,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
+import 'package:network_analytics/extensions/development_filter.dart';
 
 class CanvasTab {
+  static Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_canvas_tab_logging", false));
+
+
   final UniqueKey? selected;
   final Map<UniqueKey, String> tabs;
   final List<UniqueKey> order;
@@ -21,13 +25,12 @@ class CanvasTabNotifier extends StateNotifier<CanvasTab> {
   CanvasTabNotifier() : super(CanvasTab(selected: null, order: [], tabs: {}));
 
   void setSelected(UniqueKey id) {
-      state = CanvasTab(
+    state = CanvasTab(
         selected: id, 
         tabs: state.tabs,
         order: state.order,
     );
-
-    Logger().d("Set $id selected");
+    CanvasTab.logger.d("Canvas Tab, Set $id selected");
   }
 
   void append(String title) {
@@ -38,6 +41,8 @@ class CanvasTabNotifier extends StateNotifier<CanvasTab> {
 
     tabs[id] = title;
     order.add(id);
+
+    CanvasTab.logger.d("Canvas Tab, Added new tab, title=$title, id=$id");
 
     // Force rebuild
     state = CanvasTab(selected: selected, tabs: tabs, order: order);
@@ -55,6 +60,9 @@ class CanvasTabNotifier extends StateNotifier<CanvasTab> {
     if (id == state.selected) {
       selected = null;
     }
+
+
+    CanvasTab.logger.d("Canvas Tab, removed tab, id=$id");
 
     // Force rebuild
     state = CanvasTab(selected: selected, tabs: tabs, order: order);

@@ -16,8 +16,7 @@ class ChipTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ActionChip(
-        label: 
-          Text(label),
+        label: Text(label),
         onPressed: () => onClick(),
         tooltip: "",
         shape: RoundedRectangleBorder(

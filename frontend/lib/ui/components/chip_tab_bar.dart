@@ -31,7 +31,8 @@ class ChipTabBar extends StatelessWidget {
     onReorder(oldIndex, newIndex) => notifier.reoder(oldIndex, newIndex);
 
     return SizedBox(
-        height: 40,
+
+        height: 32,
         child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -40,7 +41,7 @@ class ChipTabBar extends StatelessWidget {
                 spacing: 0,
                 runSpacing: 0,
                 direction: Axis.horizontal,
-                needsLongPressDraggable: true,
+                needsLongPressDraggable: false,
                 onReorder: onReorder,
                 children: children,
               ),

@@ -10,7 +10,7 @@ class TopologyTabView extends StatelessWidget {
     return Column(
       children: [
         SizedBox.fromSize(
-          size: Size(double.infinity, 40),
+          size: Size(double.infinity, 36),
           child: ChipTabBar()
         ),
         Expanded(
