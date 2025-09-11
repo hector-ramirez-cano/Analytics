@@ -1,15 +1,15 @@
 import 'package:flutter/widgets.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/ui/components/collapsible_section.dart';
+import 'package:network_analytics/ui/components/topology_tree.dart';
 
 class ChartPanel extends StatelessWidget {
 
-  final Topology? topology;
+  final Topology topology;
 
   const ChartPanel({super.key, required this.topology});
   
   @override
   Widget build(BuildContext context) {
-    return CollapsibleSection.createCollapsibleSections(topology!.groups);
+    return TopologyTree(topology: topology, includeDevices: true, includeGroups: false, onItemTap: (_) => {},); // TODO: Functionality
   }
 }

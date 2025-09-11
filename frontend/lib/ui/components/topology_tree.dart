@@ -52,6 +52,7 @@ class TopologyTree extends StatelessWidget {
   final Topology topology;
   final bool includeDevices;
   final bool includeGroups;
+  final bool showRoot;
   final Function(TreeNode) onItemTap;
 
   const TopologyTree({
@@ -59,7 +60,9 @@ class TopologyTree extends StatelessWidget {
     required this.topology,
     required this.includeDevices,
     required this.includeGroups,
-    required this.onItemTap
+    required this.onItemTap,
+
+    this.showRoot = false,
   });
 
   
@@ -166,7 +169,7 @@ class TopologyTree extends StatelessWidget {
   Widget _makeTreeView(WidgetRef ref) {
     return TreeView.simple(
       tree: _makeTree(),
-      showRootNode: false,
+      showRootNode: showRoot,
       indentation: const Indentation(style: IndentStyle.roundJoint),
       expansionIndicatorBuilder: (context, node) {
         return PlusMinusIndicator(

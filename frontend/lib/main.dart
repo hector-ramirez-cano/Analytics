@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/services/app_config.dart' show AppConfig;
 
@@ -7,6 +8,12 @@ import 'ui/main_layout.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfig.load();
+
+  // Force landscape orientation
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
 
   runApp(ProviderScope(child: const MyApp()));
 }

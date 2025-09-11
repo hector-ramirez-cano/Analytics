@@ -17,7 +17,9 @@ class ItemEditView extends StatelessWidget {
     super.key,
   });
 
-  Widget _makeAnimatedSettings(Topology topology, dynamic selected) {
+  Widget _makeAnimatedSettings(Topology topology, WidgetRef ref) {
+    var item = ref.watch(itemEditSelectionNotifier);
+    var selected = item.selectedStack.lastOrNull;
     return AnimatedSwitcher(duration: const Duration (milliseconds: 300), child: _makeSettingsView(topology, selected),);
   }
 
@@ -53,7 +55,6 @@ class ItemEditView extends StatelessWidget {
     return Consumer (builder: 
       (context, ref, child) {
         final topologyAsync = ref.watch(topologyProvider);
-        final itemEditSelection = ref.watch(itemEditSelectionNotifier);
 
         onRetry () async => {
           ref.refresh(topologyProvider.future)
@@ -62,7 +63,7 @@ class ItemEditView extends StatelessWidget {
         return topologyAsync.when(
           loading: () => RetryIndicator(onRetry: onRetry, isLoading: true),
           error: (error, st) => RetryIndicator(onRetry: onRetry, isLoading: false, error: error.toString(),),
-          data: (topology) => _makeAnimatedSettings(topology, itemEditSelection.selectedStack.lastOrNull),
+          data: (topology) => _makeAnimatedSettings(topology, ref),
         );
       },
     );

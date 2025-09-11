@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logger/logger.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
@@ -32,11 +31,6 @@ class ContentArea extends StatelessWidget {
 
           case WorkplaceScreen.edit:
             return ItemEditView();
-
-          // ignore: unreachable_switch_default
-          default:
-            Logger().w("[ERROR]Displaying screen undefined on WorkplaceScreen!");
-            return Text("[ERROR]Displaying screen undefined on WorkplaceScreen!");
         }
       }
     );
