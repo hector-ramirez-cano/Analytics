@@ -2,7 +2,7 @@ CREATE SCHEMA IF NOT EXISTS Analytics;
 
 CREATE TYPE ItemType AS ENUM ('device', 'link', 'group');
 CREATE TYPE LinkType AS ENUM ('optical', 'copper', 'wireless');
-CREATE TYPE DataSource AS ENUM('ssh', 'snmp', 'icmp', 'syslog');
+CREATE TYPE DataSource AS ENUM('ssh', 'snmp', 'icmp');
 
 CREATE TABLE IF NOT EXISTS Analytics.items (
     id SERIAL PRIMARY KEY,

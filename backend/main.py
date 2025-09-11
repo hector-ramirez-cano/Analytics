@@ -9,6 +9,7 @@ import hypercorn.config
 import hypercorn.asyncio
 
 from backend.model.fact_gathering.fact_gathering import  gather_facts_task
+from backend.model.fact_gathering.syslog.syslog_backend import SyslogBackend
 
 
 def init():
@@ -37,15 +38,16 @@ async def main():
     server_task = asyncio.create_task(hypercorn.asyncio.serve(server.app, hypercorn_config))
 
     # add my background tasks
-    loop = asyncio.get_running_loop()
+
     facts_task = asyncio.create_task(gather_facts_task(stop_event))
-    # syslog_task = asyncio.create_task(syslog_server_task())
+    syslog_task = asyncio.create_task(SyslogBackend.syslog_server_task(stop_event))
 
     await server_task
 
     # graceful shutdown
     stop_event.set()
     await facts_task
+    await syslog_task
 
 
 

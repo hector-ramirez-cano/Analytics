@@ -21,7 +21,7 @@ async def heartbeat():
 
 @app.route("/api/topology")
 async def api_get_topology():
-    topology = await get_topology_as_json()
+    topology = get_topology_as_json()
     topology = json.dumps(topology)
     return Response(topology, content_type="application/json")
     # return await send_from_directory(routes_dir, "test-data.json")
