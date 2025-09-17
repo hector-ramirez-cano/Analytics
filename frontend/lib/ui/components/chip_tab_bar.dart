@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/canvas_tab_notifier.dart';
 import 'package:network_analytics/ui/components/chip_tab.dart';
 import 'package:network_analytics/ui/components/closable_chip.dart';
@@ -9,7 +8,7 @@ class ChipTabBar extends StatelessWidget {
 
   const ChipTabBar({super.key});
 
-  List<Widget> _makeChipTabs(CanvasTabNotifier notifier, UniqueKey? selected) {
+  List<Widget> _makeChipTabs(CanvasTab notifier, UniqueKey? selected) {
 
     closeTab(id) => notifier.remove(id);
     selectTab(id) => notifier.setSelected(id);
@@ -26,7 +25,7 @@ class ChipTabBar extends StatelessWidget {
       ).toList();
   }
 
-  Widget _makeTabBar(CanvasTabNotifier notifier, List<Widget> children) {
+  Widget _makeTabBar(CanvasTab notifier, List<Widget> children) {
     openTab() => notifier.append("Nueva Vista");
     onReorder(oldIndex, newIndex) => notifier.reoder(oldIndex, newIndex);
 
@@ -58,9 +57,9 @@ class ChipTabBar extends StatelessWidget {
     return 
       Consumer(builder: 
         (context, ref, child) {
-          var _ = ref.watch(canvasTabNotifier).tabs;
-          var selected = ref.watch(canvasTabNotifier).selected;
-          var notifier = ref.watch(canvasTabNotifier.notifier);
+          var _ = ref.watch(canvasTabProvider).tabs;
+          var selected = ref.watch(canvasTabProvider).selected;
+          var notifier = ref.watch(canvasTabProvider.notifier);
           var children = _makeChipTabs(notifier, selected);
 
 

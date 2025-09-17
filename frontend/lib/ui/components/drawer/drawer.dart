@@ -4,6 +4,7 @@ import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/drawer/item_edit_drawer.dart';
 import 'package:network_analytics/ui/components/drawer/listing_drawer.dart';
 import 'package:network_analytics/ui/components/enums/navigation_rail_item.dart';
@@ -32,7 +33,7 @@ class _SideDrawerState extends ConsumerState<SideDrawer> {
   }
 
   Widget _buildDrawerPanel(AsyncValue<Topology> topology) {
-    final selectedPanel = ref.watch(screenSelectionNotifier).selected;
+    final selectedPanel = ref.watch(sideNavSelectionProvider).selected;
     SideDrawer.logger.d("3 _buildDrawerPanel called, selectedPanel=$selectedPanel");
     
     return _makeSelector(topology, selectedPanel);

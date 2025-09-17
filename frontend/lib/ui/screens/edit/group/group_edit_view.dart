@@ -4,7 +4,7 @@ import 'package:logger/web.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
 import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
@@ -34,20 +34,20 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   @override
   void initState() {
     super.initState();
-    final selected = ref.read(itemEditSelectionNotifier.notifier).group;
+    final selected = ref.read(itemEditSelectionProvider.notifier).group;
 
     _nameInputController = TextEditingController(text: selected.name);
   }
 
-  void onEditName   ()       => ref.read(itemEditSelectionNotifier.notifier).toggleEditingGroupName();
-  void onEditMembers()       => ref.read(itemEditSelectionNotifier.notifier).set(editingGroupMembers: true);
-  void onRequestedDelete()   => ref.read(itemEditSelectionNotifier.notifier).onRequestDeletion();
-  void onCancelDelete()      => ref.read(itemEditSelectionNotifier.notifier).set(requestedConfirmDeletion: false);
-  void onConfirmedDelete()   => ref.read(itemEditSelectionNotifier.notifier).onDeleteSelected();
-  void onConfirmRestore()    => ref.read(itemEditSelectionNotifier.notifier).onRestoreSelected();
+  void onEditName   ()       => ref.read(itemEditSelectionProvider.notifier).toggleEditingGroupName();
+  void onEditMembers()       => ref.read(itemEditSelectionProvider.notifier).set(editingGroupMembers: true);
+  void onRequestedDelete()   => ref.read(itemEditSelectionProvider.notifier).onRequestDeletion();
+  void onCancelDelete()      => ref.read(itemEditSelectionProvider.notifier).set(requestedConfirmDeletion: false);
+  void onConfirmedDelete()   => ref.read(itemEditSelectionProvider.notifier).onDeleteSelected();
+  void onConfirmRestore()    => ref.read(itemEditSelectionProvider.notifier).onRestoreSelected();
 
   void onContentEdit(String text) {
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+    final notifier = ref.read(itemEditSelectionProvider.notifier);
 
     if (notifier.group.name == text) { return; }
 
@@ -57,7 +57,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   }
 
   void onChangedMembers(int id, bool status) {
-    final notifier = ref.watch(itemEditSelectionNotifier.notifier);
+    final notifier = ref.watch(itemEditSelectionProvider.notifier);
 
     var item = widget.topology.items[id];
     var members = Set.from(notifier.group.members);
@@ -69,7 +69,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
 
     var group = notifier.group.cloneWith(members: members);
 
-    ref.read(itemEditSelectionNotifier.notifier).changeItem(group);
+    ref.read(itemEditSelectionProvider.notifier).changeItem(group);
   }
 
   AbstractSettingsTile _makeNameInput(Group group, bool enabled, Topology topology) {
@@ -96,7 +96,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
 
   AbstractSettingsTile _makeMembersInput() {
     List<BadgeButton> list = [];
-    final notifier = ref.watch(itemEditSelectionNotifier.notifier); 
+    final notifier = ref.watch(itemEditSelectionProvider.notifier); 
 
     for (var member in notifier.group.members) {
       if (member is! Device && member is! Group) { continue; }
@@ -123,8 +123,8 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   }
 
   Widget _buildMembersSelectionInput() {
-    var itemEditSelection = ref.watch(itemEditSelectionNotifier); 
-    final notifier = ref.watch(itemEditSelectionNotifier.notifier);
+    var itemEditSelection = ref.watch(itemEditSelectionProvider); 
+    final notifier = ref.watch(itemEditSelectionProvider.notifier);
     if (!itemEditSelection.editingGroupMembers) { return SizedBox.shrink(); }
 
     
@@ -151,8 +151,8 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
 
 
   Widget _buildSettingsView() {
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
-    final itemSelection = ref.read(itemEditSelectionNotifier);
+    final notifier = ref.read(itemEditSelectionProvider.notifier);
+    final itemSelection = ref.read(itemEditSelectionProvider);
 
     Group group = notifier.group;
     bool editingName = itemSelection.editingGroupName;
@@ -175,7 +175,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   }
 
   Widget _buildDeleteConfirmDialog() {
-    final itemSelection = ref.read(itemEditSelectionNotifier);
+    final itemSelection = ref.read(itemEditSelectionProvider);
 
     bool showConfirmDialog = itemSelection.confirmDeletion;
 
@@ -193,7 +193,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   @override
   Widget build(BuildContext context) {
       // if item changed, reset the text fields
-      ref.listen(itemEditSelectionNotifier, (previous, next) {
+      ref.listen(itemEditSelectionProvider, (previous, next) {
         if (previous?.selectedStack != next.selectedStack && next.selectedStack.last is Group) {
           _nameInputController.text = (next.selectedStack.last as Group).name;
         }

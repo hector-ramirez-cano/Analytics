@@ -5,7 +5,7 @@ import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
@@ -34,35 +34,35 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   @override
   void initState() {
     super.initState();
-    _sideAIfaceInputController = TextEditingController(text: ref.read(itemEditSelectionNotifier.notifier).link.sideAIface);
-    _sideBIfaceInputController = TextEditingController(text: ref.read(itemEditSelectionNotifier.notifier).link.sideBIface);
+    _sideAIfaceInputController = TextEditingController(text: ref.read(itemEditSelectionProvider.notifier).link.sideAIface);
+    _sideBIfaceInputController = TextEditingController(text: ref.read(itemEditSelectionProvider.notifier).link.sideBIface);
   }
 
-  void onEditSideAIface() => ref.read(itemEditSelectionNotifier.notifier).set(editingLinkIfaceA: true);
-  void onEditSideBIface() => ref.read(itemEditSelectionNotifier.notifier).set(editingLinkIfaceB: true);
-  void onEditSideA()      => ref.read(itemEditSelectionNotifier.notifier).set(editingLinkDeviceA: true);
-  void onEditSideB()      => ref.read(itemEditSelectionNotifier.notifier).set(editingLinkDeviceB: true);
-  void onRequestedDelete()=> ref.read(itemEditSelectionNotifier.notifier).onRequestDeletion();
-  void onCancelDelete()   => ref.read(itemEditSelectionNotifier.notifier).set(requestedConfirmDeletion: false);
-  void onConfirmedDelete()=> ref.read(itemEditSelectionNotifier.notifier).onDeleteSelected();
-  void onConfirmRestore() => ref.read(itemEditSelectionNotifier.notifier).onRestoreSelected();
+  void onEditSideAIface() => ref.read(itemEditSelectionProvider.notifier).set(editingLinkIfaceA: true);
+  void onEditSideBIface() => ref.read(itemEditSelectionProvider.notifier).set(editingLinkIfaceB: true);
+  void onEditSideA()      => ref.read(itemEditSelectionProvider.notifier).set(editingLinkDeviceA: true);
+  void onEditSideB()      => ref.read(itemEditSelectionProvider.notifier).set(editingLinkDeviceB: true);
+  void onRequestedDelete()=> ref.read(itemEditSelectionProvider.notifier).onRequestDeletion();
+  void onCancelDelete()   => ref.read(itemEditSelectionProvider.notifier).set(requestedConfirmDeletion: false);
+  void onConfirmedDelete()=> ref.read(itemEditSelectionProvider.notifier).onDeleteSelected();
+  void onConfirmRestore() => ref.read(itemEditSelectionProvider.notifier).onRestoreSelected();
 
   void onEditSideAIfaceContent(String text) {
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+    final notifier = ref.read(itemEditSelectionProvider.notifier);
     var link = notifier.link;
   
     onEditIFaceContent(text, notifier.link.sideAIface, (text) => link.cloneWith(sideAIface: text));
   }
 
   void onEditSideBIfaceContent(String text) {
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+    final notifier = ref.read(itemEditSelectionProvider.notifier);
     var link = notifier.link;
   
     onEditIFaceContent(text, notifier.link.sideBIface, (text) => link.cloneWith(sideBIface: text));
   }
 
   void onEditIFaceContent(String text, String currentText, Link Function(String) modifyFn) {
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+    final notifier = ref.read(itemEditSelectionProvider.notifier);
 
     if (currentText == text) { return; }
 
@@ -150,7 +150,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
 
   SettingsSection _makeDeviceSection(String title, Link link, {required bool sideA}) {
 
-    final itemSelection = ref.read(itemEditSelectionNotifier);
+    final itemSelection = ref.read(itemEditSelectionProvider);
 
     bool editingAIface = itemSelection.editingLinkIfaceA;
     bool editingBIface = itemSelection.editingLinkIfaceB;
@@ -171,8 +171,8 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   }
 
   Widget _buildSelectionDialog() {
-    final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
-    final notif = ref.watch(itemEditSelectionNotifier.notifier);
+    final itemEditSelection = ref.watch(itemEditSelectionProvider); 
+    final notif = ref.watch(itemEditSelectionProvider.notifier);
 
     bool deviceA = itemEditSelection.editingLinkDeviceA;
     bool deviceB = itemEditSelection.editingLinkDeviceB;
@@ -226,7 +226,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   }
 
   Widget _buildDeleteConfirmDialog() {
-    final itemSelection = ref.read(itemEditSelectionNotifier);
+    final itemSelection = ref.read(itemEditSelectionProvider);
 
     bool showConfirmDialog = itemSelection.confirmDeletion;
 
@@ -242,7 +242,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   }
 
   Widget _buildConfigurationPage() {
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+    final notifier = ref.read(itemEditSelectionProvider.notifier);
 
     Link link = notifier.link;
 
@@ -265,7 +265,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   Widget build(BuildContext context) {
 
     // if item changed, reset the text fields
-      ref.listen(itemEditSelectionNotifier, (previous, next) {
+      ref.listen(itemEditSelectionProvider, (previous, next) {
         if (previous?.selectedStack != next.selectedStack && next.selectedStack is Link) {
           _sideAIfaceInputController.text = (next.selectedStack.last as Link).sideAIface;
           _sideBIfaceInputController.text = (next.selectedStack.last as Link).sideBIface;

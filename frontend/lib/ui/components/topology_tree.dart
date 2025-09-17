@@ -3,12 +3,11 @@ import 'package:animated_tree_view/tree_view/tree_view.dart';
 import 'package:animated_tree_view/tree_view/widgets/expansion_indicator.dart';
 import 'package:animated_tree_view/tree_view/widgets/indent.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 
@@ -136,10 +135,10 @@ class TopologyTree extends StatelessWidget {
 
     String title = node.key;
     Widget text = Consumer(builder: (contex, ref, _)  {
-      var _ = ref.watch(itemEditSelectionNotifier);
+      var _ = ref.watch(itemEditSelectionProvider);
 
       bool canBeDeleted = node.data is Device || node.data is Group;
-      bool deleted = canBeDeleted ? ref.read(itemEditSelectionNotifier.notifier).isDeleted(node.data) : false;
+      bool deleted = canBeDeleted ? ref.read(itemEditSelectionProvider.notifier).isDeleted(node.data) : false;
       Color backgroundColor = deleted ? deletedItemColor : Colors.transparent;
 
       return Text(title, style: TextStyle(backgroundColor: backgroundColor),);
@@ -190,7 +189,7 @@ class TopologyTree extends StatelessWidget {
     return Consumer(builder: (context, ref, _) {
 
       return UniversalDetector(
-        setCursor: () => ref.read(itemEditSelectionNotifier).creatingItem ? SystemMouseCursors.forbidden : SystemMouseCursors.click, 
+        setCursor: () => ref.read(itemEditSelectionProvider).creatingItem ? SystemMouseCursors.forbidden : SystemMouseCursors.click, 
         child: _makeTreeView(ref)
       );
     });

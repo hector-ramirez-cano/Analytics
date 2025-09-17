@@ -7,6 +7,7 @@ import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/screens/edit/device/device_edit_view.dart';
 import 'package:network_analytics/ui/screens/edit/empty_edit_view.dart';
@@ -20,9 +21,9 @@ class ItemEditView extends StatelessWidget {
   });
 
   Widget _makeAnimatedSettings(Topology topology, WidgetRef ref) {
-    final item = ref.watch(itemEditSelectionNotifier);
+    final item = ref.watch(itemEditSelectionProvider);
     final selected = item.selectedStack.lastOrNull;
-    final creatingItem = ref.watch(itemEditSelectionNotifier).creatingItem;
+    final creatingItem = ref.watch(itemEditSelectionProvider).creatingItem;
     return AnimatedSwitcher(duration: const Duration (milliseconds: 300), child: _makeSettingsView(topology, creatingItem, selected),);
   }
 

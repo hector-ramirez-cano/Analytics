@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
@@ -32,15 +32,15 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
   late TextEditingController _hostnameInputController;
   late TextEditingController _nameInputController;
 
-  void onEditDeviceHostname() => ref.read(itemEditSelectionNotifier.notifier).onEditDeviceHostname();
-  void onEditDeviceName()     => ref.read(itemEditSelectionNotifier.notifier).onEditDeviceName();
-  void onEditGeoposition()    => ref.read(itemEditSelectionNotifier.notifier).onEditDeviceGeoposition();
-  void onEditMetadata()       => ref.read(itemEditSelectionNotifier.notifier).onEditMetadata();
-  void onEditMetrics()        => ref.read(itemEditSelectionNotifier.notifier).onEditMetrics();
-  void onEditDataSources()    => ref.read(itemEditSelectionNotifier.notifier).onEditDataSources();
+  void onEditDeviceHostname() => ref.read(itemEditSelectionProvider.notifier).onEditDeviceHostname();
+  void onEditDeviceName()     => ref.read(itemEditSelectionProvider.notifier).onEditDeviceName();
+  void onEditGeoposition()    => ref.read(itemEditSelectionProvider.notifier).onEditDeviceGeoposition();
+  void onEditMetadata()       => ref.read(itemEditSelectionProvider.notifier).onEditMetadata();
+  void onEditMetrics()        => ref.read(itemEditSelectionProvider.notifier).onEditMetrics();
+  void onEditDataSources()    => ref.read(itemEditSelectionProvider.notifier).onEditDataSources();
 
-  void onEditDeviceMgmtHostnameContent(String text) => ref.read(itemEditSelectionNotifier.notifier).onChangeDeviceMgmtHostname(text);
-  void onEditDeviceNameContent(String text) => ref.read(itemEditSelectionNotifier.notifier).onChangeDeviceNameContent(text);
+  void onEditDeviceMgmtHostnameContent(String text) => ref.read(itemEditSelectionProvider.notifier).onChangeDeviceMgmtHostname(text);
+  void onEditDeviceNameContent(String text) => ref.read(itemEditSelectionProvider.notifier).onChangeDeviceNameContent(text);
 
   AbstractSettingsTile _makeDeviceInput(Device device, bool editing, Topology topology) {
     bool modified = device.isModifiedName(topology);
@@ -171,7 +171,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
   void initState() {
     super.initState();
     
-    var device = ref.read(itemEditSelectionNotifier.notifier).device;
+    var device = ref.read(itemEditSelectionProvider.notifier).device;
     _hostnameInputController = TextEditingController(text: device.mgmtHostname);
     _nameInputController = TextEditingController(text: device.name);
   }
@@ -185,11 +185,11 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
   @override
   Widget build(BuildContext context) {
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
-    final itemSelectionService = ref.read(itemEditSelectionNotifier);
+    final notifier = ref.read(itemEditSelectionProvider.notifier);
+    final itemSelectionService = ref.read(itemEditSelectionProvider);
 
     // If item changed, reset the text field controller's text to the initial value of the selected
-    ref.listen(itemEditSelectionNotifier, (previous, next) {
+    ref.listen(itemEditSelectionProvider, (previous, next) {
         if (next.selectedStack.lastOrNull is Device) {
           Device device = notifier.device;
           _hostnameInputController.text = device.mgmtHostname;

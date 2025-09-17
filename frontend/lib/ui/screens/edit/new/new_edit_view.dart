@@ -5,7 +5,7 @@ import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
@@ -32,7 +32,7 @@ class _NewEditViewState extends State<NewEditView> {
 
   void _onCreate(WidgetRef ref) {
     AnalyticsItem item;
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+    final notifier = ref.read(itemEditSelectionProvider.notifier);
     switch (selected) {
       case "Dispositivo":
         item = Device.emptyDevice();
@@ -52,7 +52,7 @@ class _NewEditViewState extends State<NewEditView> {
   }
 
   void _onCancel(WidgetRef ref) {
-    ref.read(itemEditSelectionNotifier.notifier).set(overrideCreatingItem: false);
+    ref.read(itemEditSelectionProvider.notifier).set(overrideCreatingItem: false);
   }
 
   Widget _makeCreateButton() {

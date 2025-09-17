@@ -2,12 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/app_config.dart';
 import 'package:network_analytics/services/canvas_interaction_service.dart';
-import 'package:network_analytics/services/canvas_state_notifier.dart';
-import 'package:network_analytics/services/canvas_tab_notifier.dart';
-import 'package:network_analytics/services/drawer_state_notifier.dart';
-import 'package:network_analytics/services/item_edit_selection_notifier.dart';
-import 'package:network_analytics/services/item_selection_notifier.dart';
-import 'package:network_analytics/services/screen_selection_notifier.dart';
 
 import '../services/topology_service.dart';
 
@@ -26,27 +20,3 @@ final topologyProvider = FutureProvider<Topology>((ref) async {
 final canvasInteractionServiceProvider = Provider<CanvasInteractionService>((ref) {
   return CanvasInteractionService();
 });
-
-final canvasStateNotifier = StateNotifierProvider<CanvasStateNotifier, CanvasState>(
-  (ref) => CanvasStateNotifier()
-);
-
-final itemSelectionNotifier = StateNotifierProvider<ItemSelectionNotifier, ItemSelection?>(
-  (ref) => ItemSelectionNotifier(),
-);
-
-final screenSelectionNotifier = StateNotifierProvider<SideNavSelectionNotifier, SideNavSelection>(
-  (ref) => SideNavSelectionNotifier()
-);
-
-final canvasTabNotifier = StateNotifierProvider<CanvasTabNotifier, CanvasTab>(
-  (ref) => CanvasTabNotifier()
-);
-
-final itemEditSelectionNotifier = StateNotifierProvider<ItemEditSelectionNotifier, ItemEditSelection>(
-  (ref) => ItemEditSelectionNotifier(),
-);
-
-final drawerStateNotifier = StateNotifierProvider<DrawerStateNotifier, DrawerState>(
-  (ref) => DrawerStateNotifier(),
-);

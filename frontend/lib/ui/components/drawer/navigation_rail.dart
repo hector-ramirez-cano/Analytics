@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/drawer_state_notifier.dart';
+import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/enums/navigation_rail_item.dart';
 
 class AnalyticsNavigationRail extends StatelessWidget {
@@ -10,8 +11,8 @@ class AnalyticsNavigationRail extends StatelessWidget {
 
     if (selected == null) { return; }
 
-    ref.read(screenSelectionNotifier.notifier).setSelected(selected);
-    ref.read(drawerStateNotifier.notifier).setState(selected.hasDrawer);
+    ref.read(sideNavSelectionProvider.notifier).setSelected(selected);
+    ref.read(drawerStateProvider.notifier).setState(selected.hasDrawer);
   }
 
   // List<Widget> _bottomItems (WidgetRef ref) {
@@ -33,7 +34,7 @@ class AnalyticsNavigationRail extends StatelessWidget {
 
   NavigationRail _makeNavigationRail(WidgetRef ref) {
     return NavigationRail(
-      selectedIndex: ref.watch(screenSelectionNotifier).selected?.index,
+      selectedIndex: ref.watch(sideNavSelectionProvider).selected?.index,
       onDestinationSelected: (dest) => _setScreen(NavigationRailItem.values[dest], ref),
 
       // spacing

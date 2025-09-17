@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // ignore: unused_import
 import 'package:logger/web.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/drawer_state_notifier.dart';
+import 'package:network_analytics/services/item_edit_selection_notifier.dart';
+import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/drawer/drawer.dart';
 import 'package:network_analytics/ui/components/enums/navigation_rail_item.dart';
 import 'package:network_analytics/theme/app_colors.dart';
@@ -18,16 +20,16 @@ class SideNav extends StatelessWidget {
 
     if (selected == null) { return; }
 
-    ref.read(screenSelectionNotifier.notifier).setSelected(selected);
-    ref.read(itemEditSelectionNotifier.notifier).discard();
+    ref.read(sideNavSelectionProvider.notifier).setSelected(selected);
+    ref.read(itemEditSelectionProvider.notifier).discard();
   }
 
 
   void _handleNavClick(NavigationRailItem clickedItem, WidgetRef ref) {
     NavigationRailItem? selected;
     bool setOpen;
-    final selectedPanel = ref.watch(screenSelectionNotifier).selected;
-    final isDrawerOpened = ref.watch(drawerStateNotifier).isOpen;
+    final selectedPanel = ref.watch(sideNavSelectionProvider).selected;
+    final isDrawerOpened = ref.watch(drawerStateProvider).isOpen;
     if (selectedPanel == clickedItem) {
       if (isDrawerOpened) {
         // clicked the same, we gotta close
@@ -47,7 +49,7 @@ class SideNav extends StatelessWidget {
     // if the drawer doesn't have a drawer, force it to close
     setOpen &= clickedItem.hasDrawer;
 
-    ref.read(drawerStateNotifier.notifier).setState(setOpen);
+    ref.read(drawerStateProvider.notifier).setState(setOpen);
 
     _setScreen(selected, ref);
 
@@ -72,7 +74,7 @@ class SideNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer(builder:(context, ref, child) {
-      final selectedPanel = ref.read(screenSelectionNotifier).selected;
+      final selectedPanel = ref.read(sideNavSelectionProvider).selected;
 
       List<Widget> widgets = [];
       widgets.addAll(List.generate(NavigationRailItem.topItems.length, (index) => _buildChild(selectedPanel, NavigationRailItem.topItems[index], ref)));

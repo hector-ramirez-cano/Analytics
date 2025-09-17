@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/drawer_state_notifier.dart';
 import 'package:network_analytics/ui/components/drawer/drawer.dart';
 import 'package:network_analytics/ui/components/side_nav.dart';
 import 'package:network_analytics/ui/screens/content_area.dart';
@@ -10,7 +10,7 @@ class ContentBody extends StatelessWidget {
   const ContentBody({super.key});
 
   List<ResizableChild> _makeContainers(WidgetRef ref) {
-    final isOpen = ref.watch(drawerStateNotifier).isOpen;
+    final isOpen = ref.watch(drawerStateProvider).isOpen;
     return [
           ResizableChild(
             child: SideNav(),

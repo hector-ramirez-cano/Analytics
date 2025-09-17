@@ -1,57 +1,68 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-// ignore: unused_import
-import 'package:logger/web.dart';
+part 'canvas_state_notifier.g.dart'; // must match file name
 
+// Immutable state class
 class CanvasState {
   final double scale;
   final Offset centerOffset;
-  
-  bool isModified = false;
+  final bool isModified;
 
   CanvasState({
     required this.scale,
-    required this.centerOffset
+    required this.centerOffset,
+    this.isModified = false,
   });
 
   CanvasState copyWith({
     double? scale,
     Offset? centerOffset,
-    Size? canvasSize,
+    bool? isModified,
   }) {
     return CanvasState(
       scale: scale ?? this.scale,
-      centerOffset: centerOffset ?? this.centerOffset
+      centerOffset: centerOffset ?? this.centerOffset,
+      isModified: isModified ?? this.isModified,
     );
   }
 }
 
-class CanvasStateNotifier extends StateNotifier<CanvasState> {
-  CanvasStateNotifier() : super(CanvasState(scale: 1.0, centerOffset: Offset.zero));
+// Riverpod 3 Notifier
+@riverpod
+class CanvasStateNotifier extends _$CanvasStateNotifier {
+  @override
+  CanvasState build() => CanvasState(scale: 1.0, centerOffset: Offset.zero);
 
   double get scale => state.scale;
   Offset get centerOffset => state.centerOffset;
-  bool   get isModified => state.isModified;
+  bool get isModified => state.isModified;
 
   void setState(double? scale, Offset? centerOffset) {
-    bool changed = state.scale != scale || state.centerOffset != centerOffset;
+    final changed = (scale != null && scale != state.scale) ||
+        (centerOffset != null && centerOffset != state.centerOffset);
 
     if (changed) {
-      state = state.copyWith(scale: scale, centerOffset: centerOffset);
-      state.isModified = true;
+      state = state.copyWith(
+        scale: scale ?? state.scale,
+        centerOffset: centerOffset ?? state.centerOffset,
+        isModified: true,
+      );
     }
   }
 
   void reset() {
-    state = state.copyWith(scale: 1.0, centerOffset: Offset.zero);
-    state.isModified = false;
+    state = state.copyWith(
+      scale: 1.0,
+      centerOffset: Offset.zero,
+      isModified: false,
+    );
   }
 
   void pan(Offset delta) {
     state = state.copyWith(
       centerOffset: state.centerOffset + delta,
+      isModified: true,
     );
   }
-
 }

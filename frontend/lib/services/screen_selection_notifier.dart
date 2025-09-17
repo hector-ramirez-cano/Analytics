@@ -1,16 +1,20 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/ui/components/enums/navigation_rail_item.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class SideNavSelection {
+part 'screen_selection_notifier.g.dart';
+
+class _SideNavSelection {
   final NavigationRailItem? selected;
 
-  const SideNavSelection({
+  const _SideNavSelection({
     required this.selected,
   });
 }
 
-class SideNavSelectionNotifier extends StateNotifier<SideNavSelection> {
-  SideNavSelectionNotifier() : super(SideNavSelection(selected: NavigationRailItem.canvas));
+@riverpod
+class SideNavSelection extends _$SideNavSelection {
 
-  void setSelected(NavigationRailItem? selection) => state = SideNavSelection(selected: selection);
+  @override _SideNavSelection build() =>  _SideNavSelection(selected: NavigationRailItem.canvas);
+
+  void setSelected(NavigationRailItem? selection) => state = _SideNavSelection(selected: selection);
 }

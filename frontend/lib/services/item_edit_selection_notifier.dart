@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:free_map/free_map.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/models/analytics_item.dart';
@@ -7,8 +6,11 @@ import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class ItemEditSelection {
+part 'item_edit_selection_notifier.g.dart';
+
+class _ItemEditSelection {
   final List<AnalyticsItem> selectedStack;
   final Topology changes;
   final Topology deleted;
@@ -29,7 +31,7 @@ class ItemEditSelection {
   final bool creatingItem;
   
 
-  const ItemEditSelection({
+  const _ItemEditSelection({
     required this.selectedStack,
     required this.changes,
     required this.deleted,
@@ -51,10 +53,9 @@ class ItemEditSelection {
   });
 }
 
-class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
-  ItemEditSelectionNotifier() 
-  : super(
-    ItemEditSelection(
+@riverpod
+class ItemEditSelection extends _$ItemEditSelection {
+  @override _ItemEditSelection build() => _ItemEditSelection(
       selectedStack: [],
       changes: Topology(items: {}),
       deleted: Topology(items: {}),
@@ -73,8 +74,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
       editingDeviceDataSources: false,
       editingDeviceGeoPosition: false,
       creatingItem: false,
-      )
-    );
+      );
 
   void setSelected(AnalyticsItem item, {bool appendState = false, bool clearStack = false, bool appendToTopology = false}) {
     var newStack = state.selectedStack;
@@ -125,7 +125,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     bool? overrideCreatingItem,
   }) {
     if (keepState) {
-      state = ItemEditSelection(
+      state = _ItemEditSelection(
         selectedStack         : selected ?? state.selectedStack,
         deleted               : deleted ?? state.deleted,
         changes               : changes ?? state.changes,
@@ -146,7 +146,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
         editingDeviceGeoPosition: state.editingDeviceGeoPosition,
       );
     } else {
-      state = ItemEditSelection(
+      state = _ItemEditSelection(
         selectedStack              : selected ?? state.selectedStack,
         changes               : changes ?? state.changes,
         deleted               : deleted ?? state.deleted,

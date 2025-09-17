@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
 
 const Color addedItemColor = Colors.green;
@@ -41,7 +41,7 @@ Widget makeFooter(WidgetRef ref, Topology topology) {
   ButtonStyle saveStyle = ElevatedButton.styleFrom(backgroundColor: Colors.blue,);
   const TextStyle saveLabelStyle = TextStyle(color: Colors.white);
 
-  final notifier = ref.read(itemEditSelectionNotifier.notifier);
+  final notifier = ref.read(itemEditSelectionProvider.notifier);
 
   onCancel() => {
     notifier.discard()

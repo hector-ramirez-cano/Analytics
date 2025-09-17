@@ -1,4 +1,7 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'item_selection_notifier.g.dart';
 
 class ItemSelection {
   final int? selected;
@@ -10,8 +13,9 @@ class ItemSelection {
   });
 }
 
-class ItemSelectionNotifier extends StateNotifier<ItemSelection?> {
-  ItemSelectionNotifier() : super(null);
+@riverpod
+class ItemSelectionNotifier extends _$ItemSelectionNotifier {
+  @override ItemSelection? build() => null;
 
   void setSelected(int? id, bool forced) => state = ItemSelection(selected: id, forced: forced);
 }

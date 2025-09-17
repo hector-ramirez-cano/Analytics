@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class DeleteSection extends StatelessWidget {
@@ -14,7 +14,7 @@ class DeleteSection extends StatelessWidget {
   });
   
   SettingsSection _makeDeleteSection(WidgetRef ref) {
-    final notifier = ref.read(itemEditSelectionNotifier.notifier);
+    final notifier = ref.read(itemEditSelectionProvider.notifier);
     bool deleted = notifier.isDeleted(notifier.selected);
     String label = deleted ? "Restaurar" : "Eliminar";
     var onAction = deleted ? onRestore : onDelete;

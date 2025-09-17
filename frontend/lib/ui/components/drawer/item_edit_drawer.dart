@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/topology_tree.dart';
 
 
@@ -18,7 +18,7 @@ class ItemEditDrawer extends StatelessWidget {
   });
 
   void onChangeItem(WidgetRef ref, TreeNode value) {
-    if (ref.read(itemEditSelectionNotifier).creatingItem) {
+    if (ref.read(itemEditSelectionProvider).creatingItem) {
       return;
     }
 
@@ -27,16 +27,16 @@ class ItemEditDrawer extends StatelessWidget {
     }
 
     if(value.data is Device) {
-      ref.read(itemEditSelectionNotifier.notifier).setSelected(value.data, clearStack: true);
+      ref.read(itemEditSelectionProvider.notifier).setSelected(value.data, clearStack: true);
     }
 
     if(value.data is Group) {
-      ref.read(itemEditSelectionNotifier.notifier).setSelected(value.data, clearStack: true);
+      ref.read(itemEditSelectionProvider.notifier).setSelected(value.data, clearStack: true);
     }
   }
 
   void onCreateItem(WidgetRef ref) {
-    ref.read(itemEditSelectionNotifier.notifier).set(overrideCreatingItem: true, selected: []);
+    ref.read(itemEditSelectionProvider.notifier).set(overrideCreatingItem: true, selected: []);
   }
 
   @override

@@ -1,11 +1,11 @@
-// ignore_for_file: avoid_init_to_null
-
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class CanvasTab {
+part 'canvas_tab_notifier.g.dart';
+
+class _CanvasTab {
   static Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_canvas_tab_logging", false));
 
 
@@ -14,23 +14,26 @@ class CanvasTab {
   final List<UniqueKey> order;
 
 
-  const CanvasTab({
+  const _CanvasTab({
     required this.selected,
     required this.order,
     required this.tabs
   });
 }
 
-class CanvasTabNotifier extends StateNotifier<CanvasTab> {
-  CanvasTabNotifier() : super(CanvasTab(selected: null, order: [], tabs: {}));
+@riverpod
+class CanvasTab extends _$CanvasTab {
+  
+  @override _CanvasTab build() => _CanvasTab(selected: null, order: [], tabs: {});
+
 
   void setSelected(UniqueKey id) {
-    state = CanvasTab(
+    state = _CanvasTab(
         selected: id, 
         tabs: state.tabs,
         order: state.order,
     );
-    CanvasTab.logger.d("Canvas Tab, Set $id selected");
+    _CanvasTab.logger.d("Canvas Tab, Set $id selected");
   }
 
   void append(String title) {
@@ -42,10 +45,10 @@ class CanvasTabNotifier extends StateNotifier<CanvasTab> {
     tabs[id] = title;
     order.add(id);
 
-    CanvasTab.logger.d("Canvas Tab, Added new tab, title=$title, id=$id");
+    _CanvasTab.logger.d("Canvas Tab, Added new tab, title=$title, id=$id");
 
     // Force rebuild
-    state = CanvasTab(selected: selected, tabs: tabs, order: order);
+    state = _CanvasTab(selected: selected, tabs: tabs, order: order);
   }
 
   void remove(UniqueKey id) {
@@ -62,10 +65,10 @@ class CanvasTabNotifier extends StateNotifier<CanvasTab> {
     }
 
 
-    CanvasTab.logger.d("Canvas Tab, removed tab, id=$id");
+    _CanvasTab.logger.d("Canvas Tab, removed tab, id=$id");
 
     // Force rebuild
-    state = CanvasTab(selected: selected, tabs: tabs, order: order);
+    state = _CanvasTab(selected: selected, tabs: tabs, order: order);
   }
 
   void appends(List<String> items) {
@@ -80,7 +83,7 @@ class CanvasTabNotifier extends StateNotifier<CanvasTab> {
     }
     
     // Force rebuild
-    state = CanvasTab(selected: selected, tabs: tabs, order: order);
+    state = _CanvasTab(selected: selected, tabs: tabs, order: order);
   }
 
   void reoder(int oldIndex, int newIndex) {
@@ -92,7 +95,7 @@ class CanvasTabNotifier extends StateNotifier<CanvasTab> {
     order.insert(newIndex, item);
 
     // Force rebuild
-    state = CanvasTab(selected: state.selected, order: order, tabs: state.tabs);
+    state = _CanvasTab(selected: state.selected, order: order, tabs: state.tabs);
   }
 
   List<(UniqueKey, String)> getTabsByOrder() {

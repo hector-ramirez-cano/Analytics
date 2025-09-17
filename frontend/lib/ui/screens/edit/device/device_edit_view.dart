@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:free_map/free_map.dart';
 import 'package:network_analytics/models/data_sources.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
 import 'package:network_analytics/ui/screens/edit/commons/option_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/select_dialog.dart';
@@ -28,15 +28,15 @@ class DeviceEditView extends ConsumerStatefulWidget {
 
 class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
 
-  void onGeoPositionChanged(LatLng p) => ref.read(itemEditSelectionNotifier.notifier).onChangeDeviceGeoPosition(p);
-  void onRequestedDelete()   => ref.read(itemEditSelectionNotifier.notifier).onRequestDeletion();
-  void onCancelDelete()      => ref.read(itemEditSelectionNotifier.notifier).set(requestedConfirmDeletion: false);
-  void onConfirmedDelete()   => ref.read(itemEditSelectionNotifier.notifier).onDeleteSelected();
-  void onConfirmRestore()    => ref.read(itemEditSelectionNotifier.notifier).onRestoreSelected();
+  void onGeoPositionChanged(LatLng p) => ref.read(itemEditSelectionProvider.notifier).onChangeDeviceGeoPosition(p);
+  void onRequestedDelete()   => ref.read(itemEditSelectionProvider.notifier).onRequestDeletion();
+  void onCancelDelete()      => ref.read(itemEditSelectionProvider.notifier).set(requestedConfirmDeletion: false);
+  void onConfirmedDelete()   => ref.read(itemEditSelectionProvider.notifier).onDeleteSelected();
+  void onConfirmRestore()    => ref.read(itemEditSelectionProvider.notifier).onRestoreSelected();
 
   Widget _buildSelectionDialog() {
-    final itemEditSelection = ref.watch(itemEditSelectionNotifier); 
-    final notif = ref.watch(itemEditSelectionNotifier.notifier); 
+    final itemEditSelection = ref.watch(itemEditSelectionProvider); 
+    final notif = ref.watch(itemEditSelectionProvider.notifier); 
     bool metrics = itemEditSelection.editingDeviceMetrics;
     bool metadata = itemEditSelection.editingDeviceMetadata;
     bool datasources = itemEditSelection.editingDeviceDataSources;
@@ -75,14 +75,14 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
   }
 
   Widget _buildGeoInputDialog() {
-    final itemEditSelection = ref.read(itemEditSelectionNotifier); 
-    final notifier = ref.read(itemEditSelectionNotifier.notifier); 
+    final itemEditSelection = ref.read(itemEditSelectionProvider); 
+    final notifier = ref.read(itemEditSelectionProvider.notifier); 
     bool enabled = itemEditSelection.editingDeviceGeoPosition;
     LatLng initial = notifier.device.geoPosition;
 
     if (!enabled) { return SizedBox.shrink(); }
 
-    onClose() => ref.read(itemEditSelectionNotifier.notifier).set(editingDeviceGeoPosition: false);
+    onClose() => ref.read(itemEditSelectionProvider.notifier).set(editingDeviceGeoPosition: false);
 
     return GeoSelectDialog(
       onClose: onClose,
@@ -92,7 +92,7 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
   }
 
     Widget _makeDeleteConfirmDialog() {
-    final itemSelection = ref.read(itemEditSelectionNotifier);
+    final itemSelection = ref.read(itemEditSelectionProvider);
 
     bool showConfirmDialog = itemSelection.confirmDeletion;
 

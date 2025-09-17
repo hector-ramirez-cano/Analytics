@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
-import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 import 'package:network_analytics/ui/screens/canvas/topology_tab_view.dart';
@@ -17,7 +16,7 @@ class ContentArea extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer(builder: 
       (context, ref, child) {
-        final SideNavSelection item = ref.watch(screenSelectionNotifier);
+        final item = ref.watch(sideNavSelectionProvider);
         final screen = item.selected?.getSelectedScreen();
 
         switch (screen) {
