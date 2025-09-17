@@ -78,12 +78,10 @@ class DrawerPanel extends StatelessWidget {
       return SizedBox.shrink();
     }
     logger.d("Building Panel...");
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        alignment: Alignment.topLeft,
-        child: createContainerFromSelection(topology)
-      )
+    return Container(
+      padding: const EdgeInsets.all(16),
+      alignment: Alignment.topLeft,
+      child: createContainerFromSelection(topology)
     );
   }
 

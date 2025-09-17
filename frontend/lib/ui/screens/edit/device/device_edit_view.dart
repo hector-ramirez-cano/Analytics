@@ -123,10 +123,7 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
     );
   }
 
-
-  @override
-  Widget build(BuildContext context) {
-
+  Stack buildSettings() {
     return Stack(
       children: [
         _buildConfigurationPage(),
@@ -135,5 +132,10 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
         _makeDeleteConfirmDialog(),
       ],
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return buildSettings();
   }
 }

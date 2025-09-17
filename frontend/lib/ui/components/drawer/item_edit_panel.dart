@@ -8,7 +8,7 @@ import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/components/topology_tree.dart';
 
 
-
+// Rename to drawer for clarity
 class ItemEditPanel extends StatelessWidget {
   final Topology topology;
 
@@ -18,6 +18,10 @@ class ItemEditPanel extends StatelessWidget {
   });
 
   void onChangeItem(WidgetRef ref, TreeNode value) {
+    if (ref.read(itemEditSelectionNotifier).creatingItem) {
+      return;
+    }
+
     if(value.data is Section) {
       return;
     }
@@ -31,17 +35,30 @@ class ItemEditPanel extends StatelessWidget {
     }
   }
 
+  void onCreateItem(WidgetRef ref) {
+    ref.read(itemEditSelectionNotifier.notifier).set(overrideCreatingItem: true, selected: []);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer (builder: 
       (context, ref, child) {
         onItemTap(value) => onChangeItem(ref, value);
 
-        return TopologyTree(
-          topology: topology,
-          includeDevices: true,
-          includeGroups: true,
-          onItemTap: onItemTap,
+        return Column(
+          children: [
+            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => onCreateItem(ref), child: Text("Nuevo"))),
+            Padding(padding: EdgeInsetsGeometry.only(top: 4, bottom: 4)),
+            Divider(height: 1,),
+            Expanded(
+              child: TopologyTree(
+                topology: topology,
+                includeDevices: true,
+                includeGroups: true,
+                onItemTap: onItemTap,
+              ),
+            ),
+          ],
         );
       },
     );

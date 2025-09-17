@@ -19,6 +19,7 @@ class SideNav extends StatelessWidget {
     if (selected == null) { return; }
 
     ref.read(screenSelectionNotifier.notifier).setSelected(selected);
+    ref.read(itemEditSelectionNotifier.notifier).discard();
   }
 
 

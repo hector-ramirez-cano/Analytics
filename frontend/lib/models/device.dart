@@ -93,6 +93,20 @@ class Device extends AnalyticsItem<Device> implements HoverTarget{
     );
   }
 
+  factory Device.emptyDevice(){
+    return Device(
+      id: -1,
+      position: Offset.zero,
+      name: "Nuevo Dispositivo",
+      geoPosition: LatLng(0, 0),
+      mgmtHostname: "",
+      requestedMetadata: {},
+      requestedMetrics: {},
+      availableValues: {},
+      dataSources: {}
+    );
+  }
+
   static List<Device> listFromJson(List<dynamic> json) {
     List<Device> devices = [];
 
@@ -124,47 +138,61 @@ class Device extends AnalyticsItem<Device> implements HoverTarget{
 
   /// Returns whether a given [metric] is modified in the current instance, in reference to the original [topology]
   bool isModifiedMetric(String metric, Topology topology) {
-    return requestedMetrics.contains(metric) != (topology.items[id] as Device).requestedMetrics.contains(metric);
+    return requestedMetrics.contains(metric) != (topology.items[id] as Device?)?.requestedMetrics.contains(metric);
   }
 
   /// Returns whether a given [metric] is deleted in the current instance, aka is not found on the instance, but found on the original [topology]
   bool isDeletedMetric(String metric, Topology topology) {
-    return !requestedMetrics.contains(metric) && (topology.items[id] as Device).requestedMetrics.contains(metric);
+    return !requestedMetrics.contains(metric) && (topology.items[id] as Device?)?.requestedMetrics.contains(metric) == true;
   }
 
   /// Returns whether a given [metadata] is modified in the current instance, in reference to the original [topology]
   bool isModifiedMetadata(String metadata, Topology topology) {
-    return requestedMetadata.contains(metadata) != (topology.items[id] as Device).requestedMetadata.contains(metadata);
+    return requestedMetadata.contains(metadata) != (topology.items[id] as Device?)?.requestedMetadata.contains(metadata);
   }
 
   /// Returns whether a given [metadata] is deleted in the current instance, aka is not found on the instance, but found on the original [topology]
   bool isDeletedMetadata(String metadata, Topology topology) {
-    return !requestedMetadata.contains(metadata) && (topology.items[id] as Device).requestedMetadata.contains(metadata);
+    return !requestedMetadata.contains(metadata) && (topology.items[id] as Device?)?.requestedMetadata.contains(metadata) == true;
   }
 
   /// Returns whether a given [dataSource] is modified in the current instance, in reference to the original [topology]
   bool isModifiedDataSources(String dataSource, Topology topology) {
-    return dataSources.contains(dataSource) != (topology.items[id] as Device).dataSources.contains(dataSource);
+    return dataSources.contains(dataSource) != (topology.items[id] as Device?)?.dataSources.contains(dataSource);
   }
 
   /// Returns whether a given [dataSource] is deleted in the current instance, aka is not found on the instance, but found on the original [topology]
   bool isDeletedDataSource(String dataSource, Topology topology) {
-    return !dataSources.contains(dataSource) && (topology.items[id] as Device).dataSources.contains(dataSource);
+    return !dataSources.contains(dataSource) && (topology.items[id] as Device?)?.dataSources.contains(dataSource) == true;
   }
 
   bool isModifiedName(Topology topology) {
-    return name != (topology.items[id] as Device).name;
+    if (!topology.items.containsKey(id)) {
+      return false;
+    }
+
+    return name != (topology.items[id] as Device?)?.name;
   }
 
   bool isModifiedHostname(Topology topology) {
-    return mgmtHostname != (topology.items[id] as Device).mgmtHostname;
+    if (!topology.items.containsKey(id)) {
+      return false;
+    }
+
+    return mgmtHostname != (topology.items[id] as Device?)?.mgmtHostname;
   }
 
   bool isModifiedGeoLocation(Topology topology) {
-    return geoPosition != (topology.items[id] as Device).geoPosition; 
+    if (!topology.items.containsKey(id)) {
+      return false;
+    }
+    return geoPosition != (topology.items[id] as Device?)?.geoPosition; 
   }
 
   bool isModifiedPosition(Topology topology) {
-    return position != (topology.items[id] as Device).position; 
+    if (!topology.items.containsKey(id)) {
+      return false;
+    }
+    return position != (topology.items[id] as Device?)?.position; 
   }
 }

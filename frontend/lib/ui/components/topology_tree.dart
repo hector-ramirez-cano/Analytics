@@ -3,6 +3,7 @@ import 'package:animated_tree_view/tree_view/tree_view.dart';
 import 'package:animated_tree_view/tree_view/widgets/expansion_indicator.dart';
 import 'package:animated_tree_view/tree_view/widgets/indent.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
@@ -38,10 +39,7 @@ extension on TreeNode {
     }
 
     if (this is TreeNode<Device>) {
-      return UniversalDetector(
-        child: const Icon(Icons.dns, size: iconSize,),
-        setCursor: () => SystemMouseCursors.progress,
-      );
+      return const Icon(Icons.dns, size: iconSize,);
     }
 
     return const Icon(Icons.insert_drive_file, size: iconSize);
@@ -190,7 +188,11 @@ class TopologyTree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer(builder: (context, ref, _) {
-      return _makeTreeView(ref);
+
+      return UniversalDetector(
+        setCursor: () => ref.read(itemEditSelectionNotifier).creatingItem ? SystemMouseCursors.forbidden : SystemMouseCursors.click, 
+        child: _makeTreeView(ref)
+      );
     });
   }
 }

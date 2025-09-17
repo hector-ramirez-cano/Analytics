@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
+import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/link.dart';
@@ -11,6 +12,7 @@ import 'package:network_analytics/ui/screens/edit/device/device_edit_view.dart';
 import 'package:network_analytics/ui/screens/edit/empty_edit_view.dart';
 import 'package:network_analytics/ui/screens/edit/group/group_edit_view.dart';
 import 'package:network_analytics/ui/screens/edit/link/link_edit_view.dart';
+import 'package:network_analytics/ui/screens/edit/new/new_edit_view.dart';
 
 class ItemEditView extends StatelessWidget {
   const ItemEditView({
@@ -18,14 +20,18 @@ class ItemEditView extends StatelessWidget {
   });
 
   Widget _makeAnimatedSettings(Topology topology, WidgetRef ref) {
-    var item = ref.watch(itemEditSelectionNotifier);
-    var selected = item.selectedStack.lastOrNull;
-    return AnimatedSwitcher(duration: const Duration (milliseconds: 300), child: _makeSettingsView(topology, selected),);
+    final item = ref.watch(itemEditSelectionNotifier);
+    final selected = item.selectedStack.lastOrNull;
+    final creatingItem = ref.watch(itemEditSelectionNotifier).creatingItem;
+    return AnimatedSwitcher(duration: const Duration (milliseconds: 300), child: _makeSettingsView(topology, creatingItem, selected),);
   }
 
-  // TODO: Possibly remove selected
-  Widget _makeSettingsView(Topology topology, dynamic selected) {
+  Widget _makeSettingsView(Topology topology, bool creatingItem, AnalyticsItem? selected) {
     var type = selected.runtimeType;
+
+    if (creatingItem && selected == null) {
+      return NewEditView(topology: topology,);
+    }
 
     if (selected == null) {
       return EmptyEditView();

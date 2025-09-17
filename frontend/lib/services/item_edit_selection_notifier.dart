@@ -26,6 +26,7 @@ class ItemEditSelection {
   final bool editingDeviceDataSources;
   final bool editingDeviceGeoPosition;
   final bool confirmDeletion;
+  final bool creatingItem;
   
 
   const ItemEditSelection({
@@ -46,6 +47,7 @@ class ItemEditSelection {
     required this.editingDeviceDataSources,
     required this.editingDeviceGeoPosition,
     required this.confirmDeletion,
+    required this.creatingItem,
   });
 }
 
@@ -70,11 +72,13 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
       editingDeviceMetrics: false,
       editingDeviceDataSources: false,
       editingDeviceGeoPosition: false,
+      creatingItem: false,
       )
     );
 
-  void setSelected(dynamic item, {bool appendState = false, bool clearStack = false}) {
+  void setSelected(AnalyticsItem item, {bool appendState = false, bool clearStack = false, bool appendToTopology = false}) {
     var newStack = state.selectedStack;
+    Map<int, dynamic> items = Map.from(state.changes.items);
 
     if (clearStack) {
       newStack = [];
@@ -84,9 +88,11 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
       newStack.add(item);
     }
 
+    if (appendToTopology) {
+      items[item.id] = item;
+    }
 
-
-    set(selected: newStack);
+    set(selected: newStack, changes: state.changes.cloneWith(items: items));
   }
 
   bool toggleEditingGroupName() {
@@ -116,6 +122,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
     bool editingDeviceDataSources = false,
 
     bool keepState = false,
+    bool? overrideCreatingItem,
   }) {
     if (keepState) {
       state = ItemEditSelection(
@@ -134,6 +141,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
         editingLinkDeviceA    : state.editingLinkDeviceA,
         editingLinkDeviceB    : state.editingLinkDeviceB,
         editingLinkType       : state.editingLinkType,
+        creatingItem          : state.creatingItem,
         editingDeviceDataSources: state.editingDeviceDataSources,
         editingDeviceGeoPosition: state.editingDeviceGeoPosition,
       );
@@ -154,6 +162,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
         editingLinkDeviceA    : editingLinkDeviceA,
         editingLinkDeviceB    : editingLinkDeviceB,
         editingLinkType       : editingLinkType,
+        creatingItem          : overrideCreatingItem ?? state.creatingItem,
         editingDeviceDataSources: editingDeviceDataSources,
         editingDeviceGeoPosition: editingDeviceGeoPosition,
       );
@@ -167,7 +176,7 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
   }
 
   void discard() {
-    set(changes: Topology(items: {}), deleted: Topology(items: {}), selected: [], );
+    set(changes: Topology(items: {}), deleted: Topology(items: {}), selected: [], overrideCreatingItem: false);
   }
 
   void onEditDeviceHostname()    => set(editingHostname: true);
@@ -253,8 +262,12 @@ class ItemEditSelectionNotifier extends StateNotifier<ItemEditSelection> {
 
     var selectedStack = state.selectedStack..removeLast();
 
-    // add selected to deleted
-    set(deleted: state.deleted.cloneWith(items: items), selected: selectedStack);
+    // add selected to deleted only if we're not in the middle of creating an item
+    if (!state.creatingItem) {
+      set(deleted: state.deleted.cloneWith(items: items), selected: selectedStack);
+    } else {
+      set(selected: selectedStack, overrideCreatingItem: false);
+    }
   }
 
   void onRestoreSelected() {

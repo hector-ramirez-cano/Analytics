@@ -47,6 +47,10 @@ class Group extends AnalyticsItem<Group>{
     );
   }
 
+  factory Group.emptyGroup() {
+    return Group(id: -1, members: [], name: "", isDisplayGroup: false);
+  }
+
   /// Creates a list of groups from a given [json] array. Queries the items from an [items] map of {int -> dynamic}
   static void deviceGroupFromJson(List<dynamic> json, Map<int, dynamic> items) {
     for (var group in json) {
@@ -94,7 +98,8 @@ class Group extends AnalyticsItem<Group>{
   }
 
   bool isModifiedName(Topology topology) {
-    return name != (topology.items[id] as Group).name;
+    
+    return name != (topology.items[id] as Group?)?.name;
   }
 
 

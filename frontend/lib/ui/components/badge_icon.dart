@@ -3,6 +3,7 @@ import 'package:network_analytics/ui/components/universal_detector.dart';
 
 class BadgeIcon extends StatelessWidget{
   final Icon icon;
+  final EdgeInsets iconPadding;
   final EdgeInsets badgePadding;
   final Color badgeColor;
   final BoxShape badgeShape;
@@ -15,6 +16,7 @@ class BadgeIcon extends StatelessWidget{
     required this.icon,
     required this.badgeContent,
     this.tooltip,
+    this.iconPadding = const EdgeInsets.all(8),
     this.badgePadding = const EdgeInsets.all(4),
     this.badgeColor = Colors.red,
     this.badgeShape = BoxShape.circle,
@@ -60,11 +62,13 @@ class BadgeIcon extends StatelessWidget{
       return _makeBadgeIcon();
     }
 
-    
-    return Tooltip(
-      message: tooltip!,
-      waitDuration: Duration(milliseconds: 800),
-      child: _makeBadgeIcon(),
+    return Padding(
+      padding: iconPadding,
+      child: Tooltip(
+        message: tooltip!,
+        waitDuration: Duration(milliseconds: 800),
+        child: _makeBadgeIcon(),
+      ),
     );
 
   }

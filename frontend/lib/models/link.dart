@@ -81,6 +81,10 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
     );
   }
 
+  factory Link.emptyLink() {
+    return Link(id: -1, sideA: Device.emptyDevice(), sideB: Device.emptyDevice(), linkType: LinkType.copper, sideAIface: "", sideBIface: "");
+  }
+
   static List<Link> listFromJson(List<dynamic> json, Map<int, dynamic> devices) {
     List<Link> links = [];
     for (var link in json) {
@@ -107,11 +111,11 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
   }
 
   bool isModifiedAIface(Topology topology) {
-    return sideAIface != (topology.items[id] as Link).sideAIface;
+    return sideAIface != (topology.items[id] as Link?)?.sideAIface;
   }
 
   bool isModifiedBIface(Topology topology) {
-    return sideBIface != (topology.items[id] as Link).sideBIface;
+    return sideBIface != (topology.items[id] as Link?)?.sideBIface;
   }
 
   @override

@@ -194,7 +194,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   Widget build(BuildContext context) {
       // if item changed, reset the text fields
       ref.listen(itemEditSelectionNotifier, (previous, next) {
-        if (previous?.selectedStack != next.selectedStack) {
+        if (previous?.selectedStack != next.selectedStack && next.selectedStack.last is Group) {
           _nameInputController.text = (next.selectedStack.last as Group).name;
         }
       });
