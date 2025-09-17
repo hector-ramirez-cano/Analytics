@@ -9,10 +9,10 @@ import 'package:network_analytics/ui/components/topology_tree.dart';
 
 
 // Rename to drawer for clarity
-class ItemEditPanel extends StatelessWidget {
+class ItemEditDrawer extends StatelessWidget {
   final Topology topology;
 
-  const ItemEditPanel({
+  const ItemEditDrawer({
     super.key,
     required this.topology,
   });

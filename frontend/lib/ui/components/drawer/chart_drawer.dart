@@ -2,11 +2,11 @@ import 'package:flutter/widgets.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/ui/components/topology_tree.dart';
 
-class ChartPanel extends StatelessWidget {
+class ChartDrawer extends StatelessWidget {
 
   final Topology topology;
 
-  const ChartPanel({super.key, required this.topology});
+  const ChartDrawer({super.key, required this.topology});
   
   @override
   Widget build(BuildContext context) {

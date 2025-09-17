@@ -2,11 +2,11 @@ import 'package:flutter/widgets.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/ui/components/topology_tree.dart';
 
-class ListingPanel extends StatelessWidget {
+class ListingDrawer extends StatelessWidget {
 
   final Topology topology;
 
-  const ListingPanel({super.key, required this.topology});
+  const ListingDrawer({super.key, required this.topology});
   
   @override
   Widget build(BuildContext context) {
