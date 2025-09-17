@@ -1,38 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // ignore: unused_import
 import 'package:logger/web.dart';
-
-import 'package:network_analytics/ui/components/enums/side_nav_item.dart';
+import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/ui/components/drawer/drawer.dart';
+import 'package:network_analytics/ui/components/enums/navigation_rail_item.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 
 class SideNav extends StatelessWidget {
-  final SideNavItem? selectedPanel;
-  final void Function(SideNavItem selectedPanel) onPressed;
 
   const SideNav({
     super.key,
-    required this.selectedPanel,
-    required this.onPressed,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> widgets = [];
-    widgets.addAll(List.generate(SideNavItem.topItems.length, (index) => _buildChild(SideNavItem.topItems[index])));
-    widgets.add(Spacer());
-    widgets.addAll(List.generate(SideNavItem.bottomItems.length, (index) => _buildChild(SideNavItem.bottomItems[index])));
+  void _setScreen(NavigationRailItem? selected, WidgetRef ref) {
 
-    return Container(
-      width: 60,
-      color: AppColors.sidebarColor,
-      child: Column(
-        children: widgets
-      ),
-    );
+    if (selected == null) { return; }
+
+    ref.read(screenSelectionNotifier.notifier).setSelected(selected);
   }
 
-  Widget _buildChild(SideNavItem panel) {
+
+  void _handleNavClick(NavigationRailItem clickedItem, WidgetRef ref) {
+    NavigationRailItem? selected;
+    bool setOpen;
+    final selectedPanel = ref.watch(screenSelectionNotifier).selected;
+    final isDrawerOpened = ref.watch(drawerStateNotifier).isOpen;
+    if (selectedPanel == clickedItem) {
+      if (isDrawerOpened) {
+        // clicked the same, we gotta close
+        selected = null;
+        setOpen = false;
+      } else {
+        // clicked the same, but it was forcefully hidden, keep the same, but open the drawer
+        selected = selectedPanel;
+        setOpen = true;
+      }
+    } else {
+      // clicked something else, switch to that
+      selected = clickedItem;
+      setOpen = true;
+    }
+
+    // if the drawer doesn't have a drawer, force it to close
+    setOpen &= clickedItem.hasDrawer;
+
+    ref.read(drawerStateNotifier.notifier).setState(setOpen);
+
+    _setScreen(selected, ref);
+
+    SideDrawer.logger.d("Interacted with Nav, newSelected = $selected, drawerState isDrawerOpened=$setOpen");
+  }
+
+    Widget _buildChild(NavigationRailItem? selectedPanel, NavigationRailItem panel, WidgetRef ref) {
     final isSelected = panel == selectedPanel;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -42,8 +63,29 @@ class SideNav extends StatelessWidget {
         color: isSelected
             ? AppColors.selectedIconColor
             : Colors.white,
-        onPressed: () => onPressed(panel),
+        onPressed: () => _handleNavClick(panel, ref),
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer(builder:(context, ref, child) {
+      final selectedPanel = ref.read(screenSelectionNotifier).selected;
+
+      List<Widget> widgets = [];
+      widgets.addAll(List.generate(NavigationRailItem.topItems.length, (index) => _buildChild(selectedPanel, NavigationRailItem.topItems[index], ref)));
+      widgets.add(Spacer());
+      widgets.addAll(List.generate(NavigationRailItem.bottomItems.length, (index) => _buildChild(selectedPanel, NavigationRailItem.bottomItems[index], ref)));
+
+      return Container(
+        width: 60,
+        color: AppColors.sidebarColor,
+        child: Column(
+          children: widgets
+        ),
+      );
+    });
+  }
+
 }

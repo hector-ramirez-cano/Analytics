@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/ui/components/enums/side_nav_item.dart';
+import 'package:network_analytics/ui/components/enums/navigation_rail_item.dart';
 
 class SideNavSelection {
-  final SideNavItem selected;
+  final NavigationRailItem? selected;
 
   const SideNavSelection({
     required this.selected,
@@ -10,7 +10,7 @@ class SideNavSelection {
 }
 
 class SideNavSelectionNotifier extends StateNotifier<SideNavSelection> {
-  SideNavSelectionNotifier() : super(SideNavSelection(selected: SideNavItem.canvas));
+  SideNavSelectionNotifier() : super(SideNavSelection(selected: NavigationRailItem.canvas));
 
-  void setSelected(SideNavItem selection) => state = SideNavSelection(selected: selection);
+  void setSelected(NavigationRailItem? selection) => state = SideNavSelection(selected: selection);
 }

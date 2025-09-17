@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 
-enum SideNavItem {
+enum NavigationRailItem {
   canvas   (Icons.segment   , 'Topología'      , bottom: false, hasDrawer: true ),
   search   (Icons.search    , 'Búsqueda'       , bottom: false, hasDrawer: true ),
   charts   (Icons.area_chart, 'Gráficas'       , bottom: false, hasDrawer: true ),
@@ -14,42 +14,54 @@ enum SideNavItem {
   final bool     bottom;
   final bool     hasDrawer;
 
-  const SideNavItem(this.icon, this.label, {required this.bottom, required this.hasDrawer});
+  const NavigationRailItem(this.icon, this.label, {required this.bottom, required this.hasDrawer});
 
   static List<IconData> get icons {
-    return SideNavItem.values.map((item) => item.icon).toList();
+    return NavigationRailItem.values.map((item) => item.icon).toList();
   }
 
   static List<String> get labels {
-    return SideNavItem.values.map((item) => item.label).toList();
+    return NavigationRailItem.values.map((item) => item.label).toList();
   }
 
-  static List<SideNavItem> get bottomItems {
-    return SideNavItem.values.where((item) => item.bottom).toList();
+  static List<NavigationRailItem> get bottomItems {
+    return NavigationRailItem.values.where((item) => item.bottom).toList();
   }
 
-  static List<SideNavItem> get topItems {
-    return SideNavItem.values.where((item) => !item.bottom).toList();
+  static List<NavigationRailItem> get topItems {
+    return NavigationRailItem.values.where((item) => !item.bottom).toList();
   }
 
   static int get length {
-    return SideNavItem.values.length;
+    return NavigationRailItem.values.length;
+  }
+
+  static List<NavigationRailDestination> get destinations {
+    return values.map((item) => NavigationRailDestination(icon: Icon(item.icon), label: Text(item.label))).toList();
+  }
+
+  static List<NavigationRailDestination> get topDestinations {
+    return topItems.map((item) => NavigationRailDestination(icon: Icon(item.icon), label: Text(item.label))).toList();
+  }
+
+  static List<NavigationRailDestination> get bottomDestinations {
+    return bottomItems.map((item) => NavigationRailDestination(icon: Icon(item.icon), label: Text(item.label))).toList();
   }
 
   WorkplaceScreen getSelectedScreen() {
     WorkplaceScreen selectedScreen;
     switch (this) {
-      case SideNavItem.canvas:
-      case SideNavItem.search:
+      case NavigationRailItem.canvas:
+      case NavigationRailItem.search:
         selectedScreen = WorkplaceScreen.canvas;
 
-      case SideNavItem.charts:
+      case NavigationRailItem.charts:
         selectedScreen = WorkplaceScreen.charts;
 
-      case SideNavItem.settings:
+      case NavigationRailItem.settings:
         selectedScreen = WorkplaceScreen.settings;
 
-      case SideNavItem.edit:
+      case NavigationRailItem.edit:
         selectedScreen = WorkplaceScreen.edit;
 
       // keeping this in case new items are added

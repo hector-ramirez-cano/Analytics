@@ -5,14 +5,12 @@ import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/ui/components/drawer/item_edit_panel.dart';
 import 'package:network_analytics/ui/components/drawer/listing_panel.dart';
-import 'package:network_analytics/ui/components/enums/side_nav_item.dart';
+import 'package:network_analytics/ui/components/enums/navigation_rail_item.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 
 class DrawerPanel extends StatelessWidget {
-  final double width;
   final bool isVisible;
-  final Animation<double> fadeAnimation;
-  final SideNavItem? selectedPanel;
+  final NavigationRailItem? selectedPanel;
   final AsyncValue<Topology> topology;
   final OnRetryCallback onRetry;
 
@@ -20,9 +18,7 @@ class DrawerPanel extends StatelessWidget {
 
   const DrawerPanel({
     super.key,
-    required this.width,
     required this.isVisible,
-    required this.fadeAnimation,
     required this.selectedPanel,
     required this.topology,
     required this.onRetry
@@ -41,21 +37,21 @@ class DrawerPanel extends StatelessWidget {
 
     // TODO: Handle on at least one successful load, don't completely change the layout to a error layout if it fails
     switch (selectedPanel) {
-      case SideNavItem.canvas:
+      case NavigationRailItem.canvas:
         return topology.when(
           data   : (topology)  => ListingPanel(topology: topology),
           error  : (error, st) => _buildOnNotSuccessful(error.toString(), topology.isLoading),
           loading: ()          => _buildOnNotSuccessful(null, true)
         );
 
-      case SideNavItem.charts:
+      case NavigationRailItem.charts:
         return topology.when(
           data   : (topology)  => ListingPanel(topology: topology),
           error  : (error, st) => _buildOnNotSuccessful(error.toString(), topology.isLoading),
           loading: ()          => _buildOnNotSuccessful(null, true)
         );
 
-      case SideNavItem.edit:
+      case NavigationRailItem.edit:
         return topology.when(
           data   : (topology) => ItemEditPanel(topology: topology),
           error  : (error, st) => _buildOnNotSuccessful(error.toString(), topology.isLoading),
@@ -81,20 +77,13 @@ class DrawerPanel extends StatelessWidget {
       // force hiding of drawer
       return SizedBox.shrink();
     }
-
-    return SizedBox(
-      width: width,
-      child: isVisible
-          ? FadeTransition(
-              opacity: fadeAnimation,
-              child: Container(
-                color: Colors.grey.shade300,
-                padding: const EdgeInsets.all(16),
-                alignment: Alignment.topLeft,
-                child: createContainerFromSelection(topology)
-              ),
-            )
-          : const SizedBox.shrink(),
+    logger.d("Building Panel...");
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        alignment: Alignment.topLeft,
+        child: createContainerFromSelection(topology)
+      )
     );
   }
 

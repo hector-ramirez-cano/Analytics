@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/web.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
@@ -17,7 +18,7 @@ class ContentArea extends StatelessWidget {
     return Consumer(builder: 
       (context, ref, child) {
         final SideNavSelection item = ref.watch(screenSelectionNotifier);
-        final screen = item.selected.getSelectedScreen();
+        final screen = item.selected?.getSelectedScreen();
 
         switch (screen) {
           case WorkplaceScreen.canvas:
@@ -31,6 +32,10 @@ class ContentArea extends StatelessWidget {
 
           case WorkplaceScreen.edit:
             return ItemEditView();
+
+          default:
+            Logger().w("Created content area for undefined WorkplaceScreen");
+            return Text("Nobody here but us, chickens!");
         }
       }
     );

@@ -4,3 +4,4 @@ backend/__pycache__/
 
 **/__pycache__/*
 influxdb2/*
+*.sqlite3

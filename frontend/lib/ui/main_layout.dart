@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:network_analytics/ui/components/drawer/drawer.dart';
-import 'package:network_analytics/ui/components/title_bar.dart';
-import 'package:network_analytics/ui/screens/content_area.dart';
+import 'package:network_analytics/ui/components/badge_icon.dart';
+import 'package:network_analytics/ui/screens/content_body.dart';
 
 class MainLayout extends StatelessWidget {
   const MainLayout({super.key});
@@ -9,22 +8,14 @@ class MainLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          // AppBar
-          TitleBar(),
-
-          // Main content row
-          Expanded(
-            child: Row(
-              children: const [
-                SideDrawer(),
-                Expanded(child: SizedBox.expand(child: ContentArea())),
-              ],
-            ),
-          ),
+      appBar: AppBar(
+        title: const Text("Analytics"),
+        automaticallyImplyLeading: false,
+        actions: [
+          BadgeIcon(icon: Icon(Icons.notifications, size: 32,), badgeContent: "1", tooltip: "Notificaciones",)
         ],
       ),
+      body: ContentBody()
     );
   }
 }

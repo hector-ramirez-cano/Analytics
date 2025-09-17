@@ -1,11 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// ignore: unused_import
-import 'package:logger/web.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/app_config.dart';
 import 'package:network_analytics/services/canvas_interaction_service.dart';
 import 'package:network_analytics/services/canvas_state_notifier.dart';
 import 'package:network_analytics/services/canvas_tab_notifier.dart';
+import 'package:network_analytics/services/drawer_state_notifier.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
 import 'package:network_analytics/services/screen_selection_notifier.dart';
@@ -46,4 +45,8 @@ final canvasTabNotifier = StateNotifierProvider<CanvasTabNotifier, CanvasTab>(
 
 final itemEditSelectionNotifier = StateNotifierProvider<ItemEditSelectionNotifier, ItemEditSelection>(
   (ref) => ItemEditSelectionNotifier(),
+);
+
+final drawerStateNotifier = StateNotifierProvider<DrawerStateNotifier, DrawerState>(
+  (ref) => DrawerStateNotifier(),
 );
