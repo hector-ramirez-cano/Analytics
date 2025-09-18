@@ -6,3 +6,4 @@ backend/__pycache__/
 influxdb2/*
 *.sqlite3
 *.g.dart
+/syslog_*

@@ -12,6 +12,23 @@ logger = logging.getLogger(__name__)
 
 class SyslogBackend(SyslogUDPServer):
 
+    _syslog_listeners : list[asyncio.Queue[tuple]] = []
+
+    @staticmethod
+    async def notify_listeners(data, addr, received_at):
+        for listener in SyslogBackend._syslog_listeners:
+            await listener.put((data, addr, received_at))
+
+    @staticmethod
+    def register_listener(queue: asyncio.Queue[tuple]):
+        SyslogBackend._syslog_listeners.append(queue)
+
+
+    @staticmethod
+    def remove_listener(queue: asyncio.Queue[tuple]):
+        SyslogBackend._syslog_listeners.remove(queue)
+
+
     def __init__(self, host: str, port: int, db_driver: BaseDatabase | None):
         super().__init__(host, port, db_driver)
         self.exit_flag = None
@@ -48,7 +65,7 @@ class SyslogBackend(SyslogUDPServer):
                     self._message_queue.get(), timeout=BATCH_TIMEOUT
                 )
                 params = self.process_datagram(data, addr, received_at)
-                print(params) # TODO: Somehow pass this to the frontend and analyze it for patterns
+                await SyslogBackend.notify_listeners(data, addr, received_at)
                 await self.__original_database_writer(batch, params)
 
             except asyncio.CancelledError:

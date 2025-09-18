@@ -7,6 +7,7 @@ import os
 from backend.model import db
 from backend.model.db.health_check import check_connections, health_check_listeners
 from backend.model.db.operations import get_topology_as_json
+from backend.model.fact_gathering.syslog.syslog_backend import SyslogBackend
 
 static_dir = os.path.join(os.getcwd(), "../frontend/static")
 routes_dir = os.path.join(os.getcwd(), "../frontend")
@@ -54,8 +55,20 @@ async def api_check_backend_ws():
         health_check_listeners.remove(queue)
 
 @app.websocket("/ws/syslog")
-def api_syslog_ws():
-    pass
+async def api_syslog_ws():
+    queue = asyncio.Queue[tuple]()
+    SyslogBackend.register_listener(queue)
+
+    try:
+        while True:
+            msg = await queue.get()
+            await websocket.send(data=str(msg))
+
+    except asyncio.CancelledError as e:
+        raise
+
+    finally:
+        SyslogBackend.remove_listener(queue)
 
 
 @app.route("/api/schema/<selected>")
