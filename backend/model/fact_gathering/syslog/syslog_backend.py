@@ -1,5 +1,6 @@
 import asyncio
-from asyncio import AbstractEventLoop
+import logging
+from logging import Logger
 from typing import *
 
 import aiosyslogd
@@ -7,8 +8,9 @@ from aiosyslogd.server import SyslogUDPServer, BATCH_TIMEOUT, BATCH_SIZE
 
 from backend.Config import Config
 
-class SyslogBackend(SyslogUDPServer):
+logger = logging.getLogger(__name__)
 
+class SyslogBackend(SyslogUDPServer):
 
     async def __original_database_writer(self, batch, params) -> None:
         # noinspection PyBroadException
@@ -62,10 +64,14 @@ class SyslogBackend(SyslogUDPServer):
         print("[INFO ][SYSLOG]Creating server on binding '", host+":"+str(port), "'")
         server = await SyslogBackend.create(host=host, port=port)
 
-        transport, protocol = await loop.create_datagram_endpoint(
-            protocol_factory=lambda: server,
-            local_addr=(server.host, server.port),
-        )
+        try:
+            transport, protocol = await loop.create_datagram_endpoint(
+                protocol_factory=lambda: server,
+                local_addr=(server.host, server.port),
+            )
+        except OSError as e:
+            print("[ERROR][SYSLOG]Failed to init Syslog with the following error: "+e.strerror)
+            return
 
         print("[INFO ][SYSLOG]Server is listening...")
         await stop_event.wait()

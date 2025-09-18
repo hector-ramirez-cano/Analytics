@@ -2,7 +2,7 @@
 import asyncio
 
 from backend.Config import Config
-from backend.model import db
+from backend.model.db.update_devices import update_topology_cache, update_device_metadata, update_device_analytics
 from backend.model.fact_gathering.ansible import ansible_backend
 from backend.model.fact_gathering.snmp import snmp_backend
 from backend.model.fact_gathering.icmp import icmp_backend
@@ -47,7 +47,7 @@ def __get_exposed_fields(metrics: dict) -> dict:
 async def __gather_all_facts():
     loop = asyncio.get_running_loop()
 
-    loop.run_in_executor(None, db.update_topology_cache)
+    loop.run_in_executor(None, update_topology_cache)
     print("[INFO ]Gathering facts")
 
     tasks = [
@@ -70,10 +70,10 @@ async def __update_db_with_facts(exposed_fields, metrics, status):
     loop = asyncio.get_running_loop()
 
     # Update database
-    await  loop.run_in_executor(None, db.update_topology_cache, )
+    await  loop.run_in_executor(None, update_topology_cache, )
 
-    metadata  = loop.run_in_executor(None, db.update_device_metadata, exposed_fields, metrics, status)
-    analytics = loop.run_in_executor(None, db.update_device_analytics, metrics)
+    metadata  = loop.run_in_executor(None, update_device_metadata, exposed_fields, metrics, status)
+    analytics = loop.run_in_executor(None, update_device_analytics, metrics)
 
     await metadata
     await analytics
@@ -82,12 +82,18 @@ async def __update_db_with_facts(exposed_fields, metrics, status):
 async def gather_facts_task(stop_event: asyncio.Event):
 
     while not stop_event.is_set():
-        # Gather facts - non-blocking
-        exposed_fields, metrics, status = await __gather_all_facts()
 
-        # Update the database
-        await __update_db_with_facts(exposed_fields, metrics, status)
+        try:
+            # timeout
+            timeout = Config.get("backend/controller/fact-gathering/polling_time_s", 5)
+            await asyncio.wait_for(stop_event.wait(),  timeout)
 
-        # timeout
-        timeout = Config.get("backend/controller/fact-gathering/polling_time_s", 5)
-        await asyncio.sleep(timeout)
+        except asyncio.TimeoutError:
+
+            # Gather facts - non-blocking
+            exposed_fields, metrics, status = await __gather_all_facts()
+
+            # Update the database
+            await __update_db_with_facts(exposed_fields, metrics, status)
+
+    print("[INFO][FACTS]Shutting down fact gathering loop!")

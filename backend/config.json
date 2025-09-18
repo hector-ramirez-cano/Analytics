@@ -28,6 +28,11 @@
         "hostname": "localhost",
         "name": "AnalyticsDB",
         "schema": "postgresql://",
+        "max_idle_s": 60,
+        "num_workers": 3,
+        "min_size": 1,
+        "max_size": 10,
+        "reconnect_timeout_s": 15,
         "$ref": "backend/identity/postgres_db.json"
       },
       "influx": {

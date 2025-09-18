@@ -1,10 +1,12 @@
 import asyncio
 import json
 
-from quart import Quart, send_from_directory, Response
+from quart import Quart, send_from_directory, Response, websocket
 import os
 
-from backend.model.db import get_topology_as_json
+from backend.model import db
+from backend.model.db.health_check import check_connections, health_check_listeners
+from backend.model.db.operations import get_topology_as_json
 
 static_dir = os.path.join(os.getcwd(), "../frontend/static")
 routes_dir = os.path.join(os.getcwd(), "../frontend")
@@ -25,6 +27,30 @@ async def api_get_topology():
     topology = json.dumps(topology)
     return Response(topology, content_type="application/json")
     # return await send_from_directory(routes_dir, "test-data.json")
+
+
+@app.route("/ws/health")
+async def api_check_backend():
+    return  check_connections()
+
+
+@app.websocket("/ws/health")
+async def api_check_backend_ws():
+    queue = asyncio.Queue()
+    health_check_listeners.append(queue)
+    try:
+        while True:
+            msg = await queue.get()
+            await websocket.send(data=str(msg))
+
+    except asyncio.CancelledError as e:
+        raise
+
+    finally:
+        health_check_listeners.remove(queue)
+
+
+
 
 @app.route("/api/schema/<selected>")
 async def api_get_schema(selected: str):
