@@ -7,11 +7,11 @@ import asyncio
 import hypercorn.config
 import hypercorn.asyncio
 
-import backend.model.db as db
+from backend.model import db
 from backend.model.db.health_check import check_postgres_connection, periodic_health_check
-from backend.model.db.pools import init_db_pool, graceful_shutdown
+from backend.model.db.pools import init_db_pool
 
-from backend.model.fact_gathering.fact_gathering import  gather_facts_task
+from backend.model.fact_gathering.fact_gathering import gather_facts_task, database_update_facts
 from backend.model.fact_gathering.syslog.syslog_backend import SyslogBackend
 
 
@@ -40,8 +40,12 @@ async def main():
     # Hypercorn webserver serve
     server_task = asyncio.create_task(hypercorn.asyncio.serve(server.app, hypercorn_config))
 
+    # fact queue
+    fact_queue = asyncio.Queue[tuple]()
+
     # add background tasks
-    facts_task = asyncio.create_task(gather_facts_task(stop_event))
+    facts_task = asyncio.create_task(gather_facts_task(stop_event, fact_queue))
+    facts_writer_task = asyncio.create_task(database_update_facts(stop_event, fact_queue))
     syslog_task = asyncio.create_task(SyslogBackend.syslog_server_task(stop_event))
     db_health_task = asyncio.create_task(periodic_health_check(stop_event))
 
@@ -56,9 +60,12 @@ async def main():
     # graceful shutdown
     print("[INFO]Graceful shutdown requested, awaiting pending tasks to finish...")
     stop_event.set()
-    await asyncio.gather(facts_task, syslog_task, db_health_task)
-    graceful_shutdown()
-    asyncio.get_running_loop().close()
+    syslog_task.cancel()
+
+    await asyncio.gather(facts_task, facts_writer_task, syslog_task, db_health_task)
+
+    db.pools.graceful_shutdown()
+
 
 
 

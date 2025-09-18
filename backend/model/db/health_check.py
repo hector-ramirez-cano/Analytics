@@ -16,7 +16,6 @@ def check_postgres_connection(conn):
         raise
 
 
-
 async def notify_health_listeners(postgres_status : dict | None = None, influx_status: dict | None = None, full_status: dict | None = None):
     if (postgres_status == influx_status == full_status is None) or len(health_check_listeners) == 0:
         return
@@ -37,6 +36,7 @@ async def notify_health_listeners(postgres_status : dict | None = None, influx_s
 
 async def periodic_health_check(stop_event : asyncio.Event):
     while not stop_event.is_set():
+
         try:
             # timeout
             await asyncio.wait_for(stop_event.wait(), 15)

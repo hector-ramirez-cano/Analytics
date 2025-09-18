@@ -1,5 +1,8 @@
 
 import asyncio
+import copy
+
+from psycopg_pool import PoolTimeout
 
 from backend.Config import Config
 from backend.model.db.update_devices import update_topology_cache, update_device_metadata, update_device_analytics
@@ -79,9 +82,28 @@ async def __update_db_with_facts(exposed_fields, metrics, status):
     await analytics
 
 
-async def gather_facts_task(stop_event: asyncio.Event):
+async def database_update_facts(stop_event: asyncio.Event, data_queue: asyncio.Queue[tuple]):
+    while not stop_event.is_set():
+        exposed_fields, metrics, status = await data_queue.get()
+
+        try:
+            # Update the database
+            await __update_db_with_facts(exposed_fields, metrics, status)
+        except PoolTimeout as e:
+            await data_queue.put(exposed_fields)
+
+
+async def gather_facts_task(stop_event: asyncio.Event, data_queue: asyncio.Queue[tuple]):
 
     while not stop_event.is_set():
+        try:
+            # Gather facts - non-blocking
+            exposed_fields, metrics, status = await __gather_all_facts()
+
+            await data_queue.put((exposed_fields, metrics, status))
+
+        except PoolTimeout as e:
+            pass
 
         try:
             # timeout
@@ -89,11 +111,7 @@ async def gather_facts_task(stop_event: asyncio.Event):
             await asyncio.wait_for(stop_event.wait(),  timeout)
 
         except asyncio.TimeoutError:
+            pass
 
-            # Gather facts - non-blocking
-            exposed_fields, metrics, status = await __gather_all_facts()
-
-            # Update the database
-            await __update_db_with_facts(exposed_fields, metrics, status)
 
     print("[INFO][FACTS]Shutting down fact gathering loop!")

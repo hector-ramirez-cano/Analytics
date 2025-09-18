@@ -1,9 +1,9 @@
 import asyncio
 import logging
-from logging import Logger
 from typing import *
 
 import aiosyslogd
+from aiosyslogd.db import BaseDatabase
 from aiosyslogd.server import SyslogUDPServer, BATCH_TIMEOUT, BATCH_SIZE
 
 from backend.Config import Config
@@ -11,6 +11,13 @@ from backend.Config import Config
 logger = logging.getLogger(__name__)
 
 class SyslogBackend(SyslogUDPServer):
+
+    def __init__(self, host: str, port: int, db_driver: BaseDatabase | None):
+        super().__init__(host, port, db_driver)
+        self.exit_flag = None
+
+    def set_exit_flag(self, exit_flag: asyncio.Event):
+        self.exit_flag = exit_flag
 
     async def __original_database_writer(self, batch, params) -> None:
         # noinspection PyBroadException
@@ -34,7 +41,7 @@ class SyslogBackend(SyslogUDPServer):
     async def database_writer(self) -> None:
         """A dedicated task to write messages to the database in batches."""
         batch: List[Dict[str, Any]] = []
-        while not self._shutting_down:
+        while not self._shutting_down and not self.exit_flag.is_set():
 
             try:
                 data, addr, received_at = await asyncio.wait_for(
@@ -46,6 +53,10 @@ class SyslogBackend(SyslogUDPServer):
 
             except asyncio.CancelledError:
                 break
+
+            except asyncio.TimeoutError:
+                if self.exit_flag.is_set():
+                    break
 
         # on close
         if batch and self.db:
@@ -63,7 +74,7 @@ class SyslogBackend(SyslogUDPServer):
 
         print("[INFO ][SYSLOG]Creating server on binding '", host+":"+str(port), "'")
         server = await SyslogBackend.create(host=host, port=port)
-
+        server.set_exit_flag(exit_flag=stop_event)
         try:
             transport, protocol = await loop.create_datagram_endpoint(
                 protocol_factory=lambda: server,
@@ -74,9 +85,12 @@ class SyslogBackend(SyslogUDPServer):
             return
 
         print("[INFO ][SYSLOG]Server is listening...")
-        await stop_event.wait()
+        try:
+            await stop_event.wait()
 
-        print("[INFO ][SYSLOG]Shutting down custom server.")
-        transport.close()
-        await server.shutdown()
+        except asyncio.CancelledError:
+            print("[INFO ][SYSLOG]Shutting down custom server.")
+            transport.close()
+            await server.shutdown()
+
 

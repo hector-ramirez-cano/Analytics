@@ -33,6 +33,7 @@ def init_db_pool(check_postgres_connection):
         min_size=Config.Config.get("backend/controller/postgres/min_size", 1),
         max_size=Config.Config.get("backend/controller/postgres/max_size", 10),
         reconnect_timeout=Config.Config.get("backend/controller/postgres/reconnect_timeout_s", 15),
+        timeout=Config.Config.get("backend/controller/postgres/request_timeout_s", 5),
         check= check_postgres_connection,
     )
     print("[INFO ]Acquired DB pool for Postgresql at='" + schema + host + ":" + str(port) + "'")
@@ -58,6 +59,12 @@ def influx_db_write_api():
     return _influx_db_write_api
 
 def graceful_shutdown():
-    _postgres_db_pool.close()
-    _influx_db_write_api.close()
-    _influx_db_client.close()
+    global _postgres_db_pool, _influx_db_client, _influx_db_write_api
+
+    try:
+        _postgres_db_pool.close()
+        _influx_db_write_api.close()
+        _influx_db_client.close()
+
+    except TypeError as e:
+        pass

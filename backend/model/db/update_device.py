@@ -5,8 +5,6 @@ from backend.model.cache import cache
 from backend.model.device import Device
 from backend.model.device_configuration import DeviceConfiguration
 
-
-
 def parse_devices(cur: ServerCursor):
     """
     Parses the output of a database call, into a dictionary of devices in dictionary form, with the device_id as the key

@@ -38,6 +38,10 @@ async def api_check_backend():
 async def api_check_backend_ws():
     queue = asyncio.Queue()
     health_check_listeners.append(queue)
+
+    # send first msg
+    await websocket.send(data=str(check_connections()))
+
     try:
         while True:
             msg = await queue.get()
@@ -49,7 +53,9 @@ async def api_check_backend_ws():
     finally:
         health_check_listeners.remove(queue)
 
-
+@app.websocket("/ws/syslog")
+def api_syslog_ws():
+    pass
 
 
 @app.route("/api/schema/<selected>")
