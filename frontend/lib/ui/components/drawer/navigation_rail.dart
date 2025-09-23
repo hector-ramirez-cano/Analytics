@@ -34,7 +34,7 @@ class AnalyticsNavigationRail extends StatelessWidget {
 
   NavigationRail _makeNavigationRail(WidgetRef ref) {
     return NavigationRail(
-      selectedIndex: ref.watch(sideNavSelectionProvider).selected?.index,
+      selectedIndex: ref.watch(sideNavSelectionProvider)?.index,
       onDestinationSelected: (dest) => _setScreen(NavigationRailItem.values[dest], ref),
 
       // spacing

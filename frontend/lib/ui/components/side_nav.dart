@@ -28,7 +28,7 @@ class SideNav extends StatelessWidget {
   void _handleNavClick(NavigationRailItem clickedItem, WidgetRef ref) {
     NavigationRailItem? selected;
     bool setOpen;
-    final selectedPanel = ref.watch(sideNavSelectionProvider).selected;
+    final selectedPanel = ref.watch(sideNavSelectionProvider);
     final isDrawerOpened = ref.watch(drawerStateProvider).isOpen;
     if (selectedPanel == clickedItem) {
       if (isDrawerOpened) {
@@ -74,7 +74,7 @@ class SideNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer(builder:(context, ref, child) {
-      final selectedPanel = ref.read(sideNavSelectionProvider).selected;
+      final selectedPanel = ref.read(sideNavSelectionProvider);
 
       List<Widget> widgets = [];
       widgets.addAll(List.generate(NavigationRailItem.topItems.length, (index) => _buildChild(selectedPanel, NavigationRailItem.topItems[index], ref)));

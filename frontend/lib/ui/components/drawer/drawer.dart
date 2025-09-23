@@ -33,7 +33,7 @@ class _SideDrawerState extends ConsumerState<SideDrawer> {
   }
 
   Widget _buildDrawerPanel(AsyncValue<Topology> topology) {
-    final selectedPanel = ref.watch(sideNavSelectionProvider).selected;
+    final selectedPanel = ref.watch(sideNavSelectionProvider);
     SideDrawer.logger.d("3 _buildDrawerPanel called, selectedPanel=$selectedPanel");
     
     return _makeSelector(topology, selectedPanel);

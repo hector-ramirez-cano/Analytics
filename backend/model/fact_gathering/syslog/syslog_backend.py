@@ -12,12 +12,12 @@ logger = logging.getLogger(__name__)
 
 class SyslogBackend(SyslogUDPServer):
 
-    _syslog_listeners : list[asyncio.Queue[tuple]] = []
+    _syslog_listeners : list[asyncio.Queue[dict]] = []
 
     @staticmethod
-    async def notify_listeners(data, addr, received_at):
+    async def notify_listeners(params : dict):
         for listener in SyslogBackend._syslog_listeners:
-            await listener.put((data, addr, received_at))
+            await listener.put(params)
 
     @staticmethod
     def register_listener(queue: asyncio.Queue[tuple]):
@@ -65,7 +65,7 @@ class SyslogBackend(SyslogUDPServer):
                     self._message_queue.get(), timeout=BATCH_TIMEOUT
                 )
                 params = self.process_datagram(data, addr, received_at)
-                await SyslogBackend.notify_listeners(data, addr, received_at)
+                await SyslogBackend.notify_listeners(params)
                 await self.__original_database_writer(batch, params)
 
             except asyncio.CancelledError:

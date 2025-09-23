@@ -5,6 +5,12 @@ api:
   retry_delay_s: 5
   timeout_s: 15
 
+ws:
+  syslog_ws_endpoint: "ws://localhost:5050/ws/syslog"
+
+syslog:
+  max_buffer_lines: 254
+
 ui:
   natural_scrolling: false
   move_canvas_with: "mouse3"

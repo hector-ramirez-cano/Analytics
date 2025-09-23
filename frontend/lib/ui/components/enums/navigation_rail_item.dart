@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:logger/web.dart';
 import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 
 enum NavigationRailItem {
-  canvas   (Icons.segment   , 'Topología'      , bottom: false, hasDrawer: true ),
-  search   (Icons.search    , 'Búsqueda'       , bottom: false, hasDrawer: true ),
-  charts   (Icons.area_chart, 'Gráficas'       , bottom: false, hasDrawer: true ),
-  edit     (Icons.edit      , "Editar datos"   , bottom: true , hasDrawer: true ),
-  settings (Icons.settings  , 'Configuraciones', bottom: true , hasDrawer: false);
+  canvas   (Icons.segment   , 'Topología'      , bottom: false, hasDrawer: true , screen: WorkplaceScreen.canvas  ),
+  search   (Icons.search    , 'Búsqueda'       , bottom: false, hasDrawer: true , screen: WorkplaceScreen.canvas  ),
+  charts   (Icons.area_chart, 'Gráficas'       , bottom: false, hasDrawer: true , screen: WorkplaceScreen.charts  ),
+  syslog   (Icons.terminal  , 'Syslog'         , bottom: false, hasDrawer: false, screen: WorkplaceScreen.syslog  ),
+  edit     (Icons.edit      , "Editar datos"   , bottom: true , hasDrawer: true , screen: WorkplaceScreen.edit    ),
+  settings (Icons.settings  , 'Configuraciones', bottom: true , hasDrawer: false, screen: WorkplaceScreen.settings);
 
   final IconData icon;
   final String   label;
   final bool     bottom;
   final bool     hasDrawer;
+  final WorkplaceScreen screen;
 
-  const NavigationRailItem(this.icon, this.label, {required this.bottom, required this.hasDrawer});
+  const NavigationRailItem(this.icon, this.label, {required this.bottom, required this.hasDrawer, required this.screen});
 
   static List<IconData> get icons {
     return NavigationRailItem.values.map((item) => item.icon).toList();
@@ -49,28 +50,6 @@ enum NavigationRailItem {
   }
 
   WorkplaceScreen getSelectedScreen() {
-    WorkplaceScreen selectedScreen;
-    switch (this) {
-      case NavigationRailItem.canvas:
-      case NavigationRailItem.search:
-        selectedScreen = WorkplaceScreen.canvas;
-
-      case NavigationRailItem.charts:
-        selectedScreen = WorkplaceScreen.charts;
-
-      case NavigationRailItem.settings:
-        selectedScreen = WorkplaceScreen.settings;
-
-      case NavigationRailItem.edit:
-        selectedScreen = WorkplaceScreen.edit;
-
-      // keeping this in case new items are added
-      // ignore: unreachable_switch_default
-      default:
-        Logger().e("[ERROR]Selected Screen is null. This indicates a missing case for ContentArea Switching upon sidenav interaction!");
-        throw Exception("[ERROR]Selected Screen is null. This indicates a missing case for ContentArea Switching upon sidenav interaction!");
-    }
-
-    return selectedScreen;
+    return screen;
   }
 }

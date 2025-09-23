@@ -7,6 +7,7 @@ import 'package:network_analytics/ui/screens/canvas/topology_tab_view.dart';
 import 'package:network_analytics/ui/screens/charts/chart.dart';
 import 'package:network_analytics/ui/screens/edit/editor_view.dart';
 import 'package:network_analytics/ui/screens/settings/settings.dart';
+import 'package:network_analytics/ui/screens/syslog/syslog_viewer.dart';
 
 class ContentArea extends StatelessWidget {
 
@@ -17,7 +18,7 @@ class ContentArea extends StatelessWidget {
     return Consumer(builder: 
       (context, ref, child) {
         final item = ref.watch(sideNavSelectionProvider);
-        final screen = item.selected?.getSelectedScreen();
+        final screen = item?.getSelectedScreen();
 
         switch (screen) {
           case WorkplaceScreen.canvas:
@@ -31,6 +32,9 @@ class ContentArea extends StatelessWidget {
 
           case WorkplaceScreen.edit:
             return ItemEditView();
+
+          case WorkplaceScreen.syslog:
+          return SyslogViewer();
 
           default:
             Logger().w("Created content area for undefined WorkplaceScreen");
