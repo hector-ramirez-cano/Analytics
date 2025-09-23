@@ -5,12 +5,14 @@ import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/services/dialog_change_notifier.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
+import 'package:network_analytics/ui/components/dialogs/device_selection_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
-import 'package:network_analytics/ui/screens/edit/commons/option_dialog.dart';
-import 'package:network_analytics/ui/screens/edit/commons/select_dialog.dart';
+import 'package:network_analytics/ui/components/dialogs/option_dialog.dart';
+import 'package:network_analytics/ui/components/list_selector.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class LinkEditView extends ConsumerStatefulWidget {
@@ -40,12 +42,13 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
 
   void onEditSideAIface() => ref.read(itemEditSelectionProvider.notifier).set(editingLinkIfaceA: true);
   void onEditSideBIface() => ref.read(itemEditSelectionProvider.notifier).set(editingLinkIfaceB: true);
-  void onEditSideA()      => ref.read(itemEditSelectionProvider.notifier).set(editingLinkDeviceA: true);
-  void onEditSideB()      => ref.read(itemEditSelectionProvider.notifier).set(editingLinkDeviceB: true);
-  void onRequestedDelete()=> ref.read(itemEditSelectionProvider.notifier).onRequestDeletion();
   void onCancelDelete()   => ref.read(itemEditSelectionProvider.notifier).set(requestedConfirmDeletion: false);
   void onConfirmedDelete()=> ref.read(itemEditSelectionProvider.notifier).onDeleteSelected();
   void onConfirmRestore() => ref.read(itemEditSelectionProvider.notifier).onRestoreSelected();
+
+  void onRequestedDelete(){ ref.read(itemEditSelectionProvider.notifier).onRequestDeletion(); _displayDeleteConfirmDialog(); }
+  void onEditSideB()      { ref.read(itemEditSelectionProvider.notifier).set(editingLinkDeviceB: true); _displaySelectionDialog(deviceB: true);}
+  void onEditSideA()      { ref.read(itemEditSelectionProvider.notifier).set(editingLinkDeviceA: true); _displaySelectionDialog(deviceA: true);}
 
   void onEditSideAIfaceContent(String text) {
     final notifier = ref.read(itemEditSelectionProvider.notifier);
@@ -170,75 +173,67 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
       );
   }
 
-  Widget _buildSelectionDialog() {
+  Future _displaySelectionDialog({bool deviceA = false, bool deviceB = false}) {
     final itemEditSelection = ref.watch(itemEditSelectionProvider); 
     final notif = ref.watch(itemEditSelectionProvider.notifier);
 
-    bool deviceA = itemEditSelection.editingLinkDeviceA;
-    bool deviceB = itemEditSelection.editingLinkDeviceB;
     bool linkType= itemEditSelection.editingLinkType;
     Link link    = notif.link;
 
     bool enabled = deviceA || deviceB || linkType;
 
-    if (!enabled) { return SizedBox.shrink(); }
+    if (!enabled) { return Future.value(null); }
 
     getOptions(Device device) {
       Logger().d("Filtering out device with ID ${device.id}");
-      return widget.topology.getDevices().where((item) => item.id != device.id).toSet();
+      return widget.topology.devices.where((item) => item.id != device.id).toSet();
     }
 
-    Set<Device> selectedOptions;
-    Set<Device> options;
-    if (deviceA)  { 
-      Logger().d("Input for device A");
-      selectedOptions = {link.sideA};
-      options = getOptions(link.sideB);
-    }
-    else if (deviceB) {
-      Logger().d("Input for device B");
-      selectedOptions = {link.sideB};
-      options = getOptions(link.sideA);
-    }
-    else {
-      return SizedBox.shrink();
+    Set<Device> options = {};
+    if      (deviceA) { options = getOptions(link.sideB); }
+    else if (deviceB) { options = getOptions(link.sideA);}
+    
+    bool isSelectedFn(option) {
+      if      (deviceA)  { return ref.read(itemEditSelectionProvider.notifier).link.sideA == option; }
+      else if (deviceB) {return ref.read(itemEditSelectionProvider.notifier).link.sideB == option; }
+      
+      return false;
     }
 
-    onChanged (option, state) => {
-      if      (deviceA)  { notif.onChangeLinkDeviceA(option) } 
-      else if (deviceB)  { notif.onChangeLinkDeviceB(option) }
-      else {
-        throw Exception("Unreachable code reached! Logic is faulty!")
-      }
-    }; 
-    isSelectedFn (option) => selectedOptions.contains(option);
+    onChanged (option, state) {
+      if      (deviceA)  { notif.onChangeLinkDeviceA(option); } 
+      else if (deviceB)  { notif.onChangeLinkDeviceB(option); }
+
+      ref.read(dialogRebuildProvider.notifier).markDirty();
+    }
     onClose () => notif.set(editingDeviceMetadata: false, editingDeviceMetrics: false, editingDeviceDataSources: false); 
-    toText(option) => (option as Device).name;
-
-    return SelectDialog(
+    
+    final dialog = DeviceSelectionDialog(
       options: options,
-      dialogType: SelectDialogType.radio,
-      isSelectedFn: isSelectedFn,
+      selectorType: ListSelectorType.radio,
       onChanged: onChanged,
       onClose: onClose,
-      toText: toText,
+      isSelectedFn: isSelectedFn
     );
+
+
+    return dialog.show(context);
   }
 
-  Widget _buildDeleteConfirmDialog() {
+  void _displayDeleteConfirmDialog() {
     final itemSelection = ref.read(itemEditSelectionProvider);
 
     bool showConfirmDialog = itemSelection.confirmDeletion;
 
-    if (!showConfirmDialog) { return SizedBox.shrink(); }
+    if (!showConfirmDialog) { return; }
 
-    return OptionDialog(
+    OptionDialog(
         dialogType: OptionDialogType.cancelDelete,
         title: Text("Confirmar acción"),
         confirmMessage: Text("(Los cambios no serán apliacados todavía)"),
         onCancel: onCancelDelete,
         onDelete: onConfirmedDelete,
-      );
+      ).show(context);
   }
 
   Widget _buildConfigurationPage() {
@@ -265,19 +260,13 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   Widget build(BuildContext context) {
 
     // if item changed, reset the text fields
-      ref.listen(itemEditSelectionProvider, (previous, next) {
-        if (previous?.selectedStack != next.selectedStack && next.selectedStack is Link) {
-          _sideAIfaceInputController.text = (next.selectedStack.last as Link).sideAIface;
-          _sideBIfaceInputController.text = (next.selectedStack.last as Link).sideBIface;
-        }
-      });
+    ref.listen(itemEditSelectionProvider, (previous, next) {
+      if (previous?.selectedStack != next.selectedStack && next.selectedStack is Link) {
+        _sideAIfaceInputController.text = (next.selectedStack.last as Link).sideAIface;
+        _sideBIfaceInputController.text = (next.selectedStack.last as Link).sideBIface;
+      }
+    });
 
-    return Stack(
-      children: [
-        _buildConfigurationPage(),
-        _buildSelectionDialog(),
-        _buildDeleteConfirmDialog(),
-      ],
-    );
+    return _buildConfigurationPage();
   }
 }

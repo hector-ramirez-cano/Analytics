@@ -6,13 +6,13 @@ import 'package:logger/logger.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
 
-class GeoSelectDialog extends ConsumerStatefulWidget {
+class GeoSelector extends ConsumerStatefulWidget {
 
   final VoidCallback onClose;
   final Function(LatLng) onSelect;
   final LatLng initialPosition;
 
-  const GeoSelectDialog({
+  const GeoSelector({
     super.key,
     required this.onClose,
     required this.initialPosition,
@@ -26,10 +26,10 @@ class GeoSelectDialog extends ConsumerStatefulWidget {
   );
 
   @override
-  ConsumerState<GeoSelectDialog> createState() => _GeoSelectDialogState();
+  ConsumerState<GeoSelector> createState() => _GeoSelectDialogState();
 }
 
-class _GeoSelectDialogState extends ConsumerState<GeoSelectDialog> {
+class _GeoSelectDialogState extends ConsumerState<GeoSelector> {
 
   late final MapController _mapController;
   late final TextEditingController _latController;
@@ -73,6 +73,8 @@ class _GeoSelectDialogState extends ConsumerState<GeoSelectDialog> {
     double lat = double.parse(_latController.text);
     double lng = double.parse(_longController.text);
 
+    widget.onSelect(LatLng(lat, lng));
+
     _mapController.move(LatLng(lat, lng), 16);
     // Update state for marker and text input
     setState(() {
@@ -100,7 +102,6 @@ class _GeoSelectDialogState extends ConsumerState<GeoSelectDialog> {
   }
   
   Widget _makeCloseButton() {
-    
     return Positioned(
       top: 16,
       right: 16,
@@ -123,7 +124,7 @@ class _GeoSelectDialogState extends ConsumerState<GeoSelectDialog> {
           initialCenter: widget.initialPosition,
           onLongPress: onLongPressEvent
         ),
-        markers: [ Marker(point: marker, child: GeoSelectDialog.locationIcon,) ]
+        markers: [ Marker(point: marker, child: GeoSelector.locationIcon,) ]
       ),
     );
 
@@ -167,28 +168,28 @@ class _GeoSelectDialogState extends ConsumerState<GeoSelectDialog> {
 
     var button = ElevatedButton.icon(onPressed: onTextChange, label: Text("Buscar"));
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [latInput, longInput, button  ],
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [latInput, longInput, button  ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     
-    return Container(
-      color: const Color.fromRGBO(100, 100, 100, 0.5),
-      child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(50, 50, 50, 150),
-        child: Center( child: Container(
-            color: Colors.white,
-            child: Column(
-              children: [
-                _makeGeoLocator(),
-                _makeLatLongInput()
-              ],
-            ),
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 20),
+      child: Center( child: Container(
+          color: Colors.white,
+          child: Column(
+            children: [
+              _makeGeoLocator(),
+              _makeLatLongInput()
+            ],
           ),
         ),
       ),

@@ -5,3 +5,12 @@ abstract class AnalyticsItem <T extends AnalyticsItem<T>> {
 
   T mergeWith(T other);
 }
+
+abstract class GroupableItem<T extends GroupableItem<T>> extends AnalyticsItem<T> {
+  final String name;
+
+  GroupableItem({
+    required this.name,
+    required super.id,
+  });
+}

@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/ui/screens/syslog/live_log_view.dart';
 import 'package:network_analytics/ui/screens/syslog/log_table.dart';
 
-class SyslogViewer extends StatefulWidget {
-  const SyslogViewer({super.key});
+class SyslogViewer extends ConsumerStatefulWidget {
+
+  const SyslogViewer({
+    super.key,
+  });
+
 
   @override
-  State<SyslogViewer> createState() => _SyslogViewerState();
+  ConsumerState<SyslogViewer> createState() => _SyslogViewerState();
 }
 
-class _SyslogViewerState extends State<SyslogViewer> {
+class _SyslogViewerState extends ConsumerState<SyslogViewer> {
   final logViewerHeightNotifier = ValueNotifier(250.0);
   final syslogViewerController = ResizableController();
 
@@ -28,7 +33,15 @@ class _SyslogViewerState extends State<SyslogViewer> {
   }
 
   Widget _makeLogTable(WidgetRef ref) {
-    return LogTable();
+
+    final topology = ref.watch(topologyProvider);
+
+    // TODO: Make buildOnNotSuccessful
+    return topology.when(
+      data   : (topology)  => LogTable(topology: topology),
+      error  : (error, st) => Text("Fallo en cargar"), //_buildOnNotSuccessful(error.toString(), topology.isLoading),
+      loading: ()          => Text("Fallo en cargar"), //_buildOnNotSuccessful(null, true)
+    );
   }
 
   List<ResizableChild> _makeContainers(WidgetRef ref) {
@@ -48,12 +61,10 @@ class _SyslogViewerState extends State<SyslogViewer> {
   @override
   Widget build(BuildContext context) {
 
-    return Consumer(builder: (context, ref, child) => 
-      ResizableContainer(
-          direction: Axis.vertical,
-          controller: syslogViewerController,
-          children: _makeContainers(ref)
-        )
-    ,);
+    return ResizableContainer(
+        direction: Axis.vertical,
+        controller: syslogViewerController,
+        children: _makeContainers(ref)
+      );
   }
 }

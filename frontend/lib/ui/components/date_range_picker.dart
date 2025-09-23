@@ -81,6 +81,9 @@ class _DatePickerState extends State<DatePicker> {
   Widget build(BuildContext context) {
     return Row(
       children: [
+
+        widget.leading ?? SizedBox.shrink(),
+
         ElevatedButton(
           onPressed: () => _selectDateRange(context),
           child: Text(_dateString(_selectedDateRange.start)),
@@ -92,6 +95,8 @@ class _DatePickerState extends State<DatePicker> {
           onPressed: () => _selectDateRange(context),
           child: Text(_dateString(_selectedDateRange.end)),
         ),
+
+        widget.trailing ?? SizedBox.shrink()
       ],
     );
   }

@@ -32,7 +32,7 @@ class TopologyCanvasPainter extends CustomPainter {
     double scale = canvasState.scale;
     Offset centerOffset = canvasState.centerOffset;
 
-    for (var device in topology.getDevices()) {
+    for (var device in topology.devices) {
       final position = device.position.globalToPixel(size, scale, centerOffset);
       final devicePaint = device.getPaint(position, size);
       double radius = 6;
@@ -49,7 +49,7 @@ class TopologyCanvasPainter extends CustomPainter {
     double scale = canvasState.scale;
     Offset centerOffset = canvasState.centerOffset;
 
-    for (var link in topology.getLinks()) {
+    for (var link in topology.links) {
 
       final Paint linkPaint = link.getPaint(itemSelection);
       final path = link.getPath(size, scale, centerOffset);
@@ -66,8 +66,8 @@ class TopologyCanvasPainter extends CustomPainter {
   void _registerHoverItems() {
     canvasInteractionService.clearTargets();
 
-    topology.getDevices().forEach((device) => canvasInteractionService.registerTarget(device));
-    topology.getLinks().forEach((link) => canvasInteractionService.registerTarget(link));
+    topology.devices.forEach((device) => canvasInteractionService.registerTarget(device));
+    topology.links.forEach((link) => canvasInteractionService.registerTarget(link));
   }
 
   @override

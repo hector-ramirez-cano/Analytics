@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:network_analytics/services/dialog_change_notifier.dart';
 import 'package:string_similarity/string_similarity.dart';
 
-enum SelectDialogType {
+enum ListSelectorType {
   checkbox,
   radio,
 }
 
-class SelectDialog<T> extends StatefulWidget {
+class ListSelector<T> extends ConsumerStatefulWidget {
   final Set<T> options;
-  final SelectDialogType dialogType;
+  final ListSelectorType selectorType;
   final bool Function(T) isSelectedFn;
   final void Function(T, bool?) onChanged;
   final String Function(T) toText;
   final VoidCallback onClose;
 
-  const SelectDialog({
+  const ListSelector({
     super.key,
     required this.options,
-    required this.dialogType,
+    required this.selectorType,
     required this.isSelectedFn,
     required this.onChanged,
     required this.onClose,
@@ -25,10 +27,10 @@ class SelectDialog<T> extends StatefulWidget {
   });
 
   @override
-  State<SelectDialog> createState() => _SelectDialogState<T>();
+  ConsumerState<ListSelector> createState() => _ListSelectorState<T>();
 }
 
-class _SelectDialogState<T> extends State<SelectDialog> {
+class _ListSelectorState<T> extends ConsumerState<ListSelector> {
   String filterText = "";
 
   List<T> fuzzySearch(String query, List<T> items) {
@@ -43,7 +45,6 @@ class _SelectDialogState<T> extends State<SelectDialog> {
     // Return just the items, ordered
     return ratings.map((entry) => entry.key).toList();
   }
-
 
   Widget _makeSearchBar() {
     return Expanded(
@@ -83,7 +84,7 @@ class _SelectDialogState<T> extends State<SelectDialog> {
         title: Text(widget.toText(option)),
       );
     }).toList();
-
+    
     return Expanded(
       child: SingleChildScrollView(
         child: Column(
@@ -96,6 +97,7 @@ class _SelectDialogState<T> extends State<SelectDialog> {
   Widget _makeRadioList(List<T> list) {
     var radioButtons = list.map((option) {
       return ListTile(
+        key: ValueKey(option),
         title: Text(widget.toText(option)),
         trailing: Radio(value: option,),
       );
@@ -105,7 +107,7 @@ class _SelectDialogState<T> extends State<SelectDialog> {
 
     return RadioGroup(
       onChanged: (option) => widget.onChanged(option, null),
-      groupValue: selected[0],
+      groupValue: selected.firstOrNull,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: radioButtons
@@ -121,37 +123,33 @@ class _SelectDialogState<T> extends State<SelectDialog> {
       list = fuzzySearch(filterText, options);
     }
 
-    switch (widget.dialogType) {
-      case SelectDialogType.checkbox:
+    switch (widget.selectorType) {
+      case ListSelectorType.checkbox:
         return _makeChecklist(list);
 
-      case SelectDialogType.radio:
+      case ListSelectorType.radio:
         return _makeRadioList(list);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color.fromRGBO(100, 100, 100, 0.5),
-      child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(50, 50, 50, 150),
-        child: Center(
-          child: Container(
-            color: Colors.white,
-            child: Column(
+    ref.watch(dialogRebuildProvider);
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 150),
+      child: Center(
+        child: Column(
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    _makeSearchBar(),
-                    _makeCloseButton(),
-                  ],
-                ),
-                // Scrollable list
-                _makeScrollList()
+                _makeSearchBar(),
+                _makeCloseButton(),
               ],
             ),
-          ),
+            // Scrollable list
+            _makeScrollList()
+          ],
         ),
       ),
     );

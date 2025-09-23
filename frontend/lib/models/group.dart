@@ -3,15 +3,14 @@ import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/topology.dart';
 
-class Group extends AnalyticsItem<Group>{
-  final String name;
+class Group extends GroupableItem<Group>{
   final Set<dynamic> members;
   final bool isDisplayGroup;
 
   Group({
     required super.id,
+    required super.name,
     required members,
-    required this.name,
     required this.isDisplayGroup,
   })
     : members = Set.unmodifiable(members);

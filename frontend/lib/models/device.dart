@@ -6,8 +6,7 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/canvas_interaction_service.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 
-class Device extends AnalyticsItem<Device> implements HoverTarget{
-  final String name;
+class Device extends GroupableItem<Device> implements HoverTarget{
   final Offset position;    // x, y
   final LatLng geoPosition; // Lat , Long
   final String mgmtHostname;
@@ -19,8 +18,8 @@ class Device extends AnalyticsItem<Device> implements HoverTarget{
 
   Device({
     required super.id,
+    required super.name,
     required this.position,
-    required this.name,
     required this.geoPosition,
     required this.mgmtHostname,
     required Set<String> requestedMetadata,

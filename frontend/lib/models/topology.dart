@@ -34,11 +34,12 @@ class Topology {
     return Topology(items: itemsLocal);
   }
 
-  List<Device> getDevices() {
+  // TODO: Convert to SET
+  List<Device> get devices {
     return items.values.whereType<Device>().toList();
   }
 
-  List<Link> getLinks() {
+  List<Link> get links {
     return items.values.whereType<Link>().toList();
   }
 
@@ -47,7 +48,7 @@ class Topology {
   }
 
   List<Link> getDeviceLinks(Device device) {
-    return getLinks().where((link) => link.sideA.id == device.id || link.sideB.id == device.id).toList();
+    return links.where((link) => link.sideA.id == device.id || link.sideB.id == device.id).toList();
   }
 
   List<Group> getDeviceGroups(Device device) {

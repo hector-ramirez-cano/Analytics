@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
+import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/services/dialog_change_notifier.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
+import 'package:network_analytics/ui/components/dialogs/group_item_selection_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
-import 'package:network_analytics/ui/screens/edit/commons/option_dialog.dart';
-import 'package:network_analytics/ui/screens/edit/commons/select_dialog.dart';
+import 'package:network_analytics/ui/components/dialogs/option_dialog.dart';
+import 'package:network_analytics/ui/components/list_selector.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
 
@@ -39,12 +42,16 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     _nameInputController = TextEditingController(text: selected.name);
   }
 
+  // Callbacks that chnge the state
   void onEditName   ()       => ref.read(itemEditSelectionProvider.notifier).toggleEditingGroupName();
-  void onEditMembers()       => ref.read(itemEditSelectionProvider.notifier).set(editingGroupMembers: true);
-  void onRequestedDelete()   => ref.read(itemEditSelectionProvider.notifier).onRequestDeletion();
   void onCancelDelete()      => ref.read(itemEditSelectionProvider.notifier).set(requestedConfirmDeletion: false);
   void onConfirmedDelete()   => ref.read(itemEditSelectionProvider.notifier).onDeleteSelected();
   void onConfirmRestore()    => ref.read(itemEditSelectionProvider.notifier).onRestoreSelected();
+
+  // Callbacks that display a dialog and change the state
+  // TODO: Make a distinction for groups and devices on the dialog
+  void onEditMembers()       { ref.read(itemEditSelectionProvider.notifier).set(editingGroupMembers: true); _displayMembersSelectionInput();}
+  void onRequestedDelete()   { ref.read(itemEditSelectionProvider.notifier).onRequestDeletion(); _displayDeleteConfirmDialog(); }
 
   void onContentEdit(String text) {
     final notifier = ref.read(itemEditSelectionProvider.notifier);
@@ -62,7 +69,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     var item = widget.topology.items[id];
     var members = Set.from(notifier.group.members);
 
-    if (status) { members.add(item); } 
+    if (status) { members.add(item); }
     else        { members.remove(item); }
 
     Logger().d("Changed members of Group, id=$id, status=$status, members=$members");
@@ -73,7 +80,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   }
 
   AbstractSettingsTile _makeNameInput(Group group, bool enabled, Topology topology) {
-    
+
     bool modified = group.isModifiedName(topology);
     Color backgroundColor = modified ? addedItemColor : Colors.transparent;
 
@@ -96,7 +103,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
 
   AbstractSettingsTile _makeMembersInput() {
     List<BadgeButton> list = [];
-    final notifier = ref.watch(itemEditSelectionProvider.notifier); 
+    final notifier = ref.watch(itemEditSelectionProvider.notifier);
 
     for (var member in notifier.group.members) {
       if (member is! Device && member is! Group) { continue; }
@@ -111,7 +118,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
       );
       list.add(button);
     }
-    
+
     var members = Wrap(spacing: 4, runSpacing: 4,children: list,);
 
     return SettingsTile(
@@ -122,27 +129,30 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     );
   }
 
-  Widget _buildMembersSelectionInput() {
-    var itemEditSelection = ref.watch(itemEditSelectionProvider); 
+  void _displayMembersSelectionInput() {
+    var itemEditSelection = ref.watch(itemEditSelectionProvider);
     final notifier = ref.watch(itemEditSelectionProvider.notifier);
-    if (!itemEditSelection.editingGroupMembers) { return SizedBox.shrink(); }
+    if (!itemEditSelection.editingGroupMembers) { return; }
 
-    
-    var options = widget.topology.getDevices().toSet();
+    var devices = widget.topology.devices;
+    var groups = widget.topology.groups;
+
+    Set<GroupableItem> options = {...devices, ...groups};
 
     isSelectedFn(option) => notifier.group.memberKeys.contains(option.id);
-    onChanged(option, state) => onChangedMembers(option.id, state ?? false);
     onClose() => notifier.set(editingGroupMembers: false);
-    toText(device) => (device as Device).name;
-    
-    return SelectDialog(
+    onChanged(option, state) {
+      onChangedMembers(option.id, state ?? false);
+      ref.watch(dialogRebuildProvider.notifier).markDirty();
+    }
+
+    GroupItemSelectionDialog(
       options: options,
-      dialogType: SelectDialogType.checkbox,
-      isSelectedFn: isSelectedFn,
+      selectorType: ListSelectorType.checkbox,
       onChanged: onChanged,
       onClose: onClose,
-      toText: toText,
-    );
+      isSelectedFn: isSelectedFn
+    ).show(context);
   }
 
   Widget _makeDeleteSection() {
@@ -161,7 +171,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
       children: [ Expanded( child: SettingsList( sections: [
               SettingsSection(
                 title: Text(notifier.group.name),
-                tiles: [ 
+                tiles: [
                   _makeNameInput(group, editingName, widget.topology),
                   _makeMembersInput(),
                 ]
@@ -174,20 +184,20 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     );
   }
 
-  Widget _buildDeleteConfirmDialog() {
+  void _displayDeleteConfirmDialog() {
     final itemSelection = ref.read(itemEditSelectionProvider);
 
     bool showConfirmDialog = itemSelection.confirmDeletion;
 
-    if (!showConfirmDialog) { return SizedBox.shrink(); }
+    if (!showConfirmDialog) { return; }
 
-    return OptionDialog(
+    OptionDialog(
         dialogType: OptionDialogType.cancelDelete,
         title: Text("Confirmar acción"),
         confirmMessage: Text("(Los cambios no serán apliacados todavía)"),
         onCancel: onCancelDelete,
         onDelete: onConfirmedDelete,
-      );
+      ).show(context);
   }
 
   @override
@@ -199,10 +209,6 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
         }
       });
 
-      return Stack(children: [
-        _buildSettingsView(),
-        _buildMembersSelectionInput(),
-        _buildDeleteConfirmDialog(),
-      ],);    
+      return _buildSettingsView();
   }
 }

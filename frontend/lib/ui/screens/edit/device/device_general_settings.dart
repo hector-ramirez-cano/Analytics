@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:free_map/free_map.dart';
+import 'package:network_analytics/models/data_sources.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/services/dialog_change_notifier.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
+import 'package:network_analytics/ui/components/dialogs/geo_selection_dialog.dart';
+import 'package:network_analytics/ui/components/dialogs/tag_selection_dialog.dart';
+import 'package:network_analytics/ui/components/list_selector.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
 import 'package:settings_ui/settings_ui.dart';
@@ -32,13 +38,18 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
   late TextEditingController _hostnameInputController;
   late TextEditingController _nameInputController;
 
+  // callbacks that modify the state
   void onEditDeviceHostname() => ref.read(itemEditSelectionProvider.notifier).onEditDeviceHostname();
   void onEditDeviceName()     => ref.read(itemEditSelectionProvider.notifier).onEditDeviceName();
-  void onEditGeoposition()    => ref.read(itemEditSelectionProvider.notifier).onEditDeviceGeoposition();
-  void onEditMetadata()       => ref.read(itemEditSelectionProvider.notifier).onEditMetadata();
-  void onEditMetrics()        => ref.read(itemEditSelectionProvider.notifier).onEditMetrics();
-  void onEditDataSources()    => ref.read(itemEditSelectionProvider.notifier).onEditDataSources();
 
+  // callbacks that show a dialog and modify the state
+  void onEditGeoposition()    { ref.read(itemEditSelectionProvider.notifier).onEditDeviceGeoposition(); _displayGeoInputDialog();  }
+  void onEditMetadata()       { ref.read(itemEditSelectionProvider.notifier).onEditMetadata();          _displaySelectionDialog(); }
+  void onEditMetrics()        { ref.read(itemEditSelectionProvider.notifier).onEditMetrics();           _displaySelectionDialog(); }
+  void onEditDataSources()    { ref.read(itemEditSelectionProvider.notifier).onEditDataSources();       _displaySelectionDialog(); }
+
+  // callbacks that modify the data
+  void onGeoPositionChanged(LatLng p) => ref.read(itemEditSelectionProvider.notifier).onChangeDeviceGeoPosition(p);
   void onEditDeviceMgmtHostnameContent(String text) => ref.read(itemEditSelectionProvider.notifier).onChangeDeviceMgmtHostname(text);
   void onEditDeviceNameContent(String text) => ref.read(itemEditSelectionProvider.notifier).onChangeDeviceNameContent(text);
 
@@ -166,6 +177,69 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
       trailing: makeTrailing(dataSources, onEditDataSources, width: 440),
     );
   }
+
+  void _displaySelectionDialog() {
+    final itemEditSelection = ref.watch(itemEditSelectionProvider); 
+    final notif = ref.watch(itemEditSelectionProvider.notifier); 
+    bool metrics = itemEditSelection.editingDeviceMetrics;
+    bool metadata = itemEditSelection.editingDeviceMetadata;
+    bool datasources = itemEditSelection.editingDeviceDataSources;
+
+    bool enabled = metrics || metadata || datasources;
+
+    if (!enabled) { return; }
+
+    Set<String> options;
+    if      (metrics)     { options = notif.device.availableValues; }
+    else if (metadata)    { options = notif.device.availableValues; }
+    else if (datasources) { options = DataSources.values.map((i) => i.name).toSet(); }
+    else { return; }
+
+    bool isSelectedFn(option) {
+      if      (metrics)     { return notif.device.requestedMetrics.contains(option);}
+      else if (metadata)    { return notif.device.requestedMetadata.contains(option);}
+      else if (datasources) { return notif.device.dataSources.contains(option);}
+      else { return false; }
+    }
+
+    onChanged (option, state) {
+      if      (metrics)  { notif.onChangeSelectedMetric(option, state); } 
+      else if (metadata) { notif.onChangeSelectedMetadata(option, state); }
+      else if (datasources) {notif.onChangeSelectedDatasource(option, state); }
+      else {
+        throw Exception("Unreachable code reached! Logic is faulty!");
+      }
+      ref.watch(dialogRebuildProvider.notifier).markDirty();
+    }
+    onClose () => notif.set(editingDeviceMetadata: false, editingDeviceMetrics: false, editingDeviceDataSources: false); 
+
+    TagSelectionDialog(
+      options: options,
+      selectorType: ListSelectorType.checkbox,
+      onChanged: onChanged,
+      onClose: onClose,
+      isSelectedFn: isSelectedFn
+    ).show(context);
+  }
+
+  void _displayGeoInputDialog() {
+    final itemEditSelection = ref.read(itemEditSelectionProvider); 
+    final notifier = ref.read(itemEditSelectionProvider.notifier); 
+    bool enabled = itemEditSelection.editingDeviceGeoPosition;
+    LatLng initialPosition = notifier.device.geoPosition;
+
+    if (!enabled) { return; }
+
+    onClose() => ref.read(itemEditSelectionProvider.notifier).set(editingDeviceGeoPosition: false);
+
+    GeoSelectionDialog(
+      initialPosition: initialPosition,
+      onClose: onClose,
+      onGeoPositionChanged: onGeoPositionChanged
+    ).show(context);
+  }
+
+
 
   @override
   void initState() {

@@ -5,7 +5,7 @@ enum OptionDialogType {
   cancelAccept
 }
 
-class OptionDialog extends StatelessWidget{
+class OptionDialog{
 
   final OptionDialogType dialogType;
   final Widget title;
@@ -16,7 +16,6 @@ class OptionDialog extends StatelessWidget{
   final Function()? onAccept;
 
   const OptionDialog({
-    super.key,
     required this.title,
     required this.confirmMessage,
     required this.dialogType,
@@ -26,7 +25,13 @@ class OptionDialog extends StatelessWidget{
     this.onAccept,
   });
 
-  Widget _makeOptionButtons() {
+  void dismiss(BuildContext context) {
+    if (context.mounted && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+  }
+
+  Widget _makeOptionButtons(BuildContext context) {
     String leftBtnLabel = "";
     String rightBtnLabel = "";
     Function()? leftAction;
@@ -37,14 +42,14 @@ class OptionDialog extends StatelessWidget{
       case OptionDialogType.cancelDelete:
         leftBtnLabel = "Cancelar";
         rightBtnLabel = "Eliminar";
-        leftAction = onCancel;
-        rightAction = onDelete;
+        leftAction  = () { dismiss(context);  if (onCancel != null) { onCancel!(); }};
+        rightAction = () { dismiss(context);  if (onDelete != null) { onDelete!(); }};
         
       case OptionDialogType.cancelAccept:
         leftBtnLabel = "Cancelar";
         rightBtnLabel = "Aceptar";
-        leftAction = onCancel;
-        rightAction = onAccept;
+        leftAction  = () { dismiss(context);  if (onCancel != null) { onCancel!(); }};
+        rightAction = () { dismiss(context);  if (onAccept != null) { onAccept!(); }};
     }
 
     return AlertDialog.adaptive(
@@ -58,18 +63,18 @@ class OptionDialog extends StatelessWidget{
   }
 
 
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
+  Future show(BuildContext context) {
+    final dialog = Container(
       color: const Color.fromRGBO(100, 100, 100, 0.5),
       child: Padding(
         padding: const EdgeInsetsDirectional.fromSTEB(50, 50, 50, 150),
         child: Center(
-          child: _makeOptionButtons(),
+          child: _makeOptionButtons(context),
         ),
       ),
     );
+
+    return showDialog(context: context, builder: (context) => dialog);
   }
   
 }
