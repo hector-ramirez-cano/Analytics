@@ -1,6 +1,7 @@
 api:
   endpoint: "http://localhost:5050"
   topology_endpoint: "http://localhost:5050/api/topology"
+  syslog_count_endpoint: "http://localhost:5050/api/syslog/message_count"
   retries: 3
   retry_delay_s: 5
   timeout_s: 15
@@ -19,6 +20,7 @@ ui:
 debug:
   enable_canvas_interaction_logging: false
   enable_canvas_link_class_logging: false
+  enable_syslog_service_logging: true
   enable_topology_service_logging: false
   enable_drawer_logging: false
   enable_canvas_tab_logging: false

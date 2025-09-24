@@ -6,6 +6,7 @@ class DatePicker extends StatefulWidget {
     this.leading,
     this.trailing,
   });
+
   final Widget? leading;
   final Widget? trailing;
 
@@ -80,6 +81,8 @@ class _DatePickerState extends State<DatePicker> {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      spacing: 20,
       children: [
 
         widget.leading ?? SizedBox.shrink(),
@@ -88,9 +91,7 @@ class _DatePickerState extends State<DatePicker> {
           onPressed: () => _selectDateRange(context),
           child: Text(_dateString(_selectedDateRange.start)),
         ),
-        SizedBox(width: 20,),
-        Text(" —— "),
-        SizedBox(width: 20,),
+        Text(" ┣━┫ "),
         ElevatedButton(
           onPressed: () => _selectDateRange(context),
           child: Text(_dateString(_selectedDateRange.end)),
