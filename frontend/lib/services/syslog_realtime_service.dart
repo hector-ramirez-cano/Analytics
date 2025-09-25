@@ -44,7 +44,7 @@ class SyslogRealtimeService extends _$SyslogRealtimeService {
 
   void _connect() {
     _channel = WebSocketChannel.connect(
-      Uri.parse(AppConfig.getOrDefault("ws/syslog_ws_endpoint"))
+      Uri.parse(AppConfig.getOrDefault("ws/syslog_rt_ws_endpoint"))
     );
 
     _sub = _channel!.stream.listen((data) {

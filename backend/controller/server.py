@@ -1,8 +1,13 @@
 import asyncio
+import datetime
 import json
+import threading
 
-from quart import Quart, send_from_directory, Response, websocket
+import janus
+from quart import Quart, send_from_directory, Response, websocket, request
 import os
+
+from attrs import define
 
 from backend.model.db.health_check import check_connections, health_check_listeners
 from backend.model.db.operations import get_topology_as_json
@@ -16,6 +21,18 @@ print(os.getcwd())
 ansible_runner_event = asyncio.Event()
 app = Quart(__name__, static_folder=static_dir)
 
+#  ________                  __                      __              __
+# /        |                /  |                    /  |            /  |
+# $$$$$$$$/  _______    ____$$ |  ______    ______  $$/  _______   _$$ |_    _______
+# $$ |__    /       \  /    $$ | /      \  /      \ /  |/       \ / $$   |  /       |
+# $$    |   $$$$$$$  |/$$$$$$$ |/$$$$$$  |/$$$$$$  |$$ |$$$$$$$  |$$$$$$/  /$$$$$$$/
+# $$$$$/    $$ |  $$ |$$ |  $$ |$$ |  $$ |$$ |  $$ |$$ |$$ |  $$ |  $$ | __$$      \
+# $$ |_____ $$ |  $$ |$$ \__$$ |$$ |__$$ |$$ \__$$ |$$ |$$ |  $$ |  $$ |/  |$$$$$$  |
+# $$       |$$ |  $$ |$$    $$ |$$    $$/ $$    $$/ $$ |$$ |  $$ |  $$  $$//     $$/
+# $$$$$$$$/ $$/   $$/  $$$$$$$/ $$$$$$$/   $$$$$$/  $$/ $$/   $$/    $$$$/ $$$$$$$/
+#                               $$ |
+#                               $$ |
+#                               $$/
 @app.route("/heartbeat")
 async def heartbeat():
     print("[DEBUG]Heartbeat!")
@@ -28,6 +45,29 @@ async def api_get_topology():
     return Response(topology, content_type="application/json")
     # return await send_from_directory(routes_dir, "test-data.json")
 
+
+@app.route("/api/syslog/message_count")
+async def api_syslog_message_count():
+    start = request.args.get("start", default="")
+    end = request.args.get("end", default="")
+
+    start = datetime.datetime.strptime(start, "%Y-%m-%d:%H:%M.%S")
+    end = datetime.datetime.strptime(end, "%Y-%m-%d:%H:%M.%S")
+
+    response = json.dumps({"count": 50})
+
+    return Response(response, content_type="application/json")
+
+
+#  __       __            __                                      __                    __
+# /  |  _  /  |          /  |                                    /  |                  /  |
+# $$ | / \ $$ |  ______  $$ |____    _______   ______    _______ $$ |   __   ______   _$$ |_    _______
+# $$ |/$  \$$ | /      \ $$      \  /       | /      \  /       |$$ |  /  | /      \ / $$   |  /       |
+# $$ /$$$  $$ |/$$$$$$  |$$$$$$$  |/$$$$$$$/ /$$$$$$  |/$$$$$$$/ $$ |_/$$/ /$$$$$$  |$$$$$$/  /$$$$$$$/
+# $$ $$/$$ $$ |$$    $$ |$$ |  $$ |$$      \ $$ |  $$ |$$ |      $$   $$<  $$    $$ |  $$ | __$$      \
+# $$$$/  $$$$ |$$$$$$$$/ $$ |__$$ | $$$$$$  |$$ \__$$ |$$ \_____ $$$$$$  \ $$$$$$$$/   $$ |/  |$$$$$$  |
+# $$$/    $$$ |$$       |$$    $$/ /     $$/ $$    $$/ $$       |$$ | $$  |$$       |  $$  $$//     $$/
+# $$/      $$/  $$$$$$$/ $$$$$$$/  $$$$$$$/   $$$$$$/   $$$$$$$/ $$/   $$/  $$$$$$$/    $$$$/ $$$$$$$/
 
 @app.route("/ws/health")
 async def api_check_backend():
@@ -55,6 +95,43 @@ async def api_check_backend_ws():
 
 @app.websocket("/ws/syslog")
 async def api_syslog_ws():
+    temp_start = datetime.datetime(2025, 9, 1)
+    temp_end = datetime.datetime(2025, 10, 1)
+    data_queue = janus.Queue()
+    signal_queue = janus.Queue()
+    finished_event = threading.Event()
+
+    syslog_thread = SyslogBackend.spawn_log_stream(data_queue.sync_q, signal_queue.sync_q, finished_event)
+
+    async def rx():
+        while True:
+            data = await websocket.receive_json()
+            await signal_queue.async_q.put(data)
+
+
+    async def tx():
+        while True:
+            data = await data_queue.async_q.get()
+            await websocket.send(str(data))
+
+    producer = asyncio.create_task(tx())
+    consumer = asyncio.create_task(rx())
+
+    #TODO: Change this for a more permanent solution
+    await signal_queue.async_q.put({"type": "set-date", "start-date": temp_start, "end-date": temp_end})
+    await signal_queue.async_q.put({"type": "request", "count": 2})
+
+    try:
+        await asyncio.gather(producer, consumer, syslog_thread)
+    except asyncio.CancelledError as e:
+        finished_event.set()
+        await signal_queue.aclose()
+        await data_queue.aclose()
+        await websocket.close(-1)
+
+
+@app.websocket("/ws/syslog/realtime")
+async def api_syslog_rt_ws():
     queue = asyncio.Queue[dict]()
     SyslogBackend.register_listener(queue)
 

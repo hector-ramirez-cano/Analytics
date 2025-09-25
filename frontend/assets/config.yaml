@@ -8,6 +8,7 @@ api:
 
 ws:
   syslog_ws_endpoint: "ws://localhost:5050/ws/syslog"
+  syslog_rt_ws_endpoint: "ws://localhost:5050/ws/syslog/realtime"
 
 syslog:
   max_buffer_lines: 254

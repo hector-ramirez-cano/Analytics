@@ -66,8 +66,12 @@ class TopologyCanvasPainter extends CustomPainter {
   void _registerHoverItems() {
     canvasInteractionService.clearTargets();
 
-    topology.devices.forEach((device) => canvasInteractionService.registerTarget(device));
-    topology.links.forEach((link) => canvasInteractionService.registerTarget(link));
+    for (var device in topology.devices) {
+      canvasInteractionService.registerTarget(device);
+    }
+    for (var link in topology.links) {
+      canvasInteractionService.registerTarget(link);
+    }
   }
 
   @override

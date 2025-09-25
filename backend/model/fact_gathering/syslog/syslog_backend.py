@@ -1,12 +1,15 @@
-import asyncio
+import asyncio # TODO: Integrate UVLoop for faster processing
 import logging
+import threading
 from typing import *
 
 import aiosyslogd
-from aiosyslogd.db import BaseDatabase
-from aiosyslogd.server import SyslogUDPServer, BATCH_TIMEOUT, BATCH_SIZE
+import janus
+from aiosyslogd.db import BaseDatabase, sqlite
+from aiosyslogd.server import SyslogUDPServer, BATCH_TIMEOUT, BATCH_SIZE, get_db_driver
 
 from backend.Config import Config
+from backend.model import db
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +38,7 @@ class SyslogBackend(SyslogUDPServer):
 
     def set_exit_flag(self, exit_flag: asyncio.Event):
         self.exit_flag = exit_flag
+
 
     async def __original_database_writer(self, batch, params) -> None:
         # noinspection PyBroadException
@@ -111,3 +115,6 @@ class SyslogBackend(SyslogUDPServer):
             await server.shutdown()
 
 
+    @staticmethod
+    def spawn_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue, finished: threading.Event) -> Coroutine:
+        return asyncio.to_thread(lambda: db.operations.get_log_stream(data_queue, signal_queue, finished))
