@@ -7,7 +7,6 @@ import janus
 from quart import Quart, send_from_directory, Response, websocket, request
 import os
 
-from attrs import define
 
 from backend.model.db.health_check import check_connections, health_check_listeners
 from backend.model.db.operations import get_topology_as_json
@@ -51,10 +50,15 @@ async def api_syslog_message_count():
     start = request.args.get("start", default="")
     end = request.args.get("end", default="")
 
-    start = datetime.datetime.strptime(start, "%Y-%m-%d:%H:%M.%S")
-    end = datetime.datetime.strptime(end, "%Y-%m-%d:%H:%M.%S")
+    try:
+        start = datetime.datetime.strptime(start, "%Y-%m-%d:%H:%M:%S")
+        end = datetime.datetime.strptime(end, "%Y-%m-%d:%H:%M:%S")
+    except ValueError as e:
+        return Response(str(e), status=400)
 
-    response = json.dumps({"count": 50})
+    count = await SyslogBackend.get_row_count(start, end)
+
+    response = json.dumps({"count": count})
 
     return Response(response, content_type="application/json")
 
@@ -87,7 +91,7 @@ async def api_check_backend_ws():
             msg = await queue.get()
             await websocket.send(data=str(msg))
 
-    except asyncio.CancelledError as e:
+    except asyncio.CancelledError as _:
         raise
 
     finally:
@@ -95,8 +99,6 @@ async def api_check_backend_ws():
 
 @app.websocket("/ws/syslog")
 async def api_syslog_ws():
-    temp_start = datetime.datetime(2025, 9, 1)
-    temp_end = datetime.datetime(2025, 10, 1)
     data_queue = janus.Queue()
     signal_queue = janus.Queue()
     finished_event = threading.Event()
@@ -106,7 +108,8 @@ async def api_syslog_ws():
     async def rx():
         while True:
             data = await websocket.receive_json()
-            await signal_queue.async_q.put(data)
+            for obj in data:
+                await signal_queue.async_q.put(obj)
 
 
     async def tx():
@@ -117,13 +120,9 @@ async def api_syslog_ws():
     producer = asyncio.create_task(tx())
     consumer = asyncio.create_task(rx())
 
-    #TODO: Change this for a more permanent solution
-    await signal_queue.async_q.put({"type": "set-date", "start-date": temp_start, "end-date": temp_end})
-    await signal_queue.async_q.put({"type": "request", "count": 2})
-
     try:
         await asyncio.gather(producer, consumer, syslog_thread)
-    except asyncio.CancelledError as e:
+    except asyncio.CancelledError as _:
         finished_event.set()
         await signal_queue.aclose()
         await data_queue.aclose()
@@ -150,7 +149,7 @@ async def api_syslog_rt_ws():
             }
             await websocket.send(data=str(packet))
 
-    except asyncio.CancelledError as e:
+    except asyncio.CancelledError as _:
         raise
 
     finally:

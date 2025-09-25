@@ -1,4 +1,5 @@
-import asyncio # TODO: Integrate UVLoop for faster processing
+import asyncio
+import datetime
 import logging
 import threading
 from typing import *
@@ -118,3 +119,8 @@ class SyslogBackend(SyslogUDPServer):
     @staticmethod
     def spawn_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue, finished: threading.Event) -> Coroutine:
         return asyncio.to_thread(lambda: db.operations.get_log_stream(data_queue, signal_queue, finished))
+
+
+    @staticmethod
+    async def get_row_count(start_date : datetime.datetime, end_date: datetime.datetime) -> int:
+        return await asyncio.to_thread(lambda: db.operations.get_row_count(start_date, end_date))
