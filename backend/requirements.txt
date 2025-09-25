@@ -7,3 +7,4 @@ influxdb-client
 pysnmp
 aiosyslogd
 janus
+uvloop

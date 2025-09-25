@@ -3,6 +3,7 @@ import os
 import Config
 from backend.controller import server
 
+import uvloop
 import asyncio
 import hypercorn.config
 import hypercorn.asyncio
@@ -67,7 +68,6 @@ async def main():
     db.pools.graceful_shutdown()
 
 
-
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:
+        runner.run(main())
