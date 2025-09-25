@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/screens/syslog/live_log_view.dart';
 import 'package:network_analytics/ui/screens/syslog/log_table.dart';
 
@@ -36,11 +37,20 @@ class _SyslogViewerState extends ConsumerState<SyslogViewer> {
 
     final topology = ref.watch(topologyProvider);
 
-    // TODO: Make buildOnNotSuccessful
     return topology.when(
       data   : (topology)  => LogTable(topology: topology),
-      error  : (error, st) => Text("Fallo en cargar"), //_buildOnNotSuccessful(error.toString(), topology.isLoading),
-      loading: ()          => Text("Fallo en cargar"), //_buildOnNotSuccessful(null, true)
+      error  : (error, st) => _makeRetryIndicator(ref, context, error.toString(), st),
+      loading: ()          => _makeRetryIndicator(ref, context, null, null)
+    );
+  }
+
+    Widget _makeRetryIndicator(WidgetRef ref, BuildContext context, dynamic err, StackTrace? st) {
+    void onRetry() async {
+      final _ = ref.invalidate(syslogTableProvider);
+    }
+
+    return Center(
+      child: RetryIndicator(onRetry: () async => onRetry(), isLoading: err != null, error: err,)
     );
   }
 

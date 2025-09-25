@@ -26,10 +26,11 @@ class LogTable extends StatefulWidget {
 
 class _LogTableState extends State<LogTable> {
   late PlutoGridStateManager stateManager;
+  DateTimeRange _selectedDateRange = DateTimeRange(start: DateTime.now(), end: DateTime.now());
 
   Widget _makeRetryIndicator(WidgetRef ref, BuildContext context, dynamic err, StackTrace? st) {
     void onRetry() async {
-      final _ = ref.refresh(syslogTableProvider.future);
+      final _ = ref.invalidate(syslogTableProvider.from);
     }
 
     return Center(
@@ -92,8 +93,7 @@ class _LogTableState extends State<LogTable> {
         enableSorting: false, enableFilterMenuItem: true,),
     ];
 
-
-    List<PlutoRow> rows = List.generate(cache.messageCount, (rowIndex) {
+    List<PlutoRow> rows = List.generate(growable: false, cache.messageCount > 0 ? 20 : 0, (rowIndex) {
       return PlutoRow(
         cells: {
           'Origin'    : PlutoCell(value: null),
@@ -130,7 +130,7 @@ class _LogTableState extends State<LogTable> {
   }
 
   Widget _makeLogTableArea(WidgetRef ref, BuildContext context) {
-    return ref.watch(syslogTableProvider).when(
+    return ref.watch(syslogTableProvider(_selectedDateRange)).when(
       data   : (data   ) => _makeLogTable(data),
       loading: (       ) => _makeRetryIndicator(ref, context, null, null),
       error  : (err, st) => _makeRetryIndicator(ref, context, err, st) // TODO: Check why this retries
@@ -140,10 +140,16 @@ class _LogTableState extends State<LogTable> {
   @override
   Widget build(BuildContext conRetryontext) {
     return Consumer(builder:(context, ref, child) {
+      void onDateSelect(DateTimeRange range) {
+        setState(() {
+          _selectedDateRange = range;
+        });
+      }
+
       return Padding(
         padding: const EdgeInsets.all(16),
         child: Column(children: [
-          DatePicker(),
+          DateRangePicker(initialRange: _selectedDateRange, onChanged: onDateSelect,),
           SizedBox(height: 24,),
           Expanded(child: _makeLogTableArea(ref, context))
         ],),

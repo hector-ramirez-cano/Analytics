@@ -1,104 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:network_analytics/ui/components/dialogs/date_range_picker_dialog.dart';
 
-class DatePicker extends StatefulWidget {
-  const DatePicker({
-    super.key,
-    this.leading,
-    this.trailing,
-  });
+String _formatTimeOfDay(DateTime dt) {
+  final String hour = dt.hour < 10 ? "0${dt.hour}" : "${dt.hour}";
+  final String minute = dt.minute < 10 ? "0${dt.minute}" : "${dt.minute}";
 
-  final Widget? leading;
-  final Widget? trailing;
-
-  @override
-  State<DatePicker> createState() => _DatePickerState();
+  return "$hour : $minute";
 }
 
-class _DatePickerState extends State<DatePicker> {
-  late DateTimeRange _selectedDateRange;
+String _formatDate(DateTime dt) {
+  const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  return "${dt.day} / ${months[dt.month-1]} / ${dt.year}  ${_formatTimeOfDay(dt)}";
+}
+
+String formatRange(DateTimeRange? range) {
+  if (range == null) return '--';
+  return '${_formatDate(range.start)}   ⟶   ${_formatDate(range.end)}';
+}
+
+
+/// A widget that displays a selected date range and opens a dialog on tap.
+class DateRangePicker extends StatefulWidget {
+  /// Initial value, optional.
+  final DateTimeRange? initialRange;
+
+  /// Called when a new range is selected.
+  final void Function(DateTimeRange)? onChanged;
+
+  const DateRangePicker({super.key, this.initialRange, this.onChanged});
+
+  @override
+  State<DateRangePicker> createState() => _DateRangePickerState();
+}
+
+class _DateRangePickerState extends State<DateRangePicker> {
+  DateTimeRange? _range;
 
   @override
   void initState() {
     super.initState();
-    _selectedDateRange = DateTimeRange(start: DateTime.now(), end: DateTime.now());
+    _range = widget.initialRange;
   }
 
-  String _timeOfDateString(DateTime dt) {
-    final String hour = dt.hour < 10 ? "0${dt.hour}" : "${dt.hour}";
-    final String minute = dt.minute < 10 ? "0${dt.minute}" : "${dt.minute}";
+  Future<void> _pickRange() async {
+    final selectedRange = await showDateRangeWithTimeDialog(context);
+    if (selectedRange == null) return;
 
-    return "$hour : $minute";
+    setState(() => _range = selectedRange);
+    widget.onChanged?.call(selectedRange);
   }
-
-  String _dateString(DateTime dt) {
-    const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-    return "${dt.day} / ${months[dt.month-1]} / ${dt.year}     ${_timeOfDateString(dt)}";
-  }
-
-  Future _selectDateRange(BuildContext context) async => showDateRangePicker(
-    context: context,
-    initialDateRange: _selectedDateRange,
-    firstDate: DateTime(2000),
-    lastDate: DateTime(2050),
-    saveText: "Siguiente",
-    cancelText: "Cancelar",
-    helpText: "Rango de fechas",
-  ).then((range) => {
-    if (range != null && context.mounted) {
-      _selectStartHour(context, range)
-    }
-  });
-
-  Future _selectStartHour(BuildContext context, DateTimeRange range) => showTimePicker(
-    context: context,
-    initialTime: TimeOfDay.fromDateTime(range.start),
-    helpText: "Hora de inicio",
-    confirmText: "Siguiente",
-    cancelText: "Cancelar"
-  ).then((start) => {
-    if (start != null && context.mounted) {
-      _selectEndHour(context, range, start)
-    }
-  });
-
-  Future _selectEndHour(BuildContext context, DateTimeRange range, TimeOfDay startTime) => showTimePicker(
-    context: context,
-    initialTime: TimeOfDay.fromDateTime(range.end),
-    helpText: "Hora de fin",
-    confirmText: "Aplicar",
-    cancelText: "Cancelar"
-  ).then((end) => {
-    if (end != null) {
-      setState(() {
-        _selectedDateRange = DateTimeRange(
-          start: range.start.copyWith(hour: startTime.hour, minute: startTime.minute),
-          end: range.end.copyWith(hour: end.hour, minute: end.minute),
-        );
-      })
-    }
-  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      spacing: 20,
-      children: [
-
-        widget.leading ?? SizedBox.shrink(),
-
-        ElevatedButton(
-          onPressed: () => _selectDateRange(context),
-          child: Text(_dateString(_selectedDateRange.start)),
-        ),
-        Text(" ┣━┫ "),
-        ElevatedButton(
-          onPressed: () => _selectDateRange(context),
-          child: Text(_dateString(_selectedDateRange.end)),
-        ),
-
-        widget.trailing ?? SizedBox.shrink()
-      ],
+    return GestureDetector(
+      onTap: _pickRange,
+      child: ElevatedButton.icon(
+        onPressed: _pickRange,
+        label: Text(formatRange(_range), style: const TextStyle(fontSize: 16)),
+        icon: const Icon(Icons.date_range, color: Colors.blue),
+      ),
     );
   }
 }

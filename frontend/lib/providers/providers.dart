@@ -27,12 +27,12 @@ final topologyProvider = FutureProvider<Topology>((ref) async {
   return service.fetchItems();
 });
 
-final syslogTableProvider = FutureProvider<SyslogTableCache>((ref) async {
+final syslogTableProvider = FutureProvider.family<SyslogTableCache, DateTimeRange>((ref, range) async {
   final service = ref.watch(_syslogTableServiceProvider);
 
-  final range = DateTimeRange(start: DateTime(2025, 9, 1), end: DateTime(2025, 9, 15));
+  final dateRange = DateTimeRange(start: range.start, end: range.end);
 
-  return service.fetchItems(range);
+  return service.fetchItems(dateRange);
 });
 
 

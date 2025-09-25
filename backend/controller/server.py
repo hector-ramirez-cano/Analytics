@@ -51,9 +51,12 @@ async def api_syslog_message_count():
     end = request.args.get("end", default="")
 
     try:
-        start = datetime.datetime.strptime(start, "%Y-%m-%d:%H:%M:%S")
-        end = datetime.datetime.strptime(end, "%Y-%m-%d:%H:%M:%S")
+        start = datetime.datetime.fromtimestamp(float(start))
+        end   = datetime.datetime.fromtimestamp(float(end))
     except ValueError as e:
+        return Response(str(e), status=400)
+
+    except TypeError as e:
         return Response(str(e), status=400)
 
     count = await SyslogBackend.get_row_count(start, end)

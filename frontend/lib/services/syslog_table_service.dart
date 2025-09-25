@@ -28,11 +28,12 @@ class SyslogTableService {
 
     final finalEndpoint = endpoint.replace(queryParameters: {
       ...endpoint.queryParameters,
-      "start": dateString(range.start),
-      "end": dateString(range.end)
+      "start": (range.start.millisecondsSinceEpoch / 1000.0).toString(),
+      "end":   (range.end.millisecondsSinceEpoch   / 1000.0).toString(),
     });
 
-    logger.d("Fetching items..., retries=$retries, retryAfter=$retryDelayS, timeout=$timeoutS");
+    logger.d("Fetching items..., retries=$retries, retryAfter=$retryDelayS, timeout=$timeoutS, Hitting endpoint=$finalEndpoint");
+  
     while (true) {
       try {
         final response = await http
