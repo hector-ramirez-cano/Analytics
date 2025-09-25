@@ -48,7 +48,7 @@ def generate_months(start_time: datetime.datetime, end_time: datetime.datetime) 
 
     return months
 
-def __get_log_stream(start_time: datetime.datetime, end_time: datetime.datetime) -> Generator[Tuple[Any, ...], None, None]:
+def __get_log_stream(start_time: datetime.datetime, end_time: datetime.datetime, offset) -> Generator[Tuple[Any, ...], None, None]:
     months = generate_months(start_time, end_time)
     query_hub_path = "/tmp/syslog_query_hub.sqlite3"
     if not os.path.exists(query_hub_path):
@@ -67,8 +67,8 @@ def __get_log_stream(start_time: datetime.datetime, end_time: datetime.datetime)
             conn.execute(f"ATTACH DATABASE '{db_path}' AS {alias}")
 
             yield from conn.execute(
-                f"SELECT * FROM {alias}.SystemEvents WHERE ReceivedAt BETWEEN ? AND ?",
-                (start_time, end_time)
+                f"SELECT * FROM {alias}.SystemEvents WHERE ReceivedAt BETWEEN ? AND ? OFFSET = ?",
+                (start_time, end_time, offset)
             )
 
             conn.execute(f"DETACH DATABASE {alias}")
@@ -81,6 +81,7 @@ def __get_log_stream(start_time: datetime.datetime, end_time: datetime.datetime)
 def get_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue, finished: threading.Event):
     start_date: datetime.datetime
     end_date: datetime.datetime
+    offset = 0
     generator: Generator[Tuple[Any, ...], None, None] = None
 
     while not finished.is_set():
@@ -92,8 +93,8 @@ def get_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue, f
                 # date set, reset the generator to yield values in the new range
                 start_date = datetime.datetime.strptime(signal["start-date"], "%Y-%m-%d %H:%M:%S.%f")
                 end_date   = datetime.datetime.strptime(signal["end-date"]  , "%Y-%m-%d %H:%M:%S.%f")
-
-                generator  = __get_log_stream(start_date, end_date)
+                offset     = signal["offset"]
+                generator  = __get_log_stream(start_date, end_date, offset)
 
             case "request":
                 if generator is None:
