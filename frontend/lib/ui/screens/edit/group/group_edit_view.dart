@@ -84,7 +84,6 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     bool modified = group.isModifiedName(topology);
     Color backgroundColor = modified ? addedItemColor : Colors.transparent;
 
-
     var editInput = EditTextField(
       initialText: group.name,
       enabled: enabled,
@@ -94,7 +93,6 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
       onEditToggle: onEditName,
       onContentEdit: onContentEdit,
     );
-
 
     return SettingsTile(
       title: Text("Nombre"), leading: GroupEditView.nameIcon, trailing: editInput, onPressed: null
@@ -158,7 +156,6 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   Widget _makeDeleteSection() {
     return DeleteSection(onDelete: onRequestedDelete, onRestore: onConfirmRestore);
   }
-
 
   Widget _buildSettingsView() {
     final notifier = ref.read(itemEditSelectionProvider.notifier);

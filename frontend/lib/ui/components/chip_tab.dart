@@ -12,7 +12,6 @@ class ChipTab extends StatelessWidget {
     required this.onClick
   });
 
-
   @override
   Widget build(BuildContext context) {
     return ActionChip(

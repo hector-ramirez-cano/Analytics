@@ -17,7 +17,6 @@ typedef CanvasStateChangedCallback = Function(double? scale, Offset? center);
 typedef CanvasSizeChangedCallback = Function(Size size);
 typedef ScaleChangedCallback = Function(Offset cursorPixel, double scaleDelta, Size canvasSize);
 
-
 abstract class HoverTarget {
   bool hitTest(Offset position);
   int getId();
@@ -34,7 +33,6 @@ class CanvasInteractionService {
   double _lastScale = 1.0;
   bool mouseMovingCanvas = false;
   final Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_canvas_interaction_logging", false));
-
 
   /// 
   /// Retrieves the first target over which the position (in global space) is colliding with. If no collision is detected, null will be returned

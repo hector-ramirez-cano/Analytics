@@ -62,7 +62,6 @@ class OptionDialog{
     );
   }
 
-
   Future show(BuildContext context) {
     final dialog = Container(
       color: const Color.fromRGBO(100, 100, 100, 0.5),

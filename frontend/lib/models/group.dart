@@ -101,7 +101,6 @@ class Group extends GroupableItem<Group>{
     return name != (topology.items[id] as Group?)?.name;
   }
 
-
   @override
   String toString() {
     return members.map((member) => {

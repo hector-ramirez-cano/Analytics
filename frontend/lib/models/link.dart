@@ -137,7 +137,6 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
     return id;
   }
 
-
   Path getPath(Size canvasSize, double scale, Offset centerOffset) {
     final start = sideA.position.globalToPixel(canvasSize, scale, centerOffset);
     final end   = sideB.position.globalToPixel(canvasSize, scale, centerOffset);

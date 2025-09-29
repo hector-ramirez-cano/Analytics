@@ -45,14 +45,13 @@ dependencies:
         free_map: ^2.5.0
         flutter_resizable_container: ^4.2.0
         web_socket_channel: ^3.0.3
-        pluto_grid: ^8.0.0
+        trina_grid: ^2.0.2
         shimmer: ^3.0.0
         oxidized: ^6.2.0
 
         # The following adds the Cupertino Icons font to your application.
         # Use with the CupertinoIcons class for iOS style icons.
         cupertino_icons: ^1.0.8
-
 
 dev_dependencies:
         build_runner: ^2.4.0
@@ -67,7 +66,6 @@ dev_dependencies:
         # package. See that file for information about deactivating specific lint
         # rules and activating additional ones.
         flutter_lints: ^6.0.0
-
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

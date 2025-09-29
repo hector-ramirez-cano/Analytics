@@ -7,8 +7,7 @@ import 'package:network_analytics/services/syslog_db_service.dart';
 import 'package:network_analytics/ui/components/date_range_picker.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/screens/syslog/log_table_columns.dart';
-import 'package:pluto_grid/pluto_grid.dart';
-
+import 'package:trina_grid/trina_grid.dart';
 
 class LogTable extends StatefulWidget {
 
@@ -36,15 +35,13 @@ DateTimeRange _nowEmptyDateTimeRange() {
   );
 }
 
-
 enum LogTableStateScreen{
     loading, error, ready
 }
 
 class _LogTableState extends State<LogTable> {
-  late PlutoGridStateManager stateManager;
-  Map<int, PlutoRow> rowMap = {};
-
+  late TrinaGridStateManager stateManager;
+  Map<int, TrinaRow> rowMap = {};
 
   DateTimeRange _selectedDateRange = _nowEmptyDateTimeRange();
 
@@ -63,16 +60,16 @@ class _LogTableState extends State<LogTable> {
     return Key("LogTable${(rowId).toString()}");
   }
 
-  PlutoRow _genShimmerRow(int index, int indexOffset) {
-    final row = PlutoRow(
+  TrinaRow _genShimmerRow(int index, int indexOffset) {
+    final row = TrinaRow(
         key: _genRowKey(index+indexOffset),
         cells: {
-          'Origin'    : PlutoCell(value: null),
-          'RecievedAt': PlutoCell(value: null),
-          'Facility'  : PlutoCell(value: null),
-          'Severity'  : PlutoCell(value: null),
-          'PID'       : PlutoCell(value: null),
-          'Message'   : PlutoCell(value: null),
+          'Origin'    : TrinaCell(value: null),
+          'RecievedAt': TrinaCell(value: null),
+          'Facility'  : TrinaCell(value: null),
+          'Severity'  : TrinaCell(value: null),
+          'PID'       : TrinaCell(value: null),
+          'Message'   : TrinaCell(value: null),
         },
       );
 
@@ -80,7 +77,7 @@ class _LogTableState extends State<LogTable> {
       return row;
   }
 
-  List<PlutoRow> _genShimmerRows(SyslogTableCache cache) {
+  List<TrinaRow> _genShimmerRows(SyslogTableCache cache) {
     int rowCount = cache.messageCount != 0 ? cache.requestedCount : 0;
     int indexOffset = cache.reserveRows(rowCount);
     return List.generate(rowCount, ((index) => _genShimmerRow(index, indexOffset)));
@@ -88,10 +85,10 @@ class _LogTableState extends State<LogTable> {
 
   Widget _makeLogTable(SyslogTableCache cache, WidgetRef ref)  {
     // handle retries and loading
-    return PlutoGrid(
+    return TrinaGrid(
       columns: columns,
       rows: [],
-      onLoaded: (PlutoGridOnLoadedEvent event) {
+      onLoaded: (TrinaGridOnLoadedEvent event) {
         stateManager = event.stateManager;
         stateManager.setShowColumnFilter(true);
 
@@ -106,15 +103,15 @@ class _LogTableState extends State<LogTable> {
         });
 
       },
-      configuration: PlutoGridConfiguration(
+      configuration: TrinaGridConfiguration(
         enableMoveHorizontalInEditing: true,
-        columnSize: PlutoGridColumnSizeConfig(
-          autoSizeMode: PlutoAutoSizeMode.scale,
-          resizeMode: PlutoResizeMode.normal
+        columnSize: TrinaGridColumnSizeConfig(
+          autoSizeMode: TrinaAutoSizeMode.scale,
+          resizeMode: TrinaResizeMode.normal
         ),
       ),
       onChanged: null,
-      mode: PlutoGridMode.readOnly,
+      mode: TrinaGridMode.readOnly,
     );
   }
 
@@ -130,7 +127,7 @@ class _LogTableState extends State<LogTable> {
             final int offset = cache.getNextRowIndex();
 
             // if we're outpacing the hydration, don't append more than once
-            final List<PlutoRow> shimmerRows = _genShimmerRows(cache);
+            final List<TrinaRow> shimmerRows = _genShimmerRows(cache);
             stateManager.appendRows(shimmerRows);
             stateManager.notifyListeners();
 

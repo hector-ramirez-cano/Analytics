@@ -8,11 +8,9 @@ part 'canvas_tab_notifier.g.dart';
 class _CanvasTab {
   static Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_canvas_tab_logging", false));
 
-
   final UniqueKey? selected;
   final Map<UniqueKey, String> tabs;
   final List<UniqueKey> order;
-
 
   const _CanvasTab({
     required this.selected,
@@ -25,7 +23,6 @@ class _CanvasTab {
 class CanvasTab extends _$CanvasTab {
   
   @override _CanvasTab build() => _CanvasTab(selected: null, order: [], tabs: {});
-
 
   void setSelected(UniqueKey id) {
     state = _CanvasTab(
@@ -63,7 +60,6 @@ class CanvasTab extends _$CanvasTab {
     if (id == state.selected) {
       selected = null;
     }
-
 
     _CanvasTab.logger.d("Canvas Tab, removed tab, id=$id");
 

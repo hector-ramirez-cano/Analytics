@@ -82,7 +82,6 @@ class _GeoSelectDialogState extends ConsumerState<GeoSelector> {
     });
   }
 
-
   @override
   void initState() {
     super.initState();

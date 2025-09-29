@@ -72,8 +72,6 @@ class SyslogBuffer extends _$SyslogBuffer {
       throw(messageCount.err().expect("[ERROR]Error result doesn't contain an error message"), StackTrace.current);
     }
 
-
-
     ref.onDispose(() {
       SyslogBuffer.logger.d('Dettached Stream Subscription');
       _batchTimer?.cancel();
@@ -118,7 +116,6 @@ class SyslogBuffer extends _$SyslogBuffer {
 
     return Result.ok(decoded['count'] as int);
   }
-
 
   int _attachListener(Stream stream, DateTimeRange range,) {
     SyslogBuffer.logger.d('Attached Stream Subscription');
@@ -167,7 +164,6 @@ class SyslogBuffer extends _$SyslogBuffer {
 
   }
 
-
   void requestMoreRows(int count) {
     final request = jsonEncode({'type': 'request-data', 'count': count});
     _channel.sink.add(request);
@@ -184,6 +180,5 @@ class SyslogBuffer extends _$SyslogBuffer {
     logger.w('WebSocket connection closed');
     // Optionally update state or trigger reconnection
   }
-
 
 }

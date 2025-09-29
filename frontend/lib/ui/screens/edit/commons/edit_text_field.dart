@@ -80,7 +80,6 @@ class EditTextField extends StatelessWidget {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     var input = makeTrailingInput();

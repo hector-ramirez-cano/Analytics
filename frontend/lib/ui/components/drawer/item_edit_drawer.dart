@@ -7,7 +7,6 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/topology_tree.dart';
 
-
 // Rename to drawer for clarity
 class ItemEditDrawer extends StatelessWidget {
   final Topology topology;

@@ -34,7 +34,6 @@ class _LiveLogViewerState extends ConsumerState<LiveLogViewer> {
     });
   }
 
-
   @override
   void dispose() {
     super.dispose();
@@ -94,6 +93,5 @@ class _LiveLogViewerState extends ConsumerState<LiveLogViewer> {
       },
     );
   }
-
 
 }

@@ -14,7 +14,6 @@ import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
 import 'package:settings_ui/settings_ui.dart';
 
-
 class DeviceGeneralSettings extends ConsumerStatefulWidget {
   const DeviceGeneralSettings(
     this.topology,
@@ -238,8 +237,6 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
       onGeoPositionChanged: onGeoPositionChanged
     ).show(context);
   }
-
-
 
   @override
   void initState() {

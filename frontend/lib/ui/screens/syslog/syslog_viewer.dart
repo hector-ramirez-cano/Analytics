@@ -12,7 +12,6 @@ class SyslogViewer extends ConsumerStatefulWidget {
     super.key,
   });
 
-
   @override
   ConsumerState<SyslogViewer> createState() => _SyslogViewerState();
 }

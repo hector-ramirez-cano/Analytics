@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS Analytics.devices (
     device_name         VARCHAR(254),
     position_x          FLOAT        NOT NULL,
     position_y          FLOAT        NOT NULL,
-    latitude            FLOAT        NOT NULL, -- TODO: Create constraints
-    longitude           FLOAT        NOT NULL, -- TODO: Create Constraints
+    latitude            FLOAT        NOT NULL,
+    longitude           FLOAT        NOT NULL,
     management_hostname VARCHAR(254) NOT NULL,
     metadata            JSONB,
     FOREIGN KEY (device_id) REFERENCES Analytics.items(id) ON DELETE CASCADE,

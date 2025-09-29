@@ -22,7 +22,6 @@ class Section {
 
 }
 
-
 extension on TreeNode {
   Widget get icon {
     const double iconSize = 16;
@@ -182,7 +181,6 @@ class TopologyTree extends StatelessWidget {
       onItemTap: onItemTap,
     );
   }
-
 
   @override
   Widget build(BuildContext context) {

@@ -18,7 +18,6 @@ String formatRange(DateTimeRange? range) {
   return '${_formatDate(range.start)}   ⟶   ${_formatDate(range.end)}';
 }
 
-
 /// A widget that displays a selected date range and opens a dialog on tap.
 class DateRangePicker extends StatefulWidget {
   /// Initial value, optional.

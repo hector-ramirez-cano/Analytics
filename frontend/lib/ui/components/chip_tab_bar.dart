@@ -62,7 +62,6 @@ class ChipTabBar extends StatelessWidget {
           var notifier = ref.watch(canvasTabProvider.notifier);
           var children = _makeChipTabs(notifier, selected);
 
-
           return Scrollbar(
             thumbVisibility: false,
             child: SingleChildScrollView(

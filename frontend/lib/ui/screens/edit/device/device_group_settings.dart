@@ -34,7 +34,6 @@ class DeviceGroupSettings extends StatelessWidget{
     return list;
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Consumer(builder: (context, ref, _) {

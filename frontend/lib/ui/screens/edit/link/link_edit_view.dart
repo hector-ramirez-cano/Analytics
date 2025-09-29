@@ -18,7 +18,6 @@ import 'package:settings_ui/settings_ui.dart';
 class LinkEditView extends ConsumerStatefulWidget {
   final Topology topology;
 
-
   const LinkEditView({
     super.key,
     required this.topology, 
@@ -215,7 +214,6 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
       onClose: onClose,
       isSelectedFn: isSelectedFn
     );
-
 
     return dialog.show(context);
   }

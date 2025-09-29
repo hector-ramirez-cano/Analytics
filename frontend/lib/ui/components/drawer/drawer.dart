@@ -72,7 +72,6 @@ class _SideDrawerState extends ConsumerState<SideDrawer> {
           loading: ()          => _buildOnNotSuccessful(null, true)
         );
 
-
       default:
         if (selectedPanel?.hasDrawer == true) {
           SideDrawer.logger.w("Creating drawer panel with default text");

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:network_analytics/models/syslog/syslog_facility.dart';
 import 'package:network_analytics/models/syslog/syslog_severity.dart';
-import 'package:pluto_grid/pluto_grid.dart';
+import 'package:trina_grid/trina_grid.dart';
 import 'package:shimmer/shimmer.dart';
 
 final shimmer = Shimmer.fromColors(
@@ -14,8 +14,7 @@ final shimmer = Shimmer.fromColors(
   ),
 );
 
-
-Widget columnRenderer(PlutoColumnRendererContext context) {
+Widget columnRenderer(TrinaColumnRendererContext context) {
   final available = context.cell.value != null;
 
   if (available) {
@@ -25,34 +24,34 @@ Widget columnRenderer(PlutoColumnRendererContext context) {
   return shimmer;
 }
 
-final List<PlutoColumn> columns = [
-      PlutoColumn(
+final List<TrinaColumn> columns = [
+      TrinaColumn(
         title: "Origen",field: "Origin",
-        type: PlutoColumnType.text(), renderer: columnRenderer,
+        type: TrinaColumnType.text(), renderer: columnRenderer,
         enableSorting: true, enableFilterMenuItem: true, width: 64),
 
-      PlutoColumn(
+      TrinaColumn(
         title: "Recibido", field: "RecievedAt",
-        type: PlutoColumnType.date(format: "yyyy-MM-dd hh:mm:ss"), renderer: columnRenderer,
+        type: TrinaColumnType.date(format: "yyyy-MM-dd hh:mm:ss"), renderer: columnRenderer,
         enableSorting: true, enableFilterMenuItem: true, width: 50),
 
-      PlutoColumn(
+      TrinaColumn(
         title: "Facility", field: "Facility",
-        type: PlutoColumnType.select(SyslogFacility.values), renderer: columnRenderer,
+        type: TrinaColumnType.select(SyslogFacility.values), renderer: columnRenderer,
         enableSorting: true, enableFilterMenuItem: true, width: 32),
 
-      PlutoColumn(
+      TrinaColumn(
         title: "Severidad", field: "Severity",
-        type: PlutoColumnType.select(SyslogSeverity.values), renderer: columnRenderer,
+        type: TrinaColumnType.select(SyslogSeverity.values), renderer: columnRenderer,
         enableSorting: true, enableFilterMenuItem: true, width: 32),
 
-      PlutoColumn(
+      TrinaColumn(
         title: "PID", field: "PID",
-        type: PlutoColumnType.number(negative: false, format: "########"), renderer: columnRenderer,
+        type: TrinaColumnType.number(negative: false, format: "########"), renderer: columnRenderer,
         enableSorting: false, enableFilterMenuItem: true, width: 32,),
 
-      PlutoColumn(
+      TrinaColumn(
         title: "Mensaje", field: "Message",
-        type: PlutoColumnType.text(), renderer: columnRenderer,
+        type: TrinaColumnType.text(), renderer: columnRenderer,
         enableSorting: false, enableFilterMenuItem: true,),
     ];

@@ -19,7 +19,6 @@ class AppColors {
     ..style = PaintingStyle.stroke
     ..strokeWidth = 3.0;
 
-
   // Paint used for a link that's selected via click, or other ui direct interactions
   static final Paint selectedLinkPaint = Paint()
     ..color = Color.fromRGBO(3, 177, 90, 1)

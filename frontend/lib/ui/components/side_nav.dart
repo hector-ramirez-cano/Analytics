@@ -24,7 +24,6 @@ class SideNav extends StatelessWidget {
     ref.read(itemEditSelectionProvider.notifier).discard();
   }
 
-
   void _handleNavClick(NavigationRailItem clickedItem, WidgetRef ref) {
     NavigationRailItem? selected;
     bool setOpen;

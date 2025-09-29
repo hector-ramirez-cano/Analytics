@@ -134,7 +134,6 @@ class Device extends GroupableItem<Device> implements HoverTarget{
 
   }
 
-
   /// Returns whether a given [metric] is modified in the current instance, in reference to the original [topology]
   bool isModifiedMetric(String metric, Topology topology) {
     return requestedMetrics.contains(metric) != (topology.items[id] as Device?)?.requestedMetrics.contains(metric);

@@ -11,14 +11,11 @@ final _topologyServiceProvider = Provider<TopologyService>((ref) {
   );
 });
 
-
 final topologyProvider = FutureProvider<Topology>((ref) async {
   final service = ref.watch(_topologyServiceProvider);
 
   return service.fetchItems();
 });
-
-
 
 final canvasInteractionServiceProvider = Provider<CanvasInteractionService>((ref) {
   return CanvasInteractionService();

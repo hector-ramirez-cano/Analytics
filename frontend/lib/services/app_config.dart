@@ -19,7 +19,6 @@ class AppConfig {
     return _config?[key];
   }
 
-
 // TODO: add unit tests
   /// Traverse the config file by path, and caches the content for future requests with the same path
   /// 

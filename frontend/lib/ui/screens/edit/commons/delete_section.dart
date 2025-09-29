@@ -27,7 +27,6 @@ class DeleteSection extends StatelessWidget {
         return Colors.grey;
       }
 
-
       if (states.contains(WidgetState.hovered)) {
         return const Color.fromRGBO(226, 71, 71, 1);
       } 

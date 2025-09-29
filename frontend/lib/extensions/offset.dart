@@ -31,7 +31,6 @@ extension GlobalCoordinateConversion on Offset {
     return Offset(pixelX, pixelY);
   }
 
-
   Offset pixelToGlobal(Size canvasSize, double scale, Offset centerOffset) {
     final halfW = canvasSize.width / 2;
     final halfH = canvasSize.height / 2;

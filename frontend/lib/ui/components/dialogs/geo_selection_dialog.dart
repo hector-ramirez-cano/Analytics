@@ -9,7 +9,6 @@ class GeoSelectionDialog {
   Function() onClose;
   Function(LatLng) onGeoPositionChanged;
 
-
   GeoSelectionDialog({
     required this.initialPosition,
     required this.onClose,

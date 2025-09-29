@@ -34,7 +34,6 @@ class DrawerState extends _$DrawerState {
     state = _DrawerState(isOpen: !state.isOpen, screen: state.screen);
   }
 
-
   
 
 }
