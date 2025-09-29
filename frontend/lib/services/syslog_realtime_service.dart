@@ -8,26 +8,25 @@ import 'package:web_socket_channel/status.dart' as status;
 
 part 'syslog_realtime_service.g.dart';
 
-class WsSyslogMessage {
-  final RingBuffer<String> queue;
-  final int version;
-
-  WsSyslogMessage({
+class WsSyslogMessageQueue {
+  WsSyslogMessageQueue({
     required this.queue,
     required this.version,
   }); 
 
+  factory WsSyslogMessageQueue.empty() =>
+      WsSyslogMessageQueue(queue: RingBuffer<String>(AppConfig.getOrDefault("syslog/max_buffer_lines")), version: 0);
 
-  factory WsSyslogMessage.empty() =>
-      WsSyslogMessage(queue: RingBuffer<String>(AppConfig.getOrDefault("syslog/max_buffer_lines")), version: 0);
-
-  // immutable "copy" with bumped version
-  WsSyslogMessage bump() => WsSyslogMessage(queue: queue, version: version + 1);
+  final RingBuffer<String> queue;
+  final int version;
 
   @override
   String toString() {
     return queue.toString();
   }
+
+  // immutable "copy" with bumped version, shallow copies the queue, and increases the version to notify a change
+  WsSyslogMessageQueue bump() => WsSyslogMessageQueue(queue: queue, version: version + 1);
 }
 
 @riverpod
@@ -35,11 +34,8 @@ class SyslogRealtimeService extends _$SyslogRealtimeService {
   WebSocketChannel? _channel;
   StreamSubscription? _sub;
 
-  @override
-  WsSyslogMessage build() {
-    _connect();
-    ref.onDispose(_dispose);
-    return WsSyslogMessage.empty();
+  void send(String msg) {
+    _channel?.sink.add(msg);
   }
 
   void _connect() {
@@ -47,6 +43,7 @@ class SyslogRealtimeService extends _$SyslogRealtimeService {
       Uri.parse(AppConfig.getOrDefault("ws/syslog_rt_ws_endpoint"))
     );
 
+    // TODO: Add on cancel handling
     _sub = _channel!.stream.listen((data) {
       final parsed = _parseMessage(data);
       
@@ -54,7 +51,6 @@ class SyslogRealtimeService extends _$SyslogRealtimeService {
 
       // force riverpod to update the widgets
       state = state.bump();
-
 
       Logger().d("RX'd $parsed, length=${state.queue.length}");
     });
@@ -64,12 +60,15 @@ class SyslogRealtimeService extends _$SyslogRealtimeService {
     return data.toString();
   }
 
-  void send(String msg) {
-    _channel?.sink.add(msg);
-  }
-
   void _dispose() {
     _sub?.cancel();
     _channel?.sink.close(status.normalClosure);
+  }
+
+  @override
+  WsSyslogMessageQueue build() {
+    _connect();
+    ref.onDispose(_dispose);
+    return WsSyslogMessageQueue.empty();
   }
 }

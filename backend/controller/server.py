@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import json
 import threading
+from warnings import deprecated
 
 import janus
 from quart import Quart, send_from_directory, Response, websocket, request
@@ -43,7 +44,6 @@ async def api_get_topology():
     topology = json.dumps(topology)
     return Response(topology, content_type="application/json")
     # return await send_from_directory(routes_dir, "test-data.json")
-
 
 @app.route("/api/syslog/message_count")
 async def api_syslog_message_count():
@@ -111,8 +111,14 @@ async def api_syslog_ws():
     async def rx():
         while True:
             data = await websocket.receive_json()
-            for obj in data:
-                await signal_queue.async_q.put(obj)
+            # if 'list', handle the multiple commands
+            if type(data) is list:
+                for obj in data:
+                    await signal_queue.async_q.put(obj)
+            elif type(data) is dict:
+                # if 'dict', it's only one, so only execute once
+                await signal_queue.async_q.put(data)
+
 
 
     async def tx():

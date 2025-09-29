@@ -32,4 +32,9 @@ enum SyslogFacility {
     }
     return null;
   }
+
+  @override 
+  String toString() {
+    return super.toString().substring("SyslogFacility.".length);
+  }
 }

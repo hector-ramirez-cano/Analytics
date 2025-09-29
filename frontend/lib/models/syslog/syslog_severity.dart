@@ -1,5 +1,5 @@
 /// Syslog severity levels as specified in the RFC 5424 https://www.rfc-editor.org/rfc/rfc5424
-enum SyslogServerity {
+enum SyslogSeverity {
   emerg,
   alert,
   crit,
@@ -10,11 +10,16 @@ enum SyslogServerity {
   debug;
 
   /// Returns the corresponding SyslogSeverity corresponding with the numeric value, or null if out of range
-  static SyslogServerity? fromInt(int value) {
+  static SyslogSeverity? fromInt(int value) {
     if (value >= 0 && value <= 7) {
-      return SyslogServerity.values[value];
+      return SyslogSeverity.values[value];
     }
 
     return null;
+  }
+
+    @override 
+  String toString() {
+    return super.toString().substring("SyslogSeverity.".length);
   }
 }

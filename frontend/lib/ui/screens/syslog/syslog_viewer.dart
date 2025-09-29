@@ -46,7 +46,7 @@ class _SyslogViewerState extends ConsumerState<SyslogViewer> {
 
     Widget _makeRetryIndicator(WidgetRef ref, BuildContext context, dynamic err, StackTrace? st) {
     void onRetry() async {
-      final _ = ref.invalidate(syslogTableProvider);
+      // TODO: Make it retry
     }
 
     return Center(

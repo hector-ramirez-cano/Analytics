@@ -103,7 +103,7 @@ class SyslogBackend(SyslogUDPServer):
                 local_addr=(server.host, server.port),
             )
         except OSError as e:
-            print("[ERROR][SYSLOG]Failed to init Syslog with the following error: "+e.strerror)
+            print("[ERROR][SYSLOG]Failed to init Syslog with the following error: "+str(e.strerror))
             return
 
         print("[INFO ][SYSLOG]Server is listening...")

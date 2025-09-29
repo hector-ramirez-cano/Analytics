@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import json
 import os
 import threading
 from itertools import islice
@@ -67,18 +68,51 @@ def __get_log_stream(start_time: datetime.datetime, end_time: datetime.datetime,
             conn.execute(f"ATTACH DATABASE '{db_path}' AS {alias}")
 
             yield from conn.execute(
-                f"SELECT * FROM {alias}.SystemEvents WHERE ReceivedAt BETWEEN ? AND ? OFFSET = ?",
+                f"SELECT * FROM {alias}.SystemEvents WHERE ReceivedAt BETWEEN ? AND ? LIMIT -1 OFFSET ? ",
                 (start_time, end_time, offset)
             )
 
             conn.execute(f"DETACH DATABASE {alias}")
     except Exception as e:
-        print(e)
+        print("[ERROR][SYSLOG][DB]SQL ERROR=", e)
     finally:
         conn.close()
 
 
-def get_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue, finished: threading.Event):
+def __handle_log_stream_set_range(signal : dict) -> Generator[Tuple[Any, ...], None, None]:
+    start = datetime.datetime.fromtimestamp(float(signal["start"]))
+    end = datetime.datetime.fromtimestamp(float(signal["end"]))
+    offset = signal.get("offset", 0)
+    return __get_log_stream(start, end, offset)
+
+
+
+def __handle_log_stream_request_data(generator: Generator[Tuple[Any, ...], None, None], signal: dict, data_queue: janus.SyncQueue):
+    if generator is None:
+        data_queue.put_nowait(json.dumps({
+            "type": "error",
+            "msg": "[ERROR][SYSLOG][WS]syslog date stream data requested before a date range is set!"
+        }))
+        print("[ERROR][SYSLOG][WS]syslog date stream data requested before a date range is set!")
+
+    # moar data is requested
+    count = signal["count"]
+    for log in islice(generator, count):
+        data_queue.put_nowait(json.dumps(log))
+
+
+def __handle_log_stream_request_size(signal: dict, data_queue: janus.SyncQueue):
+    print("Request Size")
+    try:
+        start = datetime.datetime.fromtimestamp(float(signal["start"]))
+        end = datetime.datetime.fromtimestamp(float(signal["end"]))
+        count = get_row_count(start, end)
+        data_queue.put_nowait(json.dumps({"type": "request-size", "count": count}))
+    except Exception as e:
+        data_queue.put_nowait(json.dumps({"type": "error", "msg": str(e)}))
+
+
+def get_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue[dict], finished: threading.Event):
     start_date: datetime.datetime
     end_date: datetime.datetime
     offset = 0
@@ -88,22 +122,28 @@ def get_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue, f
         # Block the thread until a signal is rxd
         signal = signal_queue.get()
 
-        match signal["type"]:
-            case "set-date":
-                # date set, reset the generator to yield values in the new range
-                start_date = datetime.datetime.strptime(signal["start-date"], "%Y-%m-%d %H:%M:%S.%f")
-                end_date   = datetime.datetime.strptime(signal["end-date"]  , "%Y-%m-%d %H:%M:%S.%f")
-                offset     = signal["offset"]
-                generator  = __get_log_stream(start_date, end_date, offset)
+        # noinspection PyBroadException
+        try:
+            match signal["type"]:
+                case "set-range":
+                    generator  = __handle_log_stream_set_range(signal)
 
-            case "request":
-                if generator is None:
-                    raise "syslog date stream data requested before a date range is set!"
+                case "request-data":
+                    __handle_log_stream_request_data(generator, signal, data_queue)
 
-                # moar data is requested
-                count = signal["count"]
-                for log in islice(generator, count):
-                    data_queue.put_nowait(log)
+                case "request-size":
+                    __handle_log_stream_request_size(signal, data_queue)
+
+                case _:
+                    data_queue.put_nowait(json.dumps({
+                        "type": "error",
+                        "msg": f"[ERROR][SYSLOG][WS]Malformed websocket request = '% s' ignoring..."%str(signal)
+                    }))
+                    print("[ERROR][SYSLOG][WS]Malformed websocket request = '", signal, "' ignoring...")
+
+        except Exception as e:
+            data_queue.put_nowait(json.dumps({"type": "error", "msg": "BACKEND ERROR: " + str(e)}))
+
 
 
 def get_row_count(start_time : datetime.datetime, end_time: datetime.datetime) -> int:

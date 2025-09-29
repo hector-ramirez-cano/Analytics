@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/models/syslog/syslog_facility.dart';
-import 'package:network_analytics/models/syslog/syslog_serverity.dart';
+import 'package:logger/web.dart';
 import 'package:network_analytics/models/syslog/syslog_table_cache.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/syslog_db_service.dart';
 import 'package:network_analytics/ui/components/date_range_picker.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
+import 'package:network_analytics/ui/screens/syslog/log_table_columns.dart';
 import 'package:pluto_grid/pluto_grid.dart';
-import 'package:shimmer/shimmer.dart';
 
 
 class LogTable extends StatefulWidget {
@@ -24,77 +23,49 @@ class LogTable extends StatefulWidget {
   State<LogTable> createState() => _LogTableState();
 }
 
+/// Creates a [DateTime] for .now(), and sets both the start of the [DateTimeRange] to it, truncating anything after days
+/// This is used so the LogTable defaults to a range of 0 seconds at this moment,
+/// but doesn't deviate if it's recreated more than once
+DateTimeRange _nowEmptyDateTimeRange() {
+  final datetime = DateTime.now();
+
+  // truncate seconds and millis, and set them for both start and end
+  return DateTimeRange(
+    start: DateTime(datetime.year, datetime.month, datetime.day),
+    end  : DateTime(datetime.year, datetime.month, datetime.day),
+  );
+}
+
+
+enum LogTableStateScreen{
+    loading, error, ready
+}
+
 class _LogTableState extends State<LogTable> {
   late PlutoGridStateManager stateManager;
-  DateTimeRange _selectedDateRange = DateTimeRange(start: DateTime.now(), end: DateTime.now());
+  Map<int, PlutoRow> rowMap = {};
+
+
+  DateTimeRange _selectedDateRange = _nowEmptyDateTimeRange();
 
   Widget _makeRetryIndicator(WidgetRef ref, BuildContext context, dynamic err, StackTrace? st) {
     void onRetry() async {
-      final _ = ref.invalidate(syslogTableProvider.from);
+      // TODO: Reinstate invalidation
+      //final _ = ref.invalidate(syslogTableProvider.from);
     }
 
     return Center(
-      child: RetryIndicator(onRetry: () async => onRetry(), isLoading: err != null, error: err,)
+      child: RetryIndicator(onRetry: () async => onRetry(), isLoading: err == null, error: err,)
     );
   }
 
-  Widget _makeLogTable(SyslogTableCache cache) {
+  Key _genRowKey(int rowId) {
+    return Key("LogTable${(rowId).toString()}");
+  }
 
-    final shimmer = Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
-        child: Container(
-          width: double.infinity,
-          height: 16,
-          color: Colors.grey[300],
-        ),
-      );
-
-    Widget columnRenderer(PlutoColumnRendererContext context) {
-      final row = context.rowIdx;
-      final available = false;
-
-      if (available) {
-        return Text(context.cell.value.toString(), style: TextStyle(color: Colors.black),);
-      }
-      
-      return shimmer;
-      }
-
-    List<PlutoColumn> columns = [
-      PlutoColumn(
-        title: "Origen",field: "Origin",
-        type: PlutoColumnType.text(), renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: true, width: 64),
-
-      PlutoColumn(
-        title: "Recibido", field: "RecievedAt",
-        type: PlutoColumnType.date(format: "yyyy-MM-dd   hh:mm:ss"), renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: true, width: 50),
-
-      PlutoColumn(
-        title: "Facility", field: "Facility",
-        type: PlutoColumnType.select(SyslogFacility.values), renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: true, width: 32),
-
-      PlutoColumn(
-        title: "Severidad", field: "Severity",
-        type: PlutoColumnType.select(SyslogServerity.values), renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: true, width: 32),
-
-      PlutoColumn(
-        title: "PID", field: "PID",
-        type: PlutoColumnType.number(negative: false, format: "########"), renderer: columnRenderer,
-        enableSorting: false, enableFilterMenuItem: true, width: 64,),
-
-      PlutoColumn(
-        title: "Mensaje", field: "Message",
-        type: PlutoColumnType.text(), renderer: columnRenderer,
-        enableSorting: false, enableFilterMenuItem: true,),
-    ];
-
-    List<PlutoRow> rows = List.generate(growable: false, cache.messageCount > 0 ? 20 : 0, (rowIndex) {
-      return PlutoRow(
+  PlutoRow _genShimmerRow(int index, int indexOffset) {
+    final row = PlutoRow(
+        key: _genRowKey(index+indexOffset),
         cells: {
           'Origin'    : PlutoCell(value: null),
           'RecievedAt': PlutoCell(value: null),
@@ -104,46 +75,104 @@ class _LogTableState extends State<LogTable> {
           'Message'   : PlutoCell(value: null),
         },
       );
-    });
 
-    final tableView = PlutoGrid(
-        columns: columns,
-        rows: rows,
-        onLoaded: (PlutoGridOnLoadedEvent event) {
-          stateManager = event.stateManager;
-          stateManager.setShowColumnFilter(true); // Enable filters
-        },
-        configuration: PlutoGridConfiguration(
-          enableMoveHorizontalInEditing: true,
-          columnSize: PlutoGridColumnSizeConfig(
-            autoSizeMode: PlutoAutoSizeMode.scale,
-            resizeMode: PlutoResizeMode.normal
-          ),
+      rowMap[index+indexOffset] = row;
+      return row;
+  }
 
+  List<PlutoRow> _genShimmerRows(SyslogTableCache cache) {
+    int rowCount = cache.messageCount != 0 ? cache.requestedCount : 0;
+    int indexOffset = cache.reserveRows(rowCount);
+    return List.generate(rowCount, ((index) => _genShimmerRow(index, indexOffset)));
+  }
+
+  Widget _makeLogTable(SyslogTableCache cache, WidgetRef ref)  {
+    // handle retries and loading
+    return PlutoGrid(
+      columns: columns,
+      rows: [],
+      onLoaded: (PlutoGridOnLoadedEvent event) {
+        stateManager = event.stateManager;
+        stateManager.setShowColumnFilter(true);
+
+        stateManager.scroll.vertical!.addOffsetChangedListener(() {
+          final double offset = stateManager.scroll.verticalOffset;
+          final double maxOffset = stateManager.scroll.maxScrollVertical;
+          if (maxOffset - offset < 200) {
+            final notifier = ref.read(syslogBufferProvider(_selectedDateRange).notifier);
+
+            notifier.requestMoreRows(10);
+          }
+        });
+
+      },
+      configuration: PlutoGridConfiguration(
+        enableMoveHorizontalInEditing: true,
+        columnSize: PlutoGridColumnSizeConfig(
+          autoSizeMode: PlutoAutoSizeMode.scale,
+          resizeMode: PlutoResizeMode.normal
         ),
-        onChanged: null,
-        mode: PlutoGridMode.readOnly,
-        
-      );
-
-    return tableView;
+      ),
+      onChanged: null,
+      mode: PlutoGridMode.readOnly,
+    );
   }
 
   Widget _makeLogTableArea(WidgetRef ref, BuildContext context) {
-    return ref.watch(syslogTableProvider(_selectedDateRange)).when(
-      data   : (data   ) => _makeLogTable(data),
-      loading: (       ) => _makeRetryIndicator(ref, context, null, null),
-      error  : (err, st) => _makeRetryIndicator(ref, context, err, st) // TODO: Check why this retries
-    );
+    ref.listen(syslogBufferProvider(_selectedDateRange), (AsyncValue<SyslogTableCache>? prev, AsyncValue<SyslogTableCache>? next) {
+      next?.when(
+        error: (_, _) => {},
+        loading: () => {},
+        data: (cache) {
+          // update the mfer
+          // new items created
+          if (cache.state == SyslogTableCacheState.updating) {
+            final int offset = cache.getNextRowIndex();
+
+            // if we're outpacing the hydration, don't append more than once
+            final List<PlutoRow> shimmerRows = _genShimmerRows(cache);
+            stateManager.appendRows(shimmerRows);
+            stateManager.notifyListeners();
+
+            Logger().d("updating table, appended = ${shimmerRows.length} starting at $offset, new Offset = ${cache.getNextRowIndex()}");
+          
+          } 
+          
+          // items got hydrated
+          else if (cache.state == SyslogTableCacheState.hydrated) {
+            Logger().d("hydrating table");
+            for (var messageId in cache.hydratedRows) {
+              final message = cache.messages[messageId];
+              final rowIndex = cache.messageMapping[message?.id];
+              var plutoRow = rowMap.remove(rowIndex);// rowMap[rowIndex];
+
+              if (plutoRow == null) {
+                plutoRow = _genShimmerRow(message!.id, cache.getNextRowIndex());
+                stateManager.rows.add(plutoRow);
+              }
+
+              plutoRow.cells['Origin'    ]?.value = message?.source;
+              plutoRow.cells['RecievedAt']?.value = message?.recievedAt;
+              plutoRow.cells['Facility'  ]?.value = message?.facility;
+              plutoRow.cells['Severity'  ]?.value = message?.severity;
+              plutoRow.cells['PID'       ]?.value = message?.processId;
+              plutoRow.cells['Message'   ]?.value = message?.message;
+            }
+
+            stateManager.notifyListeners();
+          }
+        },
+      );
+    });
+
+    return _makeLogTable(SyslogTableCache.empty(_selectedDateRange), ref);
   }
 
   @override
   Widget build(BuildContext conRetryontext) {
     return Consumer(builder:(context, ref, child) {
       void onDateSelect(DateTimeRange range) {
-        setState(() {
-          _selectedDateRange = range;
-        });
+        setState(() { _selectedDateRange = range; });
       }
 
       return Padding(
