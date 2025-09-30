@@ -14,7 +14,7 @@ def update_topology_cache():
     if not cache.should_update:
         return
 
-    print("[INFO ]Updating topology cache")
+    print("\n[INFO ]Updating topology cache")
 
     with postgres_db_pool().connection() as conn:
         with conn.cursor() as cur:

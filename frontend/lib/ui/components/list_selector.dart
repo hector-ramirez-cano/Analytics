@@ -15,6 +15,7 @@ class ListSelector<T> extends ConsumerStatefulWidget {
   final void Function(T, bool?) onChanged;
   final String Function(T) toText;
   final VoidCallback onClose;
+  final void Function(bool)? onTristateToggle;
 
   const ListSelector({
     super.key,
@@ -24,6 +25,7 @@ class ListSelector<T> extends ConsumerStatefulWidget {
     required this.onChanged,
     required this.onClose,
     required this.toText,
+    this.onTristateToggle,
   });
 
   @override
@@ -132,12 +134,41 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
     }
   }
 
+  Widget _makeToggleSelector() {
+    if (widget.onTristateToggle == null) { return SizedBox.shrink();}
+
+    bool some = widget.options.any((option) => widget.isSelectedFn(option));
+    bool all = widget.options.every((option) => widget.isSelectedFn(option));
+
+    // if all, true
+    // if some, null
+    // if none, false
+
+    bool? value;
+
+    if (all) { value = true; }
+    else if (some) { value = null;  }
+    else { value = false; }
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 24.0),
+          child: Checkbox(tristate: true, value: value, onChanged: (_) => widget.onTristateToggle!(!all)),
+        ),
+        Divider(height: 2,)
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(dialogRebuildProvider);
 
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 150),
+      padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 20),
       child: Center(
         child: Column(
           children: [
@@ -147,6 +178,9 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
                 _makeCloseButton(),
               ],
             ),
+
+            _makeToggleSelector(),
+            SizedBox(height: 32,),
             // Scrollable list
             _makeScrollList()
           ],

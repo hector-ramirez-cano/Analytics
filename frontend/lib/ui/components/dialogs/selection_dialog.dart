@@ -8,6 +8,7 @@ abstract class SelectionDialog<T> {
   final Function(T, bool?) onChanged;
   final VoidCallback onClose;
   final bool Function(dynamic) isSelectedFn;
+  final void Function(bool)? onTristateToggle;
 
   const SelectionDialog({
     required this.options,
@@ -15,6 +16,7 @@ abstract class SelectionDialog<T> {
     required this.onChanged,
     required this.onClose,
     required this.isSelectedFn,
+    required this.onTristateToggle
   });
   
 

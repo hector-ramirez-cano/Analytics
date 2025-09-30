@@ -37,4 +37,6 @@ enum SyslogFacility {
   String toString() {
     return super.toString().substring("SyslogFacility.".length);
   }
+
+
 }

@@ -26,14 +26,14 @@ final _syslogWsProvider = Provider<(WebSocketChannel, Stream, Completer)>((ref) 
     final connected = Completer<void>();
 
     
-    SyslogBuffer.logger.i('Attempting to start websocket on endpoint=$endpoint');
+    SyslogDbService.logger.i('Attempting to start websocket on endpoint=$endpoint');
     // TODO: Handle onError
     channel.ready.then((_) {
-      SyslogBuffer.logger.d('Websocket channel ready');
+      SyslogDbService.logger.d('Websocket channel ready');
       connected.complete();
     },
       onError: (err, st) => {
-        SyslogBuffer.logger.e('Websocket failed to connect with error = $err')
+        SyslogDbService.logger.e('Websocket failed to connect with error = $err')
       }
     );
 
@@ -42,13 +42,13 @@ final _syslogWsProvider = Provider<(WebSocketChannel, Stream, Completer)>((ref) 
     });
   return (channel, stream, connected);
   } catch (e) {
-    SyslogBuffer.logger.e(e.toString());
+    SyslogDbService.logger.e(e.toString());
     rethrow;
   }
 });
 
 @riverpod
-class SyslogBuffer extends _$SyslogBuffer {
+class SyslogDbService extends _$SyslogDbService {
   static Logger logger = Logger(filter: ConfigFilter.fromConfig('debug/enable_syslog_service_logging', false));
   late WebSocketChannel _channel;
   late Stream _stream;
@@ -57,10 +57,10 @@ class SyslogBuffer extends _$SyslogBuffer {
   final List<SyslogMessage> _pending = [];
   Timer? _batchTimer;
 
-  @override
-  Future<SyslogTableCache> build(DateTimeRange range) async {
 
-    SyslogBuffer.logger.d('Recreating SyslogTableCache notifier!');
+  @override
+  Future<SyslogTableCache> build(DateTimeRange range, SyslogFilters filters) async {
+    SyslogDbService.logger.d('Recreating SyslogTableCache notifier!');
     final ws = ref.read(_syslogWsProvider);
     _channel = ws.$1;
     _stream = ws.$2;
@@ -73,14 +73,14 @@ class SyslogBuffer extends _$SyslogBuffer {
     }
 
     ref.onDispose(() {
-      SyslogBuffer.logger.d('Dettached Stream Subscription');
+      SyslogDbService.logger.d('Dettached Stream Subscription');
       _batchTimer?.cancel();
       _streamSubscription.cancel();
     });
 
     int requestedCount = _attachListener(_stream, range);
     
-    return SyslogTableCache.empty(range)
+    return SyslogTableCache.empty(range, filters)
       .copyWith(
         state: SyslogTableCacheState.updating,
         requestedCount: requestedCount,
@@ -94,7 +94,7 @@ class SyslogBuffer extends _$SyslogBuffer {
     // await the ws connection before trying to send anything
     await _wsCompleter.future;
 
-    SyslogBuffer.logger.d('Asking backend for row count via Websocket for range = $range');
+    SyslogDbService.logger.d('Asking backend for row count via Websocket for range = $range');
 
     // ask politely - Would you kindly...
     final start = (range.start.millisecondsSinceEpoch / 1000.0).toString();
@@ -105,7 +105,7 @@ class SyslogBuffer extends _$SyslogBuffer {
     // get the data 
     final first = await stream.first;
     final decoded = jsonDecode(first);
-    SyslogBuffer.logger.d('_getRowCount recieved a message = $decoded');
+    SyslogDbService.logger.d('_getRowCount recieved a message = $decoded');
     if (decoded['type'] == 'error') {
       
       return (Result.err(decoded['msg']));
@@ -118,13 +118,20 @@ class SyslogBuffer extends _$SyslogBuffer {
   }
 
   int _attachListener(Stream stream, DateTimeRange range,) {
-    SyslogBuffer.logger.d('Attached Stream Subscription');
+    SyslogDbService.logger.d('Attached Stream Subscription');
     _streamSubscription = stream.listen((message) {
       // SyslogBuffer.logger.d('Stream Subscription recieved a message = $message');
       final decoded = jsonDecode(message);
 
-      if (decoded.runtimeType == Map && (decoded as Map).containsKey('type') && decoded['type'] == 'error') {
-        return _handleError(decoded['msg']);
+      if (decoded is Map && decoded.containsKey('type')) {
+        final type = decoded['type'];
+        if (type == 'error') {
+          return _handleError(decoded['msg']);
+        }
+        if (type == 'request-size') {
+          // ignore
+          return;
+        }
       }
 
       final row = SyslogMessage.fromJson(decoded);

@@ -12,6 +12,7 @@ class GroupItemSelectionDialog extends SelectionDialog<GroupableItem>{
     required super.onChanged,
     required super.onClose,
     required super.isSelectedFn,
+    super.onTristateToggle,
   });
   
   @override
@@ -35,6 +36,7 @@ class GroupItemSelectionDialog extends SelectionDialog<GroupableItem>{
         onChanged: onChanged,
         onClose: localOnClose,
         toText: toText,
+        onTristateToggle: onTristateToggle,
       ),
     );
     
