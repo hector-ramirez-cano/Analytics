@@ -52,11 +52,11 @@ def generate_months(start_time: datetime.datetime, end_time: datetime.datetime) 
 
 def __get_log_stream(filters: SyslogFilters) -> Generator[Tuple[Any, ...], None, None]:
     months = generate_months(filters.start_time, filters.end_time)
-    query_hub_path = "/tmp/syslog_query_hub.sqlite3"
-    if not os.path.exists(query_hub_path):
-        open(query_hub_path, "a").close()  # Create empty file
 
-    conn = sqlite3.connect(query_hub_path, timeout=10)
+    conn = sqlite3.connect(":memory:", timeout=10)
+
+    where_clause, params = filters.get_sql_where_clause()
+    select_clauses = []
 
     try:
         for month in months:
@@ -68,14 +68,18 @@ def __get_log_stream(filters: SyslogFilters) -> Generator[Tuple[Any, ...], None,
 
             conn.execute(f"ATTACH DATABASE '{db_path}' AS {alias}")
 
-            where_clause, params = filters.get_sql_where_clause()
+            select_clauses.append(f"SELECT * FROM {alias}.SystemEvents")
 
-            yield from conn.execute(
-                f"SELECT * FROM {alias}.SystemEvents WHERE {where_clause}",
-                params
-            )
 
-            conn.execute(f"DETACH DATABASE {alias}")
+        query = " UNION ALL ".join([f"{select_clause} WHERE {where_clause}" for select_clause in select_clauses])
+
+        yield from conn.execute(
+            query,
+            params*len(select_clauses)
+        )
+
+        conn.close()
+
     except Exception as e:
         print("[ERROR][SYSLOG][DB]SQL ERROR=", e)
     finally:
@@ -119,8 +123,6 @@ def get_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue[di
         # Block the thread until a signal is rxd
         signal = signal_queue.get()
 
-
-
         # noinspection PyBroadException
         try:
             match signal["type"]:
@@ -144,15 +146,13 @@ def get_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue[di
             data_queue.put_nowait(json.dumps({"type": "error", "msg": "BACKEND ERROR: " + str(e)}))
 
 
-
 def get_row_count(filters : SyslogFilters) -> int:
     months = generate_months(filters.start_time, filters.end_time)
-    query_hub_path = "/tmp/syslog_query_hub.sqlite3"
-    if not os.path.exists(query_hub_path):
-        open(query_hub_path, "a").close()  # Create empty file
 
-    conn = sqlite3.connect(query_hub_path, timeout=10)
-    count = 0
+    conn = sqlite3.connect(":memory:", timeout=10)
+
+    where_clause, params = filters.get_sql_where_clause()
+    select_clauses = []
 
     try:
         for month in months:
@@ -162,16 +162,20 @@ def get_row_count(filters : SyslogFilters) -> int:
             if not os.path.exists(db_path):
                 continue
 
-            where_clause, params = filters.get_sql_where_clause()
-
             conn.execute(f"ATTACH DATABASE '{db_path}' AS {alias}")
-            cursor = conn.execute(
-                f"SELECT count(1) FROM {alias}.SystemEvents WHERE {where_clause}",
-                params
-            )
-            count = count + cursor.fetchone()[0]
 
-            conn.execute(f"DETACH DATABASE {alias}")
+            select_clauses.append(f"SELECT count(1) FROM {alias}.SystemEvents")
+
+        query = " UNION ALL ".join([f"{select_clause} WHERE {where_clause}" for select_clause in select_clauses])
+
+        cursor = conn.execute(
+            query,
+            params*len(select_clauses)
+        )
+        count = cursor.fetchone()[0]
+
+        # Cleanup
+        conn.close()
 
         return count
     except Exception as e:
