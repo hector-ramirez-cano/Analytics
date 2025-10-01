@@ -4,3 +4,13 @@
 00:00:48: %LINEPROTO-5-UPDOWN: Line protocol Vlan1, changed state to down
 18:47:02: %SYS-5-CONFIG_I: Configured from console by vty2 (10.34.195.36)
 18:47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)
+16:42:13: %LINK-3-UPDOWN: Interface GigabitEthernet0/1, changed state to up
+16:42:14: %LINEPROTO-5-UPDOWN: Line protocol on Interface GigabitEthernet0/1, changed state to up
+16:42:15: %SYS-5-CONFIG_I: Configured from console by admin on vty0 (192.168.1.100)
+16:42:17: %SEC_LOGIN-5-LOGIN_SUCCESS: Login Success [user: admin] [Source: 192.168.1.100] [localport: 22] at 16:42:17 GMT Wed Oct 1 2025
+16:42:19: %OSPF-5-ADJCHG: Process 1, Nbr 10.0.0.2 on GigabitEthernet0/2 from LOADING to FULL, Loading Done
+16:42:21: %DHCPD-6-ADDRESS_ASSIGN: Interface GigabitEthernet0/3 assigned IP address 192.168.10.101
+16:42:23: %SYS-6-LOGGINGHOST_STARTSTOP: Logging to host 192.168.1.200 started - CLI initiated
+16:42:25: %CRYPTO-6-ISAKMP_INIT: ISAKMP Phase 1 initiated between 192.168.1.1 and 192.168.2.1
+16:42:27: %NTP-5-NTP_SYNC: System clock synchronized to NTP server 192.168.1.254
+16:42:30: %SYS-3-CPUHOG: Task is running for (2000)msecs, more than the threshold (1000)msecs

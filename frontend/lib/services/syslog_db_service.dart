@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
+import 'package:network_analytics/models/syslog/syslog_filters.dart';
 import 'package:network_analytics/models/syslog/syslog_message.dart';
 import 'package:network_analytics/models/syslog/syslog_table_cache.dart';
 import 'package:network_analytics/services/app_config.dart';
@@ -59,14 +59,14 @@ class SyslogDbService extends _$SyslogDbService {
 
 
   @override
-  Future<SyslogTableCache> build(DateTimeRange range, SyslogFilters filters) async {
+  Future<SyslogTableCache> build(SyslogFilters filters) async {
     SyslogDbService.logger.d('Recreating SyslogTableCache notifier!');
     final ws = ref.read(_syslogWsProvider);
     _channel = ws.$1;
     _stream = ws.$2;
     _wsCompleter = ws.$3;
     
-    final messageCount = await _getRowCount(_channel, _stream, range);
+    final messageCount = await _getRowCount(_channel, _stream, filters);
 
     if (messageCount.isErr()) {
       throw(messageCount.err().expect("[ERROR]Error result doesn't contain an error message"), StackTrace.current);
@@ -78,28 +78,26 @@ class SyslogDbService extends _$SyslogDbService {
       _streamSubscription.cancel();
     });
 
-    int requestedCount = _attachListener(_stream, range);
+    int requestedCount = _attachListener(_stream, filters);
     
-    return SyslogTableCache.empty(range, filters)
+    return SyslogTableCache.empty(filters)
       .copyWith(
-        state: SyslogTableCacheState.updating,
+        state: SyslogTableCacheState.createdUpdating,
         requestedCount: requestedCount,
         messageCount: messageCount.unwrap()
       );
 
   }
 
-  Future<Result<int, String>> _getRowCount(WebSocketChannel channel, Stream stream, DateTimeRange range) async {
+  Future<Result<int, String>> _getRowCount(WebSocketChannel channel, Stream stream, SyslogFilters filters) async {
 
     // await the ws connection before trying to send anything
     await _wsCompleter.future;
 
-    SyslogDbService.logger.d('Asking backend for row count via Websocket for range = $range');
+    SyslogDbService.logger.d('Asking backend for row count via Websocket for range = ${filters.range}');
 
     // ask politely - Would you kindly...
-    final start = (range.start.millisecondsSinceEpoch / 1000.0).toString();
-    final end =   (range.end.millisecondsSinceEpoch   / 1000.0).toString();
-    final request = jsonEncode([{'type': 'request-size', 'start': start, 'end': end}]);
+    final request = jsonEncode([{'type': 'request-size', ...filters.toDict()}]);
     channel.sink.add(request);
     
     // get the data 
@@ -117,7 +115,7 @@ class SyslogDbService extends _$SyslogDbService {
     return Result.ok(decoded['count'] as int);
   }
 
-  int _attachListener(Stream stream, DateTimeRange range,) {
+  int _attachListener(Stream stream, SyslogFilters filter,) {
     SyslogDbService.logger.d('Attached Stream Subscription');
     _streamSubscription = stream.listen((message) {
       // SyslogBuffer.logger.d('Stream Subscription recieved a message = $message');
@@ -142,10 +140,8 @@ class SyslogDbService extends _$SyslogDbService {
 
     // ask for initial batch
     final int requestCount = 30;
-    final start = (range.start.millisecondsSinceEpoch / 1000.0).toString();
-    final end =   (range.end.millisecondsSinceEpoch   / 1000.0).toString();
     final request = jsonEncode([
-      {'type': 'set-range', 'start': start, 'end': end, 'offset': 0},
+      {'type': 'set-filters', ...filters.toDict()},
       {'type': 'request-data', 'count': requestCount}
     ]);
     _channel.sink.add(request);
