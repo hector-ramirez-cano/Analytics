@@ -22,6 +22,9 @@ class SyslogFilters {
   /// Message itself, uses FTS
   final String message;
 
+  /// amount of rows to skip from the beningining. Inni, inni the beninging
+  final int offset;
+
   SyslogFilters({
     required this.range,
     required this.facilities,
@@ -29,6 +32,7 @@ class SyslogFilters {
     required this.origin,
     required this.pid,
     required this.message,
+    required this.offset,
   });
 
   factory SyslogFilters.empty(DateTimeRange range) {
@@ -39,6 +43,7 @@ class SyslogFilters {
       origin: "",
       pid: "",
       message: "",
+      offset: 0,
     );
   }
 
@@ -49,6 +54,7 @@ class SyslogFilters {
     String? origin,
     String? pid,
     String? message,
+    int? offset,
   }) {
     return SyslogFilters(
       range: range ?? this.range,
@@ -57,6 +63,7 @@ class SyslogFilters {
       origin: origin ?? this.origin,
       pid: pid ?? this.pid,
       message: message ?? this.message,
+      offset: offset ?? this.offset,
     );
   }
 
@@ -68,6 +75,7 @@ class SyslogFilters {
       origin: origin,
       pid: pid,
       message: message,
+      offset: offset
     );
   }
 
@@ -130,7 +138,7 @@ class SyslogFilters {
       'severity': severities.toList().map((val) => val.toString()).toList(),
       'message' : message,
       'origin'  : origin,
-      'offset': 0,
+      'offset': offset,
       'pid': pid,
     };
   }

@@ -27,27 +27,37 @@ class _LogTableState extends State<LogTable> {
 
   late TrinaGridStateManager _stateManager;
 
+  int _prevPage = 0;
+
   @override void initState() {
     super.initState();
   }
 
-  // TODO: Fix Pagination
   Future<TrinaLazyPaginationResponse> pageFetch(TrinaLazyPaginationRequest request, WidgetRef ref) async {
     
     // 1. Show loading
     _stateManager.setShowLoading(true, level: TrinaGridLoadingLevel.rows);
 
-    // 2. try fetching
+    // 2. If the user jumped pages, we need to offset
+    // if, however, we're loading page 5 and previous was 4, we can just request as is
+    if (_prevPage + 1 != request.page && _prevPage != request.page) {
+      final filters = ref.read(syslogFilterProvider);
+      final notif = ref.read(syslogFilterProvider.notifier);
+      notif.setFilters(filters.copyWith(offset: (request.page - 1) * SyslogTablePage.pageSize));
+    }
+
+    // 3. try fetching
     try {
       final notifier = ref.watch(syslogDbServiceProvider.notifier);
 
       // wait for the service to be ready (setting up ws, getting the totalMessageCount, and attaching the listeners)
       await notifier.serviceReady.future;
       final page = await notifier.fetchPage(request.page);
+      _prevPage = request.page;
       return TrinaLazyPaginationResponse(totalPage: page.pageCount, rows: _genRowsFromPage(page), totalRecords: page.messageCount);
     } finally {
 
-      // 3. Stop the shimmering animation, regardless of whether if completed, or failed
+      // 4. Stop the lading animation, regardless of whether if completed, or failed
       _stateManager.setShowLoading(false);
     }
 

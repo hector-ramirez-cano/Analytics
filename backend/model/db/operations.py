@@ -100,6 +100,7 @@ def __handle_log_stream_request_data(generator: Generator[Tuple[Any, ...], None,
     # moar data is requested
     count = signal["count"]
     for log in islice(generator, count):
+        print(log)
         data_queue.put_nowait(json.dumps(log))
 
 

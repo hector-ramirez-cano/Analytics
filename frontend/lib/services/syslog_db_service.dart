@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/debouncer.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
+import 'package:network_analytics/extensions/queue.dart';
 import 'package:network_analytics/extensions/semaphore.dart';
 import 'package:network_analytics/models/syslog/syslog_facility.dart';
 import 'package:network_analytics/models/syslog/syslog_filters.dart';
@@ -190,6 +191,7 @@ class SyslogDbService extends _$SyslogDbService {
     );
   }
 
+  // TODO: If returned rowCount was 0, return early from fetchPage
   Future<SyslogTablePage> fetchPage(int page) async {
     await serviceReady.future;
     final request = jsonEncode({'type': 'request-data', 'count': SyslogTablePage.pageSize});
@@ -199,7 +201,7 @@ class SyslogDbService extends _$SyslogDbService {
     await pageReady.future;
 
     final pageMessageCount = min(min(SyslogTablePage.pageSize, messageCount),  _pending.length);
-    final messages = _pending.take(pageMessageCount);
+    final messages = _pending.takeAndRemove(pageMessageCount);
 
     // we could have taken enought to leave less than a page-worth of items, so we need to reevaluate
     updatePageReadyFlag();

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/providers/providers.dart';
-import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/screens/syslog/live_log_view.dart';
 import 'package:network_analytics/ui/screens/syslog/log_table.dart';
 
@@ -33,20 +31,7 @@ class _SyslogViewerState extends ConsumerState<SyslogViewer> {
   }
 
   Widget _makeLogTable(WidgetRef ref) {
-
-    final topology = ref.watch(topologyProvider);
-
     return LogTable(key: Key("SyslogDbTable"));
-  }
-
-    Widget _makeRetryIndicator(WidgetRef ref, BuildContext context, dynamic err, StackTrace? st) {
-    void onRetry() async {
-      // TODO: Make it retry
-    }
-
-    return Center(
-      child: RetryIndicator(onRetry: () async => onRetry(), isLoading: err != null, error: err,)
-    );
   }
 
   List<ResizableChild> _makeContainers(WidgetRef ref) {
