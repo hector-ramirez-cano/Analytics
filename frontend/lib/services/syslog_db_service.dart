@@ -293,8 +293,10 @@ class SyslogDbService extends _$SyslogDbService {
   }
 
   void updatePageReadyFlag() {
-    // TODO: Load last page on messageCount not being divisible by pageSize
-    if (_pending.length >= SyslogTablePage.pageSize || messageCount == 0) {
+    bool ready = _pending.length >= SyslogTablePage.pageSize;
+    bool empty = messageCount == 0;
+    bool lastPageReady = messageCount % SyslogTablePage.pageSize == _pending.length;
+    if ( ready || empty || lastPageReady ) {
       pageReady.signal();
     } else {
       pageReady.reset();

@@ -33,6 +33,7 @@ class _LogTableState extends State<LogTable> {
     super.initState();
   }
 
+  // TODO: Sorting
   Future<TrinaLazyPaginationResponse> pageFetch(TrinaLazyPaginationRequest request, WidgetRef ref) async {
     
     // 1. Show loading
