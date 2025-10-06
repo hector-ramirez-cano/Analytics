@@ -55,8 +55,7 @@ def __get_log_stream(filters: SyslogFilters) -> Generator[Tuple[Any, ...], None,
 
     conn = sqlite3.connect(":memory:", timeout=10)
 
-    where_clause, params = filters.get_sql_where_clause()
-    select_clauses = []
+    databases = []
 
     try:
         for month in months:
@@ -68,14 +67,13 @@ def __get_log_stream(filters: SyslogFilters) -> Generator[Tuple[Any, ...], None,
 
             conn.execute(f"ATTACH DATABASE '{db_path}' AS {alias}")
 
-            select_clauses.append(f"SELECT * FROM {alias}.SystemEvents")
+            databases.append(alias)
 
-
-        query = " UNION ALL ".join([f"{select_clause} WHERE {where_clause}" for select_clause in select_clauses])
+        query, params = filters.get_sql_query(target= "se.*", databases=databases)
 
         yield from conn.execute(
             query,
-            params*len(select_clauses)
+            params
         )
 
         conn.close()
@@ -106,7 +104,6 @@ def __handle_log_stream_request_data(generator: Generator[Tuple[Any, ...], None,
 
 
 def __handle_log_stream_request_size(signal: dict, data_queue: janus.SyncQueue):
-    print("Request Size")
     try:
         filters = SyslogFilters.from_json(signal)
         count = get_row_count(filters)
@@ -125,6 +122,7 @@ def get_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue[di
 
         # noinspection PyBroadException
         try:
+            print(f"[DEBUG][SYSLOG] RXd message with type={signal["type"]}")
             match signal["type"]:
                 case "set-filters":
                     generator, filters  = __handle_log_stream_set_filters(signal)
@@ -151,8 +149,7 @@ def get_row_count(filters : SyslogFilters) -> int:
 
     conn = sqlite3.connect(":memory:", timeout=10)
 
-    where_clause, params = filters.get_sql_where_clause()
-    select_clauses = []
+    databases = []
 
     try:
         for month in months:
@@ -164,13 +161,13 @@ def get_row_count(filters : SyslogFilters) -> int:
 
             conn.execute(f"ATTACH DATABASE '{db_path}' AS {alias}")
 
-            select_clauses.append(f"SELECT count(1) FROM {alias}.SystemEvents")
+            databases.append(alias)
 
-        query = " UNION ALL ".join([f"{select_clause} WHERE {where_clause}" for select_clause in select_clauses])
+        query, params = filters.get_sql_query(target="count(1) AS count", databases=databases)
 
         cursor = conn.execute(
             query,
-            params*len(select_clauses)
+            params
         )
         count = cursor.fetchone()[0]
 

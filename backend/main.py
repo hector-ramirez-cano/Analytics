@@ -45,10 +45,10 @@ async def main():
     fact_queue = asyncio.Queue[tuple]()
 
     # add background tasks
-    facts_task = asyncio.create_task(gather_facts_task(stop_event, fact_queue))
-    facts_writer_task = asyncio.create_task(database_update_facts(stop_event, fact_queue))
-    syslog_task = asyncio.create_task(SyslogBackend.syslog_server_task(stop_event))
-    db_health_task = asyncio.create_task(periodic_health_check(stop_event))
+    # facts_task = asyncio.create_task(gather_facts_task(stop_event, fact_queue))
+    # facts_writer_task = asyncio.create_task(database_update_facts(stop_event, fact_queue))
+    # syslog_task = asyncio.create_task(SyslogBackend.syslog_server_task(stop_event))
+    # db_health_task = asyncio.create_task(periodic_health_check(stop_event))
 
     try:
         await server_task

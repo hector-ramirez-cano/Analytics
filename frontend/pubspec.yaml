@@ -33,7 +33,7 @@ dependencies:
         
         http: ^1.2.1
         logger: ^2.0.2
-        flutter_riverpod: ^3.0.0
+        flutter_riverpod: ^3.0.1
         riverpod_annotation: ^3.0.0
         path_drawing: ^1.0.1
         yaml: ^3.1.3
@@ -45,10 +45,11 @@ dependencies:
         free_map: ^2.5.0
         flutter_resizable_container: ^4.2.0
         web_socket_channel: ^3.0.3
-        trina_grid: ^2.0.2
+        trina_grid: ^2.1.0
         shimmer: ^3.0.0
         oxidized: ^6.2.0
         flutter_checklist: ^1.5.5
+        flutter_markdown_plus: ^1.0.5
 
         # The following adds the Cupertino Icons font to your application.
         # Use with the CupertinoIcons class for iOS style icons.
@@ -66,7 +67,7 @@ dev_dependencies:
         # activated in the `analysis_options.yaml` file located at the root of your
         # package. See that file for information about deactivating specific lint
         # rules and activating additional ones.
-        flutter_lints: ^6.0.0
+        flutter_lints: any
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -103,7 +104,7 @@ flutter:
         #                         - asset: fonts/Schyler-Regular.ttf
         #                         - asset: fonts/Schyler-Italic.ttf
         #                                 style: italic
-        #         - family: Trajan Pro
+        #         - family: Trajan Pro^1.0.8
         #                 fonts:
         #                         - asset: fonts/TrajanPro.ttf
         #                         - asset: fonts/TrajanPro_Bold.ttf

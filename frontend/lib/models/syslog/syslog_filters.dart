@@ -128,7 +128,10 @@ class SyslogFilters {
       'end': end,
       'facility': facilities.toList().map((val) => val.toString()).toList(),
       'severity': severities.toList().map((val) => val.toString()).toList(),
+      'message' : message,
+      'origin'  : origin,
       'offset': 0,
+      'pid': pid,
     };
   }
 }

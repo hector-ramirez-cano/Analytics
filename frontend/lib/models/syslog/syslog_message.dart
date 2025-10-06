@@ -37,4 +37,9 @@ class SyslogMessage {
       message: json[9]
     );
   }
+
+  @override
+  String toString() {
+    return message;
+  }
 }

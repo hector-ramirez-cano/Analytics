@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/circular_ring_buffer.dart';
 import 'package:network_analytics/services/app_config.dart';
+import 'package:network_analytics/services/syslog_db_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
@@ -45,15 +45,18 @@ class SyslogRealtimeService extends _$SyslogRealtimeService {
 
     // TODO: Add on cancel handling
     _sub = _channel!.stream.listen((data) {
-      final parsed = _parseMessage(data);
-      
-      state.queue.push(parsed);
+        final parsed = _parseMessage(data);
+        
+        state.queue.push(parsed);
 
-      // force riverpod to update the widgets
-      state = state.bump();
+        // force riverpod to update the widgets
+        state = state.bump();
 
-      Logger().d("RX'd $parsed, length=${state.queue.length}");
-    });
+        SyslogDbService.logger.d("RX'd $parsed, length=${state.queue.length}");
+      },
+      onDone: _handleDone,
+      onError: _handleError
+    );
   }
 
   String _parseMessage(dynamic data) {
@@ -63,6 +66,15 @@ class SyslogRealtimeService extends _$SyslogRealtimeService {
   void _dispose() {
     _sub?.cancel();
     _channel?.sink.close(status.normalClosure);
+  }
+
+  void _handleError(dynamic error) {
+    SyslogDbService.logger.e('WebSocket error: $error');
+  }
+
+  void _handleDone() {
+    SyslogDbService.logger.w('WebSocket connection closed');
+    // Optionally update state or trigger reconnection
   }
 
   @override

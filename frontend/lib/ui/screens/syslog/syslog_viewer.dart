@@ -36,11 +36,7 @@ class _SyslogViewerState extends ConsumerState<SyslogViewer> {
 
     final topology = ref.watch(topologyProvider);
 
-    return topology.when(
-      data   : (topology)  => LogTable(topology: topology),
-      error  : (error, st) => _makeRetryIndicator(ref, context, error.toString(), st),
-      loading: ()          => _makeRetryIndicator(ref, context, null, null)
-    );
+    return LogTable(key: Key("SyslogDbTable"));
   }
 
     Widget _makeRetryIndicator(WidgetRef ref, BuildContext context, dynamic err, StackTrace? st) {
@@ -56,10 +52,10 @@ class _SyslogViewerState extends ConsumerState<SyslogViewer> {
   List<ResizableChild> _makeContainers(WidgetRef ref) {
 
     return [
-      ResizableChild(
+      /*ResizableChild(
         size: ResizableSize.shrink(min: 250),
         child: _makeSyslogRealtimeViewer(ref)
-      ),
+      ),*/
       ResizableChild(
         size: ResizableSize.expand(min: 300),
         child: _makeLogTable(ref)
