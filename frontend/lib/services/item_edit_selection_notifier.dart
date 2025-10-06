@@ -10,7 +10,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'item_edit_selection_notifier.g.dart';
 
-class _ItemEditSelection {
+class ItemEditSelection {
   final List<AnalyticsItem> selectedStack;
   final Topology changes;
   final Topology deleted;
@@ -31,7 +31,7 @@ class _ItemEditSelection {
   final bool creatingItem;
   
 
-  const _ItemEditSelection({
+  const ItemEditSelection({
     required this.selectedStack,
     required this.changes,
     required this.deleted,
@@ -54,8 +54,8 @@ class _ItemEditSelection {
 }
 
 @riverpod
-class ItemEditSelection extends _$ItemEditSelection {
-  @override _ItemEditSelection build() => _ItemEditSelection(
+class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
+  @override ItemEditSelection build() => ItemEditSelection(
       selectedStack: [],
       changes: Topology(items: {}),
       deleted: Topology(items: {}),
@@ -125,7 +125,7 @@ class ItemEditSelection extends _$ItemEditSelection {
     bool? overrideCreatingItem,
   }) {
     if (keepState) {
-      state = _ItemEditSelection(
+      state = ItemEditSelection(
         selectedStack         : selected ?? state.selectedStack,
         deleted               : deleted ?? state.deleted,
         changes               : changes ?? state.changes,
@@ -146,7 +146,7 @@ class ItemEditSelection extends _$ItemEditSelection {
         editingDeviceGeoPosition: state.editingDeviceGeoPosition,
       );
     } else {
-      state = _ItemEditSelection(
+      state = ItemEditSelection(
         selectedStack              : selected ?? state.selectedStack,
         changes               : changes ?? state.changes,
         deleted               : deleted ?? state.deleted,

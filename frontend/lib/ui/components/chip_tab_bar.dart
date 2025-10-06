@@ -8,7 +8,7 @@ class ChipTabBar extends StatelessWidget {
 
   const ChipTabBar({super.key});
 
-  List<Widget> _makeChipTabs(CanvasTab notifier, UniqueKey? selected) {
+  List<Widget> _makeChipTabs(CanvasTabNotifier notifier, UniqueKey? selected) {
 
     closeTab(id) => notifier.remove(id);
     selectTab(id) => notifier.setSelected(id);
@@ -25,7 +25,7 @@ class ChipTabBar extends StatelessWidget {
       ).toList();
   }
 
-  Widget _makeTabBar(CanvasTab notifier, List<Widget> children) {
+  Widget _makeTabBar(CanvasTabNotifier notifier, List<Widget> children) {
     openTab() => notifier.append("Nueva Vista");
     onReorder(oldIndex, newIndex) => notifier.reoder(oldIndex, newIndex);
 
