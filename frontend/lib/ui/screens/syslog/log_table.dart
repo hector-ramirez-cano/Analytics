@@ -52,7 +52,8 @@ class _LogTableState extends State<LogTable> {
 
       // wait for the service to be ready (setting up ws, getting the totalMessageCount, and attaching the listeners)
       await notifier.serviceReady.future;
-      final page = await notifier.fetchPage(request.page);
+      final filters = ref.read(syslogFilterProvider);
+      final page = await notifier.fetchPage(request.page, filters);
       _prevPage = request.page;
       return TrinaLazyPaginationResponse(totalPage: page.pageCount, rows: _genRowsFromPage(page), totalRecords: page.messageCount);
     } finally {

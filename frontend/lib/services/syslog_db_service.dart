@@ -191,21 +191,32 @@ class SyslogDbService extends _$SyslogDbService {
     );
   }
 
-  // TODO: If returned rowCount was 0, return early from fetchPage
-  Future<SyslogTablePage> fetchPage(int page) async {
+  Future<SyslogTablePage> fetchPage(int page, SyslogFilters filters) async {
+    // 1. we wait for the service to be finished (initial request with row-count)
     await serviceReady.future;
+
+    // 2. if we don't have any rows for this filters, we simply return early; we don't bother the backend
+    if (messageCount == 0) {
+      return SyslogTablePage.empty(filters);
+    }
+
+    // 3. we have rows, let's request 'em mfers
     final request = jsonEncode({'type': 'request-data', 'count': SyslogTablePage.pageSize});
     _channel.sink.add(request);
 
+    // 4. we force a reevaluation of the status of the pending rows queue 
+    // and await there's enough rows to form a page
     updatePageReadyFlag();
     await pageReady.future;
 
+    // 5. we take the rows, and remove them from the _pending Queue
     final pageMessageCount = min(min(SyslogTablePage.pageSize, messageCount),  _pending.length);
     final messages = _pending.takeAndRemove(pageMessageCount);
 
-    // we could have taken enought to leave less than a page-worth of items, so we need to reevaluate
+    // 6. we could have taken enought to leave less than a page-worth of items, so we need to reevaluate
     updatePageReadyFlag();
     
+    // 7. we return the page for TrinaGrid to process it
     final syslogPage = SyslogTablePage(
       messageCount: messageCount,
       messages: Map.fromEntries(messages.map((msg) => MapEntry(msg.id, msg))),
