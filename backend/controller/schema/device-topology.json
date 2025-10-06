@@ -1,20 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "",
   "type": "object",
+  "required": ["devices", "links", "groups"],
   "properties": {
     "devices": {
       "type": "array",
-      "uniqueItems": true,
-      "minItems": 1,
       "items": {
-        "required": [
-          "id", "name", "coordinates"
-        ],
+        "type": "object",
+        "required": ["id", "name", "coordinates", "geocoordinates", "management-hostname", "configuration"],
         "properties": {
           "id": {
-            "type": "integer",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -22,44 +18,63 @@
           },
           "coordinates": {
             "type": "array",
-            "minLength": 2,
-            "maxLength": 2,
             "items": {
-              "type": "number",
-              "maximum": 1,
-              "minimum": -1,
-              "properties": {}
-            }
-          }
-        }
-      }
-    },
-    "groups": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "required": [
-          "name", "members", "id", "is-display-group"
-        ],
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2
           },
-          "id": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "is-display-group": {
-            "type": "boolean"
-          },
-          "members": {
-            "minLength": 0,
+          "geocoordinates": {
             "type": "array",
-            "items": {
-              "type": "integer",
-              "minLength": 1,
-              "properties": {
+            "items": [
+              {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          },
+
+          "management-hostname": {
+            "type": "string",
+            "format": "ipv4"
+          },
+          "configuration": {
+            "type": "object",
+            "required": ["available-values", "requested-metadata", "requested-metrics", "data-sources"],
+            "properties": {
+              "available-values": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "requested-metadata": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "requested-metrics": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "data-sources": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["icmp", "ssh", "snmp"]
+                },
+                "minItems": 1
               }
             }
           }
@@ -68,74 +83,11 @@
     },
     "links": {
       "type": "array",
-      "uniqueItems": true,
-      "minItems": 1,
-      "items": {
-        "required": [
-          "id",
-          "side-a",
-          "side-b",
-          "link-type"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "side-a": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "side-b": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "link_type": {
-            "type": "string",
-            "enum": ["optical", "copper", "wireless", "serial"]
-          },
-          "link_subtype": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "dependencies": {
-          "links_subtype": {
-            "oneOf": [
-              {
-                "properties": {
-                  "links_type": { "const": "optical" },
-                  "links_subtype": { "enum": ["MMF", "SMF"] }
-                }
-              },
-              {
-                "properties": {
-                  "links_type": { "const": "copper" },
-                  "links_subtype": { "enum": ["Twisted-pair", "Coaxial"] }
-                }
-              },
-              {
-                "properties": {
-                  "links_type": { "const": "wireless" },
-                  "links_subtype": { "enum": ["WiFi", "Bluetooth"] }
-                }
-              },
-              {
-                "properties": {
-                  "links_type": { "const": "serial" },
-                  "links_subtype": { "enum": ["RS-232", "RS-485"] }
-                }
-              }
-            ]
-          }
-        }
-
-      }
+      "items": {}
+    },
+    "groups": {
+      "type": "array",
+      "items": {}
     }
-  },
-  "required": [
-    "devices",
-    "groups",
-    "links"
-  ]
+  }
 }
