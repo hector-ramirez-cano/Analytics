@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS Analytics.items (
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.devices (
-    device_id           INT PRIMARY KEY,
+    device_id           SERIAL PRIMARY KEY,
     device_name         VARCHAR(254),
     position_x          FLOAT        NOT NULL,
     position_y          FLOAT        NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS Analytics.devices (
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.device_configuration (
-    device_id           INT          NOT NULL,
+    device_id           SERIAL       NOT NULL,
     requested_metadata  JSONB        NOT NULL,
     requested_metrics   JSONB        NOT NULL,
     available_values    JSONB,
@@ -36,14 +36,14 @@ CREATE TABLE IF NOT EXISTS Analytics.device_configuration (
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.device_data_sources(
-    device_id           INT        NOT NULL,
+    device_id           SERIAL,    NOT NULL,
     data_source         DataSource NOT NULL,
 
     FOREIGN KEY (device_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.links (
-    link_id   INT PRIMARY KEY,
+    link_id   SERIAL PRIMARY KEY,
     side_a    INT NOT NULL,
     side_b    INT NOT NULL,
     side_a_iface VARCHAR(254) NOT NULL,
@@ -59,11 +59,28 @@ CREATE TABLE IF NOT EXISTS Analytics.links (
 );
 
 -- enforce uniqueness of link pairs regardless of order
-CREATE UNIQUE INDEX IF NOT EXISTS uniq_link_pair
+CREATE UNIQUE INDEX IF NOT EXISTS unique_link_pair
 ON Analytics.links (LEAST(side_a, side_b), GREATEST(side_a, side_b));
 
+CREATE TYPE AlertSeverity AS ENUM('emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug');
+CREATE TABLE IF NOT EXISTS Analytics.alerts (
+    alert_id     SERIAL,
+    alert_time   TIMESTAMP NOT NULL,
+    ack_time     TIMESTAMP,
+    requires_ack BOOLEAN NOT NULL,
+    severity     AlertSeverity NOT NULL,
+    message      VARCHAR,
+    ack_actor    VARCHAR
+);
+CREATE TABLE IF NOT EXISTS Analytics.alert_rules (
+    rule_id         SERIAL,
+    rule_name       VARCHAR(128),
+    requires_ack    BOOLEAN NOT NULL,
+    rule_definition JSONB
+);
+
 CREATE TABLE IF NOT EXISTS Analytics.groups (
-    group_id INT PRIMARY KEY,
+    group_id SERIAL PRIMARY KEY,
     group_name VARCHAR(254) NOT NULL,
     is_display_group BOOLEAN NOT NULL,
 

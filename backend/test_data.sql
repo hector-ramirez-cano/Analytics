@@ -68,3 +68,16 @@ INSERT INTO Analytics.group_members(group_id, item_id)
 -- Should fail, a group cant contain itself
 -- TODO: Handle actual parent-child recursion
 -- INSERT INTO Analytics.group_members(group_id, item_id) VALUES (203, 203);
+
+
+-- CREATE TABLE IF NOT EXISTS Analytics.alert_rules (
+--     rule_id         INT PRIMARY KEY,
+--     rule_name       VARCHAR(128),
+--     requires_ack    BOOLEAN NOT NULL,
+--     rule_definition JSONB
+-- );
+
+TRUNCATE Analytics.alert_rules;
+
+INSERT INTO Analytics.alert_rules (rule_id, rule_name, requires_ack, rule_definition)
+    VALUES (1, 'TEST-01', TRUE, '{"level":"warning","target":1,"source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":130},{"left":20,"op":"less_than","right":"&icmp_jitter"}]}')
