@@ -1,13 +1,15 @@
 import time
 
 from backend.Config import Config
+from backend.model.data.device import Device
+from backend.model.data.group import Group
 
 
 class Cache(object):
 
     __devices : dict = {}
-    __links   : list = ()
-    __groups  : list = ()
+    __links   : dict = {}
+    __groups  : dict = {}
 
     __last_update = 0 # Epoch
 
@@ -31,15 +33,15 @@ class Cache(object):
 
 
     @property
-    def devices(self):
+    def devices(self) -> dict:
         return self.__devices
 
     @property
-    def links(self):
+    def links(self) -> dict:
         return self.__links
 
     @property
-    def groups(self):
+    def groups(self) -> dict:
         return self.__groups
 
     @property
@@ -47,11 +49,11 @@ class Cache(object):
         return [self.__devices, self.__links, self.__groups]
 
     @property
-    def should_update(self):
+    def should_update(self) -> bool:
         return time.time() - self.__last_update > Config.get("backend/controller/cache/cache_invalidation_s", 60)
 
     @property
-    def last_update(self):
+    def last_update(self) -> float:
         return self.__last_update
 
     @devices.setter
@@ -70,6 +72,10 @@ class Cache(object):
         self.__last_update = time.time()
 
 
+    def get_item(self, item_id: int) -> Device | Group:
+        return self.__devices.get(item_id, self.__groups.get(item_id, None))
+
+
     def update(self, devices, links, groups):
         self.__devices = devices
         self.__links = links
@@ -77,4 +83,5 @@ class Cache(object):
 
         self.__last_update = time.time()
 
+# TODO: Turn this into a singleton
 cache = Cache()

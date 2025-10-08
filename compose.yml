@@ -23,5 +23,5 @@ services:
     volumes:
       - ./influxdb2:/var/lib/influxdb2
 
-volumes:
+volumes: 
   postgres_data:

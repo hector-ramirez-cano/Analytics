@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class AlertLevel(Enum):
+class AlertSeverity(Enum):
     emergency = "emergency"
     alert     = "alert"
     critical  = "critical"
@@ -12,8 +12,11 @@ class AlertLevel(Enum):
     debug     =  "debug"
 
     @staticmethod
-    def from_string(value: str) -> "AlertLevel":
+    def from_str(value: str) -> "AlertSeverity":
         try:
-            return AlertLevel(value)
+            return AlertSeverity(value)
         except ValueError:
             return None
+
+    def __str__(self):
+        return self.value

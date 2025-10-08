@@ -6,9 +6,9 @@ from psycopg_pool import PoolTimeout
 
 from backend.Config import Config
 from backend.model.db.update_devices import update_topology_cache, update_device_metadata, update_device_analytics
-from backend.model.fact_gathering.ansible import ansible_backend
-from backend.model.fact_gathering.snmp import snmp_backend
-from backend.model.fact_gathering.icmp import icmp_backend
+from backend.model.facts.ansible import ansible_backend
+from backend.model.facts.snmp import snmp_backend
+from backend.model.facts.icmp import icmp_backend
 
 
 class FactGatheringBackend:
@@ -24,6 +24,16 @@ class FactGatheringBackend:
     @staticmethod
     def init():
         FactGatheringBackend()
+
+    @staticmethod
+    def register_listener(queue: asyncio.Queue[dict]):
+        FactGatheringBackend().__instance.__listeners.append(queue)
+
+    @staticmethod
+    async def notify_listeners(metrics: dict):
+        for listener in FactGatheringBackend().__listeners:
+            await listener.put(metrics)
+
 
     @staticmethod
     def __recursive_merge(dict1, dict2):
@@ -98,21 +108,17 @@ class FactGatheringBackend:
         await analytics
 
     @staticmethod
-    async def update_listeners(stop_event: asyncio.Event, data_queue: asyncio.Queue[tuple]):
+    async def update(stop_event: asyncio.Event, data_queue: asyncio.Queue[tuple]):
         while not stop_event.is_set():
             exposed_fields, metrics, status = await data_queue.get()
-            loop = asyncio.get_event_loop()
 
             try:
                 # Update the database, main listener
                 await FactGatheringBackend.__update_db_with_facts(exposed_fields, metrics, status)
 
                 # Update external listeners
+                await FactGatheringBackend.notify_listeners(metrics)
 
-                for listener in FactGatheringBackend().__listeners:
-                    loop.create_task(listener(metrics))
-
-                    
             except PoolTimeout as e:
                 await data_queue.put(exposed_fields)
 
@@ -121,7 +127,7 @@ class FactGatheringBackend:
 
     @staticmethod
     async def gather_facts_task(stop_event: asyncio.Event, data_queue: asyncio.Queue[tuple]):
-
+        # TODO: Change to respond faster to stop_event, as done in alerts
         while not stop_event.is_set():
             try:
                 # Gather facts - non-blocking
@@ -143,11 +149,3 @@ class FactGatheringBackend:
 
 
         print("[INFO][FACTS]Shutting down fact gathering loop!")
-
-    @staticmethod
-    def register_listener(listener: Callable):
-        async def register():
-            FactGatheringBackend().__listeners.append(listener)
-
-        loop = asyncio.get_event_loop()
-        loop.create_task(register())

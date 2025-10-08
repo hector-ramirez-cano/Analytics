@@ -11,7 +11,7 @@ import janus
 
 from backend.model.cache import cache
 from backend.model.db.update_devices import update_topology_cache
-from backend.model.fact_gathering.syslog.syslog_filters import SyslogFilters
+from backend.model.syslog.syslog_filters import SyslogFilters
 
 
 def get_topology_as_json():

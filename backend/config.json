@@ -33,6 +33,7 @@
         "min_size": 1,
         "max_size": 10,
         "reconnect_timeout_s": 15,
+        "retry_timeout_s": 5,
         "request_timeout_s": 5,
         "$ref": "backend/identity/postgres_db.json"
       },

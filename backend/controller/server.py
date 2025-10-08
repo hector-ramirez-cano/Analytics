@@ -1,17 +1,15 @@
 import asyncio
-import datetime
 import json
 import threading
-from warnings import deprecated
 
 import janus
-from quart import Quart, send_from_directory, Response, websocket, request
+from quart import Quart, send_from_directory, Response, websocket
 import os
 
-
+from backend.model.alerts.alert_backend import AlertBackend
 from backend.model.db.health_check import check_connections, health_check_listeners
 from backend.model.db.operations import get_topology_as_json
-from backend.model.fact_gathering.syslog.syslog_backend import SyslogBackend
+from backend.model.syslog.syslog_backend import SyslogBackend
 
 static_dir = os.path.join(os.getcwd(), "../frontend/static")
 routes_dir = os.path.join(os.getcwd(), "../frontend")
@@ -44,26 +42,6 @@ async def api_get_topology():
     topology = json.dumps(topology)
     return Response(topology, content_type="application/json")
     # return await send_from_directory(routes_dir, "test-data.json")
-
-@app.route("/api/syslog/message_count")
-async def api_syslog_message_count():
-    start = request.args.get("start", default="")
-    end = request.args.get("end", default="")
-
-    try:
-        start = datetime.datetime.fromtimestamp(float(start))
-        end   = datetime.datetime.fromtimestamp(float(end))
-    except ValueError as e:
-        return Response(str(e), status=400)
-
-    except TypeError as e:
-        return Response(str(e), status=400)
-
-    count = await SyslogBackend.get_row_count(start, end)
-
-    response = json.dumps({"count": count})
-
-    return Response(response, content_type="application/json")
 
 
 #  __       __            __                                      __                    __
@@ -120,7 +98,6 @@ async def api_syslog_ws():
                 await signal_queue.async_q.put(data)
 
 
-
     async def tx():
         while True:
             data = await data_queue.async_q.get()
@@ -136,7 +113,6 @@ async def api_syslog_ws():
         await signal_queue.aclose()
         await data_queue.aclose()
         await websocket.close(-1)
-
 
 @app.websocket("/ws/syslog/realtime")
 async def api_syslog_rt_ws():
@@ -164,9 +140,30 @@ async def api_syslog_rt_ws():
     finally:
         SyslogBackend.remove_listener(queue)
 
+@app.websocket("/ws/alerts/realtime")
+async def api_alerts_ws():
+    queue = asyncio.Queue()
+    await AlertBackend.register_listener(queue)
+
+    # send first message
+    await websocket.send(data="{}")
+
+    try:
+        while True:
+            msg = await queue.get()
+            await websocket.send(data=str(msg))
+
+    # TODO: Better error handling
+    except asyncio.CancelledError as _:
+        raise
+
+    finally:
+        await AlertBackend.remove_listener(queue)
+
 
 @app.websocket("/ws/topology")
 async def api_topology_ws():
+    # TODO: Handle topology via websocket
     pass
 
 

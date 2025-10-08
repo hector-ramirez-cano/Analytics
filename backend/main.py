@@ -11,16 +11,20 @@ import hypercorn.asyncio
 
 from backend.model import db
 from backend.model.alerts.alert_backend import AlertBackend
+from backend.model.alerts.alert_event import AlertEvent
 from backend.model.db.health_check import check_postgres_connection, periodic_health_check
 from backend.model.db.pools import init_db_pool
-from backend.model.fact_gathering.fact_gathering import FactGatheringBackend
-from backend.model.fact_gathering.syslog.syslog_backend import SyslogBackend
+from backend.model.facts.fact_gathering_backend import FactGatheringBackend
+from backend.model.syslog.syslog_backend import SyslogBackend
 
 server_task       : Task[None]
 facts_task        : Task[None]
 facts_writer_task : Task[None]
 syslog_task       : Task[None]
 db_health_task    : Task[None]
+alert_syslog_task : Task[None]
+alert_facts_task  : Task[None]
+alert_handler_task: Task[None]
 
 stop_event        : asyncio.Event
 
@@ -28,7 +32,7 @@ binding           : str
 
 def init() -> tuple:
     global server_task, facts_task, facts_writer_task, syslog_task, db_health_task, binding
-    global stop_event
+    global stop_event, alert_syslog_task, alert_facts_task, alert_handler_task
 
     # TODO: Replace with Logger
     print("[INFO ]CWD=", os.getcwd())
@@ -59,16 +63,20 @@ def init() -> tuple:
     # Hypercorn webserver serve
     server_task = asyncio.create_task(hypercorn.asyncio.serve(server.app, hypercorn_config))
 
-    # fact queue
+    # queues
     fact_queue = asyncio.Queue[tuple]()
+    syslog_queue = asyncio.Queue()
+    facts_queue = asyncio.Queue[dict]()
+    alerts_queue = asyncio.Queue[AlertEvent]()
 
     stop_event = asyncio.Event()
 
     # add background tasks
     facts_task = asyncio.create_task(FactGatheringBackend.gather_facts_task(stop_event, fact_queue))
-    facts_writer_task = asyncio.create_task(FactGatheringBackend.update_listeners(stop_event, fact_queue))
+    facts_writer_task = asyncio.create_task(FactGatheringBackend.update(stop_event, fact_queue))
     syslog_task = asyncio.create_task(SyslogBackend.syslog_server_task(stop_event))
     db_health_task = asyncio.create_task(periodic_health_check(stop_event))
+    alert_syslog_task, alert_facts_task, alert_handler_task = AlertBackend.init_service(stop_event, syslog_queue, facts_queue, alerts_queue)
 
     return server_task
 
@@ -92,7 +100,15 @@ async def main():
     stop_event.set()
     syslog_task.cancel()
 
-    await asyncio.gather(facts_task, facts_writer_task, syslog_task, db_health_task)
+    await asyncio.gather(
+        facts_task,
+        facts_writer_task,
+        syslog_task,
+        db_health_task,
+        alert_syslog_task,
+        alert_facts_task,
+        alert_handler_task,
+    )
 
     db.pools.graceful_shutdown()
 

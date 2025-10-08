@@ -11,6 +11,7 @@ from aiosyslogd.server import SyslogUDPServer, BATCH_TIMEOUT, BATCH_SIZE, get_db
 
 from backend.Config import Config
 from backend.model import db
+from backend.model.syslog.syslog_filters import SyslogFilters
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ class SyslogBackend(SyslogUDPServer):
     async def notify_listeners(params : dict):
         for listener in SyslogBackend._syslog_listeners:
             await listener.put(params)
+
 
     @staticmethod
     def register_listener(queue: asyncio.Queue[tuple]):
@@ -36,6 +38,7 @@ class SyslogBackend(SyslogUDPServer):
     def __init__(self, host: str, port: int, db_driver: BaseDatabase | None):
         super().__init__(host, port, db_driver)
         self.exit_flag = None
+
 
     def set_exit_flag(self, exit_flag: asyncio.Event):
         self.exit_flag = exit_flag
@@ -122,5 +125,5 @@ class SyslogBackend(SyslogUDPServer):
 
 
     @staticmethod
-    async def get_row_count(start_date : datetime.datetime, end_date: datetime.datetime) -> int:
-        return await asyncio.to_thread(lambda: db.operations.get_row_count(start_date, end_date))
+    async def get_row_count(filters: SyslogFilters) -> int:
+        return await asyncio.to_thread(lambda: db.operations.get_row_count(filters))

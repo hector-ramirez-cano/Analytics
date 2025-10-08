@@ -2,7 +2,9 @@
 from psycopg import ServerCursor
 
 from backend.model.cache import cache
-from backend.model.device import Device
+from backend.model.data.device import Device
+from backend.model.data.group import Group
+from backend.model.data.link import Link
 from backend.model.device_configuration import DeviceConfiguration
 
 def parse_devices(cur: ServerCursor):
@@ -11,6 +13,7 @@ def parse_devices(cur: ServerCursor):
 
     If the device already exists, the data gets updated
 
+    updates cache as result
     :return: None
     """
     devices = cache.devices
@@ -36,7 +39,7 @@ def parse_devices(cur: ServerCursor):
                     requested_metadata=set(row[7]),
                     requested_metrics=set(row[8]),
                     available_values=set(row[9]),
-                    data_sources=set(), # TODO: Data sources from DB
+                    data_sources=set(),
                 )
             )
 
@@ -51,9 +54,10 @@ def parse_devices(cur: ServerCursor):
                 requested_metadata=set(row[7]),
                 requested_metrics=set(row[8]),
                 available_values=set(row[9]),
-                data_sources=set(),  # TODO: Data sources from DB
+                data_sources=set(),
             )
 
+    # we extract the data sources, the database is normalized, so it's a separate table
     cur.execute(
         """
             SELECT device_id, data_source FROM Analytics.device_data_sources;
@@ -84,40 +88,41 @@ def parse_device_datasource(cur: ServerCursor):
 
 def parse_link(cur: ServerCursor):
     """
-    Parses the output of a database call, into a list of links in dictionary form
-    :return: list of links
+    Parses the output of a database call, into a dictionary of links in dictionary form, with the link id as key
+
+    updates cache as a result
+    :return: None
     """
-    links = []
+    links = {}
     cur.execute("SELECT link_id, side_a, side_b, side_a_iface, side_b_iface, link_type, link_subtype FROM Analytics.links")
     for row in cur.fetchall():
-        link = {
-            "id": int(row[0]),
-            "side-a": int(row[1]),
-            "side-b": int(row[2]),
-            "side-a-iface": row[3],
-            "side-b-iface": row[4],
-            "link-type": row[5]
-        }
-        if row[6] is not None:
-            link["link-subtype"] = row[6]
-        links.append(link)
+        link = Link(
+            link_id= int(row[0]),
+            side_a_id = int(row[1]),
+            side_b_id = int(row[2]),
+            side_a_iface= row[3],
+            side_b_iface= row[4],
+            link_type= row[5],
+            link_subtype= row[6] if row[6] is not None else ""
+        )
+
+        links[link.link_id] = link
+
     cache.links = links
 
 
 def parse_groups(cur: ServerCursor):
     """
-    Parses the output of a database call, into a list of device groups in dictionary form
-    :return: list of groups
+    Parses the output of a database call, into a list of Groups in dictionary form, with the group ID as key
+
+    Updates cache as result
+    :return: None
     """
-    groups = {}
+    groups = dict[int, Group]()
     cur.execute("SELECT group_id, group_name, is_display_group FROM Analytics.groups")
     for row in cur.fetchall():
         gid = int(row[0])
-        groups[gid] = {
-            "id": gid,
-            "name": row[1],
-            "is-display-group": row[2] == 't'
-        }
+        groups[gid] = Group(group_id=gid, name=row[1], members=[], is_display_group=row[2] == 't')
 
     group_members = {}
     cur.execute("SELECT (group_id, item_id) FROM Analytics.group_members")
@@ -130,15 +135,16 @@ def parse_groups(cur: ServerCursor):
         group_members[gid].append(int(row[1]))
 
     # denormalization of database
-    group_list = []
+    group_list = {}
     for group in groups:
-        # groups[group] # "id": 1, "name": "wassup", "is-display-group":yey-ya
+        # groups[group] # -> Group
 
         # if not empty, add it, brah
-        if group_members.get(groups[group]["id"]) is not None:
-            groups[group]["members"] = group_members[groups[group]["id"]]
+        if group_members.get(groups[group].group_id) is not None:
+            groups[group].members = group_members[groups[group].group_id]
 
-        group_list.append(groups[group])
+        group_list[groups[group].group_id] = (groups[group])
 
     cache.groups = group_list
 
+    # TODO: Prevent group circular dependency

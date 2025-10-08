@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
 
+from backend.model.alerts.alert_rules import AlertRule
 from backend.model.device_configuration import DeviceConfiguration
 from backend.model.device_state import DeviceStatus
 
@@ -51,3 +52,5 @@ class Device:
             "configuration": self.configuration.to_dict()
         }
 
+    def eval_rule(self, rule: AlertRule, d: dict, _get_item_fn) -> tuple[bool, tuple["Device"]]:
+        return rule.eval(d.get(self.management_hostname, {})), (self,)

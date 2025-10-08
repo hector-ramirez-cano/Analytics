@@ -4,9 +4,9 @@ from influxdb_client import Point
 
 from backend.Config import Config
 from backend.model.cache import cache
-from backend.model.db import update_device
+from backend.model.db import fetch_topology
 from backend.model.db.pools import postgres_db_pool, influx_db_write_api
-from backend.model.device import Device
+from backend.model.data.device import Device
 from backend.model.device_state import DeviceStatus
 
 
@@ -18,10 +18,10 @@ def update_topology_cache():
 
     with postgres_db_pool().connection() as conn:
         with conn.cursor() as cur:
-            update_device.parse_devices(cur)
-            update_device.parse_device_datasource(cur)
-            update_device.parse_link(cur)
-            update_device.parse_groups(cur)
+            fetch_topology.parse_devices(cur)
+            fetch_topology.parse_device_datasource(cur)
+            fetch_topology.parse_link(cur)
+            fetch_topology.parse_groups(cur)
 
 
 def __extract_device_metadata(metrics):
