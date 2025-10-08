@@ -1,0 +1,38 @@
+@startuml realTimeAlerts
+
+' Define controller and model lifelines
+' Backend
+box "Controller" #ADD8E6
+participant "WebSocket" as WebSocket
+end box
+
+box "Model" #99c4ad
+participant "FactGatheringBackend" as FactGatheringBackend
+participant "SyslogBackend" as SyslogBackend
+participant "AlertBackend" as AlertBackend
+participant "Database" as Database
+end box
+
+== Subscription ==
+WebSocket -> AlertBackend : register_listener(queue)
+
+== Fact event loop ==
+loop continuous
+    FactGatheringBackend -> AlertBackend : eval_facts(queue)
+    AlertBackend -> AlertBackend : __eval_rules()
+    AlertBackend -> AlertBackend : raise_alert()
+    AlertBackend -> Database : insert_alert(AlertEvent)
+    Database --> AlertBackend : alert_id
+    AlertBackend -> WebSocket : notify(alert)
+end
+
+== Syslog event loop ==
+loop continuous
+    FactGatheringBackend -> AlertBackend : eval_facts(queue)
+    AlertBackend -> AlertBackend : __eval_rules()
+    AlertBackend -> AlertBackend : raise_alert()
+    AlertBackend -> Database : insert_alert(AlertEvent)
+    Database --> AlertBackend : alert_id
+    AlertBackend -> WebSocket : notify(alert)
+end
+@enduml

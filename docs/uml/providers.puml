@@ -1,0 +1,32 @@
+@startuml providers
+actor User
+
+User -> "Widget A - Consumer" : Interacción (ej. presiona botón)
+"Widget A - Consumer" -> "Provider" : Lee valor con ref.watch()
+"Provider" -> "ProviderContainer" : Solicita valor actual
+"ProviderContainer" -> "StateNotifier" : Recupera estado gestionado
+"StateNotifier" --> "ProviderContainer" : Devuelve el valor actual
+"ProviderContainer" --> "Provider" : Entrega estado
+"Provider" --> "Widget A - Consumer" : Devuelve valor para build
+
+note over "Widget A - Consumer"
+El widget se reconstruye automáticamente
+cuando el estado del provider cambia
+end note
+
+"User" -> "ProviderContainer" : Dispara un cambio (ej. incremento)
+"ProviderContainer" -> "StateNotifier" : Actualiza estado interno
+"StateNotifier" --> "ProviderContainer" : Notifica cambio de estado
+"ProviderContainer" --> "Provider" : Informa actualización
+"Provider" -> "Widget A - Consumer" : Notifica reconstrucción
+"Provider" -> "Widget B - Consumer" : Notifica reconstrucción
+
+"Widget A - Consumer" -> "Provider" : ref.watch() obtiene nuevo valor
+"Provider" -> "ProviderContainer" : ref.watch() obtiene nuevo valor
+"ProviderContainer" -> "StateNotifier" : Entrega nuevo estado
+"StateNotifier" --> "ProviderContainer" : Entrega nuevo estado
+"ProviderContainer" --> "Provider" : Entrega nuevo estado
+"Provider" --> "Widget A - Consumer" : Entrega nuevo estado
+"Provider" --> "Widget B - Consumer" : Entrega nuevo estado
+
+@enduml

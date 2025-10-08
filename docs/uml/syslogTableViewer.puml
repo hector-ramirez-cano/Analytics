@@ -1,0 +1,46 @@
+@startuml TableViewer
+actor "User" as User
+
+' Frontend
+box "Frontend" #99c4ad
+participant "TrinaGrid Table" as TrinaGrid
+participant "StateNotifier / Provider" as StateProvider
+participant "WebSocketChannel" as WebSocket
+end box
+
+' Backend
+box "Backend" #LightBlue
+  participant "WebSocket" as BackendWS
+end box
+
+== Initial Load ==
+User -> TrinaGrid: Display table with placeholder rows
+TrinaGrid -> StateProvider: Request initial row count
+StateProvider -> WebSocket : Set filters\nRequest rowCount
+WebSocket -> BackendWS: Set filters\nRequest rowCount
+BackendWS --> WebSocket: rowCount
+WebSocket --> StateProvider: rowCount
+StateProvider --> TrinaGrid: rowCount
+TrinaGrid -> TrinaGrid: Create shimmer/dummy rows for visible portion
+
+== Request Initial Data ==
+TrinaGrid -> StateProvider: Request rows for visible range
+StateProvider -> WebSocket: Send request for rows 0..N
+WebSocket -> BackendWS: Request rows 0..N
+BackendWS --> WebSocket: Stream messages (row 0..N)
+WebSocket -> StateProvider: Emit rows incrementally
+StateProvider -> StateProvider: Buffer rows, flush every 100ms
+StateProvider --> TrinaGrid: Update rows when flushed
+TrinaGrid -> TrinaGrid: Replace shimmer rows with real data
+
+== Scrolling ==
+User -> TrinaGrid: Scrolls near bottom
+TrinaGrid -> StateProvider: Request next batch of rows
+StateProvider -> WebSocket: Send request for next rows
+WebSocket -> BackendWS: Request rows M..M+N
+BackendWS --> WebSocket: Stream messages (rows M..M+N)
+WebSocket -> StateProvider: Emit rows incrementally
+StateProvider -> StateProvider: Buffer & flush
+StateProvider --> TrinaGrid: Append rows
+TrinaGrid -> TrinaGrid: Replace placeholders with real data
+@enduml
