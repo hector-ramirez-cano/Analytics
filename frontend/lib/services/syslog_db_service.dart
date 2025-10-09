@@ -144,7 +144,7 @@ class SyslogDbService extends _$SyslogDbService {
     // ask politely - Would you kindly...
     final request = jsonEncode([
       {'type': 'set-filters', ...filters.toDict()},
-      {'type': 'request-size', ...filters.toDict()}
+      {'type': 'request-size'}
     ]);
     channel.sink.add(request);
 

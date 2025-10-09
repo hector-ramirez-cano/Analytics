@@ -30,8 +30,8 @@ class SyslogFilters:
     def from_json(json: dict) -> "SyslogFilters":
         start_time = datetime.fromtimestamp(float(json["start"]))
         end_time = datetime.fromtimestamp(float(json["end"]))
-        facilities = set(SyslogFacility.from_json(json))
-        severities = set(SyslogSeverity.from_json(json))
+        facilities = set(SyslogFacility.from_json(json.get("facility")))
+        severities = set(SyslogSeverity.from_json(json.get("severity")))
         offset = json.get("offset", 0)
         message = json.get("message", "")
         origin = json.get("origin", "")

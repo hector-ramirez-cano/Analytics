@@ -9,7 +9,7 @@ class AlertSeverity(Enum):
     warning   = "warning"
     notice    = "notice"
     info      = "info"
-    debug     =  "debug"
+    debug     = "debug"
 
     @staticmethod
     def from_str(value: str) -> "AlertSeverity":

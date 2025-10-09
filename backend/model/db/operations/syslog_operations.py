@@ -103,9 +103,8 @@ def __handle_log_stream_request_data(generator: Generator[Tuple[Any, ...], None,
         data_queue.put_nowait(json.dumps(log))
 
 
-def __handle_log_stream_request_size(signal: dict, data_queue: janus.SyncQueue):
+def __handle_log_stream_request_size(filters: SyslogFilters, data_queue: janus.SyncQueue):
     try:
-        filters = SyslogFilters.from_json(signal)
         count = get_row_count(filters)
         data_queue.put_nowait(json.dumps({"type": "request-size", "count": count}))
     except Exception as e:
@@ -113,7 +112,7 @@ def __handle_log_stream_request_size(signal: dict, data_queue: janus.SyncQueue):
 
 
 def get_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue[dict], finished: threading.Event):
-    filters : SyslogFilters
+    filters : SyslogFilters = None
     generator: Generator[Tuple[Any, ...], None, None] = None
 
     while not finished.is_set():
@@ -131,8 +130,11 @@ def get_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue[di
                     __handle_log_stream_request_data(generator, signal, data_queue)
 
                 case "request-size":
-                    # TODO: REUSE FILTERS
-                    __handle_log_stream_request_size(signal, data_queue)
+
+                    if filters is None:
+                        raise "Size requested before filters are set"
+
+                    __handle_log_stream_request_size(filters, data_queue)
 
                 case _:
                     data_queue.put_nowait(json.dumps({

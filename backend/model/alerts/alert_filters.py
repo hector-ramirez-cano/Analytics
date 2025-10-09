@@ -31,12 +31,12 @@ class AlertFilters:
     def from_json(json: dict) -> "AlertFilters":
         start_time     = datetime.fromtimestamp(float(json["start"]))
         end_time       = datetime.fromtimestamp(float(json["end"]))
-        ack_start_time = json.get("ack_start", None)
-        ack_end_time   = json.get("ack_end", None)
+        ack_start_time = json.get("ack-start", None)
+        ack_end_time   = json.get("ack-end", None)
         alert_id       = json.get("id")
         severity       = set(AlertSeverity.from_json(json.get("severity", set())))
         message        = json.get("message")
-        ack_actor      = json.get("ack_actor")
+        ack_actor      = json.get("ack-actor")
         target_id      = json.get("target-id")
         offset         = json.get("offset")
 
