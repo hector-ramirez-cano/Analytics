@@ -24,6 +24,7 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
 
   late double A, B, C;
 
+  // TODO: Add subtypes
   Link ({
     required super.id,
     required this.sideA,
@@ -76,8 +77,8 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
       sideA: sideA,
       sideB: sideB,
       linkType: LinkType.values.byName(linkType),
-      sideAIface: "eth0", // TODO: Implement on database and backend
-      sideBIface: "eth0", // TODO: Implement on database and backend 
+      sideAIface: json['side-a-iface'],
+      sideBIface: json['side-b-iface'],
     );
   }
 

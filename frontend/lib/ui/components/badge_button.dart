@@ -8,8 +8,8 @@ class BadgeButton extends StatelessWidget {
 
   const BadgeButton({
     super.key,
-    required this.backgroundColor,
     required this.text,
+    this.backgroundColor = Colors.transparent,
     this.onPressed,
     this.textStyle,
   });

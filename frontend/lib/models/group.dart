@@ -4,7 +4,7 @@ import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/topology.dart';
 
 class Group extends GroupableItem<Group>{
-  final Set<dynamic> members;
+  final Set<dynamic> members; // TODO: Change to GroupableItem
   final bool isDisplayGroup;
 
   Group({
@@ -65,8 +65,8 @@ class Group extends GroupableItem<Group>{
       
       var members = [];
       var oldMembers = (items[id] as Group).members;
-      for (var member in group['members']) {
-        members.add(items[member]);
+      for (var id in group['members']) {
+        members.add(items[id]);
       }
 
       items[id] = (items[id] as Group).cloneWith(members: {...oldMembers, ...members});
