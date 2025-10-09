@@ -45,8 +45,8 @@ class Cache(object):
         return self.__groups
 
     @property
-    def topology(self):
-        return [self.__devices, self.__links, self.__groups]
+    def topology(self) -> tuple:
+        return self.__devices, self.__links, self.__groups
 
     @property
     def should_update(self) -> bool:

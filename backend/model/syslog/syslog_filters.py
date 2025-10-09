@@ -146,7 +146,6 @@ class SyslogFilters:
         return clause
 
 
-
     def __get_sql_select_query(self, databases: list[str], params: list, target: str, has_match: bool) -> str:
         return " UNION ALL ".join([self.__get_single_sql_select_query(database, params, target, has_match) for database in databases])
 

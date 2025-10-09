@@ -9,6 +9,7 @@ api:
 ws:
   syslog_ws_endpoint: "ws://localhost:5050/ws/syslog"
   syslog_rt_ws_endpoint: "ws://localhost:5050/ws/syslog/realtime"
+  alerts_rt_ws_endpoint: "ws://localhost:5050/ws/alerts/realtime"
 
 syslog:
   max_buffer_lines: 254
@@ -20,7 +21,8 @@ ui:
 debug:
   enable_canvas_interaction_logging: false
   enable_canvas_link_class_logging: false
-  enable_syslog_service_logging: true
+  enable_syslog_service_logging: false
   enable_topology_service_logging: false
   enable_drawer_logging: false
   enable_canvas_tab_logging: false
+  enable_alert_service_logging: true

@@ -18,5 +18,9 @@ class AlertSeverity(Enum):
         except ValueError:
             return None
 
+    @staticmethod
+    def from_json(json: dict) -> list["AlertSeverity"]:
+        return [AlertSeverity[severity] for severity in json]
+
     def __str__(self):
         return self.value

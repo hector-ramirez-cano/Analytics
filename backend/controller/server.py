@@ -8,7 +8,7 @@ import os
 
 from backend.model.alerts.alert_backend import AlertBackend
 from backend.model.db.health_check import check_connections, health_check_listeners
-from backend.model.db.operations import get_topology_as_json
+from backend.model.db.operations.syslog_operations import get_topology_as_json
 from backend.model.syslog.syslog_backend import SyslogBackend
 
 static_dir = os.path.join(os.getcwd(), "../frontend/static")
@@ -114,6 +114,43 @@ async def api_syslog_ws():
         await data_queue.aclose()
         await websocket.close(-1)
 
+@app.websocket("/ws/alerts")
+async def api_alerts_ws():
+    data_queue = janus.Queue()
+    signal_queue = janus.Queue()
+    finished_event = threading.Event()
+
+    alert_thread = AlertBackend.spawn_log_stream(data_queue.sync_q, signal_queue.sync_q, finished_event)
+
+    async def rx():
+        while True:
+            data = await websocket.receive_json()
+            # if 'list', handle the multiple commands
+            if type(data) is list:
+                for obj in data:
+                    await signal_queue.async_q.put(obj)
+            elif type(data) is dict:
+                # if 'dict', it's only one, so only execute once
+                await signal_queue.async_q.put(data)
+
+
+    async def tx():
+        while True:
+            data = await data_queue.async_q.get()
+            await websocket.send(str(data))
+
+    producer = asyncio.create_task(tx())
+    consumer = asyncio.create_task(rx())
+
+    try:
+        await asyncio.gather(producer, consumer, alert_thread)
+    except asyncio.CancelledError as _:
+        finished_event.set()
+        await signal_queue.aclose()
+        await data_queue.aclose()
+        await websocket.close(-1)
+
+
 @app.websocket("/ws/syslog/realtime")
 async def api_syslog_rt_ws():
     queue = asyncio.Queue[dict]()
@@ -141,12 +178,12 @@ async def api_syslog_rt_ws():
         SyslogBackend.remove_listener(queue)
 
 @app.websocket("/ws/alerts/realtime")
-async def api_alerts_ws():
+async def api_alerts_rt_ws():
     queue = asyncio.Queue()
     await AlertBackend.register_listener(queue)
 
     # send first message
-    await websocket.send(data="{}")
+    await websocket.send(data="")
 
     try:
         while True:

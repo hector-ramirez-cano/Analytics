@@ -30,17 +30,7 @@ class Device:
 
         return None
 
-    def to_dict(self):
-        print({
-            "id": self.device_id,
-            "name": self.device_name,
-            "coordinates": [self.position_x, self.position_y],
-            "geocoordinates": [self.latitude, self.longitude],
-            "management-hostname": self.management_hostname,
-            # "status": self.state.to_json_str(),
-            # "metadata": self.metadata,
-            "configuration": self.configuration.to_dict()
-        })
+    def to_json(self):
         return {
             "id": self.device_id,
             "name": self.device_name,

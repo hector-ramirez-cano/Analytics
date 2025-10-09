@@ -19,7 +19,7 @@ class SyslogSeverity(Enum):
 
     @staticmethod
     def from_json(json: dict) -> list["SyslogSeverity"]:
-        return [SyslogSeverity[severity] for severity in json["severity"]]
+        return [SyslogSeverity[severity] for severity in json]
 
 
     def __str__(self) -> str:

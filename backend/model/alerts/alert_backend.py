@@ -1,10 +1,12 @@
 import asyncio
 import string
 import random
+import threading
 from asyncio import Task
-from typing import Literal, Any
+from typing import Literal, Any, Coroutine
 
-from backend.Config import config
+import janus
+
 from backend.model.alerts.alert_event import AlertEvent
 from backend.model.alerts.alert_operations import AlertOperation, AlertBooleanOperation
 from backend.model.alerts.alert_rules import AlertRule
@@ -14,6 +16,7 @@ from backend.model.data.group import Group
 from backend.model.facts.fact_gathering_backend import FactGatheringBackend
 from backend.model.syslog.syslog_backend import SyslogBackend
 from backend.model.cache import cache
+from backend.model.db.operations import alert_operations
 import backend.model.db.alerts as db_alerts
 
 class AlertBackend:
@@ -152,7 +155,6 @@ class AlertBackend:
             await AlertBackend.__eval_rules(AlertBackend().syslog_rules.values(), value, alert_queue)
 
 
-
     @staticmethod
     async def raise_alert(rule : AlertRule, alert_queue: asyncio.Queue, device : Device):
         """
@@ -198,6 +200,10 @@ class AlertBackend:
             await AlertBackend.notify_listeners(event)
             event.ws_notified = True
 
+
+    @staticmethod
+    def spawn_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue, finished: threading.Event) -> Coroutine:
+        return asyncio.to_thread(lambda: alert_operations.get_alert_stream(data_queue, signal_queue, finished))
 
 
     def load_rule(self,

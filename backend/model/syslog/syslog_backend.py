@@ -1,17 +1,16 @@
 import asyncio
-import datetime
 import logging
 import threading
 from typing import *
 
 import aiosyslogd
 import janus
-from aiosyslogd.db import BaseDatabase, sqlite
-from aiosyslogd.server import SyslogUDPServer, BATCH_TIMEOUT, BATCH_SIZE, get_db_driver
+from aiosyslogd.db import BaseDatabase
+from aiosyslogd.server import SyslogUDPServer, BATCH_TIMEOUT, BATCH_SIZE
 
 from backend.Config import Config
-from backend.model import db
 from backend.model.syslog.syslog_filters import SyslogFilters
+from backend.model import db
 
 logger = logging.getLogger(__name__)
 
@@ -121,9 +120,9 @@ class SyslogBackend(SyslogUDPServer):
 
     @staticmethod
     def spawn_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue, finished: threading.Event) -> Coroutine:
-        return asyncio.to_thread(lambda: db.operations.get_log_stream(data_queue, signal_queue, finished))
+        return asyncio.to_thread(lambda: db.operations.syslog_operations.get_log_stream(data_queue, signal_queue, finished))
 
 
     @staticmethod
     async def get_row_count(filters: SyslogFilters) -> int:
-        return await asyncio.to_thread(lambda: db.operations.get_row_count(filters))
+        return await asyncio.to_thread(lambda: db.operations.syslog_operations.get_row_count(filters))

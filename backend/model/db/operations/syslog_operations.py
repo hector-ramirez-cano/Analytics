@@ -18,14 +18,14 @@ def get_topology_as_json():
     """
     Acquires topology from database, and converts it into json
     """
-    [devices, links, groups] = cache.topology
+    devices, links, groups = cache.topology
 
     update_topology_cache()
 
     return {
-        "devices": [devices[device_id].to_dict() for device_id in devices],
-        "links": links,
-        "groups": groups
+        "devices": [device.to_json() for device in devices.values()],
+        "links": [link.to_json() for link in links.values()],
+        "groups": [group.to_json() for group in groups.values()]
     }
 
 
@@ -131,6 +131,7 @@ def get_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue[di
                     __handle_log_stream_request_data(generator, signal, data_queue)
 
                 case "request-size":
+                    # TODO: REUSE FILTERS
                     __handle_log_stream_request_size(signal, data_queue)
 
                 case _:

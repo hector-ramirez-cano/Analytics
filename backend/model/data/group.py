@@ -38,3 +38,11 @@ class Group:
             for device in item.eval_rule(rule, d, get_item_fn)[1]
         )
         return bool(matched_devices), matched_devices
+
+    def to_json(self):
+        return {
+            "id": self.group_id,
+            "name": self.name,
+            "is-display-group": self.is_display_group,
+            "members": self.members,
+        }
