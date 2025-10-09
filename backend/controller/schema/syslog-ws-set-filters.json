@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SetFiltersMessage",
+  "type": "object",
+  "properties": {
+    "type": "string",
+    "enum": ["set-filters"],
+    "start": {
+      "type": "number",
+      "minimum": 0
+    },
+    "end": {
+      "type": "number",
+      "minimum": 0
+    },
+    "facility": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "kern", "user", "mail", "daemon", "auth", "syslog", "lpr", "news", "uucp", "cron",
+          "authpriv", "ftp", "ntp", "security", "console", "solaris",
+          "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "severity": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "emerg", "alert", "crit", "err", "warning", "notice", "info", "debug"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "message": { "type": "string" },
+    "origin": { "type": "string" },
+    "offset": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pid": { "type": "string" }
+  },
+  "required": [
+    "type",
+    "start",
+    "end",
+    "message",
+    "origin",
+    "pid"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RequestDataMessage",
+  "type": "object",
+  "properties": {
+    "type": "string",
+    "enum": ["request-data"],
+    "count": { "type": "integer", "minimum": 1 }
+  },
+  "required": ["type", "count"],
+  "additionalProperties": false
+}
