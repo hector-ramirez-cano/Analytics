@@ -49,8 +49,8 @@ CREATE TABLE IF NOT EXISTS Analytics.links (
     link_subtype VARCHAR(254),
 
     FOREIGN KEY (link_id) REFERENCES Analytics.items(id) ON DELETE CASCADE,
-    FOREIGN KEY (side_a) REFERENCES Analytics.devices(device_id),
-    FOREIGN KEY (side_b) REFERENCES Analytics.devices(device_id),
+    FOREIGN KEY (side_a) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE,
+    FOREIGN KEY (side_b) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE,
 
     CONSTRAINT chk_link_sides_different CHECK (side_a <> side_b)
 );
@@ -93,8 +93,8 @@ CREATE TABLE IF NOT EXISTS Analytics.group_members (
     group_id INT NOT NULL,
     item_id INT NOT NULL,
 
-    FOREIGN KEY (group_id) REFERENCES Analytics.groups(group_id),
-    FOREIGN KEY (item_id) REFERENCES Analytics.items(id),
+    FOREIGN KEY (group_id) REFERENCES Analytics.groups(group_id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES Analytics.items(id) ON DELETE CASCADE,
 
     CONSTRAINT chk_group_no_recurse CHECK (group_id <> item_id)
 );

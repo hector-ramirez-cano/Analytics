@@ -9,8 +9,8 @@ from model.db.pools import postgres_db_pool, influx_db_write_api
 from model.data.device import Device
 from model.device_state import DeviceStatus
 
-def update_topology_cache():
-    if not cache.should_update:
+def update_topology_cache(forced: bool = False):
+    if not cache.should_update and not forced:
         return
 
     print("[INFO ]Updating topology cache")
