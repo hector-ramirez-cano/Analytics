@@ -72,8 +72,11 @@ INSERT INTO Analytics.group_members(group_id, item_id)
 TRUNCATE Analytics.alert_rules;
 
 INSERT INTO Analytics.alert_rules (rule_id, rule_name, requires_ack, rule_definition)
-    VALUES (1, 'ICMP_RTT > 600ms', TRUE, '{"severity":"warning","target":201,"reduce_logic": "and","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":60}]}');
+    VALUES (1, 'ICMP_RTT > 600ms', TRUE, '{"severity":"warning","target":201,"reduce_logic": "and","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":30}]}');
 
+SELECT * FROM Analytics.alert_rules;
 
 SELECT * FROM Analytics.alerts;
 -- TRUNCATE Analytics.alerts;
+
+SELECT count(1) AS count FROM Analytics.alerts OFFSET 0;

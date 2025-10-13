@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
+import 'package:network_analytics/ui/screens/alerts/alert_viewer.dart';
 import 'package:network_analytics/ui/screens/canvas/topology_tab_view.dart';
 import 'package:network_analytics/ui/screens/charts/chart.dart';
 import 'package:network_analytics/ui/screens/edit/editor_view.dart';
@@ -34,9 +35,12 @@ class ContentArea extends StatelessWidget {
             return ItemEditView();
 
           case WorkplaceScreen.syslog:
-          return SyslogViewer();
+            return SyslogViewer();
 
-          default:
+          case WorkplaceScreen.alerts:
+            return AlertViewer();
+
+          case null:
             Logger().w("Created content area for undefined WorkplaceScreen");
             return Text("Nobody here but us, chickens!");
         }

@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:network_analytics/models/syslog/syslog_filters.dart';
-import 'package:network_analytics/models/syslog/syslog_message.dart';
+import 'package:network_analytics/models/alerts/alert_event.dart';
+import 'package:network_analytics/models/alerts/alert_filters.dart';
 
 
-class SyslogTablePage {
+class AlertTablePage {
   static const int pageSize = 30;
 
-  /// Count of recorded messages in the timeframe, given first before any other message
+  /// Count of recorded events in the timeframe, given first before any other message
   /// Helps the caller know how many rows to expect before streaming begins
   final int messageCount;
 
-  /// Actual mapping of messages, using the ID column on the SQLite DB, given as first parameter of the `SELECT * FROM SystemEvents;`
-  final Map<int, SyslogMessage> messages;
+  /// Actual mapping of events, using the ID column on the DB, given as first parameter of the `SELECT * FROM Analytics.alerts;`
+  final Map<int, AlertEvent> events;
 
-  /// Filters applied to the table. Subtractive, all items means no filter. Default status is everything is on.
-  final SyslogFilters filters;
+  /// Filters applied to the table. Subtractive, all items means no filter. Default status is everything is on, aka everything displays.
+  final AlertFilters filters;
 
-  SyslogTablePage({
+  AlertTablePage({
     required this.messageCount,
-    required this.messages,
+    required this.events,
     required this.filters,
   });
 
@@ -33,25 +33,25 @@ class SyslogTablePage {
   /// ⌈(40 / 30)⌉ = ⌈1.333...⌉ = 2
   int getPage(int row) => (row / pageSize).ceil();
 
-  SyslogTablePage copyWith({
+  AlertTablePage copyWith({
     DateTimeRange? range,
     int? messageCount,
-    Map<int, SyslogMessage>? messages,
+    Map<int, AlertEvent>? events,
     List<int>? hydrated,
     int? requestedCount,
-    SyslogFilters? filters,
+    AlertFilters? filters,
   }) {
-    return SyslogTablePage(
+    return AlertTablePage(
       messageCount: messageCount ?? this.messageCount,
-      messages: messages ?? this.messages,
+      events: events ?? this.events,
       filters: filters ?? this.filters,
     );
   }
 
-  factory SyslogTablePage.empty(SyslogFilters filters) {
-    return SyslogTablePage(
+  factory AlertTablePage.empty(AlertFilters filters) {
+    return AlertTablePage(
       messageCount: 0,
-      messages: {},
+      events: {},
       filters: filters,
     );
   }

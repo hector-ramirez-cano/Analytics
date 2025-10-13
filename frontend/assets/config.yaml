@@ -8,6 +8,7 @@ api:
 
 ws:
   syslog_ws_endpoint: "ws://localhost:5050/ws/syslog"
+  alerts_ws_endpoint: "ws://localhost:5050/ws/alerts"
   syslog_rt_ws_endpoint: "ws://localhost:5050/ws/syslog/realtime"
   alerts_rt_ws_endpoint: "ws://localhost:5050/ws/alerts/realtime"
 

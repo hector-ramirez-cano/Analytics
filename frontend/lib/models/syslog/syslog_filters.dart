@@ -4,7 +4,7 @@ import 'package:network_analytics/models/syslog/syslog_facility.dart';
 import 'package:network_analytics/models/syslog/syslog_severity.dart';
 
 class SyslogFilters {
-  /// Datetime range held within this cache
+  /// Datetime range of syslog messages to include
   final DateTimeRange range;
   
   /// Facilities that are included
@@ -110,9 +110,9 @@ class SyslogFilters {
       return copyWith(facilities: state ? SyslogFacility.values.toSet() : {});
     } else if (T == SyslogSeverity) {
       return copyWith(severities: state ? SyslogSeverity.values.toSet() : {});
+    } else {
+      throw UnimplementedError("toggleFilterClass called for type with no explicit 'hasFilters' definition");
     }
-
-    return clone();
   }
 
 

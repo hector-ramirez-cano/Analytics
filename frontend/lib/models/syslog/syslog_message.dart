@@ -24,7 +24,7 @@ class SyslogMessage {
     required this.message,
   });
 
-  factory SyslogMessage.fromJson(dynamic json) {
+  factory SyslogMessage.fromJsonArr(List<dynamic> json) {
     return SyslogMessage(
       id: json[0],
       facility: SyslogFacility.fromInt(json[1])!,

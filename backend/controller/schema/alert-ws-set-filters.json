@@ -41,6 +41,9 @@
       "type": "string",
       "minLength": 1
     },
+    "requires-ack": {
+      "type": "boolean"
+    },
     "ack-actor": {
       "type": "string",
       "minLength": 1

@@ -4,11 +4,13 @@ from dataclasses import dataclass
 
 from backend.model.alerts.alert_severity import AlertSeverity
 
+#TODO: ADD ACKACTOR
 @dataclass
 class AlertEvent:
-    def __init__(self, requires_ack: bool, severity: AlertSeverity, message: str, target_id: int):
+    def __init__(self, requires_ack: bool, severity: AlertSeverity, message: str, target_id: int, ack_time: datetime.datetime):
         self.alert_id = -1
         self.alert_time = datetime.datetime.now()
+        self.ack_time = ack_time
         self.requires_ack = requires_ack
         self.severity = severity
         self.message = message
@@ -18,13 +20,22 @@ class AlertEvent:
         self.acked = not requires_ack
 
     def to_dict(self) -> dict:
+        alert_time = self.alert_time
+        ack_time = self.ack_time
+        if self.alert_time is not None:
+            alert_time = alert_time.timestamp()
+
+        if self.ack_time is not None:
+            ack_time = self.ack_time.timestamp()
+
         return  {
-            "alert_id": self.alert_id,
-            "alert_time": self.alert_time.timestamp(),
-            "requires_ack": self.requires_ack,
+            "alert-id": self.alert_id,
+            "alert-time": alert_time,
+            "ack-time": ack_time,
+            "requires-ack": self.requires_ack,
             "severity": self.severity,
             "message": self.message,
-            "target_id": self.target_id,
+            "target-id": self.target_id,
             "acked": self.acked,
         }
 

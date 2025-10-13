@@ -18,7 +18,7 @@ enum SyslogSeverity {
     return null;
   }
 
-    @override 
+  @override 
   String toString() {
     return super.toString().substring("SyslogSeverity.".length);
   }

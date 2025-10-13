@@ -42,4 +42,9 @@ enum AlertSeverity {
         return AlertSeverity.unknown;
     }
   }
+
+  @override
+  String toString() {
+    return super.toString().substring("AlertSeverity.".length);
+  }
 }

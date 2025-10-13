@@ -82,10 +82,12 @@ class AlertBackend:
 
     @staticmethod
     async def register_listener(queue: asyncio.Queue):
+        print("[INFO ][ALERTS][WS]Registered listener")
         AlertBackend().__instance.__listeners.append(queue)
 
     @staticmethod
     async def remove_listener(queue: asyncio.Queue):
+        print("[INFO ][ALERTS][WS]Removed listener")
         AlertBackend().__instance.__listeners.remove(queue)
 
     @staticmethod
@@ -168,7 +170,8 @@ class AlertBackend:
             requires_ack=rule.requires_ack,
             severity=rule.severity,
             message=f"'{rule.name}' triggered for device='{device.device_name}'!",
-            target_id=device.device_id
+            target_id=device.device_id,
+            ack_time=None
         )
 
         # put into the queue, for someone else to handle

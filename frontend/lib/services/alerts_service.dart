@@ -6,14 +6,14 @@ import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/debouncer.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/extensions/semaphore.dart';
-import 'package:network_analytics/models/alert_event.dart';
+import 'package:network_analytics/models/alerts/alert_event.dart';
 import 'package:network_analytics/services/app_config.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 part 'alerts_service.g.dart';
 
-final alertServiceLogger = Logger(filter: ConfigFilter.fromConfig("debug/enable_syslog_service_logging", false));
+final alertServiceLogger = Logger(filter: ConfigFilter.fromConfig("debug/enable_alert_service_logging", false));
 
 final alertWsProvider = Provider<(WebSocketChannel, Stream, Completer)> ((ref) {
     try {
@@ -98,7 +98,7 @@ class AlertsService extends _$AlertsService {
       if (message is String && message.isEmpty) { return; }
 
       final decoded = jsonDecode(message);
-      final alert = AlertEvent.fromJson(decoded);
+      final alert = AlertEvent.fromJsonArr(decoded);
       _unseenAlerts.add(alert);
 
       _unseenDebouncer.run(() {

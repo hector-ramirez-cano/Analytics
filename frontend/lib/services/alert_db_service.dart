@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:collection';
+import 'dart:collection' show Queue;
 import 'dart:convert';
 import 'dart:math';
 
@@ -10,11 +10,10 @@ import 'package:network_analytics/extensions/debouncer.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/extensions/queue.dart';
 import 'package:network_analytics/extensions/semaphore.dart';
-import 'package:network_analytics/models/syslog/syslog_facility.dart';
-import 'package:network_analytics/models/syslog/syslog_filters.dart';
-import 'package:network_analytics/models/syslog/syslog_message.dart';
-import 'package:network_analytics/models/syslog/syslog_severity.dart';
-import 'package:network_analytics/models/syslog/syslog_table_page.dart';
+import 'package:network_analytics/models/alerts/alert_event.dart';
+import 'package:network_analytics/models/alerts/alert_filters.dart';
+import 'package:network_analytics/models/alerts/alert_severity.dart';
+import 'package:network_analytics/models/alerts/alert_table_page.dart';
 import 'package:network_analytics/services/app_config.dart';
 import 'package:network_analytics/services/dialog_change_notifier.dart';
 import 'package:oxidized/oxidized.dart';
@@ -22,7 +21,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:trina_grid/trina_grid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-part 'syslog_db_service.g.dart';
+part 'alert_db_service.g.dart';
+
+Logger alertServiceLogger = Logger(filter: ConfigFilter.fromConfig('debug/enable_alert_service_logging', false));
+  
 
 String dateString(DateTime time) {
   return '${time.year}-${time.month}-${time.day}:${time.hour}:${time.minute}.${time.second}';
@@ -41,22 +43,21 @@ DateTimeRange _nowEmptyDateTimeRange() {
   );
 }
 
-final syslogWsProvider = Provider<(WebSocketChannel, Stream, Completer)>((ref) {
+final alertWsProvider = Provider<(WebSocketChannel, Stream, Completer)>((ref) {
   try {
-    final endpoint = Uri.parse(AppConfig.getOrDefault('ws/syslog_ws_endpoint'));
+    final endpoint = Uri.parse(AppConfig.getOrDefault('ws/alerts_ws_endpoint'));
     final channel = WebSocketChannel.connect(endpoint);
     final stream = channel.stream.asBroadcastStream();
     final connected = Completer<void>();
 
-
-    SyslogDbService.logger.i('Attempting to start websocket on endpoint=$endpoint');
+    alertServiceLogger.i('Attempting to start websocket on endpoint=$endpoint');
     // TODO: Handle onError
     channel.ready.then((_) {
-      SyslogDbService.logger.d('Websocket channel ready');
+      alertServiceLogger.d('Websocket channel ready');
       connected.complete();
     },
       onError: (err, st) => {
-        SyslogDbService.logger.e('Websocket failed to connect with error = $err')
+        alertServiceLogger.e('Websocket failed to connect with error = $err')
       }
     );
 
@@ -65,47 +66,49 @@ final syslogWsProvider = Provider<(WebSocketChannel, Stream, Completer)>((ref) {
     });
   return (channel, stream, connected);
   } catch (e) {
-    SyslogDbService.logger.e(e.toString());
+    alertServiceLogger.e(e.toString());
     rethrow;
   }
 });
 
 @riverpod
-class SyslogFilter extends _$SyslogFilter {
+class AlertFilter extends _$AlertFilter {
   @override
-  SyslogFilters build() {
-    return SyslogFilters.empty(_nowEmptyDateTimeRange());
+  AlertFilters build() {
+    return AlertFilters.empty(_nowEmptyDateTimeRange());
   }
 
-  void setFilters(SyslogFilters filters) {
+  void setFilters(AlertFilters filters) {
     state = filters;
   }
 }
 
+
 @Riverpod(keepAlive: true)
-class SyslogDbService extends _$SyslogDbService {
+class AlertDbService extends _$AlertDbService {
   static Logger logger = Logger(filter: ConfigFilter.fromConfig('debug/enable_syslog_service_logging', false));
   late WebSocketChannel _channel;
   late Stream _stream;
   late Completer _wsCompleter;
   late StreamSubscription _streamSubscription;
-  final Queue<SyslogMessage> _pending = Queue();
+  final Queue<AlertEvent> _pending = Queue();
   Timer? _batchTimer;
 
   static const Duration _debounceDuration = Duration(milliseconds: 1000);
-  final Debouncer _msgDebouncer    = Debouncer(delay: _debounceDuration);
-  final Debouncer _pidDebouncer    = Debouncer(delay: _debounceDuration);
-  final Debouncer _originDebouncer = Debouncer(delay: _debounceDuration);
-
+  final Debouncer _msgDebouncer      = Debouncer(delay: _debounceDuration);
+  final Debouncer _ackActorDebouncer = Debouncer(delay: _debounceDuration);
+  final Debouncer _targetIdDebouncer = Debouncer(delay: _debounceDuration);
+  final Debouncer _alertIdDebouncer  = Debouncer(delay: _debounceDuration);
+  
   Semaphore pageReady = Semaphore();
   Semaphore serviceReady = Semaphore();
   int messageCount = 0;
 
   @override
   Future<int> build() async {
-    SyslogDbService.logger.d('Recreating SyslogTablePage notifier!');
-    final filters = ref.watch(syslogFilterProvider);
-    final ws = ref.watch(syslogWsProvider);
+    alertServiceLogger.d('Recreating AlertTablePage notifier!');
+    final filters = ref.watch(alertFilterProvider);
+    final ws = ref.watch(alertWsProvider);
     _channel = ws.$1;
     _stream = ws.$2;
     _wsCompleter = ws.$3;
@@ -122,7 +125,7 @@ class SyslogDbService extends _$SyslogDbService {
     }
 
     ref.onDispose(() {
-      SyslogDbService.logger.d('Dettached Stream Subscription');
+      alertServiceLogger.d('Dettached Stream Subscription');
       _batchTimer?.cancel();
       _streamSubscription.cancel();
     });
@@ -134,12 +137,12 @@ class SyslogDbService extends _$SyslogDbService {
     return messageCount;
   }
 
-  Future<Result<int, String>> _getRowCount(WebSocketChannel channel, Stream stream, SyslogFilters filters) async {
+  Future<Result<int, String>> _getRowCount(WebSocketChannel channel, Stream stream, AlertFilters filters) async {
 
     // await the ws connection before trying to send anything
     await _wsCompleter.future;
 
-    SyslogDbService.logger.d('Asking backend for row count via Websocket for range = ${filters.range}');
+    alertServiceLogger.d('Asking backend for Alert row count via Websocket for range = ${filters.range}');
 
     // ask politely - Would you kindly...
     final request = jsonEncode([
@@ -150,8 +153,8 @@ class SyslogDbService extends _$SyslogDbService {
 
     // get the data
     final first = await stream.first;
-    final decoded = jsonDecode(first);
-    SyslogDbService.logger.d('_getRowCount recieved a message = $decoded');
+    final decoded = jsonDecode(first) ?? 0;
+    alertServiceLogger.d('_getRowCount recieved a message = $decoded');
     if (decoded['type'] == 'error') {
 
       return (Result.err(decoded['msg']));
@@ -163,8 +166,8 @@ class SyslogDbService extends _$SyslogDbService {
     return Result.ok(decoded['count'] as int);
   }
 
-  void _rxMessageListener(Stream stream, SyslogFilters filter,) {
-    SyslogDbService.logger.d('Attached Stream Subscription');
+  void _rxMessageListener(Stream stream, AlertFilters filter,) {
+    alertServiceLogger.d('Attached Stream Subscription');
     updatePageReadyFlag();
     _streamSubscription = stream.listen((message) {
       // FIXME: When no match filter is present, the rowID is preppended to the message
@@ -181,8 +184,8 @@ class SyslogDbService extends _$SyslogDbService {
           }
         }
 
-        // SyslogDbService.logger.i('Stream Subscription recieved a message = $message');
-        final row = SyslogMessage.fromJsonArr(decoded);
+        // alertServiceLogger.i('Stream Subscription recieved a message = $message');
+        final row = AlertEvent.fromJsonArr(decoded);
         _pending.addLast(row);
         updatePageReadyFlag();
       },
@@ -191,17 +194,17 @@ class SyslogDbService extends _$SyslogDbService {
     );
   }
 
-  Future<SyslogTablePage> fetchPage(int page, SyslogFilters filters) async {
+  Future<AlertTablePage> fetchPage(int page, AlertFilters filters) async {
     // 1. we wait for the service to be finished (initial request with row-count)
     await serviceReady.future;
 
     // 2. if we don't have any rows for this filters, we simply return early; we don't bother the backend
     if (messageCount == 0) {
-      return SyslogTablePage.empty(filters);
+      return AlertTablePage.empty(filters);
     }
 
     // 3. we have rows, let's request 'em mfers
-    final request = jsonEncode({'type': 'request-data', 'count': SyslogTablePage.pageSize});
+    final request = jsonEncode({'type': 'request-data', 'count': AlertTablePage.pageSize});
     _channel.sink.add(request);
 
     // 4. we force a reevaluation of the status of the pending rows queue 
@@ -210,57 +213,57 @@ class SyslogDbService extends _$SyslogDbService {
     await pageReady.future;
 
     // 5. we take the rows, and remove them from the _pending Queue
-    final pageMessageCount = min(min(SyslogTablePage.pageSize, messageCount),  _pending.length);
+    final pageMessageCount = min(min(AlertTablePage.pageSize, messageCount),  _pending.length);
     final messages = _pending.takeAndRemove(pageMessageCount);
 
     // 6. we could have taken enought to leave less than a page-worth of items, so we need to reevaluate
     updatePageReadyFlag();
     
     // 7. we return the page for TrinaGrid to process it
-    final syslogPage = SyslogTablePage(
+    final syslogPage = AlertTablePage(
       messageCount: messageCount,
-      messages: Map.fromEntries(messages.map((msg) => MapEntry(msg.id, msg))),
-      filters: ref.watch(syslogFilterProvider)
+      events: Map.fromEntries(messages.map((msg) => MapEntry(msg.id, msg))),
+      filters: ref.watch(alertFilterProvider)
     );
 
     return Future.value(syslogPage);
   }
 
   void onDateSelect(TrinaGridStateManager stateManager, DateTimeRange range, WidgetRef ref) async {
-    final notifier = ref.read(syslogFilterProvider.notifier);
-    final filters = ref.read(syslogFilterProvider);
+    final notifier = ref.read(alertFilterProvider.notifier);
+    final filters = ref.read(alertFilterProvider);
     notifier.setFilters(filters.copyWith(range: range));
     
-    await ref.watch(syslogDbServiceProvider.notifier).serviceReady.future;
+    await ref.watch(alertDbServiceProvider.notifier).serviceReady.future;
   
     stateManager.setColumnFilter(
-      columnField: "date_range_filter", // Clave única para su filtro global
+      columnField: 'date_range_filter', // Clave única para su filtro global
       filterType: TrinaFilterTypeContains(), // O un tipo de filtro genérico
-      filterValue: "${range.start.toString()}|${range.end.toString()}", 
+      filterValue: '${range.start.toString()}|${range.end.toString()}', 
     );
   }
 
-  void onTristateToggle<T>(bool state, SyslogTablePage cache, WidgetRef ref) {
-    // Update filters, so the widget gets recreated and now subscribes to a syslogDbServiceProvider with the new filters
+  void onTristateToggle<T>(bool state, AlertTablePage cache, WidgetRef ref) {
+    // Update filters, so the widget gets recreated and now subscribes to a alertDbServiceProvider with the new filters
     // causing the recreation of the table with these new filters
-    final notifier = ref.read(syslogFilterProvider.notifier);
-    final filters = ref.read(syslogFilterProvider);
+    final notifier = ref.read(alertFilterProvider.notifier);
+    final filters = ref.read(alertFilterProvider);
     notifier.setFilters(filters.toggleFilterClass<T>(state));
     ref.read(dialogRebuildProvider.notifier).markDirty();
     
   }
 
   void onFilterChange(TrinaGridStateManager stateManager, dynamic filter, bool? state, WidgetRef ref) {
-    ref.read(syslogDbServiceProvider).whenData(
+    ref.read(alertDbServiceProvider).whenData(
       (cache) {
-        // Update filters, so the widget gets recreated and now subscribes to a syslogDbServiceProvider with the new filters
+        // Update filters, so the widget gets recreated and now subscribes to a alertDbServiceProvider with the new filters
         // causing the recreation of the table with these new filters
-        final notifier = ref.read(syslogFilterProvider.notifier);
-        final filters = ref.read(syslogFilterProvider);
+        final notifier = ref.read(alertFilterProvider.notifier);
+        final filters = ref.read(alertFilterProvider);
         notifier.setFilters(filters.applySetFilter(filter, state));
         ref.read(dialogRebuildProvider.notifier).markDirty();
-        final columnField = filter is SyslogFacility ? "Facility" : filter is SyslogSeverity ? "Severity"  : "Unknown filter";
-        final value = filter is SyslogFacility ? filters.facilities.toString() : filter is SyslogSeverity ? filters.severities.toString()  : "Unknown filter value";
+        final columnField = filter is AlertSeverity ? 'Severity'  : 'Unknown filter';
+        final value = filter is AlertSeverity ? filters.severities.toString()  : 'Unknown filter value';
 
         stateManager.setColumnFilter(
           columnField: columnField, // Clave única para su filtro global
@@ -271,31 +274,47 @@ class SyslogDbService extends _$SyslogDbService {
     );
   }
 
+  // TODO: Range filters
   void onMsgFilterChange(String value, WidgetRef ref) {
     _msgDebouncer.run(() {
-      final filters = ref.read(syslogFilterProvider);
-      ref.watch(syslogFilterProvider.notifier).setFilters(filters.copyWith(message: value));
+      final filters = ref.read(alertFilterProvider);
+      ref.watch(alertFilterProvider.notifier).setFilters(filters.copyWith(message: value));
     });
   }
 
-  void onPidFilterChange(String value, WidgetRef ref) {
-    _pidDebouncer.run(() {
-      final filters = ref.read(syslogFilterProvider);
-      ref.watch(syslogFilterProvider.notifier).setFilters(filters.copyWith(pid: value));
+  void onAckActorFilterChange(String value, WidgetRef ref) {
+    _ackActorDebouncer.run(() {
+      final filters = ref.read(alertFilterProvider);
+      ref.watch(alertFilterProvider.notifier).setFilters(filters.copyWith(ackActor: value));
     });
   }
 
-  void onOriginFilterChange(String value, WidgetRef ref) {
-    _originDebouncer.run(() {
-      final filters = ref.read(syslogFilterProvider);
-      ref.watch(syslogFilterProvider.notifier).setFilters(filters.copyWith(origin: value));
+  void onTargetIdFilterChange(int value, WidgetRef ref) {
+    _targetIdDebouncer.run(() {
+      final filters = ref.read(alertFilterProvider);
+      ref.watch(alertFilterProvider.notifier).setFilters(filters.copyWith(targetId: value));
     });
   }
+
+  void onAlertIdFilterChange(int value, WidgetRef ref) {
+    _alertIdDebouncer.run(() {
+      final filters = ref.read(alertFilterProvider);
+      ref.watch(alertFilterProvider.notifier).setFilters(filters.copyWith(alertId: value));
+    });
+  }
+
+  void onRequiresAckFilterChange(bool value, WidgetRef ref) {
+    _alertIdDebouncer.run(() {
+      final filters = ref.read(alertFilterProvider);
+      ref.watch(alertFilterProvider.notifier).setFilters(filters.copyWith(requiresAck: value));
+    });
+  }
+
 
   void updatePageReadyFlag() {
-    bool ready = _pending.length >= SyslogTablePage.pageSize;
+    bool ready = _pending.length >= AlertTablePage.pageSize;
     bool empty = messageCount == 0;
-    bool lastPageReady = messageCount % SyslogTablePage.pageSize == _pending.length;
+    bool lastPageReady = messageCount % AlertTablePage.pageSize == _pending.length;
     if ( ready || empty || lastPageReady ) {
       pageReady.signal();
     } else {

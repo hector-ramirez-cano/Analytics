@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS Analytics.links (
 CREATE UNIQUE INDEX IF NOT EXISTS unique_link_pair
 ON Analytics.links (LEAST(side_a, side_b), GREATEST(side_a, side_b));
 
+
 CREATE TYPE AlertSeverity AS ENUM('emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug');
 CREATE TABLE IF NOT EXISTS Analytics.alerts (
     alert_id     SERIAL,
