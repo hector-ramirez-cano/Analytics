@@ -92,6 +92,22 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     );
   }
 
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'coordinates': [position.dx, position.dy],
+      'geocoordinates': [geoPosition.latitude, geoPosition.longitude],
+      'management-hostname': mgmtHostname,
+      'configuration': {
+        'requested-metadata': requestedMetadata.toList(),
+        'requested-metrics': requestedMetrics.toList(),
+        'available-values': availableValues.toList(),
+        'data-sources': dataSources.toList()
+      }
+    };
+  }
+
   factory Device.emptyDevice(){
     return Device(
       id: -1,

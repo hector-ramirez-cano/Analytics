@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:free_map/free_map.dart';
+import 'package:http/http.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/device.dart';
@@ -6,6 +9,8 @@ import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/app_config.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'item_edit_selection_notifier.g.dart';
@@ -179,6 +184,36 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
     set(changes: Topology(items: {}), deleted: Topology(items: {}), selected: [], overrideCreatingItem: false);
   }
 
+  void apply() async {
+    final changes = state.changes.toMap();
+    final deleted = state.deleted.toMap();
+    final changeMessage = {
+      "changes": changes,
+      "deleted": deleted
+    };
+
+    final url = Uri.parse(AppConfig.getOrDefault("api/configure_endpoint"));
+    final headers = {'Content-Type': 'application/json'};
+
+    // TODO: Handle failed request, retry and if failed, show it to the UI
+    try {
+      final response = await post(url, headers: headers, body: jsonEncode(changeMessage));
+
+      if (response.statusCode != 200) { 
+        throw Exception("[BACKEND] Status Code = ${response.statusCode}");
+      }
+
+      // discard whatever was stored here, it's already commited
+      discard();
+    
+      // force update topology
+      ref.invalidate(topologyProvider);
+
+    } catch (exception, _) {
+      Logger().e("Failed to post changes to backend with error = '${exception.toString()}'");
+    }
+  }
+
   void onEditDeviceHostname()    => set(editingHostname: true);
   void onEditDeviceName()        => set(editingDeviceName: true);
   void onEditDeviceGeoposition() => set(editingDeviceGeoPosition: true);
@@ -282,7 +317,7 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
   }
 
   bool get hasChanges {
-    return state.changes.items.isNotEmpty && state.deleted.items.isNotEmpty;
+    return state.changes.items.isNotEmpty || state.deleted.items.isNotEmpty;
   }
 
   AnalyticsItem get selected {

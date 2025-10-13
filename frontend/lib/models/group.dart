@@ -4,7 +4,7 @@ import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/topology.dart';
 
 class Group extends GroupableItem<Group>{
-  final Set<dynamic> members; // TODO: Change to GroupableItem
+  final Set<GroupableItem> members;
   final bool isDisplayGroup;
 
   Group({
@@ -15,10 +15,10 @@ class Group extends GroupableItem<Group>{
   })
     : members = Set.unmodifiable(members);
   
-  Group cloneWith({int? id, String? name, Set<dynamic>? members, bool? isDisplayGroup}) {
+  Group cloneWith({int? id, String? name, Set<GroupableItem>? members, bool? isDisplayGroup}) {
     return Group(
       id: id ?? this.id,
-      members: Set.from(members ?? this.members),
+      members: Set<GroupableItem>.from(members ?? this.members),
       name: name ?? this.name,
       isDisplayGroup: isDisplayGroup ?? this.isDisplayGroup
     );
@@ -26,13 +26,13 @@ class Group extends GroupableItem<Group>{
 
   @override
   Group mergeWith(Group other) {
-    var members = Set.from(other.members)..addAll(this.members);
+    var members = Set<GroupableItem>.from(other.members)..addAll(this.members);
 
     return cloneWith(members: members);
   }
 
   factory Group.fromJson(Map<String, dynamic> json, Map<int, dynamic> items) {
-    List<dynamic> members = [];
+    List<GroupableItem> members = [];
 
     int    id   = json['id'];
     String name = json['name'];
@@ -44,6 +44,15 @@ class Group extends GroupableItem<Group>{
       name: name, 
       isDisplayGroup: isDisplayGroup
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'is-display-group': isDisplayGroup,
+      'members': members.map((member) => member.id).toList()
+    };
   }
 
   factory Group.emptyGroup() {
@@ -63,7 +72,7 @@ class Group extends GroupableItem<Group>{
     for (var group in json) {
       int id = group["id"];
       
-      var members = [];
+      var members = <GroupableItem>{};
       var oldMembers = (items[id] as Group).members;
       for (var id in group['members']) {
         members.add(items[id]);
@@ -74,10 +83,10 @@ class Group extends GroupableItem<Group>{
   }
 
   int          get groupCount  => members.whereType<Group>().toList().length;
-  List<Device> get devices     => members.whereType<Device>().toList();
-  List<Group>  get groups      => members.whereType<Group>().toList();
-  List<Link>   get links       => members.whereType<Link>().toList(); 
-  Set<int>     get memberKeys  => members.map((member) => member.id as int).toSet();
+  Set<Device>  get devices     => members.whereType<Device>().toSet();
+  Set<Group>   get groups      => members.whereType<Group>().toSet();
+  Set<Link>    get links       => members.whereType<Link>().toSet(); 
+  Set<int>     get memberKeys  => members.map((member) => member.id).toSet();
 
   /// Returns whether this group, or any nested groups contain at least one device. Short circuits once at least one is found
   bool hasDevices() {

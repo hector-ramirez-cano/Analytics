@@ -31,11 +31,11 @@ class AlertEvent {
     final ackTime = json["ack-time"] == null ? null : DateTime.fromMillisecondsSinceEpoch((json["ack-time"]*1000).toInt(), isUtc: true);
 
     return AlertEvent(
-      id: json["id"],
+      id: json["alert-id"],
       alertTime:  DateTime.fromMillisecondsSinceEpoch((json["alert-time"]*1000).toInt(), isUtc: true),
       ackTime: ackTime,
       requiresAck: json["requires-ack"],
-      severity: json["severity"],
+      severity: AlertSeverity.fromString(json["severity"]),
       message: json["message"],
       ackActor: json["ackActor"],
       targetId: json["target-id"],

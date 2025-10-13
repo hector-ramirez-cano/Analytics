@@ -67,7 +67,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     final notifier = ref.watch(itemEditSelectionProvider.notifier);
 
     var item = widget.topology.items[id];
-    var members = Set.from(notifier.group.members);
+    var members = Set<GroupableItem>.from(notifier.group.members);
 
     if (status) { members.add(item); }
     else        { members.remove(item); }

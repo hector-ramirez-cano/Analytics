@@ -82,6 +82,17 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
     );
   }
 
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'side-a': sideA.id,
+      'side-b': sideB.id,
+      'link-type': linkType.toString(),
+      'side-a-iface': sideAIface,
+      'side-b-iface': sideBIface,
+    };
+  }
+
   factory Link.emptyLink() {
     return Link(id: -1, sideA: Device.emptyDevice(), sideB: Device.emptyDevice(), linkType: LinkType.copper, sideAIface: "", sideBIface: "");
   }

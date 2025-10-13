@@ -34,6 +34,18 @@ class Topology {
     return Topology(items: itemsLocal);
   }
 
+  Map<String, dynamic> toMap() {
+    Map<String, dynamic> items = {};
+
+    final groupMap = groups.map((group) => group.toMap()).toList();
+
+    items['devices'] = devices.map((item) => item.toMap()).toList();
+    items['links'] = links.map((link) => link.toMap()).toList();
+    items['groups'] = groupMap;
+
+    return items;
+  }
+
   Set<Device> get devices {
     return items.values.whereType<Device>().toSet();
   }

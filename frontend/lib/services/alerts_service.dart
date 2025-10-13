@@ -99,7 +99,7 @@ class AlertsService extends _$AlertsService {
 
       // TODO: Check why sometimes it's a map, instead of a List
       final decoded = jsonDecode(message);
-      final alert = AlertEvent.fromJsonArr(decoded);
+      final alert = AlertEvent.fromJson(decoded);
       _unseenAlerts.add(alert);
 
       _unseenDebouncer.run(() {

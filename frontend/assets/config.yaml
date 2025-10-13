@@ -2,6 +2,7 @@ api:
   endpoint: "http://localhost:5050"
   topology_endpoint: "http://localhost:5050/api/topology"
   syslog_count_endpoint: "http://localhost:5050/api/syslog/message_count"
+  configure_endpoint: "http://localhost:5050/api/configure"
   retries: 3
   retry_delay_s: 5
   timeout_s: 15

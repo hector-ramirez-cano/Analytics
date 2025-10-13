@@ -93,8 +93,8 @@ class TopologyTree extends StatelessWidget {
     makeGroupTreeBranch(group) {
       // Create current node, and recursively add it's children to the created node
       var node = TreeNode<Group>(key: UniqueKey().toString(), data: group);
-      for (final int index in groupOrder(group.groups)) {
-        node.add(makeGroupTreeBranch(group.groups[index]));
+      for (final int index in groupOrder(group.groups.toList())) {
+        node.add(makeGroupTreeBranch(group.groups.toList()[index]));
       }
 
       return node;

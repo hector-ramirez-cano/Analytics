@@ -41,14 +41,12 @@ Widget makeFooter(WidgetRef ref, Topology topology) {
   ButtonStyle saveStyle = ElevatedButton.styleFrom(backgroundColor: Colors.blue,);
   const TextStyle saveLabelStyle = TextStyle(color: Colors.white);
 
-  final notifier = ref.read(itemEditSelectionProvider.notifier);
+  final notifier = ref.watch(itemEditSelectionProvider.notifier);
 
   onCancel() => {
     notifier.discard()
   };
-  onSave() => {
-    
-  }; // TODO: Funcionality
+  onSave() => ref.read(itemEditSelectionProvider.notifier).apply();
 
   var cancelButton = ElevatedButton(
     onPressed: () => onCancel(),
