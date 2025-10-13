@@ -16,7 +16,6 @@ class DeviceConfiguration:
             "data-sources": list(self.data_sources),
         }
 
-        print(contents)
         return contents
 
     @staticmethod

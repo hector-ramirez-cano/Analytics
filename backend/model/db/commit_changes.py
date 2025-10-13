@@ -97,7 +97,7 @@ def commit_rules(rules: list[dict], conn) -> tuple[bool, str]:
     return True, ""
 
 def __commit_device(device: Device, cur):
-    if device.device_id >= 0:
+    if device.device_id <= 0:
         cur.execute(
             """
                 INSERT INTO Analytics.devices
@@ -155,7 +155,7 @@ def __commit_device(device: Device, cur):
         )
 
 def __commit_link(link: Link, cur):
-    if link.link_id >= 0:
+    if link.link_id <= 0:
         cur.execute(
             """
                 INSERT INTO Analytics.links
@@ -181,7 +181,7 @@ def __commit_link(link: Link, cur):
             ))
 
 def __commit_group(group: Group, cur):
-    if group.group_id >= 0:
+    if group.group_id <= 0:
         cur.execute(
             """
                 INSERT INTO Analytics.groups
@@ -223,7 +223,7 @@ def __commit_group(group: Group, cur):
                 """, (group.group_id, member))
 
 def __commit_rule(rule, cur):
-    if rule["id"] >= 0:
+    if rule["id"] <= 0:
         cur.execute(
             """
             INSERT INTO Analytics.alert_rules

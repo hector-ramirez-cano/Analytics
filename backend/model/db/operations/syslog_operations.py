@@ -9,25 +9,9 @@ import sqlite3
 
 import janus
 
-from model.cache import cache
-from model.db.update_devices import update_topology_cache
 from model.syslog.syslog_filters import SyslogFilters
 from Config import config
 
-
-def get_topology_as_json():
-    """
-    Acquires topology from database, and converts it into json
-    """
-    devices, links, groups = cache.topology
-
-    update_topology_cache()
-
-    return {
-        "devices": [device.to_json() for device in devices.values()],
-        "links": [link.to_json() for link in links.values()],
-        "groups": [group.to_json() for group in groups.values()]
-    }
 
 
 def generate_months(start_time: datetime.datetime, end_time: datetime.datetime) -> list[str]:

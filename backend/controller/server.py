@@ -172,6 +172,7 @@ async def api_syslog_rt_ws():
     queue = asyncio.Queue[dict]()
     SyslogBackend.register_listener(queue)
 
+    # TODO: Change this to conform to schema, and whatever-this-style-is-called
     try:
         while True:
             msg = await queue.get()
@@ -186,9 +187,6 @@ async def api_syslog_rt_ws():
                 "Msg": msg["Message"]
             }
             await websocket.send(data=str(packet))
-
-    except asyncio.CancelledError as _:
-        raise
 
     finally:
         SyslogBackend.remove_listener(queue)
@@ -208,7 +206,8 @@ async def api_alerts_rt_ws():
 
     # TODO: Better error handling
     except asyncio.CancelledError as _:
-        raise
+        print("[ERROR][WS]Cancelled websocket connection")
+        
 
     finally:
         await AlertBackend.remove_listener(queue)
