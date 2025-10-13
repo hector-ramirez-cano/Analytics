@@ -1,3 +1,5 @@
+import 'package:logger/web.dart';
+
 final Pattern leading = RegExp("LinkType.");
 
 enum LinkType {
@@ -8,5 +10,23 @@ enum LinkType {
   @override
   String toString() {
     return super.toString().replaceFirst(leading, "");
+  }
+
+  static LinkType? fromStr(String value) {
+
+    switch(value) {
+      case "copper":
+        return copper;
+
+      case "optical":
+        return optical;
+
+      case "wireless":
+        return wireless;
+
+      default:
+        Logger().w("Parsing LinkType from '$value' will yield a null value.");
+        return null;
+    }
   }
 }

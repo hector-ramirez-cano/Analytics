@@ -12,10 +12,12 @@ import 'package:settings_ui/settings_ui.dart';
 
 class DeviceEditView extends ConsumerStatefulWidget {
   final Topology topology;
+  final bool showDeleteButton;
 
   const DeviceEditView({
     super.key,
     required this.topology,
+    required this.showDeleteButton,
   });
 
   @override
@@ -48,13 +50,20 @@ class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
   }
 
   Widget _buildConfigurationPage() {
-    return Column(
-      children: [ Expanded(child: SettingsList( sections: [
+
+    final sections = [
               CustomSettingsSection(child: DeviceGeneralSettings(widget.topology,)),
               CustomSettingsSection(child: DeviceLinkSettings   (widget.topology)),
               CustomSettingsSection(child: DeviceGroupSettings  (widget.topology)),
-              CustomSettingsSection(child: DeleteSection(onDelete: onRequestedDelete, onRestore: onConfirmRestore))
-            ],
+              
+            ];
+
+    if (widget.showDeleteButton) {
+      sections.add(CustomSettingsSection(child: DeleteSection(onDelete: onRequestedDelete, onRestore: onConfirmRestore)));
+    }
+
+    return Column(
+      children: [ Expanded(child: SettingsList( sections: sections,
           ),
         ) ,
         // Save button and cancel button

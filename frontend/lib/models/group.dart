@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link.dart';
@@ -56,7 +58,7 @@ class Group extends GroupableItem<Group>{
   }
 
   factory Group.emptyGroup() {
-    return Group(id: -1, members: [], name: "", isDisplayGroup: false);
+    return Group(id: -1*Random(2).nextInt(10000), members: <GroupableItem>{}, name: "", isDisplayGroup: false);
   }
 
   /// Creates a list of groups from a given [json] array. Queries the items from an [items] map of {int -> dynamic}
@@ -108,6 +110,11 @@ class Group extends GroupableItem<Group>{
   bool isModifiedName(Topology topology) {
     
     return name != (topology.items[id] as Group?)?.name;
+  }
+
+  @override
+  bool isNewItem() {
+    return id < 0;
   }
 
   @override

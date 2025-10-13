@@ -19,12 +19,15 @@ import 'package:settings_ui/settings_ui.dart';
 class GroupEditView extends ConsumerStatefulWidget {
   final Topology topology;
 
+  final bool showDeleteButton;
+
   static const Icon nameIcon = Icon(Icons.label);
   static const Icon membersIcon = Icon(Icons.group);
 
   const GroupEditView({
     super.key,
     required this.topology,
+    required this.showDeleteButton
   });
 
   @override
@@ -164,17 +167,20 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     Group group = notifier.group;
     bool editingName = itemSelection.editingGroupName;
 
+    final List<AbstractSettingsSection> sections = [
+      SettingsSection(
+        title: Text(notifier.group.name),
+        tiles: [
+          _makeNameInput(group, editingName, widget.topology),
+          _makeMembersInput(),
+        ]),];
+    
+    if (widget.showDeleteButton) {
+      sections.add(CustomSettingsSection(child: _makeDeleteSection(),));
+    }
+
     return Column(
-      children: [ Expanded( child: SettingsList( sections: [
-              SettingsSection(
-                title: Text(notifier.group.name),
-                tiles: [
-                  _makeNameInput(group, editingName, widget.topology),
-                  _makeMembersInput(),
-                ]
-              ),
-              CustomSettingsSection(child: _makeDeleteSection(),)
-              ])),
+      children: [ Expanded( child: SettingsList( sections: sections)),
         // Save button and cancel button
         makeFooter(ref, widget.topology),
       ],

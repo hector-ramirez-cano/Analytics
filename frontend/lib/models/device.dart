@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:free_map/free_map.dart';
@@ -110,7 +111,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
 
   factory Device.emptyDevice(){
     return Device(
-      id: -1,
+      id: -1*Random(2).nextInt(10000),
       position: Offset.zero,
       name: "Nuevo Dispositivo",
       geoPosition: LatLng(0, 0),
@@ -148,6 +149,11 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     return Paint()
       ..shader = AppColors.deviceGradient.createShader(rect);
 
+  }
+
+  @override
+  bool isNewItem() {
+    return id < 0;
   }
 
   /// Returns whether a given [metric] is modified in the current instance, in reference to the original [topology]

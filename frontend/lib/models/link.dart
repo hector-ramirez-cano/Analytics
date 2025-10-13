@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/models/analytics_item.dart';
@@ -94,7 +96,7 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
   }
 
   factory Link.emptyLink() {
-    return Link(id: -1, sideA: Device.emptyDevice(), sideB: Device.emptyDevice(), linkType: LinkType.copper, sideAIface: "", sideBIface: "");
+    return Link(id: -1*Random(2).nextInt(10000), sideA: Device.emptyDevice(), sideB: Device.emptyDevice(), linkType: LinkType.copper, sideAIface: "", sideBIface: "");
   }
 
   static Set<Link> setFromJson(List<dynamic> json, Map<int, dynamic> devices) {
@@ -104,6 +106,11 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
     }
     
     return links;
+  }
+
+  @override
+  bool isNewItem() {
+    return id < 0;
   }
 
   double dist2(Offset point) {

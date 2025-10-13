@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:free_map/free_map.dart';
 import 'package:http/http.dart';
 import 'package:logger/web.dart';
+import 'package:network_analytics/extensions/debouncer.dart';
 import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
@@ -200,7 +202,7 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
       final response = await post(url, headers: headers, body: jsonEncode(changeMessage));
 
       if (response.statusCode != 200) { 
-        throw Exception("[BACKEND] Status Code = ${response.statusCode}");
+        throw Exception("[BACKEND] Status Code = ${response.statusCode} with error='${response.body}'");
       }
 
       // discard whatever was stored here, it's already commited

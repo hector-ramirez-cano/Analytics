@@ -18,9 +18,12 @@ import 'package:settings_ui/settings_ui.dart';
 class LinkEditView extends ConsumerStatefulWidget {
   final Topology topology;
 
+  final bool showDeleteButton;
+
   const LinkEditView({
     super.key,
-    required this.topology, 
+    required this.topology,
+    required this.showDeleteButton,
   });
 
   @override
@@ -52,14 +55,14 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   void onEditSideAIfaceContent(String text) {
     final notifier = ref.read(itemEditSelectionProvider.notifier);
     var link = notifier.link;
-  
+
     onEditIFaceContent(text, notifier.link.sideAIface, (text) => link.cloneWith(sideAIface: text));
   }
 
   void onEditSideBIfaceContent(String text) {
     final notifier = ref.read(itemEditSelectionProvider.notifier);
     var link = notifier.link;
-  
+
     onEditIFaceContent(text, notifier.link.sideBIface, (text) => link.cloneWith(sideBIface: text));
   }
 
@@ -80,7 +83,14 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
           .map((type) =>
               DropdownMenuItem(value: type.name, child: Text(type.name)))
           .toList(),
-      onChanged: (val) {}, // TODO: Functionality
+      onChanged: (val) {
+        final type = LinkType.fromStr(val ?? "");
+        if (type == null) { return; }
+
+        final notifier = ref.read(itemEditSelectionProvider.notifier);
+        final Link item = notifier.selected as Link;
+        notifier.changeItem(item.cloneWith(linkType: type));
+      },
       isExpanded: true,
     );
   }
@@ -132,7 +142,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
       leading: const Icon(Icons.dns),
       trailing: child,
       onPressed: null
-    ); 
+    );
   }
 
   SettingsSection _makeLinkSelection(Link link) {
@@ -173,7 +183,7 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
   }
 
   Future _displaySelectionDialog({bool deviceA = false, bool deviceB = false}) {
-    final itemEditSelection = ref.watch(itemEditSelectionProvider); 
+    final itemEditSelection = ref.watch(itemEditSelectionProvider);
     final notif = ref.watch(itemEditSelectionProvider.notifier);
 
     bool linkType= itemEditSelection.editingLinkType;
@@ -191,22 +201,22 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     Set<Device> options = {};
     if      (deviceA) { options = getOptions(link.sideB); }
     else if (deviceB) { options = getOptions(link.sideA);}
-    
+
     bool isSelectedFn(option) {
       if      (deviceA)  { return ref.read(itemEditSelectionProvider.notifier).link.sideA == option; }
       else if (deviceB) {return ref.read(itemEditSelectionProvider.notifier).link.sideB == option; }
-      
+
       return false;
     }
 
     onChanged (option, state) {
-      if      (deviceA)  { notif.onChangeLinkDeviceA(option); } 
+      if      (deviceA)  { notif.onChangeLinkDeviceA(option); }
       else if (deviceB)  { notif.onChangeLinkDeviceB(option); }
 
       ref.read(dialogRebuildProvider.notifier).markDirty();
     }
-    onClose () => notif.set(editingDeviceMetadata: false, editingDeviceMetrics: false, editingDeviceDataSources: false); 
-    
+    onClose () => notif.set(editingDeviceMetadata: false, editingDeviceMetrics: false, editingDeviceDataSources: false);
+
     final dialog = DeviceSelectionDialog(
       options: options,
       selectorType: ListSelectorType.radio,
@@ -239,12 +249,18 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
 
     Link link = notifier.link;
 
-    var settingsList = SettingsList( sections: [
+    final sections = [
         CustomSettingsSection(child: _makeDeviceSection("Device A", link, sideA: true)),
         CustomSettingsSection(child: _makeDeviceSection("Device B", link, sideA: false)),
         CustomSettingsSection(child: _makeLinkSelection(link)),
-        CustomSettingsSection(child: DeleteSection(onDelete: onRequestedDelete, onRestore: onConfirmRestore)),
-      ],);
+        
+      ];
+
+    if (widget.showDeleteButton) {
+      sections.add(CustomSettingsSection(child: DeleteSection(onDelete: onRequestedDelete, onRestore: onConfirmRestore)),);
+    }
+
+    var settingsList = SettingsList( sections: sections,);
 
     return Column(
       children: [ Expanded( child: settingsList),

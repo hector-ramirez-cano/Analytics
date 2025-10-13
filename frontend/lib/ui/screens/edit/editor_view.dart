@@ -41,13 +41,13 @@ class ItemEditView extends StatelessWidget {
     // TODO: show change resume before applying to DB
     switch (type) {
       case const (Device):
-        return DeviceEditView(topology: topology);
+        return DeviceEditView(topology: topology, showDeleteButton: !selected.isNewItem(),);
 
       case const (Link):
-        return LinkEditView(topology: topology);
+        return LinkEditView(topology: topology, showDeleteButton: !selected.isNewItem(),);
         
       case const (Group):
-        return GroupEditView(topology: topology);
+        return GroupEditView(topology: topology, showDeleteButton: !selected.isNewItem(),);
 
       // Keep it, in case new type are added
       // ignore: unreachable_switch_default

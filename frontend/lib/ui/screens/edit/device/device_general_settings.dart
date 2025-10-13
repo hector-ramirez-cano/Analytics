@@ -56,6 +56,8 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     bool modified = device.isModifiedName(topology);
     Color backgroundColor = modified ? addedItemColor : Colors.transparent;
 
+    _nameInputController.selection = TextSelection.collapsed(offset: _nameInputController.selection.extentOffset);
+
     var editInput = EditTextField(
       initialText: device.name,
       enabled: editing,
@@ -261,10 +263,14 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
     // If item changed, reset the text field controller's text to the initial value of the selected
     ref.listen(itemEditSelectionProvider, (previous, next) {
-        if (next.selectedStack.lastOrNull is Device) {
+        if (next.selectedStack.lastOrNull is Device && previous?.selectedStack.lastOrNull is Device) {
           Device device = notifier.device;
-          _hostnameInputController.text = device.mgmtHostname;
-          _nameInputController.text = device.name;
+          Device prev = previous!.selectedStack.lastOrNull as Device;
+
+          if (prev.id != device.id) {
+            _hostnameInputController.text = device.mgmtHostname;
+            _nameInputController.text = device.name;
+          }
         }
       });
 
