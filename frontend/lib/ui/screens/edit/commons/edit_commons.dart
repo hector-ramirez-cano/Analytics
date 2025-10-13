@@ -46,7 +46,9 @@ Widget makeFooter(WidgetRef ref, Topology topology) {
   onCancel() => {
     notifier.discard()
   };
-  onSave() => {}; // TODO: Funcionality
+  onSave() => {
+    
+  }; // TODO: Funcionality
 
   var cancelButton = ElevatedButton(
     onPressed: () => onCancel(),

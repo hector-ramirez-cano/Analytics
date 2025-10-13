@@ -18,12 +18,12 @@ class Topology {
   factory Topology.fromJson(Map<String, dynamic> json) {
     Map<int, dynamic> itemsLocal = {};
 
-    List<Device> devices = Device.listFromJson(json['devices']);
+    Set<Device> devices = Device.setFromJson(json['devices']);
     for (var device in devices) {
       itemsLocal[device.id] = device;
     }
 
-    List<Link> links = Link.listFromJson(json['links'], itemsLocal);
+    Set<Link> links = Link.setFromJson(json['links'], itemsLocal);
     for (var link in links) {
       itemsLocal[link.id] = link;
     }
@@ -34,24 +34,23 @@ class Topology {
     return Topology(items: itemsLocal);
   }
 
-  // TODO: Convert to SET
-  List<Device> get devices {
-    return items.values.whereType<Device>().toList();
+  Set<Device> get devices {
+    return items.values.whereType<Device>().toSet();
   }
 
-  List<Link> get links {
-    return items.values.whereType<Link>().toList();
+  Set<Link> get links {
+    return items.values.whereType<Link>().toSet();
   }
 
-  List<Group> get groups {
-    return items.values.whereType<Group>().toList();
+  Set<Group> get groups {
+    return items.values.whereType<Group>().toSet();
   }
 
-  List<Link> getDeviceLinks(Device device) {
-    return links.where((link) => link.sideA.id == device.id || link.sideB.id == device.id).toList();
+  Set<Link> getDeviceLinks(Device device) {
+    return links.where((link) => link.sideA.id == device.id || link.sideB.id == device.id).toSet();
   }
 
-  List<Group> getDeviceGroups(Device device) {
-    return groups.where((group) => group.hasDevice(device)).toList();
+  Set<Group> getDeviceGroups(Device device) {
+    return groups.where((group) => group.hasDevice(device)).toSet();
   }
 }

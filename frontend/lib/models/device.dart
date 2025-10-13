@@ -106,8 +106,8 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     );
   }
 
-  static List<Device> listFromJson(List<dynamic> json) {
-    List<Device> devices = [];
+  static Set<Device> setFromJson(List<dynamic> json) {
+    Set<Device> devices = {};
 
     for (var device in json) {
       devices.add(Device.fromJson(device));

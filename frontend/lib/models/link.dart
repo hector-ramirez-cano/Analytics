@@ -86,8 +86,8 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
     return Link(id: -1, sideA: Device.emptyDevice(), sideB: Device.emptyDevice(), linkType: LinkType.copper, sideAIface: "", sideBIface: "");
   }
 
-  static List<Link> listFromJson(List<dynamic> json, Map<int, dynamic> devices) {
-    List<Link> links = [];
+  static Set<Link> setFromJson(List<dynamic> json, Map<int, dynamic> devices) {
+    Set<Link> links = {};
     for (var link in json) {
       links.add(Link.fromJson(link, devices));
     }

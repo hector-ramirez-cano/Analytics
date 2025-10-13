@@ -122,7 +122,7 @@ class TopologyTree extends StatelessWidget {
     }
 
     if (includeGroups) {
-      _makeGroupsBranch(topology.groups, groups);
+      _makeGroupsBranch(topology.groups.toList(), groups);
 
       root.add(groups);
     }

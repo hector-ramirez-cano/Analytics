@@ -97,6 +97,7 @@ class AlertsService extends _$AlertsService {
     _streamSubscription = stream.listen((message) {
       if (message is String && message.isEmpty) { return; }
 
+      // TODO: Check why sometimes it's a map, instead of a List
       final decoded = jsonDecode(message);
       final alert = AlertEvent.fromJsonArr(decoded);
       _unseenAlerts.add(alert);
