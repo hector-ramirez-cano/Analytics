@@ -83,11 +83,70 @@
     },
     "links": {
       "type": "array",
-      "items": {}
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "side-a",
+          "side-b",
+          "link-type",
+          "side-a-iface",
+          "side-b-iface"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "side-a": {
+            "type": "integer"
+          },
+          "side-b": {
+            "type": "integer"
+          },
+          "link-type": {
+            "type": "string",
+            "enum": [
+              "copper",
+              "wireless"
+            ]
+          },
+          "side-a-iface": {
+            "type": "string"
+          },
+          "side-b-iface": {
+            "type": "string"
+          }
+        }
+      }
     },
     "groups": {
       "type": "array",
-      "items": {}
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "is-display-group",
+          "members"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "is-display-group": {
+            "type": "boolean"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from typing import Any
 
-from backend.model.alerts.alert_rules import AlertRule
-from backend.model.data.device import Device
+from model.alerts.alert_rules import AlertRule
+from model.data.device import Device
 
 
 @dataclass
@@ -46,3 +45,13 @@ class Group:
             "is-display-group": self.is_display_group,
             "members": self.members,
         }
+
+
+    @staticmethod
+    def from_dict(d: dict) -> "Group":
+        return Group(
+            group_id=d["id"],
+            name=d["name"],
+            is_display_group=d["is-display-group"],
+            members=d["members"]
+        )

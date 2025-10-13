@@ -1,8 +1,8 @@
 import time
 
-from backend.Config import Config
-from backend.model.data.device import Device
-from backend.model.data.group import Group
+from Config import Config
+from model.data.device import Device
+from model.data.group import Group
 
 
 class Cache(object):

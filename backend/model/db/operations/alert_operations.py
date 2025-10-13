@@ -5,8 +5,8 @@ from itertools import islice
 from typing import Tuple, Any, Generator
 from datetime import datetime
 
-from backend.model.db.pools import postgres_db_pool
-from backend.model.alerts.alert_filters import AlertFilters
+from model.db.pools import postgres_db_pool
+from model.alerts.alert_filters import AlertFilters
 
 
 def get_alert_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue[dict], finished: threading.Event):

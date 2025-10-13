@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Set
 
-from backend.model.syslog.syslog_facility import SyslogFacility
-from backend.model.syslog.syslog_severity import SyslogSeverity
+from model.syslog.syslog_facility import SyslogFacility
+from model.syslog.syslog_severity import SyslogSeverity
 
 
 class SyslogFilters:

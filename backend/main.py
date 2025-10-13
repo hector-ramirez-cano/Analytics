@@ -1,21 +1,19 @@
 import os
-from asyncio import Task
-
-import Config
-from backend.controller import server
-
-import uvloop
 import asyncio
+from asyncio import Task
+import uvloop
 import hypercorn.config
 import hypercorn.asyncio
 
-from backend.model import db
-from backend.model.alerts.alert_backend import AlertBackend
-from backend.model.alerts.alert_event import AlertEvent
-from backend.model.db.health_check import check_postgres_connection, periodic_health_check
-from backend.model.db.pools import init_db_pool
-from backend.model.facts.fact_gathering_backend import FactGatheringBackend
-from backend.model.syslog.syslog_backend import SyslogBackend
+import Config
+from controller import server
+from model import db
+from model.alerts.alert_backend import AlertBackend
+from model.alerts.alert_event import AlertEvent
+from model.db.health_check import check_postgres_connection, periodic_health_check
+from model.db.pools import init_db_pool
+from model.facts.fact_gathering_backend import FactGatheringBackend
+from model.syslog.syslog_backend import SyslogBackend
 
 server_task       : Task[None]
 facts_task        : Task[None]
@@ -31,6 +29,7 @@ stop_event        : asyncio.Event
 binding           : str
 
 def init() -> tuple:
+    
     global server_task, facts_task, facts_writer_task, syslog_task, db_health_task, binding
     global stop_event, alert_syslog_task, alert_facts_task, alert_handler_task
 
@@ -85,7 +84,6 @@ async def main():
     global stop_event, binding
 
     init()
-
 
     try:
         await server_task

@@ -2,7 +2,7 @@ import asyncio
 
 import psycopg_pool
 
-from backend.model.db.pools import postgres_db_pool, influx_db_client
+from model.db.pools import postgres_db_pool, influx_db_client
 
 health_check_listeners = []
 
@@ -44,6 +44,9 @@ async def periodic_health_check(stop_event : asyncio.Event):
         except asyncio.TimeoutError:
             # manual check
             await notify_health_listeners(full_status=check_connections())
+
+        except Exception as e:
+            print(f"[ERROR][FACTS]registered exception e='{str(e)}'")
 
 
 def check_connections() -> dict:

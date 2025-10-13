@@ -1,15 +1,15 @@
 import asyncio
-import json
 import threading
 
 import janus
-from quart import Quart, send_from_directory, Response, websocket
+from quart import Quart, send_from_directory, Response, websocket, request
 import os
 
-from backend.model.alerts.alert_backend import AlertBackend
-from backend.model.db.health_check import check_connections, health_check_listeners
-from backend.model.db.operations.syslog_operations import get_topology_as_json
-from backend.model.syslog.syslog_backend import SyslogBackend
+from controller import get_operations, post_operations
+from model.alerts.alert_backend import AlertBackend
+from model.db.health_check import check_connections, health_check_listeners
+from model.syslog.syslog_backend import SyslogBackend
+
 
 static_dir = os.path.join(os.getcwd(), "../frontend/static")
 routes_dir = os.path.join(os.getcwd(), "../frontend")
@@ -36,13 +36,24 @@ async def heartbeat():
     print("[DEBUG]Heartbeat!")
     return "Bip bop"
 
-@app.route("/api/topology")
+@app.route("/api/topology", methods=['GET'])
 async def api_get_topology():
-    topology = get_topology_as_json()
-    topology = json.dumps(topology)
-    return Response(topology, content_type="application/json")
-    # return await send_from_directory(routes_dir, "test-data.json")
+    return get_operations.api_get_topology()
 
+@app.route("/api/configure", methods=['POST'])
+async def api_configure():
+    data = await request.get_data()
+
+    try:
+        result, msg = await post_operations.api_configure(data)
+
+        if not result:
+            raise Exception(msg)
+
+        return Response(status=200)
+
+    except Exception as e:
+        return Response(status=400, response=str(e))
 
 #  __       __            __                                      __                    __
 # /  |  _  /  |          /  |                                    /  |                  /  |
@@ -53,10 +64,11 @@ async def api_get_topology():
 # $$$$/  $$$$ |$$$$$$$$/ $$ |__$$ | $$$$$$  |$$ \__$$ |$$ \_____ $$$$$$  \ $$$$$$$$/   $$ |/  |$$$$$$  |
 # $$$/    $$$ |$$       |$$    $$/ /     $$/ $$    $$/ $$       |$$ | $$  |$$       |  $$  $$//     $$/
 # $$/      $$/  $$$$$$$/ $$$$$$$/  $$$$$$$/   $$$$$$/   $$$$$$$/ $$/   $$/  $$$$$$$/    $$$$/ $$$$$$$/
+# TODO: Move to ws_operations
 
 @app.route("/ws/health")
 async def api_check_backend():
-    return  check_connections()
+    return check_connections()
 
 
 @app.websocket("/ws/health")
@@ -84,16 +96,20 @@ async def api_syslog_ws():
     signal_queue = janus.Queue()
     finished_event = threading.Event()
 
-    syslog_thread = SyslogBackend.spawn_log_stream(data_queue.sync_q, signal_queue.sync_q, finished_event)
+    syslog_thread = SyslogBackend.spawn_log_stream(
+        data_queue.sync_q,
+        signal_queue.sync_q,
+        finished_event
+    )
 
     async def rx():
         while True:
             data = await websocket.receive_json()
             # if 'list', handle the multiple commands
-            if type(data) is list:
+            if isinstance(data, list):
                 for obj in data:
                     await signal_queue.async_q.put(obj)
-            elif type(data) is dict:
+            elif isinstance(data, dict):
                 # if 'dict', it's only one, so only execute once
                 await signal_queue.async_q.put(data)
 

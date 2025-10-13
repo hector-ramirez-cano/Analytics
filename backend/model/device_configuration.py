@@ -19,4 +19,12 @@ class DeviceConfiguration:
         print(contents)
         return contents
 
-
+    @staticmethod
+    def from_dict(d: dict) -> "DeviceConfiguration":
+        d = d["configuration"]
+        return DeviceConfiguration(
+            data_sources=set(d["data-sources"]),
+            available_values=set(d["available-values"]),
+            requested_metrics=set(d["requested-metrics"]),
+            requested_metadata=set(d["requested-metadata"])
+        )

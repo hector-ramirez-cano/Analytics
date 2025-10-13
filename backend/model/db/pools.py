@@ -4,7 +4,7 @@ from influxdb_client import WriteApi, InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 from psycopg_pool import ConnectionPool
 
-from backend import Config
+import Config
 
 # TODO: Check when DB handle is no longer valid
 _postgres_db_pool: Optional[ConnectionPool] = None

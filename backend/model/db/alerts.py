@@ -1,5 +1,5 @@
-from backend.model.alerts.alert_event import AlertEvent
-from backend.model.db.pools import postgres_db_pool
+from model.alerts.alert_event import AlertEvent
+from model.db.pools import postgres_db_pool
 
 def update_alert_config() -> list[tuple]:
     with postgres_db_pool().connection() as conn, conn.cursor() as cur:

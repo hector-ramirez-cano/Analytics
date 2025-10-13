@@ -1,8 +1,8 @@
-from typing import Literal, Any
+from typing import Any
 
-from backend.model.alerts.alert_operations import AlertOperation, AlertBooleanOperation
-from backend.model.alerts.alert_predicate import AlertPredicate
-from backend.model.alerts.alert_severity import AlertSeverity
+from model.alerts.alert_operations import AlertOperation, AlertBooleanOperation
+from model.alerts.alert_predicate import AlertPredicate
+from model.alerts.alert_severity import AlertSeverity
 
 
 class AlertRule:
@@ -53,3 +53,15 @@ class AlertRule:
                 # keep the "unreachable" code, in case new variants are added, the code won't fail silently
                 # noinspection PyUnreachableCode
                 raise "Unhandled AlertBooleanOperation variant"
+
+    @staticmethod
+    def from_dict(d: dict) -> "AlertRule":
+        return AlertRule(
+            rule_id=d.get("id", -1),
+            name=d.get("name", "Unnamed Rule"),
+            severity=AlertSeverity.from_json(d.get("severity", "unknown")),
+            target_item=d["target"],
+            reduce_logic=AlertBooleanOperation.from_str(d["reduce_logic"]),
+            requires_ack=d["requires-ack"],
+            predicates=AlertPredicate.from_dict(d["predicates"])
+        )

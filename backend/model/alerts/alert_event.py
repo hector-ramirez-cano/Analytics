@@ -2,7 +2,7 @@ import datetime
 import json
 from dataclasses import dataclass
 
-from backend.model.alerts.alert_severity import AlertSeverity
+from model.alerts.alert_severity import AlertSeverity
 
 #TODO: ADD ACKACTOR
 @dataclass

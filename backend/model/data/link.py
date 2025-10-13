@@ -29,3 +29,15 @@ class Link:
             "side-a-iface": self.side_a_iface,
             "side-b-iface": self.side_b_iface,
         }
+
+    @staticmethod
+    def from_dict(d: dict) -> "Link":
+        return Link(
+            link_id=d["id"],
+            side_a_id=d["side-a"],
+            side_b_id=d["side-b"],
+            side_a_iface=d["side-a-iface"],
+            side_b_iface=d["side-b-iface"],
+            link_type=d["link-type"],
+            link_subtype=d.get("link-subtype", None)
+        )

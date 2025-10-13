@@ -1,11 +1,11 @@
 
 from psycopg import ServerCursor
 
-from backend.model.cache import cache
-from backend.model.data.device import Device
-from backend.model.data.group import Group
-from backend.model.data.link import Link
-from backend.model.device_configuration import DeviceConfiguration
+from model.cache import cache
+from model.data.device import Device
+from model.data.group import Group
+from model.data.link import Link
+from model.device_configuration import DeviceConfiguration
 
 def parse_devices(cur: ServerCursor):
     """
@@ -20,12 +20,12 @@ def parse_devices(cur: ServerCursor):
     cur.execute(
         """
             SELECT Analytics.devices.device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values 
-                FROM Analytics.devices
-                JOIN Analytics.device_configuration ON Analytics.devices.device_id = Analytics.device_configuration.device_id;
+                FROM Analytics.devices;
         """)
     for row in cur.fetchall():
         device_id = int(row[0])
 
+        # TODO: Handle snmp configuration
         if devices.get(device_id) is None:
             devices[device_id] = Device(
                 device_id=int(row[0]),
@@ -38,7 +38,7 @@ def parse_devices(cur: ServerCursor):
                 configuration=DeviceConfiguration(
                     requested_metadata=set(row[7]),
                     requested_metrics=set(row[8]),
-                    available_values=set(row[9]),
+                    available_values=set(row[9]) if (row[9] is not None) else {},
                     data_sources=set(),
                 )
             )
@@ -53,7 +53,7 @@ def parse_devices(cur: ServerCursor):
             devices[device_id].configuration = DeviceConfiguration(
                 requested_metadata=set(row[7]),
                 requested_metrics=set(row[8]),
-                available_values=set(row[9]),
+                available_values=set(row[9]) if (row[9] is not None) else {},
                 data_sources=set(),
             )
 

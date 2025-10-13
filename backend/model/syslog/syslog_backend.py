@@ -8,9 +8,9 @@ import janus
 from aiosyslogd.db import BaseDatabase
 from aiosyslogd.server import SyslogUDPServer, BATCH_TIMEOUT, BATCH_SIZE
 
-from backend.Config import Config
-from backend.model.syslog.syslog_filters import SyslogFilters
-from backend.model import db
+from Config import Config
+from model.syslog.syslog_filters import SyslogFilters
+from model import db
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +116,9 @@ class SyslogBackend(SyslogUDPServer):
             print("[INFO ][SYSLOG]Shutting down custom server.")
             transport.close()
             await server.shutdown()
+
+        except Exception as e:
+            print(f"[ERROR][FACTS]registered exception e='{str(e)}'")
 
 
     @staticmethod

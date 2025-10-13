@@ -5,7 +5,7 @@
   },
   "backend": {
     "model": {
-      "private_data_dir": "backend/ansible",
+      "private_data_dir": "ansible",
       "playbooks": {
         "fact_gathering": "playbooks/fact_gathering.yml"
       }
@@ -18,7 +18,8 @@
         "port": 5050
       },
       "syslog": {
-        "RFC5424-port":1514
+        "RFC5424-port":1514,
+        "db_path" : ".."
       },
       "fact-gathering":{
         "polling_time_s": 5
@@ -35,7 +36,7 @@
         "reconnect_timeout_s": 15,
         "retry_timeout_s": 5,
         "request_timeout_s": 5,
-        "$ref": "backend/identity/postgres_db.json"
+        "$ref": "identity/postgres_db.json"
       },
       "influx": {
         "port": 8086,
@@ -43,7 +44,7 @@
         "org": "C5i",
         "schema": "http://",
         "bucket": "analytics",
-        "$ref": "backend/identity/influx_db.json"
+        "$ref": "identity/influx_db.json"
       }
     }
   }

@@ -2,9 +2,9 @@ import asyncio
 
 import ansible_runner
 
-import backend.Config as Config
-from backend.model.ansible_status import AnsibleStatus
-from backend.model.cache import cache
+import Config as Config
+from model.ansible_status import AnsibleStatus
+from model.cache import cache
 
 def __extract_facts_from_playbook(runner) -> tuple[dict, dict]:
     """

@@ -1,28 +1,20 @@
 SELECT * FROM Analytics.items;
 SELECT * FROM Analytics.devices;
-SELECT * FROM Analytics.device_configuration;
 SELECT * FROM Analytics.links;
 SELECT * FROM Analytics.groups;
 SELECT * FROM Analytics.group_members;
 SELECT device_id, data_source FROM Analytics.device_data_sources;
 
-SELECT * FROM Analytics.devices JOIN Analytics.device_configuration ON Analytics.devices.device_id = Analytics.device_configuration.device_id;
+SELECT * FROM Analytics.devices;
 
 SELECT Analytics.devices.device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, available_values 
-                FROM Analytics.devices
-                JOIN Analytics.device_configuration ON Analytics.devices.device_id = Analytics.device_configuration.device_id;
+                FROM Analytics.devices;
 
-INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, latitude, longitude, management_hostname) 
+INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, requested_metrics) 
     VALUES 
-        (1, 'Xochimilco-lan',  0.5,  0.5, 21.159425, -101.645852, '10.144.1.222'),
-        (2, 'Tlatelolco-lan',  0.7, -0.2, 21.159425, -101.645852, '10.144.1.1'),
-        (3, 'Obsidian-lan'  , -0.3 , 0.3, 21.159425, -101.645852, '10.144.1.225' );
-
-INSERT INTO Analytics.device_configuration (device_id, requested_metadata, requested_metrics)
-    VALUES
-        (1, '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]'),
-        (2, '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]'),
-        (3, '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]');
+        (1, 'Xochimilco-lan',  0.5,  0.5, 21.159425, -101.645852, '10.144.1.222' , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]'),
+        (2, 'Tlatelolco-lan',  0.7, -0.2, 21.159425, -101.645852, '10.144.1.1'   , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]'),
+        (3, 'Obsidian-lan'  , -0.3 , 0.3, 21.159425, -101.645852, '10.144.1.225' , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]');
 
 INSERT INTO Analytics.device_data_sources (device_id, data_source)
     VALUES
@@ -65,7 +57,6 @@ INSERT INTO Analytics.group_members(group_id, item_id)
         (203, 201),
         (203, 202);
 
--- Should fail, a group cant contain itself
 -- TODO: Handle actual parent-child recursion
 -- INSERT INTO Analytics.group_members(group_id, item_id) VALUES (203, 203);
 

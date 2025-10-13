@@ -1,37 +1,38 @@
-
 import asyncio
-from typing import Callable
 
 from psycopg_pool import PoolTimeout
 
-from backend.Config import Config
-from backend.model.db.update_devices import update_topology_cache, update_device_metadata, update_device_analytics
-from backend.model.facts.ansible import ansible_backend
-from backend.model.facts.snmp import snmp_backend
-from backend.model.facts.icmp import icmp_backend
+from Config import Config
+from model.db.update_devices import update_topology_cache
+from model.db.update_devices import update_device_metadata
+from model.db.update_devices import update_device_analytics
+from model.facts.ansible import ansible_backend
+from model.facts.snmp import snmp_backend
+from model.facts.icmp import icmp_backend
 
 
 class FactGatheringBackend:
-    __instance = None
+    instance = None
+    listeners = []
 
-    def __new__(cls, *args, **kwargs):
-        if cls.__instance is None:
-            cls.__instance = super(FactGatheringBackend, cls).__new__(cls)
-            cls.__instance.__listeners = []
+    def __new__(cls, *_, **__):
+        if cls.instance is None:
+            cls.instance = super(FactGatheringBackend, cls).__new__(cls)
+            cls.instance.listeners = []
 
-        return cls.__instance
-            
+        return cls.instance
+
     @staticmethod
     def init():
         FactGatheringBackend()
 
     @staticmethod
     def register_listener(queue: asyncio.Queue[dict]):
-        FactGatheringBackend().__instance.__listeners.append(queue)
+        FactGatheringBackend().instance.listeners.append(queue)
 
     @staticmethod
     async def notify_listeners(metrics: dict):
-        for listener in FactGatheringBackend().__listeners:
+        for listener in FactGatheringBackend().listeners:
             await listener.put(metrics)
 
 
@@ -49,7 +50,8 @@ class FactGatheringBackend:
     @staticmethod
     def __merge_results(results) -> tuple[dict, dict]:
         """
-        Merges metrics and status from a list of results, with correspondence of information among different data sources
+        Merges metrics and status from a list of results, 
+        with correspondence of information among different data sources
 
         return exposed_metrics, metrics, status
         """
@@ -89,8 +91,11 @@ class FactGatheringBackend:
         results = await asyncio.gather(*tasks)
 
         # merge results and stats
-        metrics, status = await loop.run_in_executor(None, FactGatheringBackend.__merge_results, results)
-        exposed_fields  = await loop.run_in_executor(None, FactGatheringBackend.__get_exposed_fields, metrics)
+        metrics, status = await loop.run_in_executor(None, 
+                                    FactGatheringBackend.__merge_results, results)
+
+        exposed_fields  = await loop.run_in_executor(None,
+                                    FactGatheringBackend.__get_exposed_fields, metrics)
 
         return exposed_fields, metrics, status
 
@@ -101,7 +106,7 @@ class FactGatheringBackend:
         # Update database
         await  loop.run_in_executor(None, update_topology_cache, )
 
-        metadata  = loop.run_in_executor(None, update_device_metadata, exposed_fields, metrics, status)
+        metadata  = loop.run_in_executor(None, update_device_metadata,exposed_fields,metrics,status)
         analytics = loop.run_in_executor(None, update_device_analytics, metrics)
 
         await metadata
@@ -119,10 +124,11 @@ class FactGatheringBackend:
                 # Update external listeners
                 await FactGatheringBackend.notify_listeners(metrics)
 
-            except PoolTimeout as e:
+            except PoolTimeout as _:
                 await data_queue.put(exposed_fields)
 
             except Exception as e:
+                # pylint: disable=broad-exception-caught
                 print(f"[ERROR][FACTS]e={e}")
 
     @staticmethod
@@ -136,8 +142,10 @@ class FactGatheringBackend:
                 # pass data into data queue for writing
                 await data_queue.put((exposed_fields, metrics, status))
 
-            except PoolTimeout as e:
+            except PoolTimeout as _:
                 pass
+            except Exception as e: # pylint: disable=W0718
+                print(f"[ERROR][FACTS]registered exception e='{str(e)}'")
 
             try:
                 # timeout
@@ -146,6 +154,9 @@ class FactGatheringBackend:
 
             except asyncio.TimeoutError:
                 pass
+
+            except Exception as e:
+                print(f"[ERROR][FACTS]registered exception e='{str(e)}'")
 
 
         print("[INFO][FACTS]Shutting down fact gathering loop!")

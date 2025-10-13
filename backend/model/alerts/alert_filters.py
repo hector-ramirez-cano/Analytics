@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from backend.model.alerts.alert_severity import AlertSeverity
+from model.alerts.alert_severity import AlertSeverity
 
 class AlertFilters:
     def __init__(self,

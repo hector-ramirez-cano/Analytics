@@ -1,8 +1,8 @@
 from enum import Enum
 
-from backend.model.Icmp_status import IcmpStatus
-from backend.model.ansible_status import AnsibleStatus
-from backend.model.snmp_status import SnmpStatus
+from model.Icmp_status import IcmpStatus
+from model.ansible_status import AnsibleStatus
+from model.snmp_status import SnmpStatus
 
 
 class DeviceState(Enum):

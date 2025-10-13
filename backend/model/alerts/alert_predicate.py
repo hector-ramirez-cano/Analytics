@@ -1,6 +1,6 @@
 from typing import Literal, Any, Callable
 
-from backend.model.alerts.alert_operations import AlertOperation
+from model.alerts.alert_operations import AlertOperation
 
 import ast
 

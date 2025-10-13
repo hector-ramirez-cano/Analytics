@@ -9,9 +9,10 @@ import sqlite3
 
 import janus
 
-from backend.model.cache import cache
-from backend.model.db.update_devices import update_topology_cache
-from backend.model.syslog.syslog_filters import SyslogFilters
+from model.cache import cache
+from model.db.update_devices import update_topology_cache
+from model.syslog.syslog_filters import SyslogFilters
+from Config import config
 
 
 def get_topology_as_json():
@@ -59,7 +60,7 @@ def __get_log_stream(filters: SyslogFilters) -> Generator[Tuple[Any, ...], None,
 
     try:
         for month in months:
-            db_path = f'syslog_{month}.sqlite3'
+            db_path = f'{config.get("syslog/db_path")}/syslog_{month}.sqlite3'
             alias = f'db_{month}'
 
             if not os.path.exists(db_path):
@@ -132,16 +133,16 @@ def get_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue[di
                 case "request-size":
 
                     if filters is None:
-                        raise "Size requested before filters are set"
+                        raise Exception("Size requested before filters are set")
 
                     __handle_log_stream_request_size(filters, data_queue)
 
                 case _:
                     data_queue.put_nowait(json.dumps({
                         "type": "error",
-                        "msg": f"[ERROR][SYSLOG][WS]Malformed websocket request = '% s' ignoring..."%str(signal)
+                        "msg": f"[ERROR][SYSLOG][WS]Malformed websocket request = '{str(signal)}' ignoring..."
                     }))
-                    print("[ERROR][SYSLOG][WS]Malformed websocket request = '", signal, "' ignoring...")
+                    print("[ERROR][SYSLOG][WS]Malformed websocket request ='", signal, "'ignoring...")
 
         except Exception as e:
             data_queue.put_nowait(json.dumps({"type": "error", "msg": "BACKEND ERROR: " + str(e)}))
@@ -156,7 +157,7 @@ def get_row_count(filters : SyslogFilters) -> int:
 
     try:
         for month in months:
-            db_path = f'syslog_{month}.sqlite3'
+            db_path = f'{config.get("syslog/db_path")}/syslog_{month}.sqlite3'
             alias = f'db_{month}'
 
             if not os.path.exists(db_path):

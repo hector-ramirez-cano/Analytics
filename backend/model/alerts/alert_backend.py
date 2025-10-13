@@ -7,17 +7,17 @@ from typing import Literal, Any, Coroutine
 
 import janus
 
-from backend.model.alerts.alert_event import AlertEvent
-from backend.model.alerts.alert_operations import AlertOperation, AlertBooleanOperation
-from backend.model.alerts.alert_rules import AlertRule
-from backend.model.alerts.alert_severity import AlertSeverity
-from backend.model.data.device import Device
-from backend.model.data.group import Group
-from backend.model.facts.fact_gathering_backend import FactGatheringBackend
-from backend.model.syslog.syslog_backend import SyslogBackend
-from backend.model.cache import cache
-from backend.model.db.operations import alert_operations
-import backend.model.db.alerts as db_alerts
+from model.alerts.alert_event import AlertEvent
+from model.alerts.alert_operations import AlertOperation, AlertBooleanOperation
+from model.alerts.alert_rules import AlertRule
+from model.alerts.alert_severity import AlertSeverity
+from model.data.device import Device
+from model.data.group import Group
+from model.facts.fact_gathering_backend import FactGatheringBackend
+from model.syslog.syslog_backend import SyslogBackend
+from model.cache import cache
+from model.db.operations import alert_operations
+import model.db.alerts as db_alerts
 
 class AlertBackend:
     __instance = None
@@ -130,13 +130,16 @@ class AlertBackend:
 
         :returns: None
         """
-        while not stop_event.is_set():
-            value = await queue.get()
-            if stop_event.is_set():
-                return
+        try:
+            while not stop_event.is_set():
+                value = await queue.get()
+                if stop_event.is_set():
+                    return
 
-            await AlertBackend.__eval_rules(AlertBackend().facts_rules.values(), value, alert_queue)
+                await AlertBackend.__eval_rules(AlertBackend().facts_rules.values(), value, alert_queue)
 
+        except Exception as e:
+            print(f"[ERROR][ALERTS]registered exception e='{str(e)}'")
 
     @staticmethod
     async def eval_syslog(stop_event : asyncio.Event, queue: asyncio.Queue, alert_queue: asyncio.Queue):
@@ -148,13 +151,17 @@ class AlertBackend:
 
         :returns: None
         """
-        while not stop_event.is_set():
+        try:
+            while not stop_event.is_set():
 
-            value = await queue.get()
-            if stop_event.is_set():
-                return
+                value = await queue.get()
+                if stop_event.is_set():
+                    return
 
-            await AlertBackend.__eval_rules(AlertBackend().syslog_rules.values(), value, alert_queue)
+                await AlertBackend.__eval_rules(AlertBackend().syslog_rules.values(), value, alert_queue)
+
+        except Exception as e:
+            print(f"[ERROR][ALERTS]registered exception e='{str(e)}'")
 
 
     @staticmethod
@@ -189,20 +196,23 @@ class AlertBackend:
         :param queue asyncio.Queue from which events will be received (and re-posted to if failed)
         """
         # TODO: Implement debounce
-        while not stop_event.is_set():
-            event = await queue.get()
-            if stop_event.is_set():
-                return
+        try:
+            while not stop_event.is_set():
+                event = await queue.get()
+                if stop_event.is_set():
+                    return
 
-            # attempt to insert it into db, if it fails, requeue
-            if not event.db_notified and not db_alerts.insert_alert(event):
-                await queue.put(event)
-            else:
-                event.db_notified = True
+                # attempt to insert it into db, if it fails, requeue
+                if not event.db_notified and not db_alerts.insert_alert(event):
+                    await queue.put(event)
+                else:
+                    event.db_notified = True
 
-            await AlertBackend.notify_listeners(event)
-            event.ws_notified = True
+                await AlertBackend.notify_listeners(event)
+                event.ws_notified = True
 
+        except Exception as e:
+            print(f"[ERROR][FACTS]registered exception e='{str(e)}'")
 
     @staticmethod
     def spawn_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue, finished: threading.Event) -> Coroutine:

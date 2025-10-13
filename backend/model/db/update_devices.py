@@ -2,19 +2,18 @@ import json
 
 from influxdb_client import Point
 
-from backend.Config import Config
-from backend.model.cache import cache
-from backend.model.db import fetch_topology
-from backend.model.db.pools import postgres_db_pool, influx_db_write_api
-from backend.model.data.device import Device
-from backend.model.device_state import DeviceStatus
-
+from Config import Config
+from model.cache import cache
+from model.db import fetch_topology
+from model.db.pools import postgres_db_pool, influx_db_write_api
+from model.data.device import Device
+from model.device_state import DeviceStatus
 
 def update_topology_cache():
     if not cache.should_update:
         return
 
-    print("\n[INFO ]Updating topology cache")
+    print("[INFO ]Updating topology cache")
 
     with postgres_db_pool().connection() as conn:
         with conn.cursor() as cur:
@@ -22,23 +21,6 @@ def update_topology_cache():
             fetch_topology.parse_device_datasource(cur)
             fetch_topology.parse_link(cur)
             fetch_topology.parse_groups(cur)
-
-
-def __extract_device_metadata(metrics):
-    """
-    Extracts from the returned ansible-metrics the fields requested for each device, and modifies the device metadata
-    """
-    devices = cache.devices
-
-    for hostname in metrics:
-        device = Device.find_by_management_hostname(devices, hostname)
-
-        if device is None:
-            continue
-
-        for field in device.configuration.requested_metadata:
-            value = metrics[hostname].get(field)
-            device.metadata[field] = value
 
 
 def update_device_metadata(exposed_metrics: dict, metrics : dict, status: dict):
@@ -72,18 +54,17 @@ def update_device_metadata(exposed_metrics: dict, metrics : dict, status: dict):
             if device is None:
                 continue
 
+            # FIXME: metadata contains every available value, as opposed to only requested metadata
             cur.execute(
                 """
-                    UPDATE Analytics.devices SET metadata = %s WHERE device_id = %s
+                    UPDATE Analytics.devices 
+                    SET metadata = %s, available_values = %s 
+                    WHERE device_id = %s
                 """,
-                (json.dumps(device.available_values), device.device_id)
-            )
-
-            cur.execute(
-                """
-                    UPDATE Analytics.device_configuration SET available_values = %s WHERE device_id = %s
-                """,
-                (json.dumps(device.available_values), device.device_id)
+                (
+                    json.dumps(device.available_values), json.dumps(device.available_values),
+                    device.device_id
+                )
             )
 
     conn.commit()
@@ -113,3 +94,19 @@ def update_device_analytics(metrics):
 
         influx_db_write_api().write(bucket=bucket, org="C5i", record=point)
 
+
+def __extract_device_metadata(metrics):
+    """
+    Extracts from the returned ansible-metrics the fields requested for each device, and modifies the device metadata
+    """
+    devices = cache.devices
+
+    for hostname in metrics:
+        device = Device.find_by_management_hostname(devices, hostname)
+
+        if device is None:
+            continue
+
+        for field in device.configuration.requested_metadata:
+            value = metrics[hostname].get(field)
+            device.metadata[field] = value

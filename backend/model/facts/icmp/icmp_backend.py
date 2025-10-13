@@ -1,8 +1,8 @@
 import re
 import subprocess
 
-from backend.model.Icmp_status import IcmpStatus
-from backend.model.cache import cache
+from model.Icmp_status import IcmpStatus
+from model.cache import cache
 
 import asyncio
 

@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
 
-from backend.model.alerts.alert_rules import AlertRule
-from backend.model.device_configuration import DeviceConfiguration
-from backend.model.device_state import DeviceStatus
+from model.alerts.alert_rules import AlertRule
+from model.device_configuration import DeviceConfiguration
+from model.device_state import DeviceStatus
 
 
 @dataclass
@@ -44,3 +44,17 @@ class Device:
 
     def eval_rule(self, rule: AlertRule, d: dict, _get_item_fn) -> tuple[bool, tuple["Device"]]:
         return rule.eval(d.get(self.management_hostname, {})), (self,)
+
+
+    @staticmethod
+    def from_dict(d: dict):
+        return Device(
+            device_id=d["id"],
+            device_name=d["name"],
+            position_x=d["coordinates"][0],
+            position_y=d["coordinates"][1],
+            latitude=d["geocoordinates"][0],
+            longitude=d["geocoordinates"][1],
+            management_hostname=d["management-hostname"],
+            configuration=DeviceConfiguration.from_dict(d)
+        )

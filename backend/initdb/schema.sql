@@ -18,25 +18,22 @@ CREATE TABLE IF NOT EXISTS Analytics.devices (
     longitude           FLOAT        NOT NULL,
     management_hostname VARCHAR(254) NOT NULL,
     metadata            JSONB,
-    FOREIGN KEY (device_id) REFERENCES Analytics.items(id) ON DELETE CASCADE,
 
-    CONSTRAINT chk_lat_in_range CHECK (latitude >= -90.0 AND latitude <= 90),
-    CONSTRAINT chk_lng_in_range CHECK (longitude >= -180 AND longitude <= 180)
-);
-
-CREATE TABLE IF NOT EXISTS Analytics.device_configuration (
-    device_id           SERIAL       NOT NULL,
     requested_metadata  JSONB        NOT NULL,
     requested_metrics   JSONB        NOT NULL,
     available_values    JSONB,
     
     snmp_configuration  JSONB,
 
-    FOREIGN KEY (device_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE
+    FOREIGN KEY (device_id) REFERENCES Analytics.items(id) ON DELETE CASCADE,
+
+    CONSTRAINT chk_lat_in_range CHECK (latitude >= -90.0 AND latitude <= 90),
+    CONSTRAINT chk_lng_in_range CHECK (longitude >= -180 AND longitude <= 180)
 );
 
+
 CREATE TABLE IF NOT EXISTS Analytics.device_data_sources(
-    device_id           SERIAL,    NOT NULL,
+    device_id           SERIAL     NOT NULL,
     data_source         DataSource NOT NULL,
 
     FOREIGN KEY (device_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE

@@ -1,4 +1,5 @@
 import json
+import os
 from logging import Logger
 
 
@@ -44,7 +45,7 @@ class Config(object):
     def __new__(cls):
         if cls.__instance is None:
             cls.__instance = super(Config, cls).__new__(cls)
-            cls.__instance.config = cls.__parse__("backend/config.json")
+            cls.__instance.config = cls.__parse__("config.json")
 
         return cls.__instance
 
