@@ -8,7 +8,7 @@ from typing import Literal, Any, Coroutine
 import janus
 
 from model.alerts.alert_event import AlertEvent
-from model.alerts.alert_operations import AlertOperation, AlertBooleanOperation
+from model.alerts.alert_operations import AlertOperation, AlertReduceLogic
 from model.alerts.alert_rules import AlertRule
 from model.alerts.alert_severity import AlertSeverity
 from model.data.device import Device
@@ -225,7 +225,7 @@ class AlertBackend:
                   requires_ack: bool,
                   severity: AlertSeverity,
                   target_item: int,
-                  reduce_logic: AlertBooleanOperation,
+                  reduce_logic: AlertReduceLogic,
                   predicates: list[tuple[AlertOperation, Any, Any, str]],
                   data_source: Literal["facts", "syslog"],
                   ):
@@ -266,7 +266,7 @@ class AlertBackend:
         :param requires_ack whether the dismissal of this alert requires manual ack
         :param definition dict holding rule definition as per the schema found at alert-definition.json
         """
-        reduce_logic = AlertBooleanOperation.from_str(definition.get("reduce_logic", None))
+        reduce_logic = AlertReduceLogic.from_str(definition.get("reduce-logic", None))
         severity     = AlertSeverity.from_str(definition.get("severity", None))
         target_item = definition.get("target", None)
         data_source = definition.get("source", None)

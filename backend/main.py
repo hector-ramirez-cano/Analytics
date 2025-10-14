@@ -29,7 +29,6 @@ stop_event        : asyncio.Event
 binding           : str
 
 def init() -> tuple:
-    
     global server_task, facts_task, facts_writer_task, syslog_task, db_health_task, binding
     global stop_event, alert_syslog_task, alert_facts_task, alert_handler_task
 

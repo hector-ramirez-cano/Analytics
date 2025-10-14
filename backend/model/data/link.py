@@ -20,7 +20,7 @@ class Link:
         self.link_type = link_type
         self.link_subtype = link_subtype
 
-    def to_json(self):
+    def to_dict(self):
         return {
             "id": self.link_id,
             "side-a": self.side_a_id,

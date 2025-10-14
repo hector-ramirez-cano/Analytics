@@ -1,6 +1,6 @@
 from typing import Any
 
-from model.alerts.alert_operations import AlertOperation, AlertBooleanOperation
+from model.alerts.alert_operations import AlertOperation, AlertReduceLogic
 from model.alerts.alert_predicate import AlertPredicate
 from model.alerts.alert_severity import AlertSeverity
 
@@ -13,7 +13,7 @@ class AlertRule:
             requires_ack: bool,
             severity: AlertSeverity,
             target_item : int,
-            reduce_logic: AlertBooleanOperation,
+            reduce_logic: AlertReduceLogic,
             predicates: tuple[AlertOperation, Any, Any, str]
     ):
         self.rule_id = rule_id
@@ -43,16 +43,16 @@ class AlertRule:
                 return False
 
         match reduce_logic:
-            case AlertBooleanOperation.boolean_and:
-                self.eval = lambda d: safe_exec_all(d)
+            case AlertReduceLogic.ALL:
+                self.eval = safe_exec_all
 
-            case AlertBooleanOperation.boolean_or:
-                self.eval = lambda d: safe_exec_any(d)
+            case AlertReduceLogic.ANY:
+                self.eval = safe_exec_any
 
             case _:
                 # keep the "unreachable" code, in case new variants are added, the code won't fail silently
                 # noinspection PyUnreachableCode
-                raise "Unhandled AlertBooleanOperation variant"
+                raise Exception("Unhandled AlertBooleanOperation variant")
 
     @staticmethod
     def from_dict(d: dict) -> "AlertRule":
@@ -61,7 +61,7 @@ class AlertRule:
             name=d.get("name", "Unnamed Rule"),
             severity=AlertSeverity.from_json(d.get("severity", "unknown")),
             target_item=d["target"],
-            reduce_logic=AlertBooleanOperation.from_str(d["reduce_logic"]),
+            reduce_logic=AlertReduceLogic.from_str(d["reduce-logic"]),
             requires_ack=d["requires-ack"],
             predicates=AlertPredicate.from_dict(d["predicates"])
         )

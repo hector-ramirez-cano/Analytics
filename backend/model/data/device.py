@@ -30,7 +30,7 @@ class Device:
 
         return None
 
-    def to_json(self):
+    def to_dict(self):
         return {
             "id": self.device_id,
             "name": self.device_name,

@@ -38,7 +38,7 @@ class Group:
         )
         return bool(matched_devices), matched_devices
 
-    def to_json(self):
+    def to_dict(self):
         return {
             "id": self.group_id,
             "name": self.name,

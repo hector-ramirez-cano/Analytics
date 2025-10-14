@@ -8,19 +8,22 @@ from model.data.link import Link
 from model.device_configuration import DeviceConfiguration
 from model.db.update_devices import update_topology_cache
 
-def get_topology_as_json():
+def get_topology_as_dict():
     """
-    Acquires topology from database, and converts it into json
+    Acquires topology from database, and converts it into a dict
     """
     devices, links, groups = cache.topology
 
     update_topology_cache()
 
     return {
-        "devices": [device.to_json() for device in devices.values()],
-        "links": [link.to_json() for link in links.values()],
-        "groups": [group.to_json() for group in groups.values()]
+        "devices": [device.to_dict() for device in devices.values()],
+        "links": [link.to_dict() for link in links.values()],
+        "groups": [group.to_dict() for group in groups.values()]
     }
+
+
+
 
 def parse_devices(cur: ServerCursor):
     """

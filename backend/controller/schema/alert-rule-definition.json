@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
-  "required": ["severity", "target", "reduce_logic", "source", "predicates"],
+  "required": ["severity", "target", "reduce-logic", "source", "predicates"],
   "properties": {
     "severity": {
       "type": "string",
@@ -14,7 +14,7 @@
       "type": "integer",
       "minimum": 1
     },
-    "reduce_logic": {
+    "reduce-logic": {
       "type": "string",
       "enum": ["and", "or"]
     },

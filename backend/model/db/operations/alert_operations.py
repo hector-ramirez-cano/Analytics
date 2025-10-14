@@ -29,20 +29,19 @@ def get_alert_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue[
 
                 case "request-size":
                     if filters is None:
-                        raise "Size requested before filters are set"
+                        raise Exception("Size requested before filters are set")
 
                     __handle_alert_stream_request_size(filters, data_queue)
 
                 case _:
                     data_queue.put_nowait(json.dumps({
                         "type": "error",
-                        "msg": f"[ERROR][ALERTS][WS]Malformed websocket request = '% s' ignoring..."%str(signal)
+                        "msg": f"[ERROR][ALERTS][WS]Malformed websocket request = '{str(signal)}' ignoring..."
                     }))
                     print("[ERROR][ALERTS][WS]Malformed websocket request = '", signal, "' ignoring...")
 
         except Exception as e:
             data_queue.put_nowait(json.dumps({"type": "error", "msg": "BACKEND ERROR: " + str(e)}))
-
 
 
 def __get_alert_stream(filters: AlertFilters) -> Generator[Tuple[Any, ...], None, None]:

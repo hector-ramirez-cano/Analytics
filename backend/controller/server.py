@@ -40,6 +40,11 @@ async def heartbeat():
 async def api_get_topology():
     return get_operations.api_get_topology()
 
+@app.route("/api/rules", methods=['GET'])
+async def api_get_rules():
+    return get_operations.api_get_rules()
+
+
 @app.route("/api/configure", methods=['POST'])
 async def api_configure():
     data = await request.get_data()

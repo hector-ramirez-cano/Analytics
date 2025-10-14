@@ -1,8 +1,8 @@
-from typing import Literal, Any, Callable
+import ast
+from typing import Literal
 
 from model.alerts.alert_operations import AlertOperation
 
-import ast
 
 def compile_accessor(path: str, sep='>'):
     """
@@ -24,7 +24,8 @@ def compile_accessor(path: str, sep='>'):
     tree = ast.parse("d", mode="eval").body
 
     # Create nested subscript `d[1][2][3]...[n]` and append to tree
-    for key in keys: tree = ast.Subscript( value=tree, slice=ast.Constant(value=key), ctx=ast.Load() )
+    for key in keys:
+        tree = ast.Subscript( value=tree, slice=ast.Constant(value=key), ctx=ast.Load() )
 
     # create the ast
     func_ast = ast.Expression(
@@ -41,15 +42,15 @@ def compile_accessor(path: str, sep='>'):
     # add lineno and some other pesky things python needs, even if the ast is not found in an actual file
     fixed_ast = ast.fix_missing_locations(func_ast)
     code = compile(fixed_ast, filename="<string>", mode="eval")
-    return eval(code)
+    return eval(code) # FIXME: REPLACE EVAL
 
 
 class AlertPredicate:
     def __init__(self,
-                 op: AlertOperation,
-                 left,
-                 right,
-                 const: Literal["left", "right", ""]
+                op: AlertOperation,
+                left,
+                right,
+                const: Literal["left", "right", ""]
         ):
 
         # if const == "", then it's a binary predicate,
@@ -80,4 +81,9 @@ class AlertPredicate:
 
             else:
                 # noinspection PyUnreachableCode
-                raise f"Invalid value '{const}' for const param. Const can only be 'left', 'right' or ''"
+                raise Exception(f"Invalid value '{const}' for const param. Const can only be 'left', 'right' or ''")
+
+
+    @staticmethod
+    def from_dict(d: dict) -> "AlertPredicate":
+        raise Exception("Not implemented")
