@@ -3,6 +3,7 @@ api:
   topology_endpoint: "http://localhost:5050/api/topology"
   syslog_count_endpoint: "http://localhost:5050/api/syslog/message_count"
   configure_endpoint: "http://localhost:5050/api/configure"
+  alert_endpoint: "http://localhost:5050/api/rules"
   retries: 3
   retry_delay_s: 5
   timeout_s: 15
@@ -28,3 +29,4 @@ debug:
   enable_drawer_logging: false
   enable_canvas_tab_logging: false
   enable_alert_service_logging: true
+  enable_alert_rules_service_logging: true

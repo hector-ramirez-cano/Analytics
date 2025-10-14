@@ -4,6 +4,7 @@ import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
+import 'package:network_analytics/services/alert_rules_service.dart';
 import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/drawer/item_edit_drawer.dart';
 import 'package:network_analytics/ui/components/drawer/listing_drawer.dart';
@@ -25,18 +26,18 @@ class _SideDrawerState extends ConsumerState<SideDrawer> {
     var _ = ref.refresh(topologyProvider.future);
   }
 
-  Widget _buildContent(AsyncValue<Topology> topology) {
+  Widget _buildContent(AsyncValue<Topology> topology, AsyncValue<AlertRuleSet> ruleSet,) {
 
     SideDrawer.logger.d("2 BuildContent called with topology=$topology");
     
-    return _buildDrawerPanel(topology);
+    return _buildDrawerPanel(topology, ruleSet);
   }
 
-  Widget _buildDrawerPanel(AsyncValue<Topology> topology) {
+  Widget _buildDrawerPanel(AsyncValue<Topology> topology, AsyncValue<AlertRuleSet> ruleSet,) {
     final selectedPanel = ref.watch(sideNavSelectionProvider);
     SideDrawer.logger.d("3 _buildDrawerPanel called, selectedPanel=$selectedPanel");
     
-    return _makeSelector(topology, selectedPanel);
+    return _makeSelector(topology, ruleSet, selectedPanel);
   }
 
   Widget _buildOnNotSuccessful(String? error, bool isLoading) {
@@ -46,7 +47,7 @@ class _SideDrawerState extends ConsumerState<SideDrawer> {
     
   }
 
-  Widget createContainerFromSelection(AsyncValue<Topology> topology, NavigationRailItem? selectedPanel) {
+  Widget createContainerFromSelection(AsyncValue<Topology> topology, AsyncValue<AlertRuleSet> ruleSet, NavigationRailItem? selectedPanel) {
     SideDrawer.logger.d("5 Creating drawer panel from $selectedPanel, topology=$topology");
 
     // TODO: Handle on at least one successful load, don't completely change the layout to a error layout if it fails
@@ -67,9 +68,13 @@ class _SideDrawerState extends ConsumerState<SideDrawer> {
 
       case NavigationRailItem.edit:
         return topology.when(
-          data   : (topology) => ItemEditDrawer(topology: topology),
-          error  : (error, st) => _buildOnNotSuccessful(error.toString(), topology.isLoading),
-          loading: ()          => _buildOnNotSuccessful(null, true)
+          error  : (error, st) => _buildOnNotSuccessful("${error.toString()}, at $st", topology.isLoading),
+          loading: ()          => _buildOnNotSuccessful(null, true),
+          data   : (topology)  => ruleSet.when(
+            error  : (error, st) => _buildOnNotSuccessful("${error.toString()}, at $st", ruleSet.isLoading),
+            loading: ()          => _buildOnNotSuccessful(null, true),
+            data: (rules) => ItemEditDrawer(topology: topology, ruleSet: rules,),
+          )
         );
 
       default:
@@ -84,7 +89,7 @@ class _SideDrawerState extends ConsumerState<SideDrawer> {
     }
   }
 
-  Widget _makeSelector(AsyncValue<Topology> topology, NavigationRailItem? selectedPanel) { 
+  Widget _makeSelector(AsyncValue<Topology> topology, AsyncValue<AlertRuleSet> ruleSet, NavigationRailItem? selectedPanel) { 
     if (selectedPanel?.hasDrawer == false) {
       // force hiding of drawer
       return SizedBox.shrink();
@@ -93,7 +98,7 @@ class _SideDrawerState extends ConsumerState<SideDrawer> {
     return Container(
       padding: const EdgeInsets.all(16),
       alignment: Alignment.topLeft,
-      child: createContainerFromSelection(topology, selectedPanel)
+      child: createContainerFromSelection(topology, ruleSet, selectedPanel)
     );
   }
 
@@ -104,9 +109,10 @@ class _SideDrawerState extends ConsumerState<SideDrawer> {
     return Consumer(builder: 
       (context, ref, child) {
         var topology = ref.watch(topologyProvider);
+        var ruleSet = ref.watch(alertRulesServiceProvider);
 
         SideDrawer.logger.d("1 Triggered a drawer rebuild with topology=$topology");
-        return _buildContent(topology);
+        return _buildContent(topology, ruleSet);
       }
     );
   }

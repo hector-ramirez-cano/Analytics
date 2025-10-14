@@ -1,19 +1,22 @@
 import 'package:animated_tree_view/tree_view/tree_node.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:network_analytics/models/alerts/alert_rule.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/services/alert_rules_service.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
-import 'package:network_analytics/ui/components/topology_tree.dart';
+import 'package:network_analytics/ui/components/item_tree.dart';
 
-// Rename to drawer for clarity
 class ItemEditDrawer extends StatelessWidget {
   final Topology topology;
+  final AlertRuleSet ruleSet;
 
   const ItemEditDrawer({
     super.key,
     required this.topology,
+    required this.ruleSet,
   });
 
   void onChangeItem(WidgetRef ref, TreeNode value) {
@@ -25,11 +28,7 @@ class ItemEditDrawer extends StatelessWidget {
       return;
     }
 
-    if(value.data is Device) {
-      ref.read(itemEditSelectionProvider.notifier).setSelected(value.data, clearStack: true);
-    }
-
-    if(value.data is Group) {
+    if(value.data is Device || value.data is Group || value.data is AlertRule) {
       ref.read(itemEditSelectionProvider.notifier).setSelected(value.data, clearStack: true);
     }
   }
@@ -50,8 +49,9 @@ class ItemEditDrawer extends StatelessWidget {
             Padding(padding: EdgeInsetsGeometry.only(top: 4, bottom: 4)),
             Divider(height: 1,),
             Expanded(
-              child: TopologyTree(
+              child: ItemTree(
                 topology: topology,
+                ruleSet: ruleSet,
                 includeDevices: true,
                 includeGroups: true,
                 onItemTap: onItemTap,

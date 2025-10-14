@@ -17,7 +17,7 @@ class Group extends GroupableItem<Group>{
   })
     : members = Set.unmodifiable(members);
   
-  Group cloneWith({int? id, String? name, Set<GroupableItem>? members, bool? isDisplayGroup}) {
+  Group copyWith({int? id, String? name, Set<GroupableItem>? members, bool? isDisplayGroup}) {
     return Group(
       id: id ?? this.id,
       members: Set<GroupableItem>.from(members ?? this.members),
@@ -30,7 +30,7 @@ class Group extends GroupableItem<Group>{
   Group mergeWith(Group other) {
     var members = Set<GroupableItem>.from(other.members)..addAll(this.members);
 
-    return cloneWith(members: members);
+    return copyWith(members: members);
   }
 
   factory Group.fromJson(Map<String, dynamic> json, Map<int, dynamic> items) {
@@ -80,7 +80,7 @@ class Group extends GroupableItem<Group>{
         members.add(items[id]);
       }
 
-      items[id] = (items[id] as Group).cloneWith(members: {...oldMembers, ...members});
+      items[id] = (items[id] as Group).copyWith(members: {...oldMembers, ...members});
     }
   }
 

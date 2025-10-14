@@ -1,0 +1,79 @@
+import 'package:network_analytics/models/alerts/alert_predicate.dart';
+import 'package:network_analytics/models/alerts/alert_reduce_logic.dart';
+import 'package:network_analytics/models/alerts/alert_severity.dart';
+import 'package:network_analytics/models/alerts/alert_source.dart';
+import 'package:network_analytics/models/analytics_item.dart';
+import 'package:network_analytics/services/alert_rules_service.dart';
+
+class AlertRule extends AnalyticsItem<AlertRule> {
+  final String name;
+  final bool requiresAck;
+  final AlertReduceLogic reduceLogic;
+  final List<AlertPredicate> definition;
+  final AlertSource source;
+  final int targetId;
+  final AlertSeverity severity;
+
+  const AlertRule({
+    required super.id,
+    required this.name,
+    required this.requiresAck,
+    required this.reduceLogic,
+    required this.source,
+    required this.targetId,
+    required this.severity,
+    required this.definition, 
+  });
+
+
+  factory AlertRule.fromJson(Map<String, dynamic> json) {
+    return AlertRule(
+      id: json["rule-id"],
+      name: json["name"],
+      requiresAck: json["requires-ack"],
+      reduceLogic: AlertReduceLogic.fromString(json["definition"]["reduce-logic"]),
+      source: AlertSource.fromString(json["definition"]["source"]),
+      targetId: json["definition"]["target"],
+      severity: AlertSeverity.fromString(json["definition"]["severity"]),
+      definition: AlertPredicate.listFromJson(json["definition"]["predicates"])
+    );
+  }
+
+  AlertRule copyWith({
+    int? id,
+    String? name,
+    bool? requiresAck,
+    AlertReduceLogic? reduceLogic,
+    List<AlertPredicate>? definition,
+    AlertSource? source,
+    int? targetId,
+    AlertSeverity? severity,
+  }) {
+    return AlertRule(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      requiresAck: requiresAck ?? this.requiresAck,
+      reduceLogic: reduceLogic ?? this.reduceLogic,
+      definition: definition ?? this.definition,
+      source: source ?? this.source,
+      targetId: targetId ?? this.targetId,
+      severity: severity ?? this.severity,
+    );
+  }
+
+  bool isModifiedName(AlertRuleSet ruleSet) {
+    return ruleSet.rules[id]?.name != name;
+  }
+  
+  @override
+  bool isNewItem() {
+    return id < 0;
+  }
+  
+  @override
+  AlertRule mergeWith(AlertRule other) {
+    Set<AlertPredicate> definition = Set.from(other.definition)..addAll(this.definition);
+    
+    return copyWith(definition: definition.toList());
+  }
+}

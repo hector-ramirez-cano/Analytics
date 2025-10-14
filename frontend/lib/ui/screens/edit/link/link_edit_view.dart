@@ -11,7 +11,6 @@ import 'package:network_analytics/ui/components/dialogs/device_selection_dialog.
 import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
-import 'package:network_analytics/ui/components/dialogs/option_dialog.dart';
 import 'package:network_analytics/ui/components/list_selector.dart';
 import 'package:settings_ui/settings_ui.dart';
 
@@ -42,13 +41,11 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     _sideBIfaceInputController = TextEditingController(text: ref.read(itemEditSelectionProvider.notifier).link.sideBIface);
   }
 
+  void onRequestedDelete()  { ref.read(itemEditSelectionProvider.notifier).onRequestDeletion(); displayDeleteConfirmDialog(context, ref); }
   void onEditSideAIface() => ref.read(itemEditSelectionProvider.notifier).set(editingLinkIfaceA: true);
   void onEditSideBIface() => ref.read(itemEditSelectionProvider.notifier).set(editingLinkIfaceB: true);
-  void onCancelDelete()   => ref.read(itemEditSelectionProvider.notifier).set(requestedConfirmDeletion: false);
-  void onConfirmedDelete()=> ref.read(itemEditSelectionProvider.notifier).onDeleteSelected();
   void onConfirmRestore() => ref.read(itemEditSelectionProvider.notifier).onRestoreSelected();
 
-  void onRequestedDelete(){ ref.read(itemEditSelectionProvider.notifier).onRequestDeletion(); _displayDeleteConfirmDialog(); }
   void onEditSideB()      { ref.read(itemEditSelectionProvider.notifier).set(editingLinkDeviceB: true); _displaySelectionDialog(deviceB: true);}
   void onEditSideA()      { ref.read(itemEditSelectionProvider.notifier).set(editingLinkDeviceA: true); _displaySelectionDialog(deviceA: true);}
 
@@ -56,14 +53,14 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     final notifier = ref.read(itemEditSelectionProvider.notifier);
     var link = notifier.link;
 
-    onEditIFaceContent(text, notifier.link.sideAIface, (text) => link.cloneWith(sideAIface: text));
+    onEditIFaceContent(text, notifier.link.sideAIface, (text) => link.copyWith(sideAIface: text));
   }
 
   void onEditSideBIfaceContent(String text) {
     final notifier = ref.read(itemEditSelectionProvider.notifier);
     var link = notifier.link;
 
-    onEditIFaceContent(text, notifier.link.sideBIface, (text) => link.cloneWith(sideBIface: text));
+    onEditIFaceContent(text, notifier.link.sideBIface, (text) => link.copyWith(sideBIface: text));
   }
 
   void onEditIFaceContent(String text, String currentText, Link Function(String) modifyFn) {
@@ -84,12 +81,12 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
               DropdownMenuItem(value: type.name, child: Text(type.name)))
           .toList(),
       onChanged: (val) {
-        final type = LinkType.fromStr(val ?? "");
+        final type = LinkType.fromString(val ?? "");
         if (type == null) { return; }
 
         final notifier = ref.read(itemEditSelectionProvider.notifier);
         final Link item = notifier.selected as Link;
-        notifier.changeItem(item.cloneWith(linkType: type));
+        notifier.changeItem(item.copyWith(linkType: type));
       },
       isExpanded: true,
     );
@@ -228,21 +225,6 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
     return dialog.show(context);
   }
 
-  void _displayDeleteConfirmDialog() {
-    final itemSelection = ref.read(itemEditSelectionProvider);
-
-    bool showConfirmDialog = itemSelection.confirmDeletion;
-
-    if (!showConfirmDialog) { return; }
-
-    OptionDialog(
-        dialogType: OptionDialogType.cancelDelete,
-        title: Text("Confirmar acción"),
-        confirmMessage: Text("(Los cambios no serán apliacados todavía)"),
-        onCancel: onCancelDelete,
-        onDelete: onConfirmedDelete,
-      ).show(context);
-  }
 
   Widget _buildConfigurationPage() {
     final notifier = ref.read(itemEditSelectionProvider.notifier);

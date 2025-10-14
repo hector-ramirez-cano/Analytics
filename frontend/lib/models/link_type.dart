@@ -12,7 +12,7 @@ enum LinkType {
     return super.toString().replaceFirst(leading, "");
   }
 
-  static LinkType? fromStr(String value) {
+  static LinkType? fromString(String value) {
 
     switch(value) {
       case "copper":

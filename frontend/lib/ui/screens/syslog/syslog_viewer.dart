@@ -37,10 +37,10 @@ class _SyslogViewerState extends ConsumerState<SyslogViewer> {
   List<ResizableChild> _makeContainers(WidgetRef ref) {
 
     return [
-      /*ResizableChild(
+      ResizableChild(
         size: ResizableSize.shrink(min: 250),
         child: _makeSyslogRealtimeViewer(ref)
-      ),*/
+      ),
       ResizableChild(
         size: ResizableSize.expand(min: 300),
         child: _makeLogTable(ref)

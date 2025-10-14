@@ -4,9 +4,12 @@ import 'package:animated_tree_view/tree_view/widgets/expansion_indicator.dart';
 import 'package:animated_tree_view/tree_view/widgets/indent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/web.dart';
+import 'package:network_analytics/models/alerts/alert_rule.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/services/alert_rules_service.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
@@ -40,24 +43,31 @@ extension on TreeNode {
       return const Icon(Icons.dns, size: iconSize,);
     }
 
+    if (this is TreeNode<AlertRule>) {
+      return const Icon(Icons.rule, size: iconSize);
+    }
+
+    Logger().w("Displaying Tree node with undefined icon, default icon will be used");
     return const Icon(Icons.insert_drive_file, size: iconSize);
   }
 }
 
-class TopologyTree extends StatelessWidget {
+class ItemTree extends StatelessWidget {
   final Topology topology;
+  final AlertRuleSet? ruleSet;
   final bool includeDevices;
   final bool includeGroups;
   final bool showRoot;
   final Function(TreeNode) onItemTap;
 
-  const TopologyTree({
+  const ItemTree({
     super.key,
     required this.topology,
     required this.includeDevices,
     required this.includeGroups,
     required this.onItemTap,
 
+    this.ruleSet,
     this.showRoot = false,
   });
 
@@ -104,7 +114,12 @@ class TopologyTree extends StatelessWidget {
     for (final int index in groupOrder(groups)) {
       root.add(makeGroupTreeBranch(groups[index]));
     }
+  }
 
+  void _makeRulesBranch(AlertRuleSet ruleSet, TreeNode rules) {
+    for (AlertRule rule in ruleSet.rules.values) {
+      rules.add(TreeNode<AlertRule>(key: UniqueKey().toString(), data: rule));
+    }
   }
 
   TreeNode _makeTree() {
@@ -112,6 +127,7 @@ class TopologyTree extends StatelessWidget {
 
     var devices = TreeNode<Section>(key: UniqueKey().toString(), data: Section(name: "Dispositivos", icon: Icons.dns));
     var groups  = TreeNode<Section>(key: UniqueKey().toString(), data: Section(name: "Grupos", icon: Icons.folder));
+    var rules   = TreeNode<Section>(key: UniqueKey().toString(), data: Section(name: "Reglas", icon: Icons.rule_folder));
     
     if (includeDevices) {
       for (Group group in topology.groups) {
@@ -125,6 +141,12 @@ class TopologyTree extends StatelessWidget {
       _makeGroupsBranch(topology.groups.toList(), groups);
 
       root.add(groups);
+    }
+
+    if (ruleSet != null) {
+      _makeRulesBranch(ruleSet!, rules);
+
+      root.add(rules);
     }
 
     return root;
@@ -151,6 +173,10 @@ class TopologyTree extends StatelessWidget {
     }
     else if (node is TreeNode<Section>) {
       title = node.data?.name ?? "";
+    } else if (node is TreeNode<AlertRule>) {
+      title = node.data?.name ?? "";
+    } else {
+      Logger().w("Displaying Tree node with undefined title conversion, item key will be used");
     }
 
     var iconPadding = node.isLeaf ? EdgeInsets.only(left: 0) : EdgeInsets.only(left: 8);

@@ -11,7 +11,7 @@ class Topology {
     required Map<int, dynamic> items,
   }) : items = Map.unmodifiable(items);
 
-  Topology cloneWith({Map<int, dynamic>? items, List<Group>? groups}) {
+  Topology copyWith({Map<int, dynamic>? items, List<Group>? groups}) {
     return Topology(items: items ?? this.items);
   }
 

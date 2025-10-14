@@ -8,10 +8,9 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/dialog_change_notifier.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
-import 'package:network_analytics/ui/components/dialogs/group_item_selection_dialog.dart';
+import 'package:network_analytics/ui/components/dialogs/groupable_item_selection_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
-import 'package:network_analytics/ui/components/dialogs/option_dialog.dart';
 import 'package:network_analytics/ui/components/list_selector.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:settings_ui/settings_ui.dart';
@@ -45,16 +44,13 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     _nameInputController = TextEditingController(text: selected.name);
   }
 
-  // Callbacks that chnge the state
+  // Callbacks that change the state
   void onEditName   ()       => ref.read(itemEditSelectionProvider.notifier).toggleEditingGroupName();
-  void onCancelDelete()      => ref.read(itemEditSelectionProvider.notifier).set(requestedConfirmDeletion: false);
-  void onConfirmedDelete()   => ref.read(itemEditSelectionProvider.notifier).onDeleteSelected();
   void onConfirmRestore()    => ref.read(itemEditSelectionProvider.notifier).onRestoreSelected();
 
   // Callbacks that display a dialog and change the state
-  // TODO: Make a distinction for groups and devices on the dialog
   void onEditMembers()       { ref.read(itemEditSelectionProvider.notifier).set(editingGroupMembers: true); _displayMembersSelectionInput();}
-  void onRequestedDelete()   { ref.read(itemEditSelectionProvider.notifier).onRequestDeletion(); _displayDeleteConfirmDialog(); }
+  void onRequestedDelete()   { ref.read(itemEditSelectionProvider.notifier).onRequestDeletion(); displayDeleteConfirmDialog(context, ref); }
 
   void onContentEdit(String text) {
     final notifier = ref.read(itemEditSelectionProvider.notifier);
@@ -62,7 +58,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     if (notifier.group.name == text) { return; }
 
     var group = notifier.group;
-    var modified = group.cloneWith(name: text);
+    var modified = group.copyWith(name: text);
     notifier.changeItem(modified);
   }
 
@@ -77,7 +73,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
 
     Logger().d("Changed members of Group, id=$id, status=$status, members=$members");
 
-    var group = notifier.group.cloneWith(members: members);
+    var group = notifier.group.copyWith(members: members);
 
     ref.read(itemEditSelectionProvider.notifier).changeItem(group);
   }
@@ -147,7 +143,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
       ref.watch(dialogRebuildProvider.notifier).markDirty();
     }
 
-    GroupItemSelectionDialog(
+    GroupableItemSelectionDialog(
       options: options,
       selectorType: ListSelectorType.checkbox,
       onChanged: onChanged,
@@ -187,21 +183,6 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     );
   }
 
-  void _displayDeleteConfirmDialog() {
-    final itemSelection = ref.read(itemEditSelectionProvider);
-
-    bool showConfirmDialog = itemSelection.confirmDeletion;
-
-    if (!showConfirmDialog) { return; }
-
-    OptionDialog(
-        dialogType: OptionDialogType.cancelDelete,
-        title: Text("Confirmar acción"),
-        confirmMessage: Text("(Los cambios no serán apliacados todavía)"),
-        onCancel: onCancelDelete,
-        onDelete: onConfirmedDelete,
-      ).show(context);
-  }
 
   @override
   Widget build(BuildContext context) {

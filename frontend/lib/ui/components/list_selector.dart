@@ -7,8 +7,10 @@ enum ListSelectorType {
   checkbox,
   radio,
 }
+Icon? noIcon(dynamic _) => null;
 
 class ListSelector<T> extends ConsumerStatefulWidget {
+
   final Set<T> options;
   final ListSelectorType selectorType;
   final bool Function(T) isSelectedFn;
@@ -16,6 +18,7 @@ class ListSelector<T> extends ConsumerStatefulWidget {
   final String Function(T) toText;
   final VoidCallback onClose;
   final void Function(bool)? onTristateToggle;
+  final Icon? Function(dynamic) leadingIconFn;
 
   const ListSelector({
     super.key,
@@ -26,6 +29,7 @@ class ListSelector<T> extends ConsumerStatefulWidget {
     required this.onClose,
     required this.toText,
     this.onTristateToggle,
+    this.leadingIconFn = noIcon,
   });
 
   @override
@@ -83,7 +87,13 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
       return CheckboxListTile(
         value: widget.isSelectedFn(option),
         onChanged: (state) => widget.onChanged(option, state),
-        title: Text(widget.toText(option)),
+        title: ListTile(
+          key: ValueKey(option),
+          leading: widget.leadingIconFn(option),
+          title: Text(
+            widget.toText(option),
+          ),
+        ),
       );
     }).toList();
     
@@ -100,6 +110,7 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
     var radioButtons = list.map((option) {
       return ListTile(
         key: ValueKey(option),
+        leading: widget.leadingIconFn(option as dynamic),
         title: Text(widget.toText(option)),
         trailing: Radio(value: option,),
       );
@@ -112,8 +123,7 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
       groupValue: selected.firstOrNull,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: radioButtons
-        ,
+        children: radioButtons,
       ),
     );
   }

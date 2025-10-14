@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:network_analytics/models/analytics_item.dart';
+import 'package:network_analytics/models/device.dart';
+import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/ui/components/dialogs/selection_dialog.dart';
 import 'package:network_analytics/ui/components/list_selector.dart';
 
-class GroupItemSelectionDialog extends SelectionDialog<GroupableItem>{
 
-  const GroupItemSelectionDialog({
+Icon? defaultIcons(dynamic item) {
+  if (item is Device) { return Icon(Icons.dns); }
+  if (item is Group ) { return Icon(Icons.folder); }
+  return null;
+}
+
+class GroupableItemSelectionDialog extends SelectionDialog<GroupableItem>{
+
+  const GroupableItemSelectionDialog({
     required super.options,
     required super.selectorType,
     required super.onChanged,
     required super.onClose,
     required super.isSelectedFn,
+    super.leadingIconFn = defaultIcons,
     super.onTristateToggle,
   });
   
@@ -37,6 +47,7 @@ class GroupItemSelectionDialog extends SelectionDialog<GroupableItem>{
         onClose: localOnClose,
         toText: toText,
         onTristateToggle: onTristateToggle,
+        leadingIconFn: leadingIconFn,
       ),
     );
     

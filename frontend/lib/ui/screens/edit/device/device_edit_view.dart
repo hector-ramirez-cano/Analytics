@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
-import 'package:network_analytics/ui/components/dialogs/option_dialog.dart';
 import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
 import 'package:network_analytics/ui/screens/edit/device/device_general_settings.dart';
 import 'package:network_analytics/ui/screens/edit/device/device_group_settings.dart';
@@ -26,28 +25,9 @@ class DeviceEditView extends ConsumerStatefulWidget {
 
 class _DeviceEditViewState extends ConsumerState<DeviceEditView> {
 
-  void onCancelDelete()      => ref.read(itemEditSelectionProvider.notifier).set(requestedConfirmDeletion: false);
-  void onConfirmedDelete()   => ref.read(itemEditSelectionProvider.notifier).onDeleteSelected();
-  void onConfirmRestore()    => ref.read(itemEditSelectionProvider.notifier).onRestoreSelected();
-  
   // Callbacks that show a dialog
-  void onRequestedDelete()   { ref.read(itemEditSelectionProvider.notifier).onRequestDeletion(); _displayDeleteConfirmDialog(); }
-
-  void _displayDeleteConfirmDialog() {
-    final itemSelection = ref.read(itemEditSelectionProvider);
-
-    bool showConfirmDialog = itemSelection.confirmDeletion;
-
-    if (!showConfirmDialog) { return; }
-
-    OptionDialog(
-      dialogType: OptionDialogType.cancelDelete,
-      title: Text("Confirmar acción"),
-      confirmMessage: Text("(Los cambios no serán apliacados todavía)"),
-      onCancel: onCancelDelete,
-      onDelete: onConfirmedDelete,
-    ).show(context);
-  }
+  void onRequestedDelete()  { ref.read(itemEditSelectionProvider.notifier).onRequestDeletion(); displayDeleteConfirmDialog(context, ref); }
+  void onConfirmRestore ()  { ref.read(itemEditSelectionProvider.notifier).onRestoreSelected(); }
 
   Widget _buildConfigurationPage() {
 

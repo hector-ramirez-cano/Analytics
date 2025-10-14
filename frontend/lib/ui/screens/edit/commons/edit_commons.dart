@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
+import 'package:network_analytics/ui/components/dialogs/option_dialog.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
 
 const Color addedItemColor = Colors.green;
@@ -76,3 +77,23 @@ Widget makeFooter(WidgetRef ref, Topology topology) {
     ),
   );
 }
+
+void displayDeleteConfirmDialog(BuildContext context, WidgetRef ref,) {
+    void onConfirmedDelete()   => ref.read(itemEditSelectionProvider.notifier).onDeleteSelected();
+    void onCancelDelete()      => ref.read(itemEditSelectionProvider.notifier).set(requestedConfirmDeletion: false);
+  
+
+    final itemSelection = ref.read(itemEditSelectionProvider);
+
+    bool showConfirmDialog = itemSelection.confirmDeletion;
+
+    if (!showConfirmDialog) { return; }
+
+    OptionDialog(
+      dialogType: OptionDialogType.cancelDelete,
+      title: Text("Confirmar acción"),
+      confirmMessage: Text("(Los cambios no serán apliacados todavía)"),
+      onCancel: onCancelDelete,
+      onDelete: onConfirmedDelete,
+    ).show(context);
+  }

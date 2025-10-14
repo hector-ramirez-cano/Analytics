@@ -34,7 +34,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     availableValues = Set.unmodifiable(availableValues),
     dataSources = Set.unmodifiable(dataSources);
 
-  Device cloneWith({
+  Device copyWith({
     int? id,
     Offset? position,
     String? name,
@@ -65,7 +65,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     var availableValues   = Set.from(other.availableValues  )..addAll(this.availableValues  );
     var dataSources       = Set.from(other.dataSources      )..addAll(this.dataSources      );
 
-    return cloneWith(
+    return copyWith(
       requestedMetadata: requestedMetadata, 
       requestedMetrics : requestedMetrics,  
       availableValues  : availableValues,   

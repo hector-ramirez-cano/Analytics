@@ -1,10 +1,9 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:free_map/free_map.dart';
 import 'package:http/http.dart';
 import 'package:logger/web.dart';
-import 'package:network_analytics/extensions/debouncer.dart';
+import 'package:network_analytics/models/alerts/alert_rule.dart';
 import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
@@ -34,9 +33,11 @@ class ItemEditSelection {
   final bool editingDeviceMetrics;
   final bool editingDeviceDataSources;
   final bool editingDeviceGeoPosition;
+  final bool editingAlertName;
+  final bool editingAlertMembers;
   final bool confirmDeletion;
   final bool creatingItem;
-  
+
 
   const ItemEditSelection({
     required this.selectedStack,
@@ -55,6 +56,8 @@ class ItemEditSelection {
     required this.editingDeviceMetrics,
     required this.editingDeviceDataSources,
     required this.editingDeviceGeoPosition,
+    required this.editingAlertName,
+    required this.editingAlertMembers,
     required this.confirmDeletion,
     required this.creatingItem,
   });
@@ -80,6 +83,8 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
       editingDeviceMetrics: false,
       editingDeviceDataSources: false,
       editingDeviceGeoPosition: false,
+      editingAlertName: false,
+      editingAlertMembers: false,
       creatingItem: false,
       );
 
@@ -99,12 +104,19 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
       items[item.id] = item;
     }
 
-    set(selected: newStack, changes: state.changes.cloneWith(items: items));
+    set(selected: newStack, changes: state.changes.copyWith(items: items));
   }
 
   bool toggleEditingGroupName() {
     bool editing = !state.editingGroupName;
     set(editingGroupName: editing);
+
+    return editing;
+  }
+
+    bool toggleEditingAlertName() {
+    bool editing = !state.editingAlertName;
+    set(editingAlertName: editing);
 
     return editing;
   }
@@ -127,6 +139,8 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
     bool editingDeviceMetrics = false,
     bool editingDeviceGeoPosition = false,
     bool editingDeviceDataSources = false,
+    bool editingAlertName = false,
+    bool editingAlertMembers = false,
 
     bool keepState = false,
     bool? overrideCreatingItem,
@@ -149,6 +163,8 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
         editingLinkDeviceB    : state.editingLinkDeviceB,
         editingLinkType       : state.editingLinkType,
         creatingItem          : state.creatingItem,
+        editingAlertName      : state.editingAlertName,
+        editingAlertMembers   : state.editingAlertMembers,
         editingDeviceDataSources: state.editingDeviceDataSources,
         editingDeviceGeoPosition: state.editingDeviceGeoPosition,
       );
@@ -170,6 +186,8 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
         editingLinkDeviceB    : editingLinkDeviceB,
         editingLinkType       : editingLinkType,
         creatingItem          : overrideCreatingItem ?? state.creatingItem,
+        editingAlertName      : editingAlertName,
+        editingAlertMembers   : editingAlertMembers,
         editingDeviceDataSources: editingDeviceDataSources,
         editingDeviceGeoPosition: editingDeviceGeoPosition,
       );
@@ -177,7 +195,7 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
   }
 
   void changeItem(dynamic item) {
-    final topology = state.changes.cloneWith(items: {...state.changes.items, item.id : item});
+    final topology = state.changes.copyWith(items: {...state.changes.items, item.id : item});
 
     set(changes: topology, keepState: true);
   }
@@ -201,13 +219,13 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
     try {
       final response = await post(url, headers: headers, body: jsonEncode(changeMessage));
 
-      if (response.statusCode != 200) { 
+      if (response.statusCode != 200) {
         throw Exception("[BACKEND] Status Code = ${response.statusCode} with error='${response.body}'");
       }
 
       // discard whatever was stored here, it's already commited
       discard();
-    
+
       // force update topology
       ref.invalidate(topologyProvider);
 
@@ -222,75 +240,76 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
   void onEditMetadata()          => set(editingDeviceMetadata: true);
   void onEditMetrics()           => set(editingDeviceMetrics: true);
   void onEditDataSources()       => set(editingDeviceDataSources: true);
+  void onEditAlertName()         => set(editingAlertName: true);
   void onRequestDeletion()       => set(requestedConfirmDeletion: true);
 
   void onChangeDeviceMgmtHostname(String text) {
     if (selected is! Device || (selected as Device).name == text) { return; }
 
-    changeItem(device.cloneWith(mgmtHostname: text));
+    changeItem(device.copyWith(mgmtHostname: text));
   }
 
   void onChangeDeviceNameContent(String text) {
     if (selected is! Device || (selected as Device).name == text) { return; }
 
-    changeItem(device.cloneWith(name: text));
+    changeItem(device.copyWith(name: text));
   }
 
   void onChangeSelectedMetric(String option, bool? state) {
     if (selected is! Device) { Logger().w("Changed metric on a device, where device isn't selected"); return; }
-    
+
     var metrics = Set.from((selected as Device).requestedMetrics);
     if (state == false)     { metrics.remove(option); }
     else if (state == true) { metrics.add(option);    }
     else { Logger().d("Warning, selected metric with tri-state. Tri-states on metrics aren't supported"); return; }
 
-    changeItem((selected as Device).cloneWith(requestedMetrics: metrics));
+    changeItem((selected as Device).copyWith(requestedMetrics: metrics));
   }
 
   void onChangeSelectedMetadata(String option, bool? state) {
     if (selected is! Device) { Logger().w("Changed metadata on a device, where device isn't selected"); return; }
-    
+
     var metadata = Set.from((selected as Device).requestedMetadata);
     if (state == false)     { metadata.remove(option); }
     else if (state == true) { metadata.add(option);    }
     else { Logger().d("Warning, selected metadata with tri-state. Tri-states on metadata aren't supported"); return; }
 
-    changeItem((selected as Device).cloneWith(requestedMetadata: metadata));
+    changeItem((selected as Device).copyWith(requestedMetadata: metadata));
   }
 
   void onChangeSelectedDatasource(String option, bool? state) {
     if (selected is! Device) { Logger().w("Changed datasource on a device, where device isn't selected"); return; }
-    
+
     var datasource = Set.from((selected as Device).dataSources);
     if (state == false)     { datasource.remove(option); }
     else if (state == true) { datasource.add(option);    }
     else { Logger().d("Warning, selected datasource with tri-state. Tri-states on datasource aren't supported"); return; }
 
-    changeItem(device.cloneWith(dataSources: datasource));
+    changeItem(device.copyWith(dataSources: datasource));
   }
 
   void onChangeDeviceGeoPosition(LatLng newPosition) {
     if (selected is! Device) { Logger().w("Changed geoposition on a device, where device isn't selected"); return; }
-    
-    changeItem(device.cloneWith(geoPosition: newPosition));
+
+    changeItem(device.copyWith(geoPosition: newPosition));
   }
 
   void onChangeLinkDeviceA(Device newDevice) {
     if (selected is! Link) { Logger().w("Changed device in link, where link isn't selected"); return; }
-    
-    changeItem(link.cloneWith(sideA: newDevice));
+
+    changeItem(link.copyWith(sideA: newDevice));
   }
 
   void onChangeLinkDeviceB(Device newDevice) {
     if (selected is! Link) { Logger().w("Changed device in link, where link isn't selected"); return; }
-    
-    changeItem(link.cloneWith(sideB: newDevice));
+
+    changeItem(link.copyWith(sideB: newDevice));
   }
 
   void onChangeLinkType(LinkType type) {
     if (selected is! Link) { Logger().w("Changed link type in link, where link isn't selected"); return; }
-    
-    changeItem(link.cloneWith(linkType: type));
+
+    changeItem(link.copyWith(linkType: type));
   }
 
   void onDeleteSelected() {
@@ -301,7 +320,7 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
 
     // add selected to deleted only if we're not in the middle of creating an item
     if (!state.creatingItem) {
-      set(deleted: state.deleted.cloneWith(items: items), selected: selectedStack);
+      set(deleted: state.deleted.copyWith(items: items), selected: selectedStack);
     } else {
       set(selected: selectedStack, overrideCreatingItem: false);
     }
@@ -311,7 +330,15 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
     Map<int, dynamic> items = Map.from(state.deleted.items);
     items.remove(selected.id);
 
-    set(deleted: state.deleted.cloneWith(items: items));
+    set(deleted: state.deleted.copyWith(items: items));
+  }
+
+  void onToggleRequiresAckInput(bool requiresAck) {
+    if (selected is! AlertRule) { Logger().w("Changed requires Ack in alertRule, where alertRule isn't selected"); return; }
+
+    final rules = alertRule.copyWith(requiresAck: requiresAck);
+
+    changeItem(rules);
   }
 
   bool isDeleted(dynamic item) {
@@ -378,5 +405,15 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
     }
 
     return curr as Link;
+  }
+
+  AlertRule get alertRule {
+    dynamic curr = selected;
+
+    if (curr is! AlertRule) {
+      Logger().e("Accessed item for edit, where item isn't an AlertRule. SelectedItem = $curr");
+    }
+
+    return curr as AlertRule;
   }
 }

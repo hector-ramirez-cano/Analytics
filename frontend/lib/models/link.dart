@@ -54,7 +54,7 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
     logger.d("sideA=${sideA.position}, sideB=${sideB.position}, m=$m");
   }
 
-  Link cloneWith({int? id, Device? sideA, Device? sideB, LinkType? linkType, String? sideAIface, String? sideBIface}) {
+  Link copyWith({int? id, Device? sideA, Device? sideB, LinkType? linkType, String? sideAIface, String? sideBIface}) {
     return Link(id: id ?? this.id,
       sideA     : sideA ?? this.sideA,
       sideB     : sideB ?? this.sideB,
@@ -66,7 +66,7 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
 
   @override
   Link mergeWith(Link other) {
-    return other.cloneWith();
+    return other.copyWith();
   }
 
   factory Link.fromJson(Map<String, dynamic> json, Map<int, dynamic> devices) {
