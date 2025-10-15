@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:network_analytics/models/alerts/alert_predicate.dart';
 import 'package:network_analytics/models/alerts/alert_predicate_operation.dart';
 import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/topology.dart';
@@ -8,11 +9,13 @@ import 'package:network_analytics/ui/components/list_selector.dart';
 class AlertRuleDefinitionInput extends StatefulWidget {
   final Topology topology;
   final GroupableItem target;
+  final Function(AlertPredicate op) onSave;
   
   const AlertRuleDefinitionInput({
     super.key,
     required this.topology,
     required this.target,
+    required this.onSave,
   });
 
   static bool defaultValidator(dynamic _) => true;
@@ -49,11 +52,10 @@ class _AlertRuleDefinitionInputState extends State<AlertRuleDefinitionInput> {
   bool _rightForced = false;
   AlertPredicateOperation? _selectedOperation;
   AlertConstTypes? _constType;
-  dynamic _constValue;
   late final TextEditingController _leftController;
   late final TextEditingController _rightController;
-  String? _leftValue;
-  String? _rightValue;
+  dynamic _leftValue;
+  dynamic _rightValue;
 
   @override
   void initState() {
@@ -62,10 +64,10 @@ class _AlertRuleDefinitionInputState extends State<AlertRuleDefinitionInput> {
     _rightController = TextEditingController();
   }
 
-  void _handleConstLeftToggle (bool value)  => setState(() { if (value) { _rightConst = false; } _leftConst  = value; });
-  void _handleConstRightToggle(bool value)  => setState(() { if (value) { _leftConst  = false; } _rightConst = value; });
-  void _handleForcedLeftToggle (bool value) => setState(() { _leftForced  = value; });
-  void _handleForcedRightToggle(bool value) => setState(() { _rightForced = value; });
+  void _handleConstLeftToggle (bool value)  => setState(() { if (value) { _rightConst = false; } _leftConst  = value; _leftValue = null;});
+  void _handleConstRightToggle(bool value)  => setState(() { if (value) { _leftConst  = false; } _rightConst = value; _rightValue = null;});
+  void _handleForcedLeftToggle (bool value) => setState(() { _leftForced  = value; _leftValue = null;});
+  void _handleForcedRightToggle(bool value) => setState(() { _rightForced = value; _rightValue = null;});
   void _handleOpToggle(AlertPredicateOperation op) => setState(() { _selectedOperation = _selectedOperation == op ? null : op; });
 
   Widget _makeToggle(String label, bool value, bool enabled, Function(bool) onToggle, {double leftPadding = 64.0}) {
@@ -113,7 +115,11 @@ class _AlertRuleDefinitionInputState extends State<AlertRuleDefinitionInput> {
         onChanged: (text) {
           setState(() {
             if (validator(controller.text)) {
-              _constValue = text;
+              if (left) {
+                _leftValue = text;
+              } else {
+                _rightValue = text;
+              }
             }
           });
         },
@@ -157,8 +163,8 @@ class _AlertRuleDefinitionInputState extends State<AlertRuleDefinitionInput> {
           _makeToggle("Constante", false, enabled, onToggle),
           _makeToggle("Introducir manualmente la variable", forced, true, onToggleForced),
           SizedBox(
-            width: MediaQuery.of(context).size.width * 0.35,
-            height: MediaQuery.of(context).size.height * 0.7,
+            width : MediaQuery.of(context).size.width  * 0.35,
+            height: MediaQuery.of(context).size.height * 0.65,
             child: child,
           ),
         ],
@@ -186,25 +192,26 @@ class _AlertRuleDefinitionInputState extends State<AlertRuleDefinitionInput> {
     );
   }
 
-  Widget _makeBooleanToggle(bool? initial) {
+  Widget _makeBooleanToggle(bool isLeft, bool? initial) {
     return _makeToggle("Valor", initial ?? false, true, (state) => setState(() {
-      _constValue = state;
+      if (isLeft) {_leftValue = state; } else { _rightValue = state; }
     }), leftPadding: MediaQuery.of(context).size.width * 0.125);
   }
   
   Widget _makeConstantSelector(bool isLeft) {
+    dynamic constValue = isLeft ? _leftValue : _rightValue;
 
     Widget child;
     switch (_constType) {
       case AlertConstTypes.boolean:
-        _constValue = _constValue is bool ? _constValue as bool : null;
+        constValue = constValue is bool ? constValue : null;
         child = Padding(
           padding: const EdgeInsets.all(28.0),
-          child: _makeBooleanToggle(_constValue),
+          child: _makeBooleanToggle(isLeft, constValue),
         );
 
       case AlertConstTypes.nullable:
-        _constValue = null;
+        constValue = null;
         child = Padding(
           padding: const EdgeInsets.all(28.0),
           child: Column(
@@ -243,10 +250,9 @@ class _AlertRuleDefinitionInputState extends State<AlertRuleDefinitionInput> {
           _makeTypeDropdown(_constType),
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.35,
-            height: MediaQuery.of(context).size.height * 0.7,
+            height: MediaQuery.of(context).size.height * 0.65,
             child: child,
           )
-          
         ],
       ),
     );
@@ -287,15 +293,66 @@ class _AlertRuleDefinitionInputState extends State<AlertRuleDefinitionInput> {
     );
   }
 
+  Widget _makeFooter() {
+    const consolasStyle = TextStyle(
+      fontFamily: 'monospace',
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      color: Colors.black87,
+      letterSpacing: 0.5,
+    );
+
+    final Color bgColor = const Color.fromRGBO(216, 216, 216, 1);
+    final left  = _leftValue  != null ? _leftValue .toString() : "";
+    final right = _rightValue != null ? _rightValue.toString() : "";
+    final saveBtnStyle = ElevatedButton.styleFrom(
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+      disabledBackgroundColor: Theme.of(context).colorScheme.onSurface.withAlpha(50),
+      disabledForegroundColor: Theme.of(context).colorScheme.onSurface.withAlpha(50),
+    );
+    final valid = _leftValue != null && _rightValue != null && _selectedOperation != null;
+
+    onClose () {
+      if(context.mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    }
+    final onSave = !valid ? null : () {
+      widget.onSave(AlertPredicate(left: _leftValue, right: _rightValue, op: _selectedOperation!));
+      onClose();
+    };
+
+
+    return Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          spacing: 4,
+          children: [
+            Text("Predicado = "),
+            BadgeButton(text: left, backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: _selectedOperation?.toPrettyString() ?? "", backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: right , backgroundColor: bgColor, textStyle: consolasStyle,),
+            SizedBox(width: 16,),
+            ElevatedButton(onPressed: onClose, child: Text("Descartar")),
+            ElevatedButton(onPressed: onSave, style: saveBtnStyle, child: Text("Guardar"),),
+          ],
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
       children: [
-      _makeSide(_leftConst, _leftForced, true),
-      _makeOpSelector(),
-      _makeSide(_rightConst, _rightForced, false),
-    ],);
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+          _makeSide(_leftConst, _leftForced, true),
+          _makeOpSelector(),
+          _makeSide(_rightConst, _rightForced, false),
+        ],),
+        _makeFooter()
+      ],
+    );
   }
 }

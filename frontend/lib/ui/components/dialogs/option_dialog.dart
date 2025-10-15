@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 enum OptionDialogType {
   cancelDelete,
-  cancelAccept
+  cancelAccept,
+  discardSave,
 }
 
 class OptionDialog{
@@ -14,6 +15,8 @@ class OptionDialog{
   final Function()? onCancel;
   final Function()? onDelete;
   final Function()? onAccept;
+  final Function()? onDiscard;
+  final Function()? onSave;
 
   const OptionDialog({
     required this.title,
@@ -23,6 +26,8 @@ class OptionDialog{
     this.onCancel,
     this.onDelete,
     this.onAccept,
+    this.onDiscard,
+    this.onSave,
   });
 
   void dismiss(BuildContext context) {
@@ -50,6 +55,12 @@ class OptionDialog{
         rightBtnLabel = "Aceptar";
         leftAction  = () { dismiss(context);  if (onCancel != null) { onCancel!(); }};
         rightAction = () { dismiss(context);  if (onAccept != null) { onAccept!(); }};
+
+      case OptionDialogType.discardSave:
+        leftBtnLabel = "Descartar";
+        rightBtnLabel = "Guardar";
+        leftAction  = () { dismiss(context);  if (onDiscard != null) { onDiscard!(); }};
+        rightAction = () { dismiss(context);  if (onSave    != null) { onSave   !(); }};
     }
 
     return AlertDialog.adaptive(

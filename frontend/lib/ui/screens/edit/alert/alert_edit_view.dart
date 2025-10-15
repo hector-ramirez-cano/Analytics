@@ -302,11 +302,16 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
 
     var target = widget.topology.items[notifier.alertRule.targetId];
 
+    onSave(predicate) => {
+      // TODO: Save it to temp changes, and then commit to db
+      print(predicate.toString())
+    };
+
     return SettingsTile(title: Row(
       children: [
         Spacer(),
         IconButton(
-          onPressed: () => EmptyDialog(child: AlertRuleDefinitionInput(topology: widget.topology, target: target,)).show(context),
+          onPressed: () => EmptyDialog(child: AlertRuleDefinitionInput(topology: widget.topology, onSave: onSave, target: target,)).show(context),
           icon: Icon(Icons.add_box),
         ),
         Spacer(),
