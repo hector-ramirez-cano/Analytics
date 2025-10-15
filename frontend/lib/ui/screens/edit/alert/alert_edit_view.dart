@@ -10,7 +10,7 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/alert_rules_service.dart';
 import 'package:network_analytics/services/dialog_change_notifier.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
-import 'package:network_analytics/ui/components/alert_rule_definition_input.dart';
+import 'package:network_analytics/ui/components/alert_rule_edit_predicate.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
 import 'package:network_analytics/ui/components/dialogs/empty_dialog.dart';
 import 'package:network_analytics/ui/components/dialogs/groupable_item_selection_dialog.dart';
@@ -311,7 +311,7 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
       children: [
         Spacer(),
         IconButton(
-          onPressed: () => EmptyDialog(child: AlertRuleDefinitionInput(topology: widget.topology, onSave: onSave, target: target,)).show(context),
+          onPressed: () => EmptyDialog(child: AlertRuleEditPredicate(topology: widget.topology, onSave: onSave, target: target,)).show(context),
           icon: Icon(Icons.add_box),
         ),
         Spacer(),

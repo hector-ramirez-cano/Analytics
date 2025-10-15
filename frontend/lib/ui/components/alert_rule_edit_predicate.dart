@@ -6,12 +6,12 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
 import 'package:network_analytics/ui/components/list_selector.dart';
 
-class AlertRuleDefinitionInput extends StatefulWidget {
+class AlertRuleEditPredicate extends StatefulWidget {
   final Topology topology;
   final GroupableItem target;
   final Function(AlertPredicate op) onSave;
   
-  const AlertRuleDefinitionInput({
+  const AlertRuleEditPredicate({
     super.key,
     required this.topology,
     required this.target,
@@ -21,7 +21,7 @@ class AlertRuleDefinitionInput extends StatefulWidget {
   static bool defaultValidator(dynamic _) => true;
 
   @override
-  State<AlertRuleDefinitionInput> createState() => _AlertRuleDefinitionInputState();
+  State<AlertRuleEditPredicate> createState() => _AlertRuleEditPredicateState();
 }
 
 enum AlertConstTypes {
@@ -45,7 +45,7 @@ enum AlertConstTypes {
   }
 }
 
-class _AlertRuleDefinitionInputState extends State<AlertRuleDefinitionInput> {
+class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
   bool _leftConst = false;
   bool _rightConst = false;
   bool _leftForced = false;
@@ -88,7 +88,7 @@ class _AlertRuleDefinitionInputState extends State<AlertRuleDefinitionInput> {
     );
   }
 
-  Widget _makeDirectInput(bool left, String label, Icon prefixIcon, {TextInputType? inputType, bool Function(dynamic) validator = AlertRuleDefinitionInput.defaultValidator}) {
+  Widget _makeDirectInput(bool left, String label, Icon prefixIcon, {TextInputType? inputType, bool Function(dynamic) validator = AlertRuleEditPredicate.defaultValidator}) {
     Key formKey = ValueKey('${left ? "left" : "right"}_$label');
     final controller = left ? _leftController : _rightController;
     final hasError = !validator(controller.text);
