@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:network_analytics/models/alerts/alert_predicate_operation.dart';
+import 'package:network_analytics/models/analytics_item.dart';
+import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
 import 'package:network_analytics/ui/components/list_selector.dart';
 
 class AlertRuleDefinitionInput extends StatefulWidget {
-  const AlertRuleDefinitionInput({super.key});
+  final Topology topology;
+  final GroupableItem target;
+  
+  const AlertRuleDefinitionInput({
+    super.key,
+    required this.topology,
+    required this.target,
+  });
 
   static bool defaultValidator(dynamic _) => true;
 
@@ -121,7 +129,7 @@ class _AlertRuleDefinitionInputState extends State<AlertRuleDefinitionInput> {
     }
     else {
       child = ListSelector<String>(
-        options: {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"},
+        options: widget.topology.getAllAvailableValues(widget.target),
         selectorType: ListSelectorType.radio,
         toText: (v) => v,
         onClose: null,

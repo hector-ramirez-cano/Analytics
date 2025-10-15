@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:logger/web.dart';
+import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/link.dart';
@@ -64,5 +65,20 @@ class Topology {
 
   Set<Group> getDeviceGroups(Device device) {
     return groups.where((group) => group.hasDevice(device)).toSet();
+  }
+
+  Set<String> getAllAvailableValues(GroupableItem item) {
+    if (item is Device) {
+      return item.availableValues;
+    }
+
+    if (item is Group) {
+      final values = item.allDescendants.map((device) => getAllAvailableValues(device));
+      return values.expand((inner) => inner).toSet();
+    }
+
+    else {
+      throw Exception("Unexpected type for gathering all available values");
+    }
   }
 }

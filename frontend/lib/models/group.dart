@@ -89,6 +89,7 @@ class Group extends GroupableItem<Group>{
   Set<Group>   get groups      => members.whereType<Group>().toSet();
   Set<Link>    get links       => members.whereType<Link>().toSet(); 
   Set<int>     get memberKeys  => members.map((member) => member.id).toSet();
+  Set<Device>  get allDescendants => Set.from({...devices, ...groups.map((inner) => inner.allDescendants).toSet()});
 
   /// Returns whether this group, or any nested groups contain at least one device. Short circuits once at least one is found
   bool hasDevices() {
