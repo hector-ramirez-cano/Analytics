@@ -113,13 +113,29 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
     }).toList();
     
     return Expanded(
-      child: SingleChildScrollView(
+      child: ListView.builder(
         controller: _scrollController,
-        child: Column(
-          children: checkboxes,
-        ),
+        itemCount: list.length,
+        itemBuilder: (context, index) {
+          final option = list[index];
+          return CheckboxListTile(
+            value: widget.isSelectedFn(option),
+            onChanged: (state) => widget.onChanged(option, state),
+            title: ListTile(
+              key: ValueKey(option),
+              leading: widget.leadingIconFn(option),
+              title: Text(
+                widget.toText(option),
+                style: widget.isAvailable(option)
+                    ? null
+                    : ListSelector.unavailableValueStyle,
+              ),
+            ),
+          );
+        },
       ),
     );
+
   }
 
   Widget _makeRadioList(List<T> list) {
@@ -136,16 +152,16 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
     var selected = list.where((item) => widget.isSelectedFn(item)).toList();
 
     return Expanded(
-      child: SingleChildScrollView(
+      child: ListView.builder(
         controller: _scrollController,
-        child: RadioGroup(
-          onChanged: (option) => widget.onChanged(option, null),
-          groupValue: selected.firstOrNull,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: radioButtons,
-          ),
-        ),
+        itemCount: radioButtons.length,
+        itemBuilder: (context, index) {
+          return RadioGroup(
+            onChanged: (option) => widget.onChanged(option, null),
+            groupValue: selected.firstOrNull,
+            child: radioButtons[index],
+          );
+        },
       ),
     );
   }
