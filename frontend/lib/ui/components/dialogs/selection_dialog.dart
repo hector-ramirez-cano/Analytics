@@ -7,7 +7,7 @@ abstract class SelectionDialog<T> {
 
   final Set<T> options;
   final ListSelectorType selectorType;
-  final Function(T, bool?) onChanged;
+  final Function(dynamic, bool?) onChanged;
   final VoidCallback onClose;
   final bool Function(dynamic) isSelectedFn;
   final void Function(bool)? onTristateToggle;

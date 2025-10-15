@@ -30,4 +30,9 @@ class AlertPredicate {
       op: op
     );
   }
+
+  @override
+  String toString() {
+    return "$left ${op.toPrettyString()} $right";
+  }
 }

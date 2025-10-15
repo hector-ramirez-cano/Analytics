@@ -34,4 +34,30 @@ enum AlertPredicateOperation {
 
     return null;
   }
+
+  String toPrettyString() {
+    switch (this) {
+      
+      case AlertPredicateOperation.moreThan:
+        return " > ";
+        
+      case AlertPredicateOperation.moreThanEqual:
+        return " ≥ ";
+
+      case AlertPredicateOperation.lessThan:
+        return " < ";
+
+      case AlertPredicateOperation.lessThanEqual:
+        return " ≤ ";
+        
+      case AlertPredicateOperation.equal:
+        return " = ";
+
+      case AlertPredicateOperation.notEqual:
+        return " ≠ ";
+
+      case AlertPredicateOperation.contains:
+        return "∈";
+    }
+  }
 }

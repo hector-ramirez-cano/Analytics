@@ -13,10 +13,10 @@ class ListSelector<T> extends ConsumerStatefulWidget {
 
   final Set<T> options;
   final ListSelectorType selectorType;
-  final bool Function(T) isSelectedFn;
-  final void Function(T, bool?) onChanged;
-  final String Function(T) toText;
-  final VoidCallback onClose;
+  final bool Function(dynamic) isSelectedFn;
+  final void Function(dynamic, bool?) onChanged;
+  final String Function(dynamic) toText;
+  final VoidCallback? onClose;
   final void Function(bool)? onTristateToggle;
   final Icon? Function(dynamic) leadingIconFn;
 
@@ -37,11 +37,16 @@ class ListSelector<T> extends ConsumerStatefulWidget {
 }
 
 class _ListSelectorState<T> extends ConsumerState<ListSelector> {
+  static final _blankSpaceRegex = RegExp(r'\s');
+  final ScrollController _scrollController = ScrollController();
+
   String filterText = "";
 
   List<T> fuzzySearch(String query, List<T> items) {
+    final finalQuery = query.toLowerCase().replaceAll(_blankSpaceRegex, "");
+
     final List<MapEntry<T, double>> ratings = items.map((item) {
-      final score = query.similarityTo(widget.toText(item));
+      final score = finalQuery.similarityTo(widget.toText(item).toLowerCase());
       return MapEntry(item, score);
     }).toList();
 
@@ -58,7 +63,8 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
         padding: const EdgeInsets.all(8.0),
         child: TextField(
           decoration: const InputDecoration(
-            hintText: "Buscar...",
+            floatingLabelBehavior: FloatingLabelBehavior.auto,
+            labelText: "Buscar",
             prefixIcon: Icon(Icons.search),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(8.0)),
@@ -68,6 +74,7 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
           onChanged: (text) {
             setState(() {
               filterText = text;
+              _scrollController.animateTo(0, duration: const Duration(milliseconds: 500), curve: Curves.easeIn);
             });
           },
         ),
@@ -76,6 +83,9 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
   }
 
   Widget _makeCloseButton() {
+    if (widget.onClose == null) {
+      return SizedBox.shrink();
+    }
     return IconButton(
       icon: const Icon(Icons.close),
       onPressed: widget.onClose,
@@ -99,6 +109,7 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
     
     return Expanded(
       child: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
           children: checkboxes,
         ),
@@ -112,18 +123,24 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
         key: ValueKey(option),
         leading: widget.leadingIconFn(option as dynamic),
         title: Text(widget.toText(option)),
+        onTap: () => widget.onChanged(option, null),
         trailing: Radio(value: option,),
       );
     }).toList();
 
     var selected = list.where((item) => widget.isSelectedFn(item)).toList();
 
-    return RadioGroup(
-      onChanged: (option) => widget.onChanged(option, null),
-      groupValue: selected.firstOrNull,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: radioButtons,
+    return Expanded(
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        child: RadioGroup(
+          onChanged: (option) => widget.onChanged(option, null),
+          groupValue: selected.firstOrNull,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: radioButtons,
+          ),
+        ),
       ),
     );
   }
@@ -179,22 +196,20 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
 
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 20),
-      child: Center(
-        child: Column(
-          children: [
-            Row(
-              children: [
-                _makeSearchBar(),
-                _makeCloseButton(),
-              ],
-            ),
-
-            _makeToggleSelector(),
-            SizedBox(height: 32,),
-            // Scrollable list
-            _makeScrollList()
-          ],
-        ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _makeSearchBar(),
+              _makeCloseButton(),
+            ],
+          ),
+      
+          _makeToggleSelector(),
+          SizedBox(height: 32,),
+          // Scrollable list
+          _makeScrollList()
+        ],
       ),
     );
   }

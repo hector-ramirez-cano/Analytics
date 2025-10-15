@@ -10,6 +10,9 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/alert_rules_service.dart';
 import 'package:network_analytics/services/dialog_change_notifier.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
+import 'package:network_analytics/ui/components/alert_rule_definition_input.dart';
+import 'package:network_analytics/ui/components/badge_button.dart';
+import 'package:network_analytics/ui/components/dialogs/empty_dialog.dart';
 import 'package:network_analytics/ui/components/dialogs/groupable_item_selection_dialog.dart';
 import 'package:network_analytics/ui/components/list_selector.dart';
 import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
@@ -62,6 +65,8 @@ class AlertEditView extends ConsumerStatefulWidget {
 
 class _AlertEditViewState extends ConsumerState<AlertEditView> {
   late TextEditingController _nameInputController;
+
+  // TODO: allow it to be stored as modified
 
   @override
   void initState() {
@@ -242,7 +247,13 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
 
   AbstractSettingsTile _makeRequiresAckInput() {
     final state = ref.watch(itemEditSelectionProvider.notifier).alertRule.requiresAck;
-    return SettingsTile.switchTile(initialValue: state, onToggle: onToggleRequiresAckInput, title: Text("Requiere Ack")); // TODO:
+    return SettingsTile(title: Text("Requiere Ack"), 
+      trailing: 
+        Switch.adaptive(
+          value: state,
+          onChanged: onToggleRequiresAckInput,
+          thumbIcon: WidgetStatePropertyAll(state ? Icon(Icons.check) : null)
+        ),);
   }
 
   AbstractSettingsTile _makeMembersInput() {
@@ -258,6 +269,44 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
       trailing: makeTrailing(members, () => onEditMembers()),
       onPressed: null
     );
+  }
+
+  List<AbstractSettingsTile> _makeRulesInput(AlertRule rule) {
+    const consolasStyle = TextStyle(
+      fontFamily: 'monospace',
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      color: Colors.black87,
+      letterSpacing: 0.5,
+    );
+
+    final Color bgColor = const Color.fromRGBO(216, 216, 216, 1);
+
+    return rule.definition.map((predicate) {
+      return SettingsTile(
+        title: Row(
+          spacing: 4,
+          children: [
+            BadgeButton(text: predicate.left.toString()    , backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: predicate.op.toPrettyString(), backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: predicate.right.toString()   , backgroundColor: bgColor, textStyle: consolasStyle,),
+          ],
+        ),
+      );
+    }).toList();
+  }
+
+  AbstractSettingsTile _makeAddPredicateButton() {
+    return SettingsTile(title: Row(
+      children: [
+        Spacer(),
+        IconButton(
+          onPressed: () => EmptyDialog(child: AlertRuleDefinitionInput()).show(context),
+          icon: Icon(Icons.add_box),
+        ),
+        Spacer(),
+      ],
+    ));
   }
 
   Widget _buildSettingsView() {
@@ -282,7 +331,10 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
       ),
       SettingsSection(
         title: Text("Reglas"),
-        tiles: []
+        tiles: [
+          ..._makeRulesInput(rule),
+          _makeAddPredicateButton()
+        ]
       )
     ];
 
