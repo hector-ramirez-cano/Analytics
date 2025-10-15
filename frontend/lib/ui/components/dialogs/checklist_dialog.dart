@@ -13,6 +13,7 @@ class ChecklistDialog<T> extends SelectionDialog<T>{
     required super.onChanged,
     required super.onClose,
     required super.isSelectedFn,
+    required super.isAvailable,
     super.selectorType = ListSelectorType.checkbox,
     super.onTristateToggle,
   });
@@ -41,6 +42,7 @@ class ChecklistDialog<T> extends SelectionDialog<T>{
           onChanged: onChanged,
           onClose: localOnClose,
           toText: toText,
+          isAvailable: isAvailable,
           onTristateToggle: onTristateToggle,
         ),
       );

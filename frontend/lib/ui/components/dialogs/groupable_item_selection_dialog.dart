@@ -21,6 +21,7 @@ class GroupableItemSelectionDialog extends SelectionDialog<GroupableItem>{
     required super.onChanged,
     required super.onClose,
     required super.isSelectedFn,
+    required super.isAvailable,
     super.leadingIconFn = defaultIcons,
     super.onTristateToggle,
   });
@@ -46,6 +47,7 @@ class GroupableItemSelectionDialog extends SelectionDialog<GroupableItem>{
         onChanged: onChanged,
         onClose: localOnClose,
         toText: toText,
+        isAvailable: isAvailable,
         onTristateToggle: onTristateToggle,
         leadingIconFn: leadingIconFn,
       ),

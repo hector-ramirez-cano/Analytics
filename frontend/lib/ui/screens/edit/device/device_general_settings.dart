@@ -191,15 +191,23 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     if (!enabled) { return; }
 
     Set<String> options;
-    if      (metrics)     { options = notif.device.availableValues; }
-    else if (metadata)    { options = notif.device.availableValues; }
+    if      (metrics)     { options = {...notif.device.availableValues, ...notif.device.requestedMetrics}; }
+    else if (metadata)    { options = {...notif.device.availableValues, ...notif.device.requestedMetadata}; }
     else if (datasources) { options = DataSources.values.map((i) => i.name).toSet(); }
     else { return; }
+    
 
     bool isSelectedFn(option) {
       if      (metrics)     { return notif.device.requestedMetrics.contains(option);}
       else if (metadata)    { return notif.device.requestedMetadata.contains(option);}
       else if (datasources) { return notif.device.dataSources.contains(option);}
+      else { return false; }
+    }
+
+    bool isAvailableFn(option) {
+      if      (metrics)     { return notif.device.availableValues.contains(option); }
+      else if (metadata)    { return notif.device.availableValues.contains(option); }
+      else if (datasources) { return DataSources.values.map((i) => i.name).toSet().contains(option);}
       else { return false; }
     }
 
@@ -219,7 +227,8 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
       selectorType: ListSelectorType.checkbox,
       onChanged: onChanged,
       onClose: onClose,
-      isSelectedFn: isSelectedFn
+      isSelectedFn: isSelectedFn,
+      isAvailable: isAvailableFn,
     ).show(context);
   }
 

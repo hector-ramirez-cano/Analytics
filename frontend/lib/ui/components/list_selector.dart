@@ -19,6 +19,9 @@ class ListSelector<T> extends ConsumerStatefulWidget {
   final VoidCallback? onClose;
   final void Function(bool)? onTristateToggle;
   final Icon? Function(dynamic) leadingIconFn;
+  final bool Function(dynamic) isAvailable;
+
+  static TextStyle unavailableValueStyle = TextStyle(color: Colors.blueGrey, fontStyle: FontStyle.italic, decoration: TextDecoration.lineThrough);
 
   const ListSelector({
     super.key,
@@ -28,6 +31,7 @@ class ListSelector<T> extends ConsumerStatefulWidget {
     required this.onChanged,
     required this.onClose,
     required this.toText,
+    required this.isAvailable,
     this.onTristateToggle,
     this.leadingIconFn = noIcon,
   });
@@ -102,6 +106,7 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
           leading: widget.leadingIconFn(option),
           title: Text(
             widget.toText(option),
+            style: widget.isAvailable(option) ? null : ListSelector.unavailableValueStyle,
           ),
         ),
       );

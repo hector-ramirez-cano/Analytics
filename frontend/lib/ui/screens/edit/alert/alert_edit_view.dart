@@ -130,6 +130,7 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
       onChanged: onChanged,
       onClose: onClose,
       isSelectedFn: isSelectedFn,
+      isAvailable: (_) => true
 
     ).show(context);
   }

@@ -82,6 +82,7 @@ class _AlertViewerState extends ConsumerState<AlertViewer> {
             options: values.toSet(),
             onChanged: (dynamic filter, state) => _onFilterChange(filter, state, ref),
             onClose: () => _onFilterDialogClose(ref),
+            isAvailable: (_) => true,
             isSelectedFn: (filter) => _isFilterSelectedFn(filter, ref),
             onTristateToggle: (state) => _onTristateToggle<T>(state, cache, ref)
           ).show(context),

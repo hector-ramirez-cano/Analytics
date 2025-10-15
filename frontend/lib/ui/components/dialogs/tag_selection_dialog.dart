@@ -11,6 +11,7 @@ class TagSelectionDialog extends SelectionDialog<String>{
     required super.onChanged,
     required super.onClose,
     required super.isSelectedFn,
+    required super.isAvailable,
     super.onTristateToggle,
   });
   
@@ -36,6 +37,7 @@ class TagSelectionDialog extends SelectionDialog<String>{
         onClose: localOnClose,
         toText: toText,
         onTristateToggle: onTristateToggle,
+        isAvailable: isAvailable,
       ),
     );
     

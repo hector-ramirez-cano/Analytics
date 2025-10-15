@@ -133,6 +133,7 @@ class _AlertRuleDefinitionInputState extends State<AlertRuleDefinitionInput> {
         selectorType: ListSelectorType.radio,
         toText: (v) => v,
         onClose: null,
+        isAvailable: (_) => true,
         isSelectedFn: (val) => isLeft ? val == _leftValue : val == _rightValue,
         onChanged: (val, _) => {
           setState(() {

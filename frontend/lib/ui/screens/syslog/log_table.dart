@@ -83,7 +83,8 @@ class _LogTableState extends State<LogTable> {
             onChanged: (dynamic filter, state) => _onFilterChange(filter, state, ref),
             onClose: () => _onFilterDialogClose(ref),
             isSelectedFn: (filter) => _isFilterSelectedFn(filter, ref),
-            onTristateToggle: (state) => _onTristateToggle<T>(state, cache, ref)
+            onTristateToggle: (state) => _onTristateToggle<T>(state, cache, ref),
+            isAvailable: (_) => true
           ).show(context), 
         );
       }

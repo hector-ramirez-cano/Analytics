@@ -219,7 +219,8 @@ class _LinkEditViewState extends ConsumerState<LinkEditView> {
       selectorType: ListSelectorType.radio,
       onChanged: onChanged,
       onClose: onClose,
-      isSelectedFn: isSelectedFn
+      isSelectedFn: isSelectedFn,
+      isAvailable: (_) => true
     );
 
     return dialog.show(context);

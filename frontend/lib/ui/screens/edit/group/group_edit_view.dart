@@ -148,7 +148,8 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
       selectorType: ListSelectorType.checkbox,
       onChanged: onChanged,
       onClose: onClose,
-      isSelectedFn: isSelectedFn
+      isSelectedFn: isSelectedFn,
+      isAvailable: (_) => true
     ).show(context);
   }
 
