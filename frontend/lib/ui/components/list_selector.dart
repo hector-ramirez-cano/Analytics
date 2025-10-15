@@ -97,21 +97,6 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
   }
 
   Widget _makeChecklist(List<T> list) {
-    var checkboxes = list.map((option) {
-      return CheckboxListTile(
-        value: widget.isSelectedFn(option),
-        onChanged: (state) => widget.onChanged(option, state),
-        title: ListTile(
-          key: ValueKey(option),
-          leading: widget.leadingIconFn(option),
-          title: Text(
-            widget.toText(option),
-            style: widget.isAvailable(option) ? null : ListSelector.unavailableValueStyle,
-          ),
-        ),
-      );
-    }).toList();
-    
     return Expanded(
       child: ListView.builder(
         controller: _scrollController,
