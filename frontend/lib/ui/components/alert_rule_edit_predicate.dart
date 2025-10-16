@@ -28,7 +28,7 @@ enum AlertConstTypes {
   string,
   number,
   boolean,
-  nullable;
+  nullable,;
 
   static AlertConstTypes? fromString(String value) {
     switch (value) {
@@ -54,8 +54,9 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
   AlertConstTypes? _constType;
   late final TextEditingController _leftController;
   late final TextEditingController _rightController;
-  dynamic _leftValue;
-  dynamic _rightValue;
+  // TODO: Refactor initial values and const handling
+  dynamic _leftValue = "\$";
+  dynamic _rightValue = "\$";
 
   @override
   void initState() {
@@ -69,6 +70,61 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
   void _handleForcedLeftToggle (bool value) => setState(() { _leftForced  = value; _leftValue = null;});
   void _handleForcedRightToggle(bool value) => setState(() { _rightForced = value; _rightValue = null;});
   void _handleOpToggle(AlertPredicateOperation op) => setState(() { _selectedOperation = _selectedOperation == op ? null : op; });
+  
+  void _handleDirectInputChanged(bool isLeft, String text, bool Function(dynamic) validator) {
+    setState(() {
+      if (validator(text)) {
+        if (isLeft) {
+          _leftValue = cast(isLeft, text);
+        } else {
+          _rightValue = cast(isLeft, text);
+        }
+      }
+    });
+  }
+
+  void _handleVariableInputSelect(bool isLeft, String val) {
+    setState(() {
+      if (isLeft) { _leftValue = "\$$val"; }
+      else { _rightValue = "\$$val"; }
+    });
+  }
+
+  dynamic cast(bool left, String text) {
+    bool isConst = left ? _leftConst : _rightConst;
+    AlertConstTypes? type = _constType;
+
+    if (!isConst) { return "&$text"; }
+
+    switch (type) {
+      
+      case AlertConstTypes.string:
+        return text;
+
+      case AlertConstTypes.number:
+        return double.parse(text);
+
+      case null:
+        return null;
+
+      // these types should never call to cast
+      case AlertConstTypes.boolean:
+      case AlertConstTypes.nullable:
+        throw Exception("Unreachable code reached!");
+    }
+  }
+
+  String _sideToString(dynamic side) {
+    
+    if (side is String) { 
+      if (side.contains("\$")) {
+        if (side.length == 1) { return ""; }
+        return side;
+      }
+      return '"$side"'; 
+    }
+    return side.toString();
+  }
 
   Widget _makeToggle(String label, bool value, bool enabled, Function(bool) onToggle, {double leftPadding = 64.0}) {
     return Padding(
@@ -88,9 +144,9 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
     );
   }
 
-  Widget _makeDirectInput(bool left, String label, Icon prefixIcon, {TextInputType? inputType, bool Function(dynamic) validator = AlertRuleEditPredicate.defaultValidator}) {
-    Key formKey = ValueKey('${left ? "left" : "right"}_$label');
-    final controller = left ? _leftController : _rightController;
+  Widget _makeDirectInput(bool isLeft, String label, Icon prefixIcon, {TextInputType? inputType, bool Function(dynamic) validator = AlertRuleEditPredicate.defaultValidator}) {
+    Key formKey = ValueKey('${isLeft ? "left" : "right"}_$label');
+    final controller = isLeft ? _leftController : _rightController;
     final hasError = !validator(controller.text);
     return Padding(
       padding: const EdgeInsets.all(28.0),
@@ -112,17 +168,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
           errorText: hasError ? "Introduce un número válido" : null,
           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
-        onChanged: (text) {
-          setState(() {
-            if (validator(controller.text)) {
-              if (left) {
-                _leftValue = text;
-              } else {
-                _rightValue = text;
-              }
-            }
-          });
-        },
+        onChanged: (text) => _handleDirectInputChanged(isLeft, text, validator)
         
       ),
     );
@@ -140,14 +186,8 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
         toText: (v) => v,
         onClose: null,
         isAvailable: (_) => true,
-        isSelectedFn: (val) => isLeft ? val == _leftValue : val == _rightValue,
-        onChanged: (val, _) => {
-          setState(() {
-            if (isLeft) { _leftValue = val; }
-            else { _rightValue = val; }
-          })
-          
-        },
+        isSelectedFn: (val) => isLeft ? "\$$val" == _leftValue : "\$$val" == _rightValue,
+        onChanged: (val, _) => _handleVariableInputSelect(isLeft, val)
       );
     }
 
@@ -172,7 +212,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
     );
   }
 
-  Widget _makeTypeDropdown(AlertConstTypes? initial) {
+  Widget _makeTypeDropdown(bool isLeft, AlertConstTypes? initial) {
     return SizedBox(
       height: 40,
       width: MediaQuery.of(context).size.width * 0.30,
@@ -185,6 +225,11 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
           onChanged: (val) {
             if (val == "unknown") { return; }
             final type = AlertConstTypes.fromString(val ?? "");
+            
+            if (type == AlertConstTypes.nullable) { 
+              if (isLeft) { _leftValue = null; }
+              else { _rightValue = null; }
+            }
             setState(() { _constType = type; });
           },
           isExpanded: true,
@@ -193,6 +238,8 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
   }
 
   Widget _makeBooleanToggle(bool isLeft, bool? initial) {
+    if (isLeft) {_leftValue = initial ?? false; } else { _rightValue = initial ?? false; }
+
     return _makeToggle("Valor", initial ?? false, true, (state) => setState(() {
       if (isLeft) {_leftValue = state; } else { _rightValue = state; }
     }), leftPadding: MediaQuery.of(context).size.width * 0.125);
@@ -247,7 +294,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
         key: Key("Column_$onToggle"),
         children: [
           _makeToggle("Constante", true, enabled, onToggle),
-          _makeTypeDropdown(_constType),
+          _makeTypeDropdown(isLeft, _constType),
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.35,
             height: MediaQuery.of(context).size.height * 0.65,
@@ -303,15 +350,15 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
     );
 
     final Color bgColor = const Color.fromRGBO(216, 216, 216, 1);
-    final left  = _leftValue  != null ? _leftValue .toString() : "";
-    final right = _rightValue != null ? _rightValue.toString() : "";
     final saveBtnStyle = ElevatedButton.styleFrom(
       backgroundColor: Theme.of(context).colorScheme.primary,
       foregroundColor: Theme.of(context).colorScheme.onPrimary,
       disabledBackgroundColor: Theme.of(context).colorScheme.onSurface.withAlpha(50),
       disabledForegroundColor: Theme.of(context).colorScheme.onSurface.withAlpha(50),
     );
-    final valid = _leftValue != null && _rightValue != null && _selectedOperation != null;
+    final leftValid  = (_leftValue  != null && _leftValue  != "\$") || (_leftConst  && _constType == AlertConstTypes.nullable);
+    final rightValid = (_rightValue != null && _rightValue != "\$") || (_rightConst && _constType == AlertConstTypes.nullable);
+    final valid = leftValid && rightValid && _selectedOperation != null;
 
     onClose () {
       if(context.mounted && Navigator.canPop(context)) {
@@ -329,9 +376,9 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
           spacing: 4,
           children: [
             Text("Predicado = "),
-            BadgeButton(text: left, backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: _sideToString(_leftValue), backgroundColor: bgColor, textStyle: consolasStyle,),
             BadgeButton(text: _selectedOperation?.toPrettyString() ?? "", backgroundColor: bgColor, textStyle: consolasStyle,),
-            BadgeButton(text: right , backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: _sideToString(_rightValue) , backgroundColor: bgColor, textStyle: consolasStyle,),
             SizedBox(width: 16,),
             ElevatedButton(onPressed: onClose, child: Text("Descartar")),
             ElevatedButton(onPressed: onSave, style: saveBtnStyle, child: Text("Guardar"),),

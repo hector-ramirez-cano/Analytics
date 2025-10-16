@@ -6,14 +6,6 @@ import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/services/alert_rules_service.dart';
 
 class AlertRule extends AnalyticsItem<AlertRule> {
-  final String name;
-  final bool requiresAck;
-  final AlertReduceLogic reduceLogic;
-  final List<AlertPredicate> definition;
-  final AlertSource source;
-  final int targetId;
-  final AlertSeverity severity;
-
   const AlertRule({
     required super.id,
     required this.name,
@@ -25,18 +17,37 @@ class AlertRule extends AnalyticsItem<AlertRule> {
     required this.definition, 
   });
 
-
   factory AlertRule.fromJson(Map<String, dynamic> json) {
     return AlertRule(
       id: json["rule-id"],
       name: json["name"],
       requiresAck: json["requires-ack"],
-      reduceLogic: AlertReduceLogic.fromString(json["definition"]["reduce-logic"]),
-      source: AlertSource.fromString(json["definition"]["source"]),
+      reduceLogic: AlertReduceLogic.fromString(json["definition"]["reduce-logic"] ?? ""),
+      source: AlertSource.fromString(json["definition"]["source"] ?? ""),
       targetId: json["definition"]["target"],
       severity: AlertSeverity.fromString(json["definition"]["severity"]),
       definition: AlertPredicate.listFromJson(json["definition"]["predicates"])
     );
+  }
+
+  final List<AlertPredicate> definition;
+  final String name;
+  final AlertReduceLogic reduceLogic;
+  final bool requiresAck;
+  final AlertSeverity severity;
+  final AlertSource source;
+  final int targetId;
+
+  @override
+  bool isNewItem() {
+    return id < 0;
+  }
+
+  @override
+  AlertRule mergeWith(AlertRule other) {
+    Set<AlertPredicate> definition = Set.from(other.definition)..addAll(this.definition);
+    
+    return copyWith(definition: definition.toList());
   }
 
   AlertRule copyWith({
@@ -64,16 +75,23 @@ class AlertRule extends AnalyticsItem<AlertRule> {
   bool isModifiedName(AlertRuleSet ruleSet) {
     return ruleSet.rules[id]?.name != name;
   }
-  
-  @override
-  bool isNewItem() {
-    return id < 0;
+
+  Map<String, dynamic> ruleDefinitionToMap() {
+    return {
+      "severity": severity.toString(),
+      "target": targetId,
+      "reduce-logic": reduceLogic.toString(),
+      "source": source.toString(),
+      "predicates": definition.map((predicate) => predicate.toMap()).toList()
+    };
   }
-  
-  @override
-  AlertRule mergeWith(AlertRule other) {
-    Set<AlertPredicate> definition = Set.from(other.definition)..addAll(this.definition);
-    
-    return copyWith(definition: definition.toList());
+
+  Map<String, dynamic> toMap() {
+    return {
+      "id" : id,
+      "name": name,
+      "requires-ack": requiresAck,
+      "rule-definition": ruleDefinitionToMap()
+    };
   }
 }

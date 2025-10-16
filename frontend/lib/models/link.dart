@@ -181,5 +181,18 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
     return AppColors.linkPaint;
   }
 
+  @override
+  bool operator ==(Object other) {
+    return other is Link
+    && id == other.id
+    && linkType == other.linkType
+    && sideA.id == other.sideA.id
+    && sideB.id == other.sideB.id
+    && sideAIface == other.sideAIface
+    && sideBIface == other.sideBIface;
+  }
+  
+  @override
+  int get hashCode => super.hashCode;
   
 }

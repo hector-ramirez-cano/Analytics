@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:network_analytics/models/alerts/alert_predicate.dart';
 import 'package:network_analytics/models/alerts/alert_reduce_logic.dart';
 import 'package:network_analytics/models/alerts/alert_rule.dart';
 import 'package:network_analytics/models/alerts/alert_severity.dart';
@@ -81,6 +82,10 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
   void onCancelDelete()      => ref.read(itemEditSelectionProvider.notifier).set(requestedConfirmDeletion: false);
   void onConfirmedDelete()   => ref.read(itemEditSelectionProvider.notifier).onDeleteSelected();
   void onConfirmRestore()    => ref.read(itemEditSelectionProvider.notifier).onRestoreSelected();
+  void onToggleRequiresAckInput(bool state) => ref.read(itemEditSelectionProvider.notifier).onToggleRequiresAckInput(state);
+  void onAddPredicate(AlertPredicate predicate) => ref.read(itemEditSelectionProvider.notifier).onAddPredicate(predicate);
+  void onRemovePredicate(AlertPredicate predicate) => ref.read(itemEditSelectionProvider.notifier).onRemovePredicate(predicate);
+
 
   // Callbacks that display a dialog and change the state
   void onEditMembers()       { ref.read(itemEditSelectionProvider.notifier).set(editingAlertMembers: true); _displayMembersSelectionInput();}
@@ -135,7 +140,6 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
     ).show(context);
   }
 
-  void onToggleRequiresAckInput(bool state) => ref.read(itemEditSelectionProvider.notifier).onToggleRequiresAckInput(state);
 
   Widget _makeDeleteSection() {
     return DeleteSection(onDelete: onRequestedDelete, onRestore: onConfirmRestore);
@@ -272,7 +276,7 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
     );
   }
 
-  List<AbstractSettingsTile> _makeRulesInput(AlertRule rule) {
+  List<AbstractSettingsTile> _makePredicateInput(AlertRule rule) {
     const consolasStyle = TextStyle(
       fontFamily: 'monospace',
       fontSize: 14,
@@ -293,6 +297,7 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
             BadgeButton(text: predicate.right.toString()   , backgroundColor: bgColor, textStyle: consolasStyle,),
           ],
         ),
+        trailing: IconButton(onPressed: () => onRemovePredicate(predicate), icon: Icon(Icons.delete)),
       );
     }).toList();
   }
@@ -302,16 +307,19 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
 
     var target = widget.topology.items[notifier.alertRule.targetId];
 
-    onSave(predicate) => {
-      // TODO: Save it to temp changes, and then commit to db
-      print(predicate.toString())
-    };
-
     return SettingsTile(title: Row(
       children: [
         Spacer(),
         IconButton(
-          onPressed: () => EmptyDialog(child: AlertRuleEditPredicate(topology: widget.topology, onSave: onSave, target: target,)).show(context),
+          onPressed: () => EmptyDialog(
+            child: 
+              AlertRuleEditPredicate(
+                topology: widget.topology,
+                onSave: onAddPredicate,
+                target:
+                target,
+              )
+            ).show(context),
           icon: Icon(Icons.add_box),
         ),
         Spacer(),
@@ -342,7 +350,7 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
       SettingsSection(
         title: Text("Reglas"),
         tiles: [
-          ..._makeRulesInput(rule),
+          ..._makePredicateInput(rule),
           _makeAddPredicateButton()
         ]
       )

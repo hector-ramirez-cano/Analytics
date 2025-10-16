@@ -1,3 +1,4 @@
+final RegExp _nameRegex = RegExp("AlertReduceLogic.");
 enum AlertReduceLogic {
   all,
   any,
@@ -14,5 +15,10 @@ enum AlertReduceLogic {
     }
 
     return unknown;
+  }
+
+  @override
+  String toString() {
+    return super.toString().replaceAll(_nameRegex, "");
   }
 }

@@ -35,6 +35,10 @@ class Topology {
     return Topology(items: itemsLocal);
   }
 
+  factory Topology.empty() {
+    return Topology(items: {});
+  }
+
   Map<String, dynamic> toMap() {
     Map<String, dynamic> items = {};
 

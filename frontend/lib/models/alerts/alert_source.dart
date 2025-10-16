@@ -1,3 +1,5 @@
+final RegExp _nameRegex = RegExp("AlertSource.");
+
 enum AlertSource {
   syslog,
   facts,
@@ -14,5 +16,10 @@ enum AlertSource {
     }
 
     return unknown;
+  }
+
+  @override
+  String toString() {
+    return super.toString().replaceAll(_nameRegex, "");
   }
 }

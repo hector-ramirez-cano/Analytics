@@ -35,4 +35,12 @@ class AlertPredicate {
   String toString() {
     return "$left ${op.toPrettyString()} $right";
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      "left": left,
+      "right": right,
+      "op": op.toString(),
+    };
+  }
 }

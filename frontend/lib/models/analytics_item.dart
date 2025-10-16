@@ -15,4 +15,13 @@ abstract class GroupableItem<T extends GroupableItem<T>> extends AnalyticsItem<T
     required this.name,
     required super.id,
   });
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupableItem && other.id == id && other.name == name;
+  }
+  
+  @override
+  int get hashCode => super.hashCode;
+  
 }

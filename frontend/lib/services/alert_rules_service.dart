@@ -21,6 +21,20 @@ class AlertRuleSet {
     final ruleList = arr.map((rule) =>  AlertRule.fromJson(rule) ).toList();
     return AlertRuleSet(rules: Map.fromEntries(ruleList.map((rule) => MapEntry(rule.id, rule))));
   }
+
+  factory AlertRuleSet.empty() {
+    return AlertRuleSet(rules: {});
+  }
+
+  AlertRuleSet copyWith({Map<int, AlertRule>? rules}) {
+    return AlertRuleSet(rules: rules ?? this.rules);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      "rules": rules.map((key, AlertRule rule) => MapEntry(rule.id, rule.toMap())).values.toList()
+    };
+  }
 }
 
 @riverpod

@@ -1,3 +1,15 @@
+final RegExp _nameRegex = RegExp("AlertPredicateOperation.");
+
+String toSnakeCase(String input) {
+  final pattern = RegExp(r'(?<=[a-z0-9])([A-Z])');
+  final snake = input
+      .replaceAllMapped(pattern, (match) => '_${match.group(0)}')
+      .replaceAll(RegExp(r'\s+'), '_')
+      .toLowerCase();
+  return snake;
+}
+
+
 enum AlertPredicateOperation {
   moreThan,
   moreThanEqual,
@@ -59,5 +71,10 @@ enum AlertPredicateOperation {
       case AlertPredicateOperation.contains:
         return "∈";
     }
+  }
+
+  @override
+  String toString() {
+    return toSnakeCase(super.toString().replaceAll(_nameRegex, ""));
   }
 }

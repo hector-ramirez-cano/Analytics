@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link.dart';
@@ -125,5 +126,13 @@ class Group extends GroupableItem<Group>{
       else if (member is Group) { member.name }
       else ""
     }).toList().toString();
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is Group
+    && (other as GroupableItem) == (this as GroupableItem)
+    && isDisplayGroup == other.isDisplayGroup
+    && setEquals(members, other.members);
   }
 }

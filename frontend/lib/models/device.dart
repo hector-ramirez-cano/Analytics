@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:free_map/free_map.dart';
 import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/topology.dart';
@@ -143,17 +144,17 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     return id;
   }
 
+  @override
+  bool isNewItem() {
+    return id < 0;
+  }
+
   Paint getPaint(Offset position, Size size) {
     final rect = Rect.fromCircle(center: position, radius: 6);
 
     return Paint()
       ..shader = AppColors.deviceGradient.createShader(rect);
 
-  }
-
-  @override
-  bool isNewItem() {
-    return id < 0;
   }
 
   /// Returns whether a given [metric] is modified in the current instance, in reference to the original [topology]
@@ -215,4 +216,21 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     }
     return position != (topology.items[id] as Device?)?.position; 
   }
+
+  @override
+  bool operator ==(Object other) {
+    return 
+    other is Device
+    && (other as GroupableItem) == (this as GroupableItem)
+    && id == other.id
+    && setEquals(requestedMetadata, requestedMetadata)
+    && setEquals(requestedMetadata, requestedMetadata)
+    && setEquals(requestedMetrics, requestedMetrics)
+    && setEquals(availableValues, availableValues)
+    && setEquals(dataSources, dataSources);
+  }
+  
+  @override
+  int get hashCode => super.hashCode;
+  
 }
