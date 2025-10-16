@@ -7,6 +7,8 @@ SELECT device_id, data_source FROM Analytics.device_data_sources;
 
 SELECT * FROM Analytics.devices;
 
+SELECT requested_metadata from Analytics.devices WHERE device_id = 1;
+
 SELECT Analytics.devices.device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, available_values 
                 FROM Analytics.devices;
 

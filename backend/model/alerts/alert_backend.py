@@ -15,12 +15,17 @@ from model.data.device import Device
 from model.data.group import Group
 from model.facts.fact_gathering_backend import FactGatheringBackend
 from model.syslog.syslog_backend import SyslogBackend
-from model.cache import cache
+from model.cache import Cache
 from model.db.operations import alert_operations
 import model.db.alerts as db_alerts
 
 class AlertBackend:
     __instance = None
+
+    facts_rules = {}
+    syslog_rules = {}
+    rules = {}
+    listeners = []
 
 
     def __new__(cls, *args, **kwargs):
@@ -29,7 +34,7 @@ class AlertBackend:
             cls.__instance.facts_rules   = {}
             cls.__instance.syslog_rules  = {}
             cls.__instance.rules         = {}
-            cls.__instance.__listeners   = []
+            cls.__instance.listeners     = []
 
         return cls.__instance
 
@@ -83,16 +88,16 @@ class AlertBackend:
     @staticmethod
     async def register_listener(queue: asyncio.Queue):
         print("[INFO ][ALERTS][WS]Registered listener")
-        AlertBackend().__instance.__listeners.append(queue)
+        AlertBackend().listeners.append(queue)
 
     @staticmethod
     async def remove_listener(queue: asyncio.Queue):
         print("[INFO ][ALERTS][WS]Removed listener")
-        AlertBackend().__instance.__listeners.remove(queue)
+        AlertBackend().listeners.remove(queue)
 
     @staticmethod
     async def notify_listeners(event: AlertEvent):
-        for listener in AlertBackend().__instance.__listeners:
+        for listener in AlertBackend().listeners:
             await listener.put(event)
 
     @staticmethod
@@ -105,10 +110,10 @@ class AlertBackend:
         :param alert_queue queue to which new events will be posted to
         """
         for rule in rules:
-            target: Device | Group = cache.get_item(rule.target_item)
+            target: Device | Group = Cache().get_item(rule.target_item)
 
             try:
-                result, devices = target.eval_rule(rule, value, cache.get_item)
+                result, devices = target.eval_rule(rule, value, Cache().get_item)
                 if not result:
                     continue
 
@@ -116,7 +121,7 @@ class AlertBackend:
                 for device in devices:
                     await AlertBackend.raise_alert(rule, alert_queue, device)
 
-            except Exception as e:
+            except Exception as _:
                 pass
 
 
@@ -220,15 +225,15 @@ class AlertBackend:
 
 
     def load_rule(self,
-                  rule_id: int,
-                  name: str,
-                  requires_ack: bool,
-                  severity: AlertSeverity,
-                  target_item: int,
-                  reduce_logic: AlertReduceLogic,
-                  predicates: list[tuple[AlertOperation, Any, Any, str]],
-                  data_source: Literal["facts", "syslog"],
-                  ):
+                    rule_id: int,
+                    name: str,
+                    requires_ack: bool,
+                    severity: AlertSeverity,
+                    target_item: int,
+                    reduce_logic: AlertReduceLogic,
+                    predicates: list[tuple[AlertOperation, Any, Any, str]],
+                    data_source: Literal["facts", "syslog"],
+                ):
         """
         Creates a new rule
         :param rule_id database rule id
@@ -253,7 +258,7 @@ class AlertBackend:
 
             case _:
                 # noinspection PyUnreachableCode
-                raise "Unhandled data source"
+                raise Exception("Unhandled data source")
 
     # noinspection PyUnreachableCode
     def load_from_json(self, rule_id: int, name: str, requires_ack: bool, definition: dict):
@@ -298,7 +303,7 @@ class AlertBackend:
             right       = predicate["right"]
             left_const  = (not isinstance(left, str)) or "&" not in left
             right_const = (not isinstance(right, str)) or "&" not in right
-            op          = AlertOperation[predicate["op"]]
+            op          = AlertOperation[predicate["op"].upper()]
             const_str   = "left" if left_const else "right" if right_const else ""
 
             if op is None:

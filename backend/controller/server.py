@@ -1,10 +1,9 @@
 import asyncio
 import threading
+import os
 
 import janus
 from quart import Quart, send_from_directory, Response, websocket, request
-import os
-
 from controller import get_operations, post_operations
 from model.alerts.alert_backend import AlertBackend
 from model.db.health_check import check_connections, health_check_listeners
@@ -32,21 +31,21 @@ app = Quart(__name__, static_folder=static_dir)
 #                               $$ |
 #                               $$/
 @app.route("/heartbeat")
-async def heartbeat():
+async def __heartbeat():
     print("[DEBUG]Heartbeat!")
     return "Bip bop"
 
 @app.route("/api/topology", methods=['GET'])
-async def api_get_topology():
+async def __api_get_topology():
     return get_operations.api_get_topology()
 
 @app.route("/api/rules", methods=['GET'])
-async def api_get_rules():
+async def __api_get_rules():
     return get_operations.api_get_rules()
 
 
 @app.route("/api/configure", methods=['POST'])
-async def api_configure():
+async def __api_configure():
     data = await request.get_data()
 
     try:
@@ -72,12 +71,12 @@ async def api_configure():
 # TODO: Move to ws_operations
 
 @app.route("/ws/health")
-async def api_check_backend():
+async def __api_check_backend():
     return check_connections()
 
 
 @app.websocket("/ws/health")
-async def api_check_backend_ws():
+async def __api_check_backend_ws():
     queue = asyncio.Queue()
     health_check_listeners.append(queue)
 
@@ -96,7 +95,7 @@ async def api_check_backend_ws():
         health_check_listeners.remove(queue)
 
 @app.websocket("/ws/syslog")
-async def api_syslog_ws():
+async def __api_syslog_ws():
     data_queue = janus.Queue()
     signal_queue = janus.Queue()
     finished_event = threading.Event()
@@ -136,7 +135,7 @@ async def api_syslog_ws():
         await websocket.close(-1)
 
 @app.websocket("/ws/alerts")
-async def api_alerts_ws():
+async def __api_alerts_ws():
     data_queue = janus.Queue()
     signal_queue = janus.Queue()
     finished_event = threading.Event()
@@ -173,7 +172,7 @@ async def api_alerts_ws():
 
 
 @app.websocket("/ws/syslog/realtime")
-async def api_syslog_rt_ws():
+async def __api_syslog_rt_ws():
     queue = asyncio.Queue[dict]()
     SyslogBackend.register_listener(queue)
 
@@ -197,7 +196,7 @@ async def api_syslog_rt_ws():
         SyslogBackend.remove_listener(queue)
 
 @app.websocket("/ws/alerts/realtime")
-async def api_alerts_rt_ws():
+async def __api_alerts_rt_ws():
     queue = asyncio.Queue()
     await AlertBackend.register_listener(queue)
 
@@ -219,22 +218,22 @@ async def api_alerts_rt_ws():
 
 
 @app.websocket("/ws/topology")
-async def api_topology_ws():
+async def __api_topology_ws():
     # TODO: Handle topology via websocket
     pass
 
 
 @app.route("/api/schema/<selected>")
-async def api_get_schema(selected: str):
+async def __api_get_schema(selected: str):
     return await send_from_directory(schema_dir, selected)
 
 
 
 @app.before_serving
-async def startup():
+async def __startup():
     pass
 
 
 @app.after_serving
-async def shutdown():
+async def __shutdown():
     ansible_runner_event.set()

@@ -1,7 +1,7 @@
 
 from psycopg import ServerCursor
 
-from model.cache import cache
+from model.cache import Cache
 from model.data.device import Device
 from model.data.group import Group
 from model.data.link import Link
@@ -12,7 +12,7 @@ def get_topology_as_dict():
     """
     Acquires topology from database, and converts it into a dict
     """
-    devices, links, groups = cache.topology
+    devices, links, groups = Cache().topology
 
     update_topology_cache()
 
@@ -34,7 +34,7 @@ def parse_devices(cur: ServerCursor):
     updates cache as result
     :return: None
     """
-    devices = cache.devices
+    devices = Cache().devices
     cur.execute(
         """
             SELECT Analytics.devices.device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values 
@@ -95,7 +95,7 @@ def parse_device_datasource(cur: ServerCursor):
 
     :return: None
     """
-    devices = cache.devices
+    devices = Cache().devices
     cur.execute("SELECT device_id, data_source FROM Analytics.device_data_sources")
     for row in cur.fetchall():
         device_id = int(row[0])
@@ -126,7 +126,7 @@ def parse_link(cur: ServerCursor):
 
         links[link.link_id] = link
 
-    cache.links = links
+    Cache().links = links
 
 
 def parse_groups(cur: ServerCursor):
@@ -163,6 +163,6 @@ def parse_groups(cur: ServerCursor):
 
         group_list[groups[group].group_id] = (groups[group])
 
-    cache.groups = group_list
+    Cache().groups = group_list
 
     # TODO: Prevent group circular dependency

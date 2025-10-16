@@ -1,3 +1,15 @@
+"""Database commit operations of modified data
+
+Raises:
+    Exception: failed to commit
+    Exception: failed to commit
+    Exception: failed to commit
+    Exception: failed to commit
+
+Returns:
+    _type_: None
+"""
+
 import json
 
 from model.data.device import Device
@@ -7,50 +19,66 @@ from model.db.pools import postgres_db_pool
 from model.db.update_devices import update_topology_cache
 
 async def commit(data: dict) -> tuple[bool, str]:
+    """_Commits to the database the changes_
+
+    Args:
+        data (dict): dictionary of changes with 4 keys ["topology-changes", "topology-deletions", "ruleset-changes", "ruleset-deletions"]
+
+    Raises:
+        Exception: Failed to commit to database
+
+    Returns:
+        tuple[bool, str]: success?, err_msg
+
+    """
+    result: bool
+    msg : str
     with postgres_db_pool().connection() as conn:
         try:
-            changes = data["changes"]
-            deleted = data["deleted"]
+            topology_changes = data["topology-changes"]
+            topology_deletions = data["topology-deletions"]
+            ruleset_changes = data["ruleset-changes"]
+            ruleset_deletions = data["ruleset-deletions"]
 
-            if devices := changes.get("devices", False):
+            if devices := topology_changes.get("devices", False):
                 devices = [Device.from_dict(d) for d in devices]
-                result, msg = await commit_devices(devices, conn)
+                result, msg = commit_devices(devices, conn)
 
                 if not result:
                     raise Exception(msg)
 
-            if groups := changes.get("groups", False):
+            if groups := topology_changes.get("groups", False):
                 groups = [Group.from_dict(d) for d in groups]
-                result, msg = await commit_groups(groups, conn)
+                result, msg = commit_groups(groups, conn)
 
                 if not result:
                     raise Exception(msg)
 
-            if links := changes.get("links", False):
+            if links := topology_changes.get("links", False):
                 links = [Link.from_dict(d) for d in links]
-                result, msg = await commit_links(links, conn)
+                result, msg = commit_links(links, conn)
 
                 if not result:
                     raise Exception(msg)
 
-            if rules := changes.get("rules", False):
-                result, msg = await commit_rules(rules, conn)
+            if rules := ruleset_changes.get("rules", False):
+                result, msg = commit_rules(rules, conn)
 
                 if not result:
                     raise Exception(msg)
 
             # Deletions
 
-            for group in deleted.get("groups", []):
+            for group in topology_deletions.get("groups", []):
                 __delete_group(group.from_dict(group).group_id, conn)
 
-            for link in deleted.get("links", []):
+            for link in topology_deletions.get("links", []):
                 __delete_link(Link.from_dict(link).link_id, conn)
 
-            for device in deleted.get("devices", []):
+            for device in topology_deletions.get("devices", []):
                 __delete_device(Device.from_dict(device).device_id, conn)
 
-            for rule in deleted.get("rules", []):
+            for rule in ruleset_deletions.get("rules", []):
                 __delete_rule(rule.rule_id, conn)
 
 
@@ -59,14 +87,21 @@ async def commit(data: dict) -> tuple[bool, str]:
             conn.rollback()
             return False, str(e)
 
-        # force update of local cache from db
-        update_topology_cache(forced=True)
+    update_topology_cache(forced=True)
+
+    return True, ""
 
 
-        return True, ""
+def commit_devices(devices: list[Device], conn) -> tuple[bool, str]:
+    """_Commits to the database the device changes_
 
+    Args:
+        devices (list[Device]): devices
+        conn: database connection
 
-async def commit_devices(devices: list[Device], conn) -> tuple[bool, str]:
+    Returns:
+        tuple[bool, str]: success?, err_msg
+    """
     print("[INFO ]Commit device changes following user configuration from UI")
     with conn.cursor() as cur:
         for device in devices:
@@ -75,7 +110,16 @@ async def commit_devices(devices: list[Device], conn) -> tuple[bool, str]:
     return True, ""
 
 
-async def commit_links(links: list[Link], conn) -> tuple[bool, str]:
+def commit_links(links: list[Link], conn) -> tuple[bool, str]:
+    """_Commits to the database the link changes_
+
+    Args:
+        links (list[Link]): links
+        conn: database connection
+
+    Returns:
+        tuple[bool, str]: success?, err_msg
+    """
     with conn.cursor() as cur:
         for link in links:
             __commit_link(link, cur)
@@ -83,13 +127,31 @@ async def commit_links(links: list[Link], conn) -> tuple[bool, str]:
     return True, ""
 
 
-async def commit_groups(groups: list[Group], conn) -> tuple[bool, str]:
+def commit_groups(groups: list[Group], conn) -> tuple[bool, str]:
+    """_Commits to the database the group changes_
+
+    Args:
+        groups (list[Group]): groups
+        conn: database connection
+
+    Returns:
+        tuple[bool, str]: success?, err_msg
+    """
     with conn.cursor() as cur:
         for group in groups:
             __commit_group(group, cur)
     return True, ""
 
 def commit_rules(rules: list[dict], conn) -> tuple[bool, str]:
+    """_Commits to the database the rule changes_
+
+    Args:
+        rules (list[dict]): rules
+        conn: database connection
+
+    Returns:
+        tuple[bool, str]: success?, err_msg
+    """
     with conn.cursor() as cur:
         for rule in rules:
             __commit_rule(rule, cur)
@@ -231,7 +293,7 @@ def __commit_rule(rule, cur):
             VALUES
                 (%s, %s, %s)
             """,
-            (rule["name"], rule["requires-ack"], rule["rule-definition"])
+            (rule["name"], rule["requires-ack"], json.dumps(rule["rule-definition"]))
         )
 
     else:
@@ -241,7 +303,7 @@ def __commit_rule(rule, cur):
             SET rule_name=%s, requires_ack=%s, rule_definition=%s
             WHERE rule_id =%s
             """,
-            (rule["name"], rule["requires-ack"], rule["rule-definition"], rule["id"])
+            (rule["name"], rule["requires-ack"], json.dumps(rule["rule-definition"]), rule["id"])
         )
 
 def __delete_device(device_id: int, conn):

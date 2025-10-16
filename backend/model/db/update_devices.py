@@ -3,14 +3,14 @@ import json
 from influxdb_client import Point
 
 from Config import Config
-from model.cache import cache
+from model.cache import Cache
 from model.db import fetch_topology
 from model.db.pools import postgres_db_pool, influx_db_write_api
 from model.data.device import Device
 from model.device_state import DeviceStatus
 
 def update_topology_cache(forced: bool = False):
-    if not cache.should_update and not forced:
+    if not Cache().should_update and not forced:
         return
 
     print("[INFO ]Updating topology cache")
@@ -29,7 +29,7 @@ def update_device_metadata(exposed_metrics: dict, metrics : dict, status: dict):
     :return: None
     """
     __extract_device_metadata(metrics)
-    devices = cache.devices
+    devices = Cache().devices
 
     for device_hostname in status:
         device = Device.find_by_management_hostname(devices, device_hostname)
@@ -40,7 +40,7 @@ def update_device_metadata(exposed_metrics: dict, metrics : dict, status: dict):
         # set state
         device.state = DeviceStatus.make_from_dict(status[device_hostname])
 
-        # set available_values, but only if it was not null since last call
+        # set available_values, override if last gotten values were not null
         available_values = exposed_metrics.get(device_hostname)
         if available_values is not None:
             device.available_values = available_values
@@ -77,7 +77,7 @@ def update_device_analytics(metrics):
     Inserts datapoints into influxdb bucket
     """
     bucket = Config.get("backend/controller/influx/bucket")
-    devices = cache.devices
+    devices = Cache().devices
 
     # Metrics will contain only devices for which connection was successful
     for hostname in metrics:
@@ -99,7 +99,7 @@ def __extract_device_metadata(metrics):
     """
     Extracts from the returned ansible-metrics the fields requested for each device, and modifies the device metadata
     """
-    devices = cache.devices
+    devices = Cache().devices
 
     for hostname in metrics:
         device = Device.find_by_management_hostname(devices, hostname)

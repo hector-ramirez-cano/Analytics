@@ -25,7 +25,7 @@ class Group:
         Leverages CPython functions for fast execution
         Equivalent python code:
             for item_id in self.members:
-                item = cache.get_item(item_id)
+                item = Cache().get_item(item_id)
 
                 if item.eval_rule(rule, d):
                     return True, item

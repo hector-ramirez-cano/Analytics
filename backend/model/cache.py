@@ -6,6 +6,13 @@ from model.data.group import Group
 
 
 class Cache(object):
+    __instance = None
+
+    def __new__(cls):
+        if cls.__instance is None:
+            cls.__instance = super(Cache, cls).__new__(cls)
+
+        return cls.__instance
 
     __devices : dict = {}
     __links   : dict = {}
@@ -82,6 +89,3 @@ class Cache(object):
         self.__groups = groups
 
         self.__last_update = time.time()
-
-# TODO: Turn this into a singleton
-cache = Cache()

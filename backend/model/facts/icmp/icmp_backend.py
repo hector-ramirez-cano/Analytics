@@ -2,7 +2,7 @@ import re
 import subprocess
 
 from model.Icmp_status import IcmpStatus
-from model.cache import cache
+from model.cache import Cache
 
 import asyncio
 
@@ -20,7 +20,8 @@ def __ping_host_once(host: str):
     result = subprocess.run(
         ['ping', '-A', '-c', '1', host],
         capture_output=True,
-        text=True
+        text=True,
+        check=False,
     )
 
     rtt = 0.0
@@ -80,7 +81,7 @@ async def gather_facts():
          with "icmp" in data_sources.
     """
 
-    targets = cache.icmp_inventory
+    targets = Cache().icmp_inventory
     results = await __ping_devices(targets)
 
     print("[INFO ][FACTS][ICMP   ]ICMP Echo finished with the following results: ", results)

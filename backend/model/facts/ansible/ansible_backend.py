@@ -4,7 +4,7 @@ import ansible_runner
 
 import Config as Config
 from model.ansible_status import AnsibleStatus
-from model.cache import cache
+from model.cache import Cache
 
 def __extract_facts_from_playbook(runner) -> tuple[dict, dict]:
     """
@@ -47,7 +47,7 @@ def __run_fact_gathering_playbook() -> tuple[dict, dict]:
     playbook = config.get("backend/model/playbooks/fact_gathering")
     private = config.get("backend/model/private_data_dir")
 
-    inventory = "[servers]\n" + cache.ansible_inventory
+    inventory = "[servers]\n" + Cache().ansible_inventory
 
     print("[INFO ][FACTS][ANSIBLE]Starting playbook execution")
     runner = ansible_runner.run(
