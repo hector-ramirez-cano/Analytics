@@ -1,0 +1,85 @@
+@startuml Architecture
+skinparam linetype ortho
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor<<Frontend>> #ADD8E6
+  BackgroundColor<<Backend>> #99c4ad
+  BorderColor black
+  BorderStyle dashed
+}
+
+package "Frontend" <<Frontend>> {
+  artifact "UI Client"
+}
+
+package "Backend" <<Backend>> {
+  package "Model (Python Docker)" {
+    artifact "Alerts Engine"
+    artifact "DB backend"
+    artifact "Cache"
+    artifact "ICMP poller"
+    artifact "SNMP poller"
+    artifact "Ansible poller"
+    artifact "Syslog handler"
+    artifact "Facts backend"
+    artifact "Syslog backend"
+    
+    
+    "Syslog backend" -right-> "DB backend"
+    "Facts backend" -right-> "DB backend"
+
+    "ICMP poller" -right-> "Facts backend"
+    "SNMP poller" -right-> "Facts backend"
+    "Ansible poller" -right-> "Facts backend" 
+    "Syslog handler" -right-> "Syslog backend"
+    "Facts backend" -[hidden]d-> "Syslog backend"
+    "ICMP poller" <-[hidden]d-> "SNMP poller"
+    "SNMP poller" <-[hidden]d-> "Ansible poller"
+    "Ansible poller" <-[hidden]d-> "Syslog handler"
+    
+    "Cache" <-down-> "DB backend"
+    
+    "Cache" <-up-> "Alerts Engine"
+    
+    
+  }
+
+  package "Controller (Python Docker)" {
+    artifact "HTTP/Websocket API (Quart)"
+    node "DB Drivers" {
+      artifact "Psycopg Driver"
+      artifact "SQLite Driver"
+      artifact "InfluxDB Driver"
+    }
+    
+    "DB Drivers" <..right..> "DB backend"
+  }
+
+  
+  package "External Services" {
+    node "Postgres DB (Docker)" {
+      database "Postgres"
+    }
+    node "InfluxDB (Docker)" {
+      database "InfluxDB"
+    }
+    database "SQLite"
+    
+    artifact "rsyslogd"
+  }
+
+
+  "Controller (Python Docker)" --[hidden]down-> "External Services"
+  "HTTP/Websocket API (Quart)" --[hidden]down-> "DB Drivers"
+  "DB Drivers" --[hidden]left-> "External Services"
+  "InfluxDB" --[hidden]left-> "SQLite"
+}
+
+"HTTP/Websocket API (Quart)" --> "UI Client"
+"DB backend" <-up-> "HTTP/Websocket API (Quart)"
+"Alerts Engine" <-> "HTTP/Websocket API (Quart)"
+"Syslog handler" -right-> "rsyslogd"
+"Psycopg Driver" -down-> "Postgres"
+"SQLite Driver" -down-> "SQLite"
+"InfluxDB Driver" -down-> "InfluxDB"
+@enduml

@@ -1,0 +1,115 @@
+@startuml database
+skinparam linetype ortho
+
+' Enumerations
+enum ItemType {
+    device
+    link
+    group
+}
+
+enum LinkType {
+    optical
+    copper
+    wireless
+}
+
+enum DataSource {
+    ssh
+    snmp
+    icmp
+}
+
+enum AlertSeverity {
+    emergency
+    alert
+    critical
+    error
+    warning
+    notice
+    info
+    debug
+}
+
+' Tables
+dataclass items {
+  * id : SERIAL
+  item_type : ItemType
+}
+
+dataclass devices {
+  * device_id : SERIAL
+  device_name : VARCHAR(254)
+  position_x : FLOAT
+  position_y : FLOAT
+  latitude : FLOAT
+  longitude : FLOAT
+  management_hostname : VARCHAR(254)
+  metadata : JSONB
+  requested_metadata : JSONB
+  requested_metrics : JSONB
+  available_values : JSONB
+  snmp_configuration : JSONB
+  FK item_id : INT
+}
+
+dataclass device_data_sources {
+  * device_id : SERIAL
+  data_source : DataSource
+}
+
+dataclass links {
+  * link_id : SERIAL
+  side_a : INT
+  side_b : INT
+  side_a_iface : VARCHAR(254)
+  side_b_iface : VARCHAR(254)
+  link_type : LinkType
+  link_subtype : VARCHAR(254)
+  FK item_id : INT
+}
+
+dataclass alerts {
+  * alert_id : SERIAL
+  alert_time : TIMESTAMP
+  ack_time : TIMESTAMP
+  requires_ack : BOOLEAN
+  severity : AlertSeverity
+  message : VARCHAR
+  ack_actor : VARCHAR
+  FK target_id : INT
+}
+
+dataclass alert_rules {
+  * rule_id : SERIAL
+  rule_name : VARCHAR(128)
+  requires_ack : BOOLEAN
+  rule_definition : JSONB
+}
+
+dataclass groups {
+  * group_id : SERIAL
+  group_name : VARCHAR(254)
+  is_display_group : BOOLEAN
+  FK item_id : INT
+}
+
+dataclass group_members {
+  FK group_id : INT
+  FK item_id : INT
+}
+
+' Relationships with crow's foot cardinality
+items ||--|| devices : item_id
+items ||--|| links : item_id
+items ||--|| groups : item_id
+
+devices ||--o{ device_data_sources : device_id
+devices ||--o{ alerts : target_id
+devices ||--o{ links : side_a
+devices ||--o{ links : side_b
+
+groups ||--o{ group_members : group_id
+items ||--o{ group_members : item_id
+
+@enduml

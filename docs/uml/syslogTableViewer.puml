@@ -13,34 +13,34 @@ box "Backend" #LightBlue
   participant "WebSocket" as BackendWS
 end box
 
-== Initial Load ==
-User -> TrinaGrid: Display table with placeholder rows
-TrinaGrid -> StateProvider: Request initial row count
-StateProvider -> WebSocket : Set filters\nRequest rowCount
-WebSocket -> BackendWS: Set filters\nRequest rowCount
+== Carga inicial ==
+User -> TrinaGrid: Mostrar la tabla con filas temporales
+TrinaGrid -> StateProvider: Solicitud de conteo de filas
+StateProvider -> WebSocket : [Set filters]\n[Request rowCount]
+WebSocket -> BackendWS: [Set filters]\n[Request rowCount]
 BackendWS --> WebSocket: rowCount
 WebSocket --> StateProvider: rowCount
 StateProvider --> TrinaGrid: rowCount
-TrinaGrid -> TrinaGrid: Create shimmer/dummy rows for visible portion
+TrinaGrid -> TrinaGrid: Creación de filas con efecto shimmer\npara simular la carga
 
-== Request Initial Data ==
-TrinaGrid -> StateProvider: Request rows for visible range
-StateProvider -> WebSocket: Send request for rows 0..N
-WebSocket -> BackendWS: Request rows 0..N
-BackendWS --> WebSocket: Stream messages (row 0..N)
-WebSocket -> StateProvider: Emit rows incrementally
-StateProvider -> StateProvider: Buffer rows, flush every 100ms
-StateProvider --> TrinaGrid: Update rows when flushed
-TrinaGrid -> TrinaGrid: Replace shimmer rows with real data
+== Petición inicial de datos ==
+TrinaGrid -> StateProvider: Petición de datos para las filas visibles
+StateProvider -> WebSocket: Petición de filas 0..N
+WebSocket -> BackendWS: Petición de filas 0..N
+BackendWS --> WebSocket: Stream de mensajes (row 0..N)
+WebSocket -> StateProvider: Emisión incremental de filas
+StateProvider -> StateProvider: Filas se colocan en Buffer\nEl buffer se vacía cada 100ms
+StateProvider --> TrinaGrid: Actualizar las filas cuando\nse saquen los datos del buffer
+TrinaGrid -> TrinaGrid: Reemplazo de las filas con shimmer\nPor los datos reales
 
 == Scrolling ==
-User -> TrinaGrid: Scrolls near bottom
-TrinaGrid -> StateProvider: Request next batch of rows
-StateProvider -> WebSocket: Send request for next rows
-WebSocket -> BackendWS: Request rows M..M+N
-BackendWS --> WebSocket: Stream messages (rows M..M+N)
-WebSocket -> StateProvider: Emit rows incrementally
-StateProvider -> StateProvider: Buffer & flush
-StateProvider --> TrinaGrid: Append rows
-TrinaGrid -> TrinaGrid: Replace placeholders with real data
+User -> TrinaGrid: Desplazamiento hasta abajo
+TrinaGrid -> StateProvider: Petición de siguientes filas
+StateProvider -> WebSocket: Petición de siguientes filas
+WebSocket -> BackendWS: Petición de filas M..M+N
+BackendWS --> WebSocket: Stream de mensajes (rows M..M+N)
+WebSocket -> StateProvider: Emisión incremental de filas
+StateProvider -> StateProvider: Buffer & vaciado
+StateProvider --> TrinaGrid: Insersión de filas
+TrinaGrid -> TrinaGrid: Reemplazo de filas con shimmer
 @enduml

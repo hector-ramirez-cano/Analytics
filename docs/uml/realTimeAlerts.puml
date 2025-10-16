@@ -1,23 +1,30 @@
 @startuml realTimeAlerts
 
+actor "Usuario" as User
+box "Frontend" #ffdcdcff
+boundary "UI" as UI
+end box
+
 ' Define controller and model lifelines
 ' Backend
 box "Controller" #ADD8E6
-participant "WebSocket" as WebSocket
+control "WebSocket" as WebSocket
 end box
 
 box "Model" #99c4ad
-participant "FactGatheringBackend" as FactGatheringBackend
-participant "SyslogBackend" as SyslogBackend
-participant "AlertBackend" as AlertBackend
-participant "Database" as Database
+boundary "Fact\nGathering" as FactGatheringBackend
+entity "Syslog\nBackend" as SyslogBackend
+entity "Alert\nBackend" as AlertBackend
+Database "Database" as Database
 end box
 
 == Subscription ==
+User -> UI : Inicio
+UI -> WebSocket : registro
 WebSocket -> AlertBackend : register_listener(queue)
 
 == Fact event loop ==
-loop continuous
+loop Corutine
     FactGatheringBackend -> AlertBackend : eval_facts(queue)
     AlertBackend -> AlertBackend : __eval_rules()
     AlertBackend -> AlertBackend : raise_alert()
@@ -27,7 +34,7 @@ loop continuous
 end
 
 == Syslog event loop ==
-loop continuous
+loop Corutine
     FactGatheringBackend -> AlertBackend : eval_facts(queue)
     AlertBackend -> AlertBackend : __eval_rules()
     AlertBackend -> AlertBackend : raise_alert()
