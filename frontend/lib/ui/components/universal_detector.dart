@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 class UniversalDetector extends StatelessWidget {
   final Widget child;
   final GestureTapUpCallback? onTapUp;
+  final GestureDragUpdateCallback? onPanUpdate;
+  final GestureDragEndCallback? onPanEnd;
   final GestureScaleUpdateCallback? onScaleUpdate;
   final GestureScaleStartCallback? onScaleStart;
   final PointerHoverEventListener? onHover;
@@ -21,6 +23,8 @@ class UniversalDetector extends StatelessWidget {
   const UniversalDetector({
     super.key,
     this.onTapUp,
+    this.onPanUpdate,
+    this.onPanEnd,
     this.onScaleUpdate,
     this.onHover,
     this.onEnter,
@@ -43,6 +47,8 @@ class UniversalDetector extends StatelessWidget {
         onTapUp: onTapUp,
         onScaleUpdate: onScaleUpdate,
         onScaleStart: onScaleStart,
+        onPanUpdate: onPanUpdate,
+        onPanEnd: onPanEnd,
         child: child,
       );
   }

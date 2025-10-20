@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:network_analytics/models/alerts/alert_predicate.dart';
 import 'package:network_analytics/models/alerts/alert_predicate_operation.dart';
 import 'package:network_analytics/models/analytics_item.dart';
+import 'package:network_analytics/models/enums/facts_const_types.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
 import 'package:network_analytics/ui/components/list_selector.dart';
@@ -24,34 +25,13 @@ class AlertRuleEditPredicate extends StatefulWidget {
   State<AlertRuleEditPredicate> createState() => _AlertRuleEditPredicateState();
 }
 
-enum AlertConstTypes {
-  string,
-  number,
-  boolean,
-  nullable,;
-
-  static AlertConstTypes? fromString(String value) {
-    switch (value) {
-      case "string":
-        return string;
-      case "number":
-        return number;
-      case "boolean":
-        return boolean;
-      case "nullable":
-        return nullable;
-    }
-    return null;
-  }
-}
-
 class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
   bool _leftConst = false;
   bool _rightConst = false;
   bool _leftForced = false;
   bool _rightForced = false;
   AlertPredicateOperation? _selectedOperation;
-  AlertConstTypes? _constType;
+  FactsDataTypes? _constType;
   late final TextEditingController _leftController;
   late final TextEditingController _rightController;
   // TODO: Refactor initial values and const handling
@@ -92,24 +72,24 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
 
   dynamic cast(bool left, String text) {
     bool isConst = left ? _leftConst : _rightConst;
-    AlertConstTypes? type = _constType;
+    FactsDataTypes? type = _constType;
 
     if (!isConst) { return "&$text"; }
 
     switch (type) {
       
-      case AlertConstTypes.string:
+      case FactsDataTypes.string:
         return text;
 
-      case AlertConstTypes.number:
+      case FactsDataTypes.number:
         return double.parse(text);
 
       case null:
         return null;
 
       // these types should never call to cast
-      case AlertConstTypes.boolean:
-      case AlertConstTypes.nullable:
+      case FactsDataTypes.boolean:
+      case FactsDataTypes.nullable:
         throw Exception("Unreachable code reached!");
     }
   }
@@ -212,21 +192,21 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
     );
   }
 
-  Widget _makeTypeDropdown(bool isLeft, AlertConstTypes? initial) {
+  Widget _makeTypeDropdown(bool isLeft, FactsDataTypes? initial) {
     return SizedBox(
       height: 40,
       width: MediaQuery.of(context).size.width * 0.30,
       child: DropdownButton<String>(
         value: initial?.name,
           hint: const Text("Tipo de dato"),
-          items: AlertConstTypes.values
+          items: FactsDataTypes.values
               .map((type) => DropdownMenuItem(value: type.name, child: Text(type.name)))
               .toList(),
           onChanged: (val) {
             if (val == "unknown") { return; }
-            final type = AlertConstTypes.fromString(val ?? "");
+            final type = FactsDataTypes.fromString(val ?? "");
             
-            if (type == AlertConstTypes.nullable) { 
+            if (type == FactsDataTypes.nullable) { 
               if (isLeft) { _leftValue = null; }
               else { _rightValue = null; }
             }
@@ -250,14 +230,14 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
 
     Widget child;
     switch (_constType) {
-      case AlertConstTypes.boolean:
+      case FactsDataTypes.boolean:
         constValue = constValue is bool ? constValue : null;
         child = Padding(
           padding: const EdgeInsets.all(28.0),
           child: _makeBooleanToggle(isLeft, constValue),
         );
 
-      case AlertConstTypes.nullable:
+      case FactsDataTypes.nullable:
         constValue = null;
         child = Padding(
           padding: const EdgeInsets.all(28.0),
@@ -268,7 +248,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
           ),
         );
 
-      case AlertConstTypes.number:
+      case FactsDataTypes.number:
         bool validator(value) {
           return value is String && (value.isEmpty || double.tryParse(value) != null);
         }
@@ -280,7 +260,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
           validator: validator,
         );
 
-      case AlertConstTypes.string:
+      case FactsDataTypes.string:
       case null:
         child = _makeDirectInput(isLeft, "Constante", Icon(Icons.sync_disabled));
     }
@@ -356,8 +336,8 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
       disabledBackgroundColor: Theme.of(context).colorScheme.onSurface.withAlpha(50),
       disabledForegroundColor: Theme.of(context).colorScheme.onSurface.withAlpha(50),
     );
-    final leftValid  = (_leftValue  != null && _leftValue  != "\$") || (_leftConst  && _constType == AlertConstTypes.nullable);
-    final rightValid = (_rightValue != null && _rightValue != "\$") || (_rightConst && _constType == AlertConstTypes.nullable);
+    final leftValid  = (_leftValue  != null && _leftValue  != "\$") || (_leftConst  && _constType == FactsDataTypes.nullable);
+    final rightValid = (_rightValue != null && _rightValue != "\$") || (_rightConst && _constType == FactsDataTypes.nullable);
     final valid = leftValid && rightValid && _selectedOperation != null;
 
     onClose () {

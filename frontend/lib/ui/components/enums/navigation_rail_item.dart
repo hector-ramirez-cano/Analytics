@@ -3,7 +3,6 @@ import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 
 enum NavigationRailItem {
   canvas   (Icons.segment       , 'Topología'      , bottom: false, hasDrawer: true , screen: WorkplaceScreen.canvas  ),
-  search   (Icons.search        , 'Búsqueda'       , bottom: false, hasDrawer: true , screen: WorkplaceScreen.canvas  ),
   charts   (Icons.area_chart    , 'Gráficas'       , bottom: false, hasDrawer: true , screen: WorkplaceScreen.charts  ),
   syslog   (Icons.terminal      , 'Syslog'         , bottom: false, hasDrawer: false, screen: WorkplaceScreen.syslog  ),
   alerts   (Icons.notifications , 'Alertas'        , bottom: false, hasDrawer: false, screen: WorkplaceScreen.alerts  ),

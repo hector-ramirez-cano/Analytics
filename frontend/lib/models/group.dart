@@ -58,7 +58,7 @@ class Group extends GroupableItem<Group>{
     };
   }
 
-  factory Group.emptyGroup() {
+  factory Group.empty() {
     return Group(id: -1*Random(2).nextInt(10000), members: <GroupableItem>{}, name: "", isDisplayGroup: false);
   }
 

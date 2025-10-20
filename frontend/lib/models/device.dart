@@ -110,7 +110,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     };
   }
 
-  factory Device.emptyDevice(){
+  factory Device.empty() {
     return Device(
       id: -1*Random(2).nextInt(10000),
       position: Offset.zero,

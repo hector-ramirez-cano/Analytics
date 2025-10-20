@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:network_analytics/models/alerts/alert_predicate.dart';
 import 'package:network_analytics/models/alerts/alert_reduce_logic.dart';
 import 'package:network_analytics/models/alerts/alert_severity.dart';
@@ -69,6 +71,19 @@ class AlertRule extends AnalyticsItem<AlertRule> {
       source: source ?? this.source,
       targetId: targetId ?? this.targetId,
       severity: severity ?? this.severity,
+    );
+  }
+
+  factory AlertRule.empty() {
+    return AlertRule(
+      id: -1*Random(2).nextInt(10000),
+      name: "Nueva regla",
+      requiresAck: false,
+      reduceLogic: AlertReduceLogic.unknown,
+      source: AlertSource.unknown,
+      targetId: -1,
+      severity: AlertSeverity.unknown,
+      definition: []
     );
   }
 

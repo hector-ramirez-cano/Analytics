@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:network_analytics/models/alerts/alert_rule.dart';
 import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
@@ -35,14 +36,17 @@ class _NewEditViewState extends State<NewEditView> {
     final notifier = ref.read(itemEditSelectionProvider.notifier);
     switch (selected) {
       case "Dispositivo":
-        item = Device.emptyDevice();
+        item = Device.empty();
         break;
 
       case "Link":
-        item = Link.emptyLink();
+        item = Link.empty();
 
       case "Grupo":
-        item = Group.emptyGroup();
+        item = Group.empty();
+
+      case "Regla de alerta":
+        item = AlertRule.empty();
 
       default:
         throw Exception("Unreachable code reached!");
@@ -77,7 +81,7 @@ class _NewEditViewState extends State<NewEditView> {
     var child = DropdownButton<String>(
       value: selected,
         hint: const Text("Tipo"),
-        items: ["Dispositivo", "Link", "Grupo"]
+        items: ["Dispositivo", "Link", "Grupo", "Regla de alerta"]
             .map((type) =>
                 DropdownMenuItem(value: type, child: Text(type)))
             .toList(),

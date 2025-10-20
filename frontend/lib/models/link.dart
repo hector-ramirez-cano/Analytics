@@ -95,8 +95,8 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
     };
   }
 
-  factory Link.emptyLink() {
-    return Link(id: -1*Random(2).nextInt(10000), sideA: Device.emptyDevice(), sideB: Device.emptyDevice(), linkType: LinkType.copper, sideAIface: "", sideBIface: "");
+  factory Link.empty() {
+    return Link(id: -1*Random(2).nextInt(10000), sideA: Device.empty(), sideB: Device.empty(), linkType: LinkType.copper, sideAIface: "", sideBIface: "");
   }
 
   static Set<Link> setFromJson(List<dynamic> json, Map<int, dynamic> devices) {

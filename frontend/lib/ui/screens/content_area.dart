@@ -5,7 +5,7 @@ import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/enums/workplace_screen.dart';
 import 'package:network_analytics/ui/screens/alerts/alert_viewer.dart';
 import 'package:network_analytics/ui/screens/canvas/topology_tab_view.dart';
-import 'package:network_analytics/ui/screens/charts/chart.dart';
+import 'package:network_analytics/ui/screens/charts/chart_dashboard.dart';
 import 'package:network_analytics/ui/screens/edit/editor_view.dart';
 import 'package:network_analytics/ui/screens/settings/settings.dart';
 import 'package:network_analytics/ui/screens/syslog/syslog_viewer.dart';
@@ -26,7 +26,7 @@ class ContentArea extends StatelessWidget {
             return TopologyTabView();
 
           case WorkplaceScreen.charts:
-            return LineChartSample2();
+            return ChartDashboard();
 
           case WorkplaceScreen.settings:
             return SettingsScreen();
