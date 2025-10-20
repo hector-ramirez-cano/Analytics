@@ -75,17 +75,22 @@ class SideNav extends StatelessWidget {
     return Consumer(builder:(context, ref, child) {
       final selectedPanel = ref.read(sideNavSelectionProvider);
 
-      List<Widget> widgets = [];
-      widgets.addAll(List.generate(NavigationRailItem.topItems.length, (index) => _buildChild(selectedPanel, NavigationRailItem.topItems[index], ref)));
-      widgets.add(Spacer());
-      widgets.addAll(List.generate(NavigationRailItem.bottomItems.length, (index) => _buildChild(selectedPanel, NavigationRailItem.bottomItems[index], ref)));
+      List<Widget> topItems = List.generate(NavigationRailItem.topItems.length, (index) => _buildChild(selectedPanel, NavigationRailItem.topItems[index], ref));
+      List<Widget> bottomItems = List.generate(NavigationRailItem.bottomItems.length, (index) => _buildChild(selectedPanel, NavigationRailItem.bottomItems[index], ref));
 
       return Container(
         width: 60,
         color: AppColors.sidebarColor,
-        child: Column(
-          children: widgets
-        ),
+        child: LayoutBuilder(builder: (context, constraints) {
+          final height = (NavigationRailItem.values.length ) * 64;
+          if (height > constraints.maxHeight) {
+            return ListView(
+              children: [...topItems, ...bottomItems]
+            );
+          }
+          return Column(children: [...topItems, Spacer(), ...bottomItems],);
+        })
+        
       );
     });
   }
