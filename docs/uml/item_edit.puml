@@ -1,0 +1,53 @@
+@startuml ItemEdit
+skinparam linetype ortho
+skinparam sequence {
+  BoxPadding 10
+  ParticipantPadding 20
+  ArrowThickness 1
+}
+
+actor Usuario
+
+box "Frontend" #ffdcdcff
+  boundary UI
+end box
+
+box "Controller" #ADD8E6
+  boundary "HTTP Endpoint"
+  database "Database"
+end box
+
+box "Model" #99c4ad
+  participant "DB Backend"
+  participant "Cache"
+end box
+
+Usuario -> UI : Enviar datos
+UI -> "HTTP Endpoint" : POST /configure
+"HTTP Endpoint" -> "DB Backend" : Validar y procesar datos
+"Database" -> "Database" : Inicio de transacción
+"DB Backend" -> "Database" : Intentar insertar
+
+== Caso 1: Inserción fallida ==
+
+"Database" --> "DB Backend" : Error de inserción
+"DB Backend" -> "Database" : Realizar rollback
+"DB Backend" --> "HTTP Endpoint" : Error con mensaje
+"HTTP Endpoint" --> UI : HTTP 400 + mensaje de error
+
+== Caso 2: Inserción exitosa ==
+
+"Database" --> "DB Backend" : Confirmación de éxito
+"DB Backend" -> "Database" : Commit
+"DB Backend" -> "Cache" : Actualizar caché
+"DB Backend" --> "HTTP Endpoint" : OK
+"HTTP Endpoint" --> UI : HTTP 200 OK
+
+UI -> "HTTP Endpoint" : GET /topología + reglas
+"HTTP Endpoint" -> "DB Backend" : Obtener datos
+"DB Backend" -> "Cache" : Consultar caché
+"Cache" --> "DB Backend" : Respuesta
+"DB Backend" --> "HTTP Endpoint" : Datos
+"HTTP Endpoint" --> UI : Topología + reglas
+
+@enduml

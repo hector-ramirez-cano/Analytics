@@ -1,0 +1,38 @@
+@startuml facts insert
+skinparam linetype ortho
+skinparam sequence {
+  BoxPadding 10
+  ParticipantPadding 20
+  ArrowThickness 1
+}
+
+
+box "Controller" #ADD8E6
+  database "Database"
+end box
+
+box "Model" #99c4ad
+  participant "DB Backend"
+  participant "FactsBackend"
+end box
+
+box "Targets" #ffff99
+  participant "Servidor"
+end box
+
+== Recolección de datos desde Targets ==
+
+loop [Corrutina]
+    FactsBackend -> "Servidor" : ICMP (ping)
+    "Servidor" --> FactsBackend : Respuesta ICMP
+
+    FactsBackend -> "Servidor" : SNMP (consulta)
+    "Servidor" --> FactsBackend : Respuesta SNMP
+
+    FactsBackend -> "Servidor" : Ansible vía SSH
+    "Servidor" --> FactsBackend : Resultado SSH
+
+    FactsBackend -> "DB Backend" : Informar datos recolectados
+    "DB Backend" -> "Database" : Insertar datos
+end
+@enduml

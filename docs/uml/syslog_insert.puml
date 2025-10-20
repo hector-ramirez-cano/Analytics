@@ -1,0 +1,32 @@
+@startuml Syslog Insert
+skinparam linetype ortho
+skinparam sequence {
+  BoxPadding 10
+  ParticipantPadding 20
+  ArrowThickness 1
+}
+
+
+box "Controller" #ADD8E6
+  database "Database"
+end box
+
+
+box "Model" #99c4ad
+  participant "DB Backend"
+  participant "SyslogBackend"
+end box
+
+box "Targets" #ffff99
+  participant "Servidor"
+end box
+
+== Flujo de eventos por Syslog ==
+
+loop [Corrutina]
+    "Servidor" -> "SyslogBackend" : Enviar evento Syslog
+    "SyslogBackend" -> "DB Backend" : Notificar evento recibido
+    "DB Backend" -> "Database" : Insertar evento
+end
+
+@enduml
