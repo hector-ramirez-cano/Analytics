@@ -1,10 +1,9 @@
-import 'dart:async';
 import 'package:network_analytics/extensions/circular_ring_buffer.dart';
+import 'package:network_analytics/extensions/semaphore.dart';
 import 'package:network_analytics/services/app_config.dart';
 import 'package:network_analytics/services/syslog_db_service.dart';
+import 'package:network_analytics/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:web_socket_channel/status.dart' as status;
 
 part 'syslog_realtime_service.g.dart';
 
@@ -31,56 +30,33 @@ class WsSyslogMessageQueue {
 
 @riverpod
 class SyslogRealtimeService extends _$SyslogRealtimeService {
-  WebSocketChannel? _channel;
-  StreamSubscription? _sub;
 
-  void send(String msg) {
-    _channel?.sink.add(msg);
-  }
 
-  void _connect() {
-    _channel = WebSocketChannel.connect(
-      Uri.parse(AppConfig.getOrDefault("ws/syslog_rt_ws_endpoint"))
-    );
+  Semaphore serviceReady = Semaphore();
 
-    // TODO: Add on cancel handling
-    _sub = _channel!.stream.listen((data) {
-        final parsed = _parseMessage(data);
-        
-        state.queue.push(parsed);
 
-        // force riverpod to update the widgets
-        state = state.bump();
+  void _attachRxMessageListener() {
+    ref.read(websocketServiceProvider.notifier).attachListener('syslog-rt', (json) {
+      final decoded = extractBody('syslog-rt', json, (_) => {}); // TODO: Handle error
 
-        SyslogDbService.logger.d("RX'd $parsed, length=${state.queue.length}");
-      },
-      onDone: _handleDone,
-      onError: _handleError
-    );
-  }
+      state.queue.push(decoded);
 
-  String _parseMessage(dynamic data) {
-    return data.toString();
-  }
+      // force riverpod to update the widgets
+      state = state.bump();
 
-  void _dispose() {
-    _sub?.cancel();
-    _channel?.sink.close(status.normalClosure);
-  }
-
-  void _handleError(dynamic error) {
-    SyslogDbService.logger.e('WebSocket error: $error');
-  }
-
-  void _handleDone() {
-    SyslogDbService.logger.w('WebSocket connection closed');
-    // Optionally update state or trigger reconnection
+      SyslogDbService.logger.d("RX'd $decoded, length=${state.queue.length}");
+    });
   }
 
   @override
   WsSyslogMessageQueue build() {
-    _connect();
-    ref.onDispose(_dispose);
+    
+    final _ = ref.watch(websocketServiceProvider);
+    serviceReady.reset();
+
+    _attachRxMessageListener();
+
     return WsSyslogMessageQueue.empty();
   }
+
 }

@@ -79,6 +79,9 @@ def update_device_analytics(metrics):
     bucket = Config.get("backend/controller/influx/bucket")
     devices = Cache().devices
 
+    # List for batched writes
+    points = []
+
     # Metrics will contain only devices for which connection was successful
     for hostname in metrics:
         device = Device.find_by_management_hostname(devices, hostname)
@@ -86,13 +89,20 @@ def update_device_analytics(metrics):
         if device is None:
             continue
 
-        point = (
-            Point("avg_latency")
-            .tag("rtt-latency", hostname)
-            .field("rtt-latency", float(metrics[hostname].get("avg_latency", [0])[0]))
-        )
+        if len(device.configuration.requested_metrics) == 0:
+            continue
 
-        influx_db_write_api().write(bucket=bucket, org="C5i", record=point)
+        point = Point("metrics").tag("device_id", device.device_id)
+
+        # add them fields on that there point
+        for requested_metric in device.configuration.requested_metrics:
+            value = metrics.get(hostname, {}).get(requested_metric, [0])
+            point.field(requested_metric, value)
+
+        points.append(point)
+
+    # tell this distinguished gentleman about the point
+    influx_db_write_api().write(bucket=bucket, org="C5i", record=points)
 
 
 def __extract_device_metadata(metrics):

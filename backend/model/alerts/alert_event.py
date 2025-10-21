@@ -19,7 +19,7 @@ class AlertEvent:
         self.db_notified = False
         self.acked = not requires_ack
 
-    def to_dict(self) -> dict:
+    def to_dict(self, stringify = False) -> dict:
         alert_time = self.alert_time
         ack_time = self.ack_time
         if self.alert_time is not None:
@@ -27,13 +27,17 @@ class AlertEvent:
 
         if self.ack_time is not None:
             ack_time = self.ack_time.timestamp()
+        
+        severity = self.severity
+        if stringify:
+            severity = str(severity)
 
         return  {
             "alert-id": self.alert_id,
             "alert-time": alert_time,
             "ack-time": ack_time,
             "requires-ack": self.requires_ack,
-            "severity": self.severity,
+            "severity": severity,
             "message": self.message,
             "target-id": self.target_id,
             "acked": self.acked,

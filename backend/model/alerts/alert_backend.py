@@ -28,7 +28,7 @@ class AlertBackend:
     listeners = []
 
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *_, **__):
         if cls.__instance is None:
             cls.__instance = super(AlertBackend, cls).__new__(cls)
             cls.__instance.facts_rules   = {}
@@ -86,12 +86,12 @@ class AlertBackend:
         return syslog_task, facts_task, alert_task
 
     @staticmethod
-    async def register_listener(queue: asyncio.Queue):
+    def register_listener(queue: asyncio.Queue):
         print("[INFO ][ALERTS][WS]Registered listener")
         AlertBackend().listeners.append(queue)
 
     @staticmethod
-    async def remove_listener(queue: asyncio.Queue):
+    def remove_listener(queue: asyncio.Queue):
         print("[INFO ][ALERTS][WS]Removed listener")
         AlertBackend().listeners.remove(queue)
 
@@ -207,14 +207,18 @@ class AlertBackend:
                 if stop_event.is_set():
                     return
 
+                # attempt to notify listeners, regardless of whether it happens, set notified to true
+                # websockets like this are "best-effort"
+                if not event.ws_notified:
+                    await AlertBackend.notify_listeners(event)
+                    event.ws_notified = True
+
                 # attempt to insert it into db, if it fails, requeue
+                # database like this is not "best-effort"
                 if not event.db_notified and not db_alerts.insert_alert(event):
                     await queue.put(event)
                 else:
                     event.db_notified = True
-
-                await AlertBackend.notify_listeners(event)
-                event.ws_notified = True
 
         except Exception as e:
             print(f"[ERROR][FACTS]registered exception e='{str(e)}'")

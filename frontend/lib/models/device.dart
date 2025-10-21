@@ -221,8 +221,8 @@ class Device extends GroupableItem<Device> implements HoverTarget{
   bool operator ==(Object other) {
     return 
     other is Device
-    && (other as GroupableItem) == (this as GroupableItem)
     && id == other.id
+    && other.name == name
     && setEquals(requestedMetadata, requestedMetadata)
     && setEquals(requestedMetadata, requestedMetadata)
     && setEquals(requestedMetrics, requestedMetrics)

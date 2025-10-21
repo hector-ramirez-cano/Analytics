@@ -19,34 +19,34 @@ def get_alert_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue[
 
         # noinspection PyBroadException
         try:
-            print(f"[DEBUG][ALERTS] RXd message with type={signal["type"]}")
-            match signal["type"]:
-                case "set-filters":
+            print(f'[DEBUG][ALERTS] RXd message with type={signal['type']}')
+            match signal['type']:
+                case 'set-filters':
                     generator, filters  = __handle_alert_stream_set_filters(signal)
 
-                case "request-data":
+                case 'request-data':
                     __handle_alert_stream_request_data(generator, signal, data_queue)
 
-                case "request-size":
+                case 'request-size':
                     if filters is None:
-                        raise Exception("Size requested before filters are set")
+                        raise Exception('Size requested before filters are set')
 
                     __handle_alert_stream_request_size(filters, data_queue)
 
                 case _:
                     data_queue.put_nowait(json.dumps({
-                        "type": "error",
-                        "msg": f"[ERROR][ALERTS][WS]Malformed websocket request = '{str(signal)}' ignoring..."
+                        'type': 'error',
+                        'msg': f"[ERROR][ALERTS][WS]Malformed websocket request = '{str(signal)}' ignoring..."
                     }))
-                    print("[ERROR][ALERTS][WS]Malformed websocket request = '", signal, "' ignoring...")
+                    print('[ERROR][ALERTS][WS]Malformed websocket request = '', signal, '' ignoring...')
 
         except Exception as e:
-            data_queue.put_nowait(json.dumps({"type": "error", "msg": "BACKEND ERROR: " + str(e)}))
+            data_queue.put_nowait(json.dumps({'type': 'error', 'msg': 'BACKEND ERROR: ' + str(e)}))
 
 
 def __get_alert_stream(filters: AlertFilters) -> Generator[Tuple[Any, ...], None, None]:
     try:
-        query, params = filters.get_sql_query(target="*")
+        query, params = filters.get_sql_query(target='*')
         with postgres_db_pool().connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(query, params)
@@ -57,7 +57,7 @@ def __get_alert_stream(filters: AlertFilters) -> Generator[Tuple[Any, ...], None
 
     except Exception as e:
         # TODO: Somehow notify the controller to regen the stream if failed
-        print("[ERROR][ALERTS][DB]SQL ERROR=", e)
+        print('[ERROR][ALERTS][DB]SQL ERROR=', e)
 
 
 
@@ -69,28 +69,29 @@ def __handle_alert_stream_set_filters(signal : dict) -> Tuple[Generator[Tuple[An
 def __handle_alert_stream_request_data(generator: Generator[Tuple[Any, ...], None, None], signal: dict, data_queue: janus.SyncQueue):
     if generator is None:
         data_queue.put_nowait(json.dumps({
-            "type": "error",
-            "msg": "[ERROR][ALERTS][WS]Alert stream data requested before a filter is set!"
+            'type': 'error',
+            'msg': '[ERROR][ALERTS][WS]Alert stream data requested before a filter is set!'
         }))
-        print("[ERROR][ALERTS][WS]Alert stream data requested before a filter is set!")
+        print('[ERROR][ALERTS][WS]Alert stream data requested before a filter is set!')
 
     # moar data is requested
-    count = signal["count"]
+    count = signal['count']
     for log in islice(generator, count):
-        data_queue.put_nowait(json.dumps(log))
+        msg = {'type': 'alerts', 'msg': log}
+        data_queue.put_nowait(json.dumps(msg))
 
 
 def __handle_alert_stream_request_size(filters: AlertFilters, data_queue: janus.SyncQueue):
     try:
         count = get_row_count(filters)
-        data_queue.put_nowait(json.dumps({"type": "request-size", "count": count}))
+        data_queue.put_nowait(json.dumps({'type':'alerts', 'msg':{'type': 'request-size', 'count': count}}))
     except Exception as e:
-        data_queue.put_nowait(json.dumps({"type": "error", "msg": str(e)}))
+        data_queue.put_nowait(json.dumps({'type': 'error', 'msg': str(e)}))
 
 
 def get_row_count(filters : AlertFilters) -> int:
     try:
-        query, params = filters.get_sql_query(target="count(1) AS count")
+        query, params = filters.get_sql_query(target='count(1) AS count')
         with postgres_db_pool().connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(query, params)
@@ -100,4 +101,4 @@ def get_row_count(filters : AlertFilters) -> int:
                 return count
     except Exception as e:
         # TODO: Somehow notify the controller to regen the stream if failed
-        print("[ERROR][ALERTS][DB]SQL ERROR=", e)
+        print('[ERROR][ALERTS][DB]SQL ERROR=', e)

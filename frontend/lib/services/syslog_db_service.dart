@@ -15,12 +15,10 @@ import 'package:network_analytics/models/syslog/syslog_filters.dart';
 import 'package:network_analytics/models/syslog/syslog_message.dart';
 import 'package:network_analytics/models/syslog/syslog_severity.dart';
 import 'package:network_analytics/models/syslog/syslog_table_page.dart';
-import 'package:network_analytics/services/app_config.dart';
 import 'package:network_analytics/services/dialog_change_notifier.dart';
-import 'package:oxidized/oxidized.dart';
+import 'package:network_analytics/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:trina_grid/trina_grid.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 part 'syslog_db_service.g.dart';
 
@@ -41,34 +39,6 @@ DateTimeRange _nowEmptyDateTimeRange() {
   );
 }
 
-final syslogWsProvider = Provider<(WebSocketChannel, Stream, Completer)>((ref) {
-  try {
-    final endpoint = Uri.parse(AppConfig.getOrDefault('ws/syslog_ws_endpoint'));
-    final channel = WebSocketChannel.connect(endpoint);
-    final stream = channel.stream.asBroadcastStream();
-    final connected = Completer<void>();
-
-
-    SyslogDbService.logger.i('Attempting to start websocket on endpoint=$endpoint');
-    // TODO: Handle onError
-    channel.ready.then((_) {
-      SyslogDbService.logger.d('Websocket channel ready');
-      connected.complete();
-    },
-      onError: (err, st) => {
-        SyslogDbService.logger.e('Websocket failed to connect with error = $err')
-      }
-    );
-
-    ref.onDispose(() {
-      channel.sink.close();
-    });
-  return (channel, stream, connected);
-  } catch (e) {
-    SyslogDbService.logger.e(e.toString());
-    rethrow;
-  }
-});
 
 @riverpod
 class SyslogFilter extends _$SyslogFilter {
@@ -85,10 +55,7 @@ class SyslogFilter extends _$SyslogFilter {
 @Riverpod(keepAlive: true)
 class SyslogDbService extends _$SyslogDbService {
   static Logger logger = Logger(filter: ConfigFilter.fromConfig('debug/enable_syslog_service_logging', false));
-  late WebSocketChannel _channel;
-  late Stream _stream;
-  late Completer _wsCompleter;
-  late StreamSubscription _streamSubscription;
+
   final Queue<SyslogMessage> _pending = Queue();
   Timer? _batchTimer;
 
@@ -105,15 +72,12 @@ class SyslogDbService extends _$SyslogDbService {
   Future<int> build() async {
     SyslogDbService.logger.d('Recreating SyslogTablePage notifier!');
     final filters = ref.watch(syslogFilterProvider);
-    final ws = ref.watch(syslogWsProvider);
-    _channel = ws.$1;
-    _stream = ws.$2;
-    _wsCompleter = ws.$3;
+    final _ = ref.watch(websocketServiceProvider);
 
     serviceReady.reset();
     _pending.clear();
 
-    final count = await _getRowCount(_channel, _stream, filters);
+    final count = await getRowCount("syslog", filters, ref, _handleError);
 
     if (count.isErr()) {
       throw(count.err().expect("[ERROR]Error result doesn't contain an error message"), StackTrace.current);
@@ -124,71 +88,28 @@ class SyslogDbService extends _$SyslogDbService {
     ref.onDispose(() {
       SyslogDbService.logger.d('Dettached Stream Subscription');
       _batchTimer?.cancel();
-      _streamSubscription.cancel();
     });
 
-    _rxMessageListener(_stream, filters);
+    _rxMessageListener(filters);
 
     serviceReady.signal();
 
     return messageCount;
   }
 
-  Future<Result<int, String>> _getRowCount(WebSocketChannel channel, Stream stream, SyslogFilters filters) async {
 
-    // await the ws connection before trying to send anything
-    await _wsCompleter.future;
-
-    SyslogDbService.logger.d('Asking backend for row count via Websocket for range = ${filters.range}');
-
-    // ask politely - Would you kindly...
-    final request = jsonEncode([
-      {'type': 'set-filters', ...filters.toDict()},
-      {'type': 'request-size'}
-    ]);
-    channel.sink.add(request);
-
-    // get the data
-    final first = await stream.first;
-    final decoded = jsonDecode(first);
-    SyslogDbService.logger.d('_getRowCount recieved a message = $decoded');
-    if (decoded['type'] == 'error') {
-
-      return (Result.err(decoded['msg']));
-    }
-    if (decoded['type'] != 'request-size') {
-      return Result.err('Expected row_count as first message');
-    }
-
-    return Result.ok(decoded['count'] as int);
-  }
-
-  void _rxMessageListener(Stream stream, SyslogFilters filter,) {
+  void _rxMessageListener(SyslogFilters filter,) {
     SyslogDbService.logger.d('Attached Stream Subscription');
     updatePageReadyFlag();
-    _streamSubscription = stream.listen((message) {
-      // FIXME: When no match filter is present, the rowID is preppended to the message
-        final decoded = jsonDecode(message);
+    ref.read(websocketServiceProvider.notifier).attachListener('syslog', (json) {
+      final content = extractBody('syslog', json, _handleError);
+      // if the message isn't addressed to this listener
+        if (content == null) { return; }
 
-        if (decoded is Map && decoded.containsKey('type')) {
-          final type = decoded['type'];
-          if (type == 'error') {
-            return _handleError(decoded['msg']);
-          }
-          if (type == 'request-size') {
-            // ignore
-            return;
-          }
-        }
-
-        // SyslogDbService.logger.i('Stream Subscription recieved a message = $message');
-        final row = SyslogMessage.fromJsonArr(decoded);
+        final row = SyslogMessage.fromJsonArr(content);
         _pending.addLast(row);
         updatePageReadyFlag();
-      },
-      onError: _handleError,
-      onDone: _handleDone
-    );
+    });
   }
 
   Future<SyslogTablePage> fetchPage(int page, SyslogFilters filters) async {
@@ -201,8 +122,8 @@ class SyslogDbService extends _$SyslogDbService {
     }
 
     // 3. we have rows, let's request 'em mfers
-    final request = jsonEncode({'type': 'request-data', 'count': SyslogTablePage.pageSize});
-    _channel.sink.add(request);
+    final request = {'type': 'request-data', 'count': SyslogTablePage.pageSize};
+    ref.read(websocketServiceProvider.notifier).post('syslog', request);
 
     // 4. we force a reevaluation of the status of the pending rows queue 
     // and await there's enough rows to form a page
@@ -306,11 +227,6 @@ class SyslogDbService extends _$SyslogDbService {
   void _handleError(dynamic error) {
     logger.e('WebSocket error: $error');
     state = AsyncValue.error(error, StackTrace.current);
-  }
-
-  void _handleDone() {
-    logger.w('WebSocket connection closed');
-    // Optionally update state or trigger reconnection
   }
 
 }

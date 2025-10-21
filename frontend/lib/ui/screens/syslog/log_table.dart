@@ -7,6 +7,7 @@ import 'package:network_analytics/models/syslog/syslog_message.dart';
 import 'package:network_analytics/models/syslog/syslog_severity.dart';
 import 'package:network_analytics/models/syslog/syslog_table_page.dart';
 import 'package:network_analytics/services/syslog_db_service.dart';
+import 'package:network_analytics/services/websocket_service.dart';
 import 'package:network_analytics/ui/components/date_range_picker.dart';
 import 'package:network_analytics/ui/components/dialogs/checklist_dialog.dart';
 import 'package:network_analytics/ui/components/dialogs/syslog_table_info_dialog.dart';
@@ -97,7 +98,7 @@ class _LogTableState extends State<LogTable> {
 
   void _onFilterChange(dynamic filter, bool? state, WidgetRef ref) => ref.read(syslogDbServiceProvider.notifier).onFilterChange(_stateManager, filter, state, ref);
 
-  void _onRetry(WidgetRef ref) async { ref.invalidate(syslogWsProvider); }
+  void _onRetry(WidgetRef ref) async { ref.invalidate(websocketServiceProvider); }
 
   void _onFilterDialogClose(WidgetRef ref) {}
 

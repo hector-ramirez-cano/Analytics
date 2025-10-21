@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import threading
-from typing import *
+from typing import List, Dict, Any, Coroutine
 
 import aiosyslogd
 import janus
@@ -10,7 +10,7 @@ from aiosyslogd.server import SyslogUDPServer, BATCH_TIMEOUT, BATCH_SIZE
 
 from Config import Config
 from model.syslog.syslog_filters import SyslogFilters
-from model import db
+from model.db.operations.syslog_operations import get_log_stream, get_row_count
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ class SyslogBackend(SyslogUDPServer):
         server = await SyslogBackend.create(host=host, port=port)
         server.set_exit_flag(exit_flag=stop_event)
         try:
-            transport, protocol = await loop.create_datagram_endpoint(
+            transport, _ = await loop.create_datagram_endpoint(
                 protocol_factory=lambda: server,
                 local_addr=(server.host, server.port),
             )
@@ -123,9 +123,9 @@ class SyslogBackend(SyslogUDPServer):
 
     @staticmethod
     def spawn_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue, finished: threading.Event) -> Coroutine:
-        return asyncio.to_thread(lambda: db.operations.syslog_operations.get_log_stream(data_queue, signal_queue, finished))
+        return asyncio.to_thread(lambda: get_log_stream(data_queue, signal_queue, finished))
 
 
     @staticmethod
     async def get_row_count(filters: SyslogFilters) -> int:
-        return await asyncio.to_thread(lambda: db.operations.syslog_operations.get_row_count(filters))
+        return await asyncio.to_thread(lambda: get_row_count(filters))

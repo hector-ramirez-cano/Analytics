@@ -14,12 +14,10 @@ import 'package:network_analytics/models/alerts/alert_event.dart';
 import 'package:network_analytics/models/alerts/alert_filters.dart';
 import 'package:network_analytics/models/alerts/alert_severity.dart';
 import 'package:network_analytics/models/alerts/alert_table_page.dart';
-import 'package:network_analytics/services/app_config.dart';
 import 'package:network_analytics/services/dialog_change_notifier.dart';
-import 'package:oxidized/oxidized.dart';
+import 'package:network_analytics/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:trina_grid/trina_grid.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 part 'alert_db_service.g.dart';
 
@@ -43,34 +41,6 @@ DateTimeRange _nowEmptyDateTimeRange() {
   );
 }
 
-final alertWsProvider = Provider<(WebSocketChannel, Stream, Completer)>((ref) {
-  try {
-    final endpoint = Uri.parse(AppConfig.getOrDefault('ws/alerts_ws_endpoint'));
-    final channel = WebSocketChannel.connect(endpoint);
-    final stream = channel.stream.asBroadcastStream();
-    final connected = Completer<void>();
-
-    alertServiceLogger.i('Attempting to start websocket on endpoint=$endpoint');
-    // TODO: Handle onError
-    channel.ready.then((_) {
-      alertServiceLogger.d('Websocket channel ready');
-      connected.complete();
-    },
-      onError: (err, st) => {
-        alertServiceLogger.e('Websocket failed to connect with error = $err')
-      }
-    );
-
-    ref.onDispose(() {
-      channel.sink.close();
-    });
-  return (channel, stream, connected);
-  } catch (e) {
-    alertServiceLogger.e(e.toString());
-    rethrow;
-  }
-});
-
 @riverpod
 class AlertFilter extends _$AlertFilter {
   @override
@@ -87,10 +57,7 @@ class AlertFilter extends _$AlertFilter {
 @Riverpod(keepAlive: true)
 class AlertDbService extends _$AlertDbService {
   static Logger logger = Logger(filter: ConfigFilter.fromConfig('debug/enable_syslog_service_logging', false));
-  late WebSocketChannel _channel;
-  late Stream _stream;
-  late Completer _wsCompleter;
-  late StreamSubscription _streamSubscription;
+  
   final Queue<AlertEvent> _pending = Queue();
   Timer? _batchTimer;
 
@@ -108,15 +75,12 @@ class AlertDbService extends _$AlertDbService {
   Future<int> build() async {
     alertServiceLogger.d('Recreating AlertTablePage notifier!');
     final filters = ref.watch(alertFilterProvider);
-    final ws = ref.watch(alertWsProvider);
-    _channel = ws.$1;
-    _stream = ws.$2;
-    _wsCompleter = ws.$3;
+    final _ = ref.watch(websocketServiceProvider);
 
     serviceReady.reset();
     _pending.clear();
 
-    final count = await _getRowCount(_channel, _stream, filters);
+    final count = await getRowCount('alerts', filters, ref, _handleError);
 
     if (count.isErr()) {
       throw(count.err().expect("[ERROR]Error result doesn't contain an error message"), StackTrace.current);
@@ -127,71 +91,29 @@ class AlertDbService extends _$AlertDbService {
     ref.onDispose(() {
       alertServiceLogger.d('Dettached Stream Subscription');
       _batchTimer?.cancel();
-      _streamSubscription.cancel();
     });
 
-    _rxMessageListener(_stream, filters);
+    _rxMessageListener(filters);
 
     serviceReady.signal();
 
     return messageCount;
   }
 
-  Future<Result<int, String>> _getRowCount(WebSocketChannel channel, Stream stream, AlertFilters filters) async {
-
-    // await the ws connection before trying to send anything
-    await _wsCompleter.future;
-
-    alertServiceLogger.d('Asking backend for Alert row count via Websocket for range = ${filters.range}');
-
-    // ask politely - Would you kindly...
-    final request = jsonEncode([
-      {'type': 'set-filters', ...filters.toDict()},
-      {'type': 'request-size'}
-    ]);
-    channel.sink.add(request);
-
-    // get the data
-    final first = await stream.first;
-    final decoded = jsonDecode(first) ?? 0;
-    alertServiceLogger.d('_getRowCount recieved a message = $decoded');
-    if (decoded['type'] == 'error') {
-
-      return (Result.err(decoded['msg']));
-    }
-    if (decoded['type'] != 'request-size') {
-      return Result.err('Expected row_count as first message');
-    }
-
-    return Result.ok(decoded['count'] as int);
-  }
-
-  void _rxMessageListener(Stream stream, AlertFilters filter,) {
+  void _rxMessageListener(AlertFilters filter,) {
     alertServiceLogger.d('Attached Stream Subscription');
     updatePageReadyFlag();
-    _streamSubscription = stream.listen((message) {
-      // FIXME: When no match filter is present, the rowID is preppended to the message
-        final decoded = jsonDecode(message);
+    ref.read(websocketServiceProvider.notifier).attachListener('alerts', (json) {
+      final content = extractBody('alerts', json, _handleError);
 
-        if (decoded is Map && decoded.containsKey('type')) {
-          final type = decoded['type'];
-          if (type == 'error') {
-            return _handleError(decoded['msg']);
-          }
-          if (type == 'request-size') {
-            // ignore
-            return;
-          }
-        }
+      // if the message isn't addressed to this listener
+      if (content == null) { return; }
+      if (content is! List) { return; }
 
-        // alertServiceLogger.i('Stream Subscription recieved a message = $message');
-        final row = AlertEvent.fromJsonArr(decoded);
-        _pending.addLast(row);
-        updatePageReadyFlag();
-      },
-      onError: _handleError,
-      onDone: _handleDone
-    );
+      final row = AlertEvent.fromJsonArr(content);
+      _pending.addLast(row);
+      updatePageReadyFlag();
+    });
   }
 
   Future<AlertTablePage> fetchPage(int page, AlertFilters filters) async {
@@ -204,8 +126,8 @@ class AlertDbService extends _$AlertDbService {
     }
 
     // 3. we have rows, let's request 'em mfers
-    final request = jsonEncode({'type': 'request-data', 'count': AlertTablePage.pageSize});
-    _channel.sink.add(request);
+    final request = {'type': 'request-data', 'count': AlertTablePage.pageSize};
+    ref.read(websocketServiceProvider.notifier).post('alerts', request);
 
     // 4. we force a reevaluation of the status of the pending rows queue 
     // and await there's enough rows to form a page
@@ -325,11 +247,6 @@ class AlertDbService extends _$AlertDbService {
   void _handleError(dynamic error) {
     logger.e('WebSocket error: $error');
     state = AsyncValue.error(error, StackTrace.current);
-  }
-
-  void _handleDone() {
-    logger.w('WebSocket connection closed');
-    // Optionally update state or trigger reconnection
   }
 
 }

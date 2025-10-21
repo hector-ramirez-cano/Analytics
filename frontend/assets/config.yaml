@@ -4,6 +4,7 @@ api:
   syslog_count_endpoint: "http://localhost:5050/api/syslog/message_count"
   configure_endpoint: "http://localhost:5050/api/configure"
   alert_endpoint: "http://localhost:5050/api/rules"
+  ws_router_endpoint: "ws://localhost:5050/ws/router"
   retries: 3
   retry_delay_s: 5
   timeout_s: 15
@@ -30,3 +31,4 @@ debug:
   enable_canvas_tab_logging: false
   enable_alert_service_logging: true
   enable_alert_rules_service_logging: true
+  enable_ws_logging: true

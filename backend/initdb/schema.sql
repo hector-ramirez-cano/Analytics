@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS Analytics.alerts (
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.alert_rules (
-    rule_id         SERIAL,
+    rule_id         SERIAL PRIMARY KEY,
     rule_name       VARCHAR(128),
     requires_ack    BOOLEAN NOT NULL,
     rule_definition JSONB

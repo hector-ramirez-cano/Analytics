@@ -4,6 +4,7 @@ import 'package:network_analytics/models/alerts/alert_event.dart';
 import 'package:network_analytics/models/alerts/alert_severity.dart';
 import 'package:network_analytics/models/alerts/alert_table_page.dart';
 import 'package:network_analytics/services/alert_db_service.dart';
+import 'package:network_analytics/services/websocket_service.dart';
 import 'package:network_analytics/ui/components/date_range_picker.dart';
 import 'package:network_analytics/ui/components/dialogs/checklist_dialog.dart';
 import 'package:network_analytics/ui/components/dialogs/syslog_table_info_dialog.dart';
@@ -97,7 +98,7 @@ class _AlertViewerState extends ConsumerState<AlertViewer> {
 
   void _onFilterChange(dynamic filter, bool? state, WidgetRef ref) => ref.read(alertDbServiceProvider.notifier).onFilterChange(_stateManager, filter, state, ref);
 
-  void _onRetry(WidgetRef ref) async { ref.invalidate(alertWsProvider); }
+  void _onRetry(WidgetRef ref) async { ref.invalidate(websocketServiceProvider); }
 
   void _onFilterDialogClose(WidgetRef ref) {}
 

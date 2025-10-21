@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/services/alerts_service.dart';
+import 'package:network_analytics/services/alerts_realtime_service.dart';
 import 'package:network_analytics/ui/components/badge_icon.dart';
 
 class AlertBadgeIcon extends StatelessWidget {
@@ -9,7 +9,7 @@ class AlertBadgeIcon extends StatelessWidget {
   Widget _buildNotificationBadgeIcon(WidgetRef ref) {
     String? badgeContent = "";
     int alertCount = 0;
-    final unreadNotifications = ref.watch(alertsServiceProvider);
+    final unreadNotifications = ref.watch(alertsRealtimeServiceProvider);
 
     unreadNotifications.when(
       data: (unseenAlerts) => alertCount = unseenAlerts.unseenAlerts.length,
@@ -38,7 +38,7 @@ class AlertBadgeIcon extends StatelessWidget {
   Widget build(BuildContext context) {
 
     return Consumer(builder:(context, ref, child) => 
-      IconButton(onPressed: () => {ref.read(alertsServiceProvider.notifier).markAsSeen()}, icon: _buildNotificationBadgeIcon(ref))
+      IconButton(onPressed: () => {ref.read(alertsRealtimeServiceProvider.notifier).markAsSeen()}, icon: _buildNotificationBadgeIcon(ref))
     );
   }
 

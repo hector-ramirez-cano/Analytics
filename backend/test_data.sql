@@ -66,7 +66,7 @@ TRUNCATE Analytics.alert_rules;
 
 -- TRUNCATE Analytics.alert_rules;
 INSERT INTO Analytics.alert_rules (rule_id, rule_name, requires_ack, rule_definition)
-    VALUES (1, 'ICMP_RTT > 600ms', TRUE, '{"severity":"warning","target":201,"reduce-logic": "all","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":30}]}');
+    VALUES (1, 'ICMP_RTT > 600ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":3}]}');
 
 SELECT * FROM Analytics.alert_rules;
 
