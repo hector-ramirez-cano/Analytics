@@ -8,7 +8,7 @@ import 'package:network_analytics/services/alerts/alert_rules_service.dart';
 import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/drawer/item_edit_drawer.dart';
 import 'package:network_analytics/ui/components/drawer/listing_drawer.dart';
-import 'package:network_analytics/ui/components/enums/navigation_rail_item.dart';
+import 'package:network_analytics/models/enums/navigation_rail_item.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 
 class SideDrawer extends ConsumerStatefulWidget{

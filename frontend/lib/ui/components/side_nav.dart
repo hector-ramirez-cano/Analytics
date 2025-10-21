@@ -7,7 +7,7 @@ import 'package:network_analytics/services/drawer_state_notifier.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/drawer/drawer.dart';
-import 'package:network_analytics/ui/components/enums/navigation_rail_item.dart';
+import 'package:network_analytics/models/enums/navigation_rail_item.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 
 class SideNav extends StatelessWidget {
