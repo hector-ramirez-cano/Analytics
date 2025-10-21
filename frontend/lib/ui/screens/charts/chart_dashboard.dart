@@ -49,7 +49,7 @@ class _ChartDashboardState extends State<ChartDashboard> {
     int col     = definition["column" ] ?? 0;
     int colSpan = definition["columnSpan"] ?? 1;
 
-    FactsDataTypes type = FactsDataTypes.fromString(definition["type"]) ?? FactsDataTypes.string;
+    FactsDataType type = FactsDataType.fromString(definition["type"]) ?? FactsDataType.string;
 
     return DashboardWidget(row, rowSpan, col, colSpan, child: LineChartSample2());
   }

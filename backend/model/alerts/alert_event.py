@@ -27,7 +27,7 @@ class AlertEvent:
 
         if self.ack_time is not None:
             ack_time = self.ack_time.timestamp()
-        
+
         severity = self.severity
         if stringify:
             severity = str(severity)

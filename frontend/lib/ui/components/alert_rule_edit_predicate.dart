@@ -11,11 +11,13 @@ class AlertRuleEditPredicate extends StatefulWidget {
   final Topology topology;
   final GroupableItem target;
   final Function(AlertPredicate op) onSave;
+  final AlertPredicate? initialValue;
   
   const AlertRuleEditPredicate({
     super.key,
     required this.topology,
     required this.target,
+    required this.initialValue,
     required this.onSave,
   });
 
@@ -26,85 +28,49 @@ class AlertRuleEditPredicate extends StatefulWidget {
 }
 
 class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
-  bool _leftConst = false;
-  bool _rightConst = false;
-  bool _leftForced = false;
-  bool _rightForced = false;
-  AlertPredicateOperation? _selectedOperation;
-  FactsDataTypes? _constType;
   late final TextEditingController _leftController;
   late final TextEditingController _rightController;
-  // TODO: Refactor initial values and const handling
-  dynamic _leftValue = "\$";
-  dynamic _rightValue = "\$";
+  AlertPredicate _predicate = AlertPredicate.empty();
 
   @override
   void initState() {
     super.initState();
-    _leftController = TextEditingController();
+    _leftController  = TextEditingController();
     _rightController = TextEditingController();
+
+    if (widget.initialValue != null) {
+      _predicate = widget.initialValue!;
+
+      if (_predicate.left.isConst) {
+        _leftController.text = _predicate.left.value.toString();
+      }
+
+      if (_predicate.right.isConst) {
+        _rightController.text = _predicate.right.value.toString();
+      }
+    }
   }
 
-  void _handleConstLeftToggle (bool value)  => setState(() { if (value) { _rightConst = false; } _leftConst  = value; _leftValue = null;});
-  void _handleConstRightToggle(bool value)  => setState(() { if (value) { _leftConst  = false; } _rightConst = value; _rightValue = null;});
-  void _handleForcedLeftToggle (bool value) => setState(() { _leftForced  = value; _leftValue = null;});
-  void _handleForcedRightToggle(bool value) => setState(() { _rightForced = value; _rightValue = null;});
-  void _handleOpToggle(AlertPredicateOperation op) => setState(() { _selectedOperation = _selectedOperation == op ? null : op; });
+  void _handleConstLeftToggle (bool value)  => setState(() { _predicate = _predicate.setLeftConst(value);   });
+  void _handleConstRightToggle(bool value)  => setState(() { _predicate = _predicate.setRightConst (value); });
+  void _handleForcedLeftToggle (bool value) => setState(() { _predicate = _predicate.setLeftForced (value); });
+  void _handleForcedRightToggle(bool value) => setState(() { _predicate = _predicate.setRightForced(value); });
+  void _handleOpToggle(AlertPredicateOperation op) => setState(() { _predicate = _predicate.setOperation(op); });
   
   void _handleDirectInputChanged(bool isLeft, String text, bool Function(dynamic) validator) {
     setState(() {
       if (validator(text)) {
-        if (isLeft) {
-          _leftValue = cast(isLeft, text);
-        } else {
-          _rightValue = cast(isLeft, text);
-        }
+        _predicate = _predicate.setValue(text, isLeft);
       }
     });
   }
 
   void _handleVariableInputSelect(bool isLeft, String val) {
     setState(() {
-      if (isLeft) { _leftValue = "\$$val"; }
-      else { _rightValue = "\$$val"; }
+      _predicate = _predicate.setValue(val, isLeft);
     });
   }
 
-  dynamic cast(bool left, String text) {
-    bool isConst = left ? _leftConst : _rightConst;
-    FactsDataTypes? type = _constType;
-
-    if (!isConst) { return "&$text"; }
-
-    switch (type) {
-      
-      case FactsDataTypes.string:
-        return text;
-
-      case FactsDataTypes.number:
-        return double.parse(text);
-
-      case null:
-        return null;
-
-      // these types should never call to cast
-      case FactsDataTypes.boolean:
-      case FactsDataTypes.nullable:
-        throw Exception("Unreachable code reached!");
-    }
-  }
-
-  String _sideToString(dynamic side) {
-    
-    if (side is String) { 
-      if (side.contains("\$")) {
-        if (side.length == 1) { return ""; }
-        return side;
-      }
-      return '"$side"'; 
-    }
-    return side.toString();
-  }
 
   Widget _makeToggle(String label, bool value, bool enabled, Function(bool) onToggle, {double leftPadding = 64.0}) {
     return Padding(
@@ -166,14 +132,14 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
         toText: (v) => v,
         onClose: null,
         isAvailable: (_) => true,
-        isSelectedFn: (val) => isLeft ? "\$$val" == _leftValue : "\$$val" == _rightValue,
+        isSelectedFn: (val) => isLeft ? val == _predicate.left.value : val == _predicate.right.value,
         onChanged: (val, _) => _handleVariableInputSelect(isLeft, val)
       );
     }
 
     final onToggle = isLeft ? _handleConstLeftToggle : _handleConstRightToggle;
     final onToggleForced = isLeft ? _handleForcedLeftToggle : _handleForcedRightToggle;
-    final enabled = isLeft ? !_rightConst : !_leftConst;
+    final enabled = isLeft ? !_predicate.right.isConst : !_predicate.left.isConst;
     
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.42,
@@ -192,25 +158,32 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
     );
   }
 
-  Widget _makeTypeDropdown(bool isLeft, FactsDataTypes? initial) {
+  Widget _makeTypeDropdown(AlertRuleOperand operand, bool isLeft) {
     return SizedBox(
       height: 40,
       width: MediaQuery.of(context).size.width * 0.30,
       child: DropdownButton<String>(
-        value: initial?.name,
+        value: operand.isInit ? operand.dataType.name : null,
           hint: const Text("Tipo de dato"),
-          items: FactsDataTypes.values
+          items: FactsDataType.values
               .map((type) => DropdownMenuItem(value: type.name, child: Text(type.name)))
               .toList(),
           onChanged: (val) {
             if (val == "unknown") { return; }
-            final type = FactsDataTypes.fromString(val ?? "");
+            final type = FactsDataType.fromString(val ?? "");
             
-            if (type == FactsDataTypes.nullable) { 
-              if (isLeft) { _leftValue = null; }
-              else { _rightValue = null; }
+            if (type == null) { return; }
+
+            if (type == FactsDataType.nullable) {
+              _predicate = _predicate.setValue(null, isLeft);
             }
-            setState(() { _constType = type; });
+
+            if (type == FactsDataType.number || type == FactsDataType.string) {
+              String input = isLeft ? _leftController.text : _rightController.text;
+              _predicate = _predicate.setValue(input, isLeft);
+            }
+
+            setState(() { _predicate = _predicate.setConstType(type); });
           },
           isExpanded: true,
         ),
@@ -218,26 +191,30 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
   }
 
   Widget _makeBooleanToggle(bool isLeft, bool? initial) {
-    if (isLeft) {_leftValue = initial ?? false; } else { _rightValue = initial ?? false; }
-
+    _predicate = _predicate.setValue(initial ?? false, isLeft);
+    
     return _makeToggle("Valor", initial ?? false, true, (state) => setState(() {
-      if (isLeft) {_leftValue = state; } else { _rightValue = state; }
+      _predicate = _predicate.setValue(state, isLeft);
     }), leftPadding: MediaQuery.of(context).size.width * 0.125);
   }
   
   Widget _makeConstantSelector(bool isLeft) {
-    dynamic constValue = isLeft ? _leftValue : _rightValue;
+    AlertRuleOperand? constOperand = _predicate.constValue;
+
+    if (constOperand == null) { throw Exception("Const selector shown for non constant value!"); }
+
+    dynamic constValue = constOperand.value;
 
     Widget child;
-    switch (_constType) {
-      case FactsDataTypes.boolean:
+    switch (constOperand.dataType) {
+      case FactsDataType.boolean:
         constValue = constValue is bool ? constValue : null;
         child = Padding(
           padding: const EdgeInsets.all(28.0),
           child: _makeBooleanToggle(isLeft, constValue),
         );
 
-      case FactsDataTypes.nullable:
+      case FactsDataType.nullable:
         constValue = null;
         child = Padding(
           padding: const EdgeInsets.all(28.0),
@@ -248,7 +225,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
           ),
         );
 
-      case FactsDataTypes.number:
+      case FactsDataType.number:
         bool validator(value) {
           return value is String && (value.isEmpty || double.tryParse(value) != null);
         }
@@ -260,13 +237,12 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
           validator: validator,
         );
 
-      case FactsDataTypes.string:
-      case null:
+      case FactsDataType.string:
         child = _makeDirectInput(isLeft, "Constante", Icon(Icons.sync_disabled));
     }
     
     final onToggle = isLeft ? _handleConstLeftToggle : _handleConstRightToggle;
-    final enabled = isLeft ? !_rightConst  : !_leftConst;
+    final enabled = isLeft ? !_predicate.right.isConst  : !_predicate.left.isConst;
     
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.42,
@@ -274,7 +250,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
         key: Key("Column_$onToggle"),
         children: [
           _makeToggle("Constante", true, enabled, onToggle),
-          _makeTypeDropdown(isLeft, _constType),
+          _makeTypeDropdown(constOperand, isLeft,),
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.35,
             height: MediaQuery.of(context).size.height * 0.65,
@@ -286,8 +262,8 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
     
   }
 
-  Widget _makeSide(bool constant, bool forced, bool isLeft) {
-    if (constant) {
+  Widget _makeSide(AlertRuleOperand operand, bool isLeft,bool forced) {
+    if (operand.isConst) {
       return _makeConstantSelector(isLeft);
     } else {
       return _makeVariableSelector(forced, isLeft);
@@ -298,7 +274,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
     TextStyle style = TextStyle(fontSize: 18);
     TextStyle selectedStyle = TextStyle(fontSize: 18, color: Colors.white);
 
-    selected(op) => op == _selectedOperation;
+    selected(op) => op == _predicate.op;
 
     final ops = AlertPredicateOperation.values
       .map((op) => 
@@ -336,17 +312,14 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
       disabledBackgroundColor: Theme.of(context).colorScheme.onSurface.withAlpha(50),
       disabledForegroundColor: Theme.of(context).colorScheme.onSurface.withAlpha(50),
     );
-    final leftValid  = (_leftValue  != null && _leftValue  != "\$") || (_leftConst  && _constType == FactsDataTypes.nullable);
-    final rightValid = (_rightValue != null && _rightValue != "\$") || (_rightConst && _constType == FactsDataTypes.nullable);
-    final valid = leftValid && rightValid && _selectedOperation != null;
 
     onClose () {
       if(context.mounted && Navigator.canPop(context)) {
         Navigator.pop(context);
       }
     }
-    final onSave = !valid ? null : () {
-      widget.onSave(AlertPredicate(left: _leftValue, right: _rightValue, op: _selectedOperation!));
+    final onSave = !_predicate.isValid ? null : () {
+      widget.onSave(_predicate);
       onClose();
     };
 
@@ -356,9 +329,9 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
           spacing: 4,
           children: [
             Text("Predicado = "),
-            BadgeButton(text: _sideToString(_leftValue), backgroundColor: bgColor, textStyle: consolasStyle,),
-            BadgeButton(text: _selectedOperation?.toPrettyString() ?? "", backgroundColor: bgColor, textStyle: consolasStyle,),
-            BadgeButton(text: _sideToString(_rightValue) , backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: _predicate.left.toString(), backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: _predicate.op?.toPrettyString() ?? "", backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: _predicate.right.toString() , backgroundColor: bgColor, textStyle: consolasStyle,),
             SizedBox(width: 16,),
             ElevatedButton(onPressed: onClose, child: Text("Descartar")),
             ElevatedButton(onPressed: onSave, style: saveBtnStyle, child: Text("Guardar"),),
@@ -374,9 +347,9 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          _makeSide(_leftConst, _leftForced, true),
+          _makeSide(_predicate.left, true, _predicate.left.isForced),
           _makeOpSelector(),
-          _makeSide(_rightConst, _rightForced, false),
+          _makeSide(_predicate.right, false, _predicate.right.isForced),
         ],),
         _makeFooter()
       ],

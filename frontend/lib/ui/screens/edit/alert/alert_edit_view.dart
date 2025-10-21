@@ -84,6 +84,7 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
   void onConfirmRestore()    => ref.read(itemEditSelectionProvider.notifier).onRestoreSelected();
   void onToggleRequiresAckInput(bool state) => ref.read(itemEditSelectionProvider.notifier).onToggleRequiresAckInput(state);
   void onAddPredicate(AlertPredicate predicate) => ref.read(itemEditSelectionProvider.notifier).onAddPredicate(predicate);
+  void onUpdatePredicate(AlertPredicate oldP, AlertPredicate p) => ref.read(itemEditSelectionProvider.notifier).onUpdatePredicate(oldP, p);
   void onRemovePredicate(AlertPredicate predicate) => ref.read(itemEditSelectionProvider.notifier).onRemovePredicate(predicate);
 
 
@@ -292,12 +293,21 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
         title: Row(
           spacing: 4,
           children: [
-            BadgeButton(text: predicate.left.toString()    , backgroundColor: bgColor, textStyle: consolasStyle,),
-            BadgeButton(text: predicate.op.toPrettyString(), backgroundColor: bgColor, textStyle: consolasStyle,),
-            BadgeButton(text: predicate.right.toString()   , backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: predicate.left.toString()           , backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: predicate.op?.toPrettyString() ?? "", backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: predicate.right.toString()          , backgroundColor: bgColor, textStyle: consolasStyle,),
           ],
         ),
         trailing: IconButton(onPressed: () => onRemovePredicate(predicate), icon: Icon(Icons.delete)),
+        onPressed: (_) => EmptyDialog(
+            child: 
+              AlertRuleEditPredicate(
+                topology: widget.topology,
+                onSave: (newP) => onUpdatePredicate(predicate, newP),
+                target: widget.topology.items[rule.targetId],
+                initialValue: predicate,
+              )
+            ).show(context),
       );
     }).toList();
   }
@@ -316,8 +326,8 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
               AlertRuleEditPredicate(
                 topology: widget.topology,
                 onSave: onAddPredicate,
-                target:
-                target,
+                target: target,
+                initialValue: null,
               )
             ).show(context),
           icon: Icon(Icons.add_box),

@@ -17,6 +17,7 @@ from model.data.group import Group
 from model.data.link import Link
 from model.db.pools import postgres_db_pool
 from model.db.update_devices import update_topology_cache
+from model.alerts.alert_backend import AlertBackend
 
 async def commit(data: dict) -> tuple[bool, str]:
     """_Commits to the database the changes_
@@ -88,6 +89,7 @@ async def commit(data: dict) -> tuple[bool, str]:
             return False, str(e)
 
     update_topology_cache(forced=True)
+    AlertBackend.update_ruleset(forced=True)
 
     return True, ""
 

@@ -424,6 +424,16 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
     changeItem(rules);
   }
 
+  void onUpdatePredicate(AlertPredicate oldPredicate, AlertPredicate predicate) {
+    if (selected is! AlertRule) { Logger().w("Changed requires Ack in alertRule, where alertRule isn't selected"); return; }
+  
+    final newDefinition = alertRule.definition.map((p) => p == oldPredicate ? predicate : p).toList();
+
+    final rules = alertRule.copyWith(definition: newDefinition);
+
+    changeItem(rules);
+  }
+
   void onRemovePredicate(AlertPredicate predicate) {
     if (selected is! AlertRule) { Logger().w("Changed requires Ack in alertRule, where alertRule isn't selected"); return; }
   

@@ -2,6 +2,7 @@ import asyncio
 import string
 import random
 import threading
+import time
 from asyncio import Task
 from typing import Literal, Any, Coroutine
 
@@ -17,10 +18,12 @@ from model.facts.fact_gathering_backend import FactGatheringBackend
 from model.syslog.syslog_backend import SyslogBackend
 from model.cache import Cache
 from model.db.operations import alert_operations
+from Config import Config
 import model.db.alerts as db_alerts
 
 class AlertBackend:
     __instance = None
+    __last_update = 0 # Epoch
 
     facts_rules = {}
     syslog_rules = {}
@@ -46,10 +49,7 @@ class AlertBackend:
 
         :returns: None
         """
-        rules = db_alerts.update_alert_config()
-
-        for rule in rules:
-            AlertBackend().load_from_json(rule[0], rule[1], rule[2], rule[3])
+        AlertBackend.update_ruleset(forced=True)
 
 
     @staticmethod
@@ -84,6 +84,21 @@ class AlertBackend:
         alert_task = loop.create_task(AlertBackend.handle_alert_queue(stop_event, alerts_queue))
 
         return syslog_task, facts_task, alert_task
+
+    @staticmethod
+    def should_update() -> bool:
+        return time.time() - AlertBackend.__last_update > Config.get("backend/controller/cache/cache_invalidation_s", 60)
+
+    @staticmethod
+    def update_ruleset(forced: bool):
+        if (AlertBackend.should_update() or forced):
+            rules = db_alerts.update_alert_config()
+
+            for rule in rules:
+                AlertBackend().load_from_json(rule[0], rule[1], rule[2], rule[3])
+
+            AlertBackend.__last_update = time.time()
+
 
     @staticmethod
     def register_listener(queue: asyncio.Queue):
@@ -123,7 +138,6 @@ class AlertBackend:
 
             except Exception as _:
                 pass
-
 
     @staticmethod
     async def eval_facts(stop_event : asyncio.Event, queue: asyncio.Queue, alert_queue: asyncio.Queue):
@@ -188,7 +202,6 @@ class AlertBackend:
 
         # put into the queue, for someone else to handle
         await alert_queue.put(event)
-
 
     @staticmethod
     async def handle_alert_queue(stop_event: asyncio.Event, queue: asyncio.Queue[AlertEvent]):
@@ -279,6 +292,9 @@ class AlertBackend:
         severity     = AlertSeverity.from_str(definition.get("severity", None))
         target_item = definition.get("target", None)
         data_source = definition.get("source", None)
+
+        AlertBackend().facts_rules = {}
+        AlertBackend().syslog_rules = {}
 
         if name is None:
             chars = string.ascii_letters + string.digits
