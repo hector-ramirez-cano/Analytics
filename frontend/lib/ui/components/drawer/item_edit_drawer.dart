@@ -5,7 +5,7 @@ import 'package:network_analytics/models/alerts/alert_rule.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/alert_rules_service.dart';
+import 'package:network_analytics/services/alerts/alert_rules_service.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/item_tree.dart';
 

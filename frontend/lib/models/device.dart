@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:free_map/free_map.dart';
 import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/canvas_interaction_service.dart';
+import 'package:network_analytics/services/canvas/canvas_interaction_service.dart';
 import 'package:network_analytics/theme/app_colors.dart';
 
 class Device extends GroupableItem<Device> implements HoverTarget{

@@ -4,7 +4,7 @@ import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
-import 'package:network_analytics/services/alert_rules_service.dart';
+import 'package:network_analytics/services/alerts/alert_rules_service.dart';
 import 'package:network_analytics/services/screen_selection_notifier.dart';
 import 'package:network_analytics/ui/components/drawer/item_edit_drawer.dart';
 import 'package:network_analytics/ui/components/drawer/listing_drawer.dart';

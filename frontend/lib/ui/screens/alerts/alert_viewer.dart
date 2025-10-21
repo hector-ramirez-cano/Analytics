@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/models/alerts/alert_event.dart';
 import 'package:network_analytics/models/alerts/alert_severity.dart';
 import 'package:network_analytics/models/alerts/alert_table_page.dart';
-import 'package:network_analytics/services/alert_db_service.dart';
+import 'package:network_analytics/services/alerts/alert_db_service.dart';
 import 'package:network_analytics/services/websocket_service.dart';
 import 'package:network_analytics/ui/components/date_range_picker.dart';
 import 'package:network_analytics/ui/components/dialogs/checklist_dialog.dart';

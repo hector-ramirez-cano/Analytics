@@ -6,7 +6,7 @@ import 'package:network_analytics/models/syslog/syslog_facility.dart';
 import 'package:network_analytics/models/syslog/syslog_message.dart';
 import 'package:network_analytics/models/syslog/syslog_severity.dart';
 import 'package:network_analytics/models/syslog/syslog_table_page.dart';
-import 'package:network_analytics/services/syslog_db_service.dart';
+import 'package:network_analytics/services/syslog/syslog_db_service.dart';
 import 'package:network_analytics/services/websocket_service.dart';
 import 'package:network_analytics/ui/components/date_range_picker.dart';
 import 'package:network_analytics/ui/components/dialogs/checklist_dialog.dart';

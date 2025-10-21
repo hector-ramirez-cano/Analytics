@@ -9,7 +9,7 @@ import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/extensions/offset.dart';
 import 'package:network_analytics/services/app_config.dart';
-import 'package:network_analytics/services/canvas_state_notifier.dart';
+import 'package:network_analytics/services/canvas/canvas_state_notifier.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
 
 typedef ItemChangedCallback = Function(bool);

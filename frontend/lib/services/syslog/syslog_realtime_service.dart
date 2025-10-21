@@ -1,7 +1,7 @@
 import 'package:network_analytics/extensions/circular_ring_buffer.dart';
 import 'package:network_analytics/extensions/semaphore.dart';
 import 'package:network_analytics/services/app_config.dart';
-import 'package:network_analytics/services/syslog_db_service.dart';
+import 'package:network_analytics/services/syslog/syslog_db_service.dart';
 import 'package:network_analytics/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

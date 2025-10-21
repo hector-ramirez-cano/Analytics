@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 // ignore: unused_import
 import 'package:logger/web.dart';
-import 'package:network_analytics/services/canvas_interaction_service.dart';
-import 'package:network_analytics/services/canvas_state_notifier.dart';
+import 'package:network_analytics/services/canvas/canvas_interaction_service.dart';
+import 'package:network_analytics/services/canvas/canvas_state_notifier.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
 
 import 'package:network_analytics/theme/app_colors.dart';

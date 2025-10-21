@@ -8,7 +8,7 @@ import 'package:network_analytics/models/alerts/alert_severity.dart';
 import 'package:network_analytics/models/alerts/alert_source.dart';
 import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/alert_rules_service.dart';
+import 'package:network_analytics/services/alerts/alert_rules_service.dart';
 import 'package:network_analytics/services/dialog_change_notifier.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
 import 'package:network_analytics/ui/components/alert_rule_edit_predicate.dart';

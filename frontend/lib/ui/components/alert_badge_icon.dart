@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/services/alerts_realtime_service.dart';
+import 'package:network_analytics/services/alerts/alerts_realtime_service.dart';
 import 'package:network_analytics/ui/components/badge_icon.dart';
 
 class AlertBadgeIcon extends StatelessWidget {

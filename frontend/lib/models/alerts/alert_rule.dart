@@ -5,7 +5,7 @@ import 'package:network_analytics/models/alerts/alert_reduce_logic.dart';
 import 'package:network_analytics/models/alerts/alert_severity.dart';
 import 'package:network_analytics/models/alerts/alert_source.dart';
 import 'package:network_analytics/models/analytics_item.dart';
-import 'package:network_analytics/services/alert_rules_service.dart';
+import 'package:network_analytics/services/alerts/alert_rules_service.dart';
 
 class AlertRule extends AnalyticsItem<AlertRule> {
   const AlertRule({
