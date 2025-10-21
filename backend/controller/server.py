@@ -10,6 +10,7 @@ from controller.sentinel import Sentinel
 from model.alerts.alert_backend import AlertBackend
 from model.db.health_check import check_connections, health_check_listeners
 from model.syslog.syslog_backend import SyslogBackend
+from model.db.dashboards import get_dashboards_as_dict
 
 
 static_dir = os.path.join(os.getcwd(), "../frontend/static")
@@ -44,7 +45,6 @@ async def __api_get_topology():
 @app.route("/api/rules", methods=['GET'])
 async def __api_get_rules():
     return get_operations.api_get_rules()
-
 
 @app.route("/api/configure", methods=['POST'])
 async def __api_configure():
@@ -117,6 +117,9 @@ async def __api_ws_router():
                 case "health":
                     await __api_check_backend_ws(data_out_queue)
 
+                case "dashboards":
+                    await __api_get_dashboards(data_out_queue)
+
 
     async def tx():
         while True:
@@ -136,8 +139,8 @@ async def __api_ws_router():
 
     finally:
         # remove subscriptions
-        # TODO: Change this to stop interacting directly with the queue
-        health_check_listeners.remove(health_check_subscription_queue)
+        
+        health_check_listeners.remove(health_check_subscription_queue) # TODO: Change this to stop interacting directly with the queue
         SyslogBackend.remove_listener(syslog_subscription_queue)
         AlertBackend.remove_listener(alerts_subscription_queue)
 
@@ -155,6 +158,14 @@ async def __api_ws_router():
         await alert_signal_queue.aclose()
         await data_out_queue.aclose()
         await websocket.close(-1)
+
+async def __api_get_dashboards(data_out_queue: janus.Queue):
+    dashboards = get_dashboards_as_dict()
+
+    dashboards = { "type": "dashboards", "msg": dashboards}
+
+    await data_out_queue.async_q.put(json.dumps(dashboards))
+
 
 async def __api_check_backend_ws(data_out_queue : janus.Queue):
     await data_out_queue.async_q.put(str(check_connections))

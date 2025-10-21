@@ -99,6 +99,30 @@ CREATE TABLE IF NOT EXISTS Analytics.group_members (
     CONSTRAINT chk_group_no_recurse CHECK (group_id <> item_id)
 );
 
+CREATE TABLE IF NOT EXISTS Analytics.dashboard(
+    dashboard_id SERIAL PRIMARY KEY,
+    dashboard_name VARCHAR NOT NULL
+);
+
+DROP TABLE Analytics.dashboard_items;
+
+CREATE TABLE IF NOT EXISTS Analytics.dashboard_items(
+    dashboard_id INT NOT NULL,
+    row_start    INT NOT NULL,
+    row_span     INT NOT NULL,
+    col_start    INT NOT NULL,
+    col_span     INT NOT NULL,
+    is_metric    BOOLEAN NOT NULL,
+    field        VARCHAR NOT NULL,
+
+    FOREIGN KEY (dashboard_id) REFERENCES Analytics.dashboard (dashboard_id) ON DELETE CASCADE,
+
+    CONSTRAINT chk_row_pos  CHECK (row_start >= 0),
+    CONSTRAINT chk_col_pos  CHECK (col_start >= 0),
+    CONSTRAINT chk_row_span CHECK (row_span  >= 1),
+    CONSTRAINT chk_col_span CHECK (col_span  >= 1)
+);
+
 -- Trigger functions
 CREATE OR REPLACE FUNCTION create_item_on_device_insert()
 RETURNS TRIGGER AS $$

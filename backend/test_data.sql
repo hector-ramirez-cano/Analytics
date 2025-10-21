@@ -59,6 +59,18 @@ INSERT INTO Analytics.group_members(group_id, item_id)
         (203, 201),
         (203, 202);
 
+INSERT INTO Analytics.dashboard(dashboard_id, dashboard_name)
+    VALUES
+        (1, 'Default Dashboard');
+
+-- TRUNCATE Analytics.dashboard_items;
+INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, is_metric, field)
+    VALUES
+        (1, 0, 1, 0, 3, TRUE, 'icmp_rtt');
+INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, is_metric, field)
+    VALUES
+        (1, 1, 1, 0, 1, FALSE, 'icmp_status');
+
 -- TODO: Handle actual parent-child recursion
 -- INSERT INTO Analytics.group_members(group_id, item_id) VALUES (203, 203);
 
