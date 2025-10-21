@@ -104,6 +104,7 @@ class SyslogDbService extends _$SyslogDbService {
       final content = extractBody('syslog', json, _handleError);
       // if the message isn't addressed to this listener
         if (content == null) { return; }
+        if (content is! List) { return; }
 
         final row = SyslogMessage.fromJsonArr(content);
         _pending.addLast(row);

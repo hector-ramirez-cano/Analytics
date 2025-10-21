@@ -27,15 +27,15 @@ class DashboardWidget extends StatelessWidget {
 
 
 class Dashboard extends StatelessWidget {
-  const Dashboard({super.key, required this.children});
+  const Dashboard({super.key, required this.name, required this.children});
 
+  final String name;
   final List<DashboardWidget> children;
 
   @override
   Widget build(BuildContext context) {
     final columnCount = children.map((widget) => widget.columnStart + widget.columnSpan).reduce((a, b) => a > b ? a : b);
     final rowCount    = children.map((widget) => widget.rowStart    + widget.rowSpan   ).reduce((a, b) => a > b ? a : b);
-
 
     return LayoutGrid(
       columnSizes: [...List.generate(columnCount, (_) => 1.fr), 20.px],

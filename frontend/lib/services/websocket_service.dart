@@ -105,8 +105,9 @@ class WebsocketService extends _$WebsocketService {
 
         _attachStreamListener();
       },
-        onError: (err, st) => {
-          wsLogger.e('Websocket failed to connect with error = $err')
+        onError: (err, st) {
+          wsLogger.e('Websocket failed to connect with error = $err');
+          reconnect();
         }
       );
 
