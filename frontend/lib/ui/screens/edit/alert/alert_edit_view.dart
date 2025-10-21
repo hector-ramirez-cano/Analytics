@@ -67,8 +67,6 @@ class AlertEditView extends ConsumerStatefulWidget {
 class _AlertEditViewState extends ConsumerState<AlertEditView> {
   late TextEditingController _nameInputController;
 
-  // TODO: allow it to be stored as modified
-
   @override
   void initState() {
     super.initState();
