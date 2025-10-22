@@ -7,7 +7,7 @@
     "model": {
       "private_data_dir": "ansible",
       "playbooks": {
-        "fact_gathering": "playbooks/fact_gathering.yml"
+        "fact_gathering": "fact_gathering.yml"
       }
     },
     "controller": {

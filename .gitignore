@@ -7,3 +7,4 @@ influxdb2/*
 *.sqlite3
 *.g.dart
 /syslog_*
+backend/ansible/env/ssh_key

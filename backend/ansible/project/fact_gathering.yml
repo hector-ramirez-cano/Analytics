@@ -2,6 +2,7 @@
 - name: Ping all Hosts
   hosts: all
   gather_facts: yes
+  strategy: free
 
   tasks:
     - name: Ping

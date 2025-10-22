@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 import ansible_runner
 
@@ -46,6 +47,7 @@ def __run_fact_gathering_playbook() -> tuple[dict, dict]:
     config = Config.config
     playbook = config.get("backend/model/playbooks/fact_gathering")
     private = config.get("backend/model/private_data_dir")
+    private = os.path.abspath(private)
 
     inventory = "[servers]\n" + Cache().ansible_inventory
 
@@ -54,8 +56,8 @@ def __run_fact_gathering_playbook() -> tuple[dict, dict]:
         private_data_dir=private,
         playbook=playbook,
         inventory=inventory,
-        artifact_dir=None,
-        quiet=True
+        artifact_dir="/tmp/runner_output",
+        quiet=True,
     )
 
     print("[INFO ][FACTS][ANSIBLE]Ansible playbook finished with the following stats: ", runner.stats)
