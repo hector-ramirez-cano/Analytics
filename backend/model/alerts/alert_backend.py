@@ -197,11 +197,14 @@ class AlertBackend:
             severity=rule.severity,
             message=f"'{rule.name}' triggered for device='{device.device_name}'!",
             target_id=device.device_id,
-            ack_time=None
+            ack_time=None,
+            rule_id = rule.rule_id
         )
 
         # put into the queue, for someone else to handle
         await alert_queue.put(event)
+
+        print("[INFO ][ALERTS]Issued alert=", str(event))
 
     @staticmethod
     async def handle_alert_queue(stop_event: asyncio.Event, queue: asyncio.Queue[AlertEvent]):

@@ -1,16 +1,15 @@
 import asyncio
 import threading
 import os
-import json
 
 import janus
 from quart import Quart, send_from_directory, Response, websocket, request
-from controller import get_operations, post_operations
+from controller import get_operations, post_operations, ws_operations
 from controller.sentinel import Sentinel
 from model.alerts.alert_backend import AlertBackend
-from model.db.health_check import check_connections, health_check_listeners
 from model.syslog.syslog_backend import SyslogBackend
-from model.db.dashboards import get_dashboards_as_dict
+from model.db.health_check import health_check_listeners
+
 
 
 static_dir = os.path.join(os.getcwd(), "../frontend/static")
@@ -70,8 +69,6 @@ async def __api_configure():
 # $$$$/  $$$$ |$$$$$$$$/ $$ |__$$ | $$$$$$  |$$ \__$$ |$$ \_____ $$$$$$  \ $$$$$$$$/   $$ |/  |$$$$$$  |
 # $$$/    $$$ |$$       |$$    $$/ /     $$/ $$    $$/ $$       |$$ | $$  |$$       |  $$  $$//     $$/
 # $$/      $$/  $$$$$$$/ $$$$$$$/  $$$$$$$/   $$$$$$/   $$$$$$$/ $$/   $$/  $$$$$$$/    $$$$/ $$$$$$$/
-# TODO: Move to ws_operations
-
 
 @app.websocket("/ws/router")
 async def __api_ws_router():
@@ -109,16 +106,16 @@ async def __api_ws_router():
 
             match data["type"]:
                 case "syslog":
-                    await __api_syslog_ws(syslog_signal_queue, inner_data)
+                    await ws_operations.syslog_ws(syslog_signal_queue, inner_data)
 
                 case "alerts":
-                    await __api_alerts_ws(alert_signal_queue, inner_data)
+                    await ws_operations.alerts_ws(alert_signal_queue, inner_data)
 
                 case "health":
-                    await __api_check_backend_ws(data_out_queue)
+                    await ws_operations.check_backend_ws(data_out_queue)
 
                 case "dashboards":
-                    await __api_get_dashboards(data_out_queue)
+                    await ws_operations.get_dashboards(data_out_queue)
 
 
     async def tx():
@@ -128,9 +125,9 @@ async def __api_ws_router():
 
     producer = asyncio.create_task(tx())
     consumer = asyncio.create_task(rx())
-    syslog_rt = asyncio.create_task(__api_syslog_rt_ws(data_out_queue, syslog_subscription_queue, finished_event))
-    alerts_rt = asyncio.create_task(__api_alerts_rt_ws(data_out_queue, alerts_subscription_queue , finished_event))
-    
+    syslog_rt = asyncio.create_task(ws_operations.syslog_rt(data_out_queue, syslog_subscription_queue, finished_event))
+    alerts_rt = asyncio.create_task(ws_operations.alerts_rt(data_out_queue, alerts_subscription_queue , finished_event))
+
 
     try:
         await asyncio.gather(producer, consumer, syslog_thread, alert_thread, alerts_rt, syslog_rt)
@@ -139,7 +136,7 @@ async def __api_ws_router():
 
     finally:
         # remove subscriptions
-        
+
         health_check_listeners.remove(health_check_subscription_queue) # TODO: Change this to stop interacting directly with the queue
         SyslogBackend.remove_listener(syslog_subscription_queue)
         AlertBackend.remove_listener(alerts_subscription_queue)
@@ -158,82 +155,6 @@ async def __api_ws_router():
         await alert_signal_queue.aclose()
         await data_out_queue.aclose()
         await websocket.close(-1)
-
-async def __api_get_dashboards(data_out_queue: janus.Queue):
-    dashboards = get_dashboards_as_dict()
-
-    dashboards = { "type": "dashboards", "msg": dashboards}
-
-    await data_out_queue.async_q.put(json.dumps(dashboards))
-
-
-async def __api_check_backend_ws(data_out_queue : janus.Queue):
-    await data_out_queue.async_q.put(str(check_connections))
-
-async def __api_syslog_ws(signal_queue: janus.Queue, data: dict):
-    # if 'list', handle the multiple commands
-    if isinstance(data, list):
-        for obj in data:
-            await signal_queue.async_q.put(obj)
-    elif isinstance(data, dict):
-        # if 'dict', it's only one, so only execute once
-        await signal_queue.async_q.put(data)
-
-async def __api_alerts_ws(signal_queue: janus.Queue, data: dict):
-    # if 'list', handle the multiple commands
-    if isinstance(data, list):
-        for obj in data:
-            await signal_queue.async_q.put(obj)
-    elif isinstance(data, dict):
-        # if 'dict', it's only one, so only execute once
-        await signal_queue.async_q.put(data)
-
-async def __api_syslog_rt_ws(data_out_queue: janus.Queue, queue: asyncio.Queue, finished: threading.Event):
-    # TODO: Change this to conform to schema, and whatever-this-style-is-called
-    while not finished.is_set():
-        try:
-            msg = await queue.get()
-
-            if msg == Sentinel():
-                break
-
-            packet = {
-                "Facility": msg["Facility"],
-                "Priority": msg["Priority"],
-                "FromHost": msg["FromHost"],
-                "ReceivedAt": msg["ReceivedAt"].timestamp(),
-                "SysLogTag": msg["SysLogTag"],
-                "ProcessID": int(msg["ProcessID"]),
-                "DeviceReportedTime": msg["DeviceReportedTime"].timestamp(),
-                "Msg": msg["Message"]
-            }
-
-            packet = { "syslog-rt" : packet }
-            await data_out_queue.async_q.put(json.dumps(packet))
-
-        except Exception as e:
-            print("[ERROR][WS]Syslog realtime errored with=", str(e))
-
-async def __api_alerts_rt_ws(data_out_queue: janus.Queue, queue: asyncio.Queue, finished: threading.Event):
-    while not finished.is_set():
-        try:
-            msg = await queue.get()
-
-            if msg == Sentinel():
-                break
-
-            msg = {
-                "type": "alerts-rt",
-                "msg": msg.to_dict(stringify=True)
-            }
-
-            msg = json.dumps(msg)
-
-            await data_out_queue.async_q.put(msg)
-
-        # TODO: Better error handling
-        except Exception as e:
-            print("[ERROR][WS]Alert realtime errored with=", str(e))
 
 
 @app.websocket("/ws/topology")

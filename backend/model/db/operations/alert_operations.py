@@ -1,9 +1,9 @@
 import json
-import janus
 import threading
 from itertools import islice
 from typing import Tuple, Any, Generator
 from datetime import datetime
+import janus
 
 from model.db.pools import postgres_db_pool
 from model.alerts.alert_filters import AlertFilters

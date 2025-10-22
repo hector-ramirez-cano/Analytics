@@ -78,7 +78,7 @@ TRUNCATE Analytics.alert_rules;
 
 -- TRUNCATE Analytics.alert_rules;
 INSERT INTO Analytics.alert_rules (rule_id, rule_name, requires_ack, rule_definition)
-    VALUES (1, 'ICMP_RTT > 600ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":3}]}');
+    VALUES (1, 'ICMP_RTT > 70ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":70}]}');
 
 SELECT * FROM Analytics.alert_rules;
 
@@ -86,3 +86,12 @@ SELECT * FROM Analytics.alerts;
 -- TRUNCATE Analytics.alerts;
 
 SELECT count(1) AS count FROM Analytics.alerts OFFSET 0;
+
+-- DROP TABLE Analytics.telegram_receiver;
+-- TRUNCATE Analytics.telegram_receiver;
+select * from Analytics.telegram_receiver;
+INSERT INTO Analytics.telegram_receiver(telegram_user_id, authenticated, subscribed) 
+VALUES (6879383639, TRUE, TRUE) 
+ON CONFLICT(telegram_user_id) 
+    DO UPDATE SET authenticated = TRUE WHERE Analytics.telegram_receiver.telegram_user_id = 1;
+

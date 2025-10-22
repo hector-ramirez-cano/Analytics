@@ -7,7 +7,7 @@ from model.alerts.alert_severity import AlertSeverity
 #TODO: ADD ACKACTOR
 @dataclass
 class AlertEvent:
-    def __init__(self, requires_ack: bool, severity: AlertSeverity, message: str, target_id: int, ack_time: datetime.datetime):
+    def __init__(self, requires_ack: bool, severity: AlertSeverity, message: str, target_id: int, ack_time: datetime.datetime, rule_id: int):
         self.alert_id = -1
         self.alert_time = datetime.datetime.now()
         self.ack_time = ack_time
@@ -18,6 +18,7 @@ class AlertEvent:
         self.ws_notified = False
         self.db_notified = False
         self.acked = not requires_ack
+        self.rule_id = rule_id
 
     def to_dict(self, stringify = False) -> dict:
         alert_time = self.alert_time

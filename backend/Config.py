@@ -95,4 +95,15 @@ class Config(object):
             Logger(name="Config").error(msg="Using undefined config value '"+path+"', returning default value," + str(default))
             return default
 
+    @staticmethod
+    def has(path: str) -> bool:
+        """
+        Checks if a nested value is found in the config using a path string.
+
+        :param path: str, e.g. "api/config/details/value"
+        :return: whether the item is found in the config files
+        """
+        sentinel = object()
+        return Config.get(path, sentinel) != sentinel
+
 config = Config()

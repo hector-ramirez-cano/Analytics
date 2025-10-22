@@ -123,6 +123,13 @@ CREATE TABLE IF NOT EXISTS Analytics.dashboard_items(
     CONSTRAINT chk_col_span CHECK (col_span  >= 1)
 );
 
+
+CREATE TABLE IF NOT EXISTS Analytics.telegram_receiver(
+    telegram_user_id NUMERIC (32, 0) PRIMARY KEY, --managed by telegram, trusted to be unique
+    authenticated    BOOLEAN NOT NULL,
+    subscribed       BOOLEAN NOT NULL
+);
+
 -- Trigger functions
 CREATE OR REPLACE FUNCTION create_item_on_device_insert()
 RETURNS TRIGGER AS $$

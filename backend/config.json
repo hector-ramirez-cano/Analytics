@@ -45,6 +45,9 @@
         "schema": "http://",
         "bucket": "analytics",
         "$ref": "identity/influx_db.json"
+      },
+      "telegram": {
+        "$ref": "identity/telegram.json"
       }
     }
   }

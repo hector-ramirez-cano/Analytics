@@ -14,6 +14,7 @@ from model.db.health_check import check_postgres_connection, periodic_health_che
 from model.db.pools import init_db_pool
 from model.facts.fact_gathering_backend import FactGatheringBackend
 from model.syslog.syslog_backend import SyslogBackend
+from model.alerts import telegram_backend as telegram
 
 server_task       : Task[None]
 facts_task        : Task[None]
@@ -28,7 +29,7 @@ stop_event        : asyncio.Event
 
 binding           : str
 
-def init() -> tuple:
+async def init() -> tuple:
     global server_task, facts_task, facts_writer_task, syslog_task, db_health_task, binding
     global stop_event, alert_syslog_task, alert_facts_task, alert_handler_task
 
@@ -76,13 +77,16 @@ def init() -> tuple:
     db_health_task = asyncio.create_task(periodic_health_check(stop_event))
     alert_syslog_task, alert_facts_task, alert_handler_task = AlertBackend.init_service(stop_event, syslog_queue, facts_queue, alerts_queue)
 
+    ### Init Telegram bot ###
+    await telegram.init(stop_event)
+
     return server_task
 
 
 async def main():
     global stop_event, binding
 
-    init()
+    await init()
 
     try:
         await server_task
