@@ -19,7 +19,6 @@ from model.syslog.syslog_backend import SyslogBackend
 from model.cache import Cache
 from model.db.operations import alert_operations
 from Config import Config
-import model.db.alerts as db_alerts
 
 class AlertBackend:
     __instance = None
@@ -92,7 +91,7 @@ class AlertBackend:
     @staticmethod
     def update_ruleset(forced: bool):
         if (AlertBackend.should_update() or forced):
-            rules = db_alerts.update_alert_config()
+            rules = alert_operations.update_alert_config()
 
             for rule in rules:
                 AlertBackend().load_from_json(rule[0], rule[1], rule[2], rule[3])
@@ -231,7 +230,7 @@ class AlertBackend:
 
                 # attempt to insert it into db, if it fails, requeue
                 # database like this is not "best-effort"
-                if not event.db_notified and not db_alerts.insert_alert(event):
+                if not event.db_notified and not alert_operations.insert_alert(event):
                     await queue.put(event)
                 else:
                     event.db_notified = True

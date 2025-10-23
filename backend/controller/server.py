@@ -1,6 +1,7 @@
 import asyncio
 import threading
 import os
+import json
 
 import janus
 from quart import Quart, send_from_directory, Response, websocket, request
@@ -99,10 +100,20 @@ async def __api_ws_router():
     SyslogBackend.register_listener(syslog_subscription_queue)
     AlertBackend.register_listener(alerts_subscription_queue)
 
-    async def rx():
-        while True:
-            data = await websocket.receive_json()
-            inner_data = data["msg"]
+    async def rx(finished_event: asyncio.Event):
+        while not finished_event.is_set():
+            try:
+                data = await websocket.receive_json()
+            except json.JSONDecodeError as e:
+                msg = {"type": "error","msg": "malformed json message, e="+str(e)}
+                await data_out_queue.async_q.put(json.dumps(msg))
+                continue
+
+            except Exception as e:
+                msg = {"type": "error","msg": "Exception found at message receiver, e="+str(e)}
+                await data_out_queue.async_q.put(json.dumps(msg))
+                continue
+            inner_data = data.get("msg", {})
 
             match data["type"]:
                 case "syslog":
@@ -117,22 +128,31 @@ async def __api_ws_router():
                 case "dashboards":
                     await ws_operations.get_dashboards(data_out_queue)
 
+                case "metrics":
+                    await ws_operations.query_metrics(data_out_queue, inner_data)
+
 
     async def tx():
         while True:
             data = await data_out_queue.async_q.get()
+
+            if data == Sentinel():
+                break
+
             await websocket.send(data)
 
     producer = asyncio.create_task(tx())
-    consumer = asyncio.create_task(rx())
+    consumer = asyncio.create_task(rx(finished_event))
     syslog_rt = asyncio.create_task(ws_operations.syslog_rt(data_out_queue, syslog_subscription_queue, finished_event))
     alerts_rt = asyncio.create_task(ws_operations.alerts_rt(data_out_queue, alerts_subscription_queue , finished_event))
 
 
     try:
-        await asyncio.gather(producer, consumer, syslog_thread, alert_thread, alerts_rt, syslog_rt)
-    except asyncio.CancelledError as e:
+        tasks = await asyncio.gather(producer, consumer, syslog_thread, alert_thread, alerts_rt, syslog_rt)
+    except Exception as e:
         print("[ERROR][WS]Websocket encountered error=", e)
+        msg = {"type": "error", "msg": "websocket router encountered a fatal error="+str(e)}
+        await websocket.send(json.dumps(msg))
 
     finally:
         # remove subscriptions
@@ -142,8 +162,10 @@ async def __api_ws_router():
         AlertBackend.remove_listener(alerts_subscription_queue)
 
         # task queues to close via sentinels
-        await syslog_signal_queue.async_q.put(Sentinel())
-        await alert_signal_queue.async_q.put(Sentinel())
+        sentinel = Sentinel()
+        await syslog_signal_queue.async_q.put(sentinel)
+        await alert_signal_queue.async_q.put(sentinel)
+        await data_out_queue.async_q.put(sentinel)
 
         # close rx and tx
         producer.cancel()

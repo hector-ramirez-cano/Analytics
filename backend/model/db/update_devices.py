@@ -7,7 +7,7 @@ from model.cache import Cache
 from model.db import fetch_topology
 from model.db.pools import postgres_db_pool, influx_db_write_api
 from model.data.device import Device
-from model.device_state import DeviceStatus
+from model.data.device_state import DeviceStatus
 
 def update_topology_cache(forced: bool = False):
     if not Cache().should_update and not forced:

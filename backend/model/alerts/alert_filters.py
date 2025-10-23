@@ -67,7 +67,7 @@ class AlertFilters:
         params.extend([self.start_time, self.end_time])
 
         if self.set_has_filters(AlertSeverity):
-            clause = clause + f"AND severity = ANY ( %s )"
+            clause = clause + "AND severity = ANY ( %s )"
             params.append( '{' +  ','.join([str(severity) for severity in self.severities]) + '}' )
 
         if self.ack_start_time is not None and self.ack_end_time is not None:

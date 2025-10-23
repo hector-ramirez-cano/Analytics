@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
 
 from model.alerts.alert_rules import AlertRule
-from model.device_configuration import DeviceConfiguration
-from model.device_state import DeviceStatus
+from model.data.device_configuration import DeviceConfiguration
+from model.data.device_state import DeviceStatus
 
 
 @dataclass

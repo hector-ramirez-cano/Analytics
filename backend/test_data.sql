@@ -7,6 +7,8 @@ SELECT device_id, data_source FROM Analytics.device_data_sources;
 
 SELECT * FROM Analytics.devices;
 
+UPDATE Analytics.devices SET available_values = NULL;
+
 SELECT requested_metadata from Analytics.devices WHERE device_id = 1;
 
 SELECT Analytics.devices.device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, available_values 
@@ -18,6 +20,7 @@ INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, l
         (2, 'Tlatelolco-lan',  0.7, -0.2, 21.159425, -101.645852, '10.144.1.1'   , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]'),
         (3, 'Obsidian-lan'  , -0.3 , 0.3, 21.159425, -101.645852, '10.144.1.225' , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]');
 
+SELECT * FROM Analytics.device_data_sources;
 INSERT INTO Analytics.device_data_sources (device_id, data_source)
     VALUES
         (1, 'icmp'),
@@ -27,9 +30,10 @@ INSERT INTO Analytics.device_data_sources (device_id, data_source)
         (2, 'snmp'),
         (3, 'icmp');
 
+SELECT * FROM Analytics.devices;
 UPDATE Analytics.devices SET management_hostname = '10.144.1.222' where device_id = 1;
 UPDATE Analytics.devices SET management_hostname = '10.144.1.1' where device_id = 2;
-UPDATE Analytics.devices SET management_hostname = '10.144.1.1' where device_id = 3;
+UPDATE Analytics.devices SET management_hostname = '10.144.1.225' where device_id = 3;
 UPDATE Analytics.devices SET metadata = NULL;
 
 INSERT INTO Analytics.links (link_id, side_a, side_b, side_a_iface, side_b_iface, link_type)

@@ -5,7 +5,7 @@ from model.cache import Cache
 from model.data.device import Device
 from model.data.group import Group
 from model.data.link import Link
-from model.device_configuration import DeviceConfiguration
+from model.data.device_configuration import DeviceConfiguration
 from model.db.update_devices import update_topology_cache
 
 def get_topology_as_dict():

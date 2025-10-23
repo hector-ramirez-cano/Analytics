@@ -34,3 +34,4 @@ def get_dashboards_as_dict() -> dict:
             dashboards[row[0]]["widgets"].append(widget)
 
     return dashboards
+

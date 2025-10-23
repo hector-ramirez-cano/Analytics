@@ -3,7 +3,7 @@ import json
 from flask import Response
 
 from model.db.fetch_topology import get_topology_as_dict
-from model.db.alerts import get_rules_as_list
+from model.db.operations.alert_operations import get_rules_as_list
 
 
 

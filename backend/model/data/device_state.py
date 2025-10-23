@@ -6,9 +6,9 @@ from model.snmp_status import SnmpStatus
 
 
 class DeviceState(Enum):
-    SKIPPED   = 0,
-    REACHABLE = 1,
-    DARK      = 2,
+    SKIPPED   = 0
+    REACHABLE = 1
+    DARK      = 2
 
     UNKNOWN = -1
 

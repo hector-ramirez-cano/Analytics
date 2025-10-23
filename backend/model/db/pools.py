@@ -2,6 +2,7 @@ from typing import Optional
 
 from influxdb_client import WriteApi, InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
+from influxdb_client.client.query_api import QueryApi
 from psycopg_pool import ConnectionPool
 
 import Config
@@ -10,9 +11,10 @@ import Config
 _postgres_db_pool: Optional[ConnectionPool] = None
 _influx_db_client: Optional[InfluxDBClient] = None
 _influx_db_write_api : Optional[WriteApi]   = None
+_influx_db_query_api : Optional[QueryApi] = None
 
 def init_db_pool(check_postgres_connection):
-    global _postgres_db_pool, _influx_db_write_api, _influx_db_client
+    global _postgres_db_pool, _influx_db_write_api, _influx_db_client, _influx_db_query_api
 
     if _postgres_db_pool is not None:
         return
@@ -46,6 +48,7 @@ def init_db_pool(check_postgres_connection):
     conn_uri = schema + host + ":" + str(port)
     _influx_db_client = InfluxDBClient(url=conn_uri, token=token, org=org)
     _influx_db_write_api = _influx_db_client.write_api(write_options=SYNCHRONOUS)
+    _influx_db_query_api = _influx_db_client.query_api()
     print("[INFO ]Acquired DB client for InfluxDB at='" + schema + host + ":" + str(port) + "'")
 
 
@@ -58,6 +61,9 @@ def influx_db_client():
 def influx_db_write_api():
     return _influx_db_write_api
 
+def influx_db_query_api():
+    return _influx_db_query_api
+
 def graceful_shutdown():
     global _postgres_db_pool, _influx_db_client, _influx_db_write_api
 
@@ -66,5 +72,5 @@ def graceful_shutdown():
         _influx_db_write_api.close()
         _influx_db_client.close()
 
-    except TypeError as e:
+    except TypeError as _:
         pass
