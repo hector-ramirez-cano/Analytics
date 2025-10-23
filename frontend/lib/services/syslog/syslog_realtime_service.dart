@@ -36,7 +36,7 @@ class SyslogRealtimeService extends _$SyslogRealtimeService {
 
 
   void _attachRxMessageListener() {
-    ref.read(websocketServiceProvider.notifier).attachListener('syslog-rt', (json) {
+    ref.read(websocketServiceProvider.notifier).attachListener('syslog-rt', 'syslog-rt', (json) {
       final decoded = extractBody('syslog-rt', json, (_) => {}); // TODO: Handle error
 
       state.queue.push(decoded);

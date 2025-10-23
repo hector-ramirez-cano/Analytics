@@ -100,7 +100,7 @@ class SyslogDbService extends _$SyslogDbService {
   void _rxMessageListener(SyslogFilters filter,) {
     SyslogDbService.logger.d('Attached Stream Subscription');
     updatePageReadyFlag();
-    ref.read(websocketServiceProvider.notifier).attachListener('syslog', (json) {
+    ref.read(websocketServiceProvider.notifier).attachListener('syslog', 'syslog', (json) {
       final content = extractBody('syslog', json, _handleError);
       // if the message isn't addressed to this listener
         if (content == null) { return; }

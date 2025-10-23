@@ -15,15 +15,16 @@ class ChartDashboard extends ConsumerStatefulWidget {
 
 class _ChartDashboardState extends ConsumerState<ChartDashboard> {
 
-  List<int> rows = [0 ,1];
-  List<int> rowSpans = [1, 1];
-  List<int> columns = [0, 0];
-  List<int> columnSpans = [2, 1];
-
   void onRetry() async => ref.invalidate(websocketServiceProvider);
 
   DashboardWidget _widgetFromDashboardItem(DashboardItem item) {
-    return DashboardWidget(item.rowStart, item.rowSpan, item.columnStart, item.columnSpan, child: LineChartSample2());
+    return DashboardWidget(
+      item.rowStart,
+      item.rowSpan,
+      item.columnStart,
+      item.columnSpan,
+      child: MetricLineChart(definition: item.definition,) // TODO: Handle detecting whether its a metric, or a metadata
+    );
   }
 
   Dashboard _fromLayouts(List<DashboardLayout> layouts) {

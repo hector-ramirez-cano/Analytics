@@ -34,8 +34,36 @@ class InfluxFilter:
             "aggregate_interval": self.aggregate_interval,
         }
 
+def get_metric_range(influx_filter: InfluxFilter) -> dict:
+    params = influx_filter.to_dict()
+    query = f'''
+    minData = from(bucket: "analytics")
+        |> range(start: {params["start"]})
+        |> filter(fn: (r) => r["_measurement"] == "metrics")
+        |> filter(fn: (r) => r["_field"] == "{params["metric"]}")
+        |> filter(fn: (r) => r["device_id"] == "{params["device_id"]}")
+        |> min()
 
-def get_metric_data(influx_filter: InfluxFilter) -> list[dict]:
+    maxData = from(bucket: "analytics")
+        |> range(start: {params["start"]})
+        |> filter(fn: (r) => r["_measurement"] == "metrics")
+        |> filter(fn: (r) => r["_field"] == "{params["metric"]}")
+        |> filter(fn: (r) => r["device_id"] == "{params["device_id"]}")
+        |> max()
+
+    union(tables: [minData, maxData])
+    '''
+    query_api = influx_db_query_api()
+    result = query_api.query(query=query, params=params)
+    for table in result:
+
+        return {
+            "min-y": table.records[0].get_value(),
+            "max-y": table.records[1].get_value(),
+        }
+
+
+def get_metric_data(influx_filter: InfluxFilter) -> dict:
     # 2025/oct/23 - Unsafe, apparently the client still doesn't support param queries
     # TODO: Implement param queries when the client implements it
 
@@ -55,4 +83,8 @@ def get_metric_data(influx_filter: InfluxFilter) -> list[dict]:
         {"time": record.get_time().timestamp(), "value": record.get_value()}
         for table in result for record in table.records
     ]
-    return data
+    data_range = get_metric_range(influx_filter)
+    return {
+        "data": data,
+        "range": data_range
+    }

@@ -40,6 +40,8 @@ class Dashboard extends StatelessWidget {
     return LayoutGrid(
       columnSizes: [...List.generate(columnCount, (_) => 1.fr), 20.px],
       rowSizes: [...List.generate(rowCount, (_) => 1.fr), 20.px],
+      rowGap: 20,
+      columnGap: 20,
       children: children.map(
         (item) => item.withGridPlacement(
           rowStart: item.rowStart,

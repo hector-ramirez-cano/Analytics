@@ -148,7 +148,7 @@ async def __api_ws_router():
 
 
     try:
-        tasks = await asyncio.gather(producer, consumer, syslog_thread, alert_thread, alerts_rt, syslog_rt)
+        await asyncio.gather(producer, consumer, syslog_thread, alert_thread, alerts_rt, syslog_rt)
     except Exception as e:
         print("[ERROR][WS]Websocket encountered error=", e)
         msg = {"type": "error", "msg": "websocket router encountered a fatal error="+str(e)}

@@ -38,6 +38,7 @@ async def query_metrics(data_out_queue: janus.Queue, filters: dict):
 
         metrics = {
             "type":"metrics",
+            "metric": filters.metric,
             "msg": metrics
         }
 

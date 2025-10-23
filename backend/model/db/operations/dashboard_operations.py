@@ -22,16 +22,12 @@ def get_dashboards_as_dict() -> dict:
         for row in cur.fetchall():
             dashboard = dashboards.get(row[0], None)
 
-            if (dashboard is None):
+            if dashboard is None:
                 continue
 
             widget = {"row": row[1], "row-span": row[2], "col": row[3], "col-span": row[4]}
-            if (row[5]):
-                widget["metric"] = row[6]
-            else:
-                widget["metadata"] = row[6]
+            widget["polling-definition"] = row[5]
 
             dashboards[row[0]]["widgets"].append(widget)
 
     return dashboards
-

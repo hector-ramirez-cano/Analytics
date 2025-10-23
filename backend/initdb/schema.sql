@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS Analytics.dashboard(
     dashboard_name VARCHAR NOT NULL
 );
 
-DROP TABLE Analytics.dashboard_items;
+-- DROP TABLE Analytics.dashboard_items;
 
 CREATE TABLE IF NOT EXISTS Analytics.dashboard_items(
     dashboard_id INT NOT NULL,
@@ -112,8 +112,7 @@ CREATE TABLE IF NOT EXISTS Analytics.dashboard_items(
     row_span     INT NOT NULL,
     col_start    INT NOT NULL,
     col_span     INT NOT NULL,
-    is_metric    BOOLEAN NOT NULL,
-    field        VARCHAR NOT NULL,
+    polling_definition JSONB NOT NULL,
 
     FOREIGN KEY (dashboard_id) REFERENCES Analytics.dashboard (dashboard_id) ON DELETE CASCADE,
 

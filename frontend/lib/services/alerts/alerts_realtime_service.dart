@@ -48,11 +48,12 @@ class AlertsRealtimeService extends _$AlertsRealtimeService {
 
   void _attachRxMessageListener() {
     alertServiceLogger.d('Attached Stream Subscription');
-    ref.read(websocketServiceProvider.notifier).attachListener('alerts-rt', (json) {
+    ref.read(websocketServiceProvider.notifier).attachListener('alerts-rt', 'alerts-rt', (json) {
       final decoded = extractBody('alerts-rt', json, (_) => {}); // TODO:_Handle onError
 
       // if the message is not addressed to us
       if (decoded == null) {return;}
+      if (decoded is Map && decoded.entries.isEmpty) { return; }
 
       final alert = AlertEvent.fromJson(decoded);
       _unseenAlerts.add(alert);

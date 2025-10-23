@@ -102,7 +102,7 @@ class AlertDbService extends _$AlertDbService {
   void _rxMessageListener(AlertFilters filter,) {
     alertServiceLogger.d('Attached Stream Subscription');
     updatePageReadyFlag();
-    ref.read(websocketServiceProvider.notifier).attachListener('alerts', (json) {
+    ref.read(websocketServiceProvider.notifier).attachListener('alerts', 'alerts', (json) {
       final content = extractBody('alerts', json, _handleError);
 
       // if the message isn't addressed to this listener

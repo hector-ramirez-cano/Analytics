@@ -80,8 +80,8 @@ class WsListener{
 
 @riverpod
 class WebsocketService extends _$WebsocketService {
-  static final wsLogger = Logger(filter: ConfigFilter.fromConfig("enable_ws_logging", false));
-  final List<WsListener> listeners = [];
+  static final wsLogger = Logger(filter: ConfigFilter.fromConfig("debug/enable_ws_logging", false));
+  final Map<String, WsListener> listeners = {};
 
   late StreamSubscription _streamSubscription;
   late WsState _state;
@@ -140,7 +140,7 @@ class WebsocketService extends _$WebsocketService {
     _streamSubscription = _state.stream.listen((message) {
       final content = jsonDecode(message);
 
-      for (var listener in listeners) {
+      for (var listener in listeners.values) {
         if (listener.filterString != content["type"] && content["type"] != "error") { continue; }
 
         listener.callback(content);
@@ -151,8 +151,10 @@ class WebsocketService extends _$WebsocketService {
     );
   }
 
-  void attachListener(String typeFilter, Function(dynamic) listener, ) => listeners.add(WsListener(callback: listener, filterString: typeFilter));
+  void attachListener(String typeFilter, String key, Function(dynamic) listener, ) => listeners[key] = (WsListener(callback: listener, filterString: typeFilter));
   
+  void removeListener(String key) => listeners.remove(key);
+
   void _handleError(dynamic error) {
     wsLogger.e('WebSocket error: $error');
 

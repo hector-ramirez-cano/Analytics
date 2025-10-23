@@ -1,5 +1,6 @@
 
 import 'package:network_analytics/extensions/semaphore.dart';
+import 'package:network_analytics/models/charts/chart_metric_polling_definition.dart';
 import 'package:network_analytics/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -10,26 +11,25 @@ class DashboardItem {
   final int rowSpan;
   final int columnStart;
   final int columnSpan;
-  final String? metric;
-  final String? metadata;
+  final ChartMetricPollingDefinition definition;
 
   DashboardItem({
     required this.rowStart,
     required this.rowSpan,
     required this.columnStart,
     required this.columnSpan,
-    required this.metric,
-    required this.metadata,
+    required this.definition,
   });
 
-  factory DashboardItem.fromJson(Map<String, dynamic> items) {
+  static DashboardItem fromJson(Map<String, dynamic> items) {
+    final definition = ChartMetricPollingDefinition.fromJson(items['polling-definition']);
+
     return DashboardItem(
-      rowStart: items["row"],
-      rowSpan: items["row-span"],
-      columnStart: items["col"],
-      columnSpan: items["col-span"],
-      metric: items["metric"],
-      metadata: items["metadata"],
+      rowStart: items["row"] ?? 0,
+      rowSpan: items["row-span"] ?? 1,
+      columnStart: items["col"] ?? 0,
+      columnSpan: items["col-span"] ?? 1,
+      definition: definition! // TODO: Safe handling of null values
     );
   }
 }
@@ -57,7 +57,7 @@ class DashboardService extends _$DashboardService {
   }
 
   List<DashboardLayout> layouts = [];
-  Semaphore _layoutsReady = Semaphore();
+  final Semaphore _layoutsReady = Semaphore();
 
   @override
   Future<List<DashboardLayout>> build() async {
@@ -68,10 +68,11 @@ class DashboardService extends _$DashboardService {
 
     await wsState.connected.future;
 
-    notifier.attachListener("dashboards", (json) {
+    notifier.attachListener("dashboards", "dashboards", (json) {
       final decoded = extractBody("dashboards", json, (e) => state = AsyncValue.error(e, StackTrace.current));
 
       if(decoded == null) { return; }
+      if(decoded is! Map) { return; }
 
       layouts = fromJson(json["msg"]);
       _layoutsReady.signal();
