@@ -3,8 +3,8 @@ from typing import Literal, Callable, Any
 
 
 class AlertReduceLogic(Enum):
-    ALL = "all",
-    ANY = "any",
+    ALL = "all"
+    ANY = "any"
 
     @staticmethod
     def from_str(value: str):
@@ -23,15 +23,53 @@ class AlertReduceLogic(Enum):
 
         return None
 
+    def __str__(self):
+        match self:
+            case AlertReduceLogic.ALL:
+                return "ALL"
+
+            case AlertReduceLogic.ANY:
+                return "ANY"
+            
+            case _:
+                return "UNKNOWN"
+
+
 # TODO: Rename to alert Predicate Operation
 class AlertOperation(Enum):
-    MORE_THAN = "more_than",
-    MORE_THAN_EQUAL = "more_than_equal",
-    LESS_THAN = "less_than",
-    LESS_THAN_EQUAL = "less_than_equal",
-    EQUAL = "equal",
-    NOT_EQUAL = "not_equal",
-    CONTAINS = "contains",
+    MORE_THAN = "more_than"
+    MORE_THAN_EQUAL = "more_than_equal"
+    LESS_THAN = "less_than"
+    LESS_THAN_EQUAL = "less_than_equal"
+    EQUAL = "equal"
+    NOT_EQUAL = "not_equal"
+    CONTAINS = "contains"
+
+    def __str__(self):
+        match self:
+            case AlertOperation.MORE_THAN:
+                return "MORE_THAN"
+
+            case AlertOperation.MORE_THAN_EQUAL:
+                return "MORE_THAN_EQUAL"
+
+            case AlertOperation.LESS_THAN:
+                return "LESS_THAN"
+
+            case AlertOperation.LESS_THAN_EQUAL:
+                return "LESS_THAN_EQUAL"
+
+            case AlertOperation.EQUAL:
+                return "EQUAL"
+
+            case AlertOperation.NOT_EQUAL:
+                return "NOT_EQUAL"
+
+            case AlertOperation.CONTAINS:
+                return "CONTAINS"
+
+            case _:
+                return "UNKNOWN"
 
     def to_predicate_with_const(self, const_input, const: Literal["left", "right"]) -> Callable[[Any], bool]:
         """

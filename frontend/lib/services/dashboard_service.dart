@@ -1,6 +1,8 @@
 
 import 'package:network_analytics/extensions/semaphore.dart';
-import 'package:network_analytics/models/charts/chart_metric_polling_definition.dart';
+import 'package:network_analytics/models/charts/metadata_polling_definition.dart';
+import 'package:network_analytics/models/charts/metric_polling_definition.dart';
+import 'package:network_analytics/models/charts/dashboard_polling_definition.dart';
 import 'package:network_analytics/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -11,7 +13,7 @@ class DashboardItem {
   final int rowSpan;
   final int columnStart;
   final int columnSpan;
-  final ChartMetricPollingDefinition definition;
+  final DashboardPollingDefinition definition;
 
   DashboardItem({
     required this.rowStart,
@@ -22,14 +24,27 @@ class DashboardItem {
   });
 
   static DashboardItem fromJson(Map<String, dynamic> items) {
-    final definition = ChartMetricPollingDefinition.fromJson(items['polling-definition']);
+
+    final DashboardPollingDefinition definition;
+    final type = items['polling-definition']['type'];
+    if (type == "metric") {
+      definition = MetricPollingDefinition.fromJson(items['polling-definition'])!;
+    } 
+    else if (type == "metadata") {
+      definition = MetadataPollingDefinition.fromJson(items['polling-definition'])!;
+    }
+    else {
+      // TODO: Handle via empty definition type
+      throw UnimplementedError();
+    }
+
 
     return DashboardItem(
       rowStart: items["row"] ?? 0,
       rowSpan: items["row-span"] ?? 1,
       columnStart: items["col"] ?? 0,
       columnSpan: items["col-span"] ?? 1,
-      definition: definition! // TODO: Safe handling of null values
+      definition: definition // TODO: Safe handling of null values
     );
   }
 }

@@ -14,6 +14,7 @@ from model.facts.icmp import icmp_backend
 class FactGatheringBackend:
     instance = None
     listeners = []
+    metrics_cache = {}
 
     def __new__(cls, *_, **__):
         if cls.instance is None:
@@ -109,6 +110,9 @@ class FactGatheringBackend:
         metadata  = loop.run_in_executor(None, update_device_metadata,exposed_fields,metrics,status)
         analytics = loop.run_in_executor(None, update_device_analytics, metrics)
 
+        # TODO: Update local cache for ws requests
+        FactGatheringBackend().metrics_cache = FactGatheringBackend.__recursive_merge(FactGatheringBackend().metrics_cache, metrics)
+
         await metadata
         await analytics
 
@@ -118,7 +122,7 @@ class FactGatheringBackend:
             exposed_fields, metrics, status = await data_queue.get()
 
             try:
-                # Update the database, main listener
+                # Update the database and cache, main listener
                 await FactGatheringBackend.__update_db_with_facts(exposed_fields, metrics, status)
 
                 # Update external listeners

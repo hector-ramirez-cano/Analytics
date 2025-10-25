@@ -1,21 +1,20 @@
 import 'package:logger/web.dart';
+import 'package:network_analytics/models/charts/dashboard_polling_definition.dart';
 
-class ChartMetricPollingDefinition {
+class MetricPollingDefinition extends DashboardPollingDefinition {
   final String start;
-  final String field;
-  final int deviceId;
   final Duration aggregateInterval;
   final Duration updateInterval;
 
-  ChartMetricPollingDefinition({
+  MetricPollingDefinition({
+    required super.deviceId,
+    required super.field,
     required this.start,
-    required this.field,
-    required this.deviceId,
     required this.aggregateInterval,
     required this.updateInterval,
   });
 
-  static ChartMetricPollingDefinition? fromJson(Map<String, dynamic> json) {
+  static MetricPollingDefinition? fromJson(Map<String, dynamic> json) {
     // fields with default value
     var start = json["start"] ?? "-1h";
     var aggregateInterval = json["aggregate-interval-s"] ?? 60;
@@ -24,13 +23,19 @@ class ChartMetricPollingDefinition {
     // must have, if they're not present, definition is invalid
     var field = json["field"];
     var deviceId = json["device-id"];
+    var type = json["type"];
 
-    if (field == null || deviceId == null) {
-      Logger().e("Parsed ChartMetricPollingDefinition fromJson with missing required values. 'field'=$field, deviceId=$deviceId");
+    if (field == null || deviceId == null || type == null) {
+      Logger().f("Parsed ChartMetricPollingDefinition fromJson with missing required values. 'field'=$field, deviceId=$deviceId, type='$type'");
       return null;
     }
 
-    return ChartMetricPollingDefinition(
+    if (type != "metric") {
+      Logger().f("Parsed ChartMetricPollingDefinition expected 'type'=='metric', actual='$type'");
+      return null;
+    }
+
+    return MetricPollingDefinition(
       start: start,
       field: field,
       deviceId: deviceId,
@@ -38,4 +43,6 @@ class ChartMetricPollingDefinition {
       updateInterval: Duration(seconds: updateInterval),
     );
   }
+
+  String get metric => field;
 }

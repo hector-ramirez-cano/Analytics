@@ -2,15 +2,15 @@ from enum import Enum
 
 
 class AlertSeverity(Enum):
-    emergency = "emergency"
-    alert     = "alert"
-    critical  = "critical"
-    error     = "error"
-    warning   = "warning"
-    notice    = "notice"
-    info      = "info"
-    debug     = "debug"
-    unknown   = "unknown"
+    EMERGENCY = "emergency"
+    ALERT     = "alert"
+    CRITICAL  = "critical"
+    ERROR     = "error"
+    WARNING   = "warning"
+    NOTICE    = "notice"
+    INFO      = "info"
+    DEBUG     = "debug"
+    UNKNOWN   = "unknown"
 
     @staticmethod
     def from_str(value: str) -> "AlertSeverity":

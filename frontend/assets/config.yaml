@@ -29,6 +29,6 @@ debug:
   enable_topology_service_logging: false
   enable_drawer_logging: false
   enable_canvas_tab_logging: false
-  enable_alert_service_logging: true
-  enable_alert_rules_service_logging: true
-  enable_ws_logging: true
+  enable_alert_service_logging: false
+  enable_alert_rules_service_logging: false
+  enable_ws_logging: false

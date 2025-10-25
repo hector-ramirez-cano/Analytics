@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphic/graphic.dart';
-import 'package:network_analytics/models/charts/chart_metric_polling_definition.dart';
-import 'package:network_analytics/services/charts/chart_metric_service.dart';
+import 'package:network_analytics/models/charts/metric_polling_definition.dart';
+import 'package:network_analytics/services/charts/dashboard_metric_service.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 
 class MetricLineChart extends StatelessWidget {
-  final ChartMetricPollingDefinition definition;
+  final MetricPollingDefinition definition;
 
   const MetricLineChart({
     super.key,
@@ -55,13 +55,13 @@ class MetricLineChart extends StatelessWidget {
   }
 
   void onRetry(WidgetRef ref) {
-    ref.invalidate(chartMetricServiceProvider(definition: definition));
+    ref.invalidate(dashboardMetricServiceProvider(definition: definition));
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer(builder: (context, ref, child) {
-      final datapoints = ref.watch(chartMetricServiceProvider(definition: definition));
+      final datapoints = ref.watch(dashboardMetricServiceProvider(definition: definition));
 
       return datapoints.when(
         data: (Map<String, dynamic> data)  => _makeGraph(data),

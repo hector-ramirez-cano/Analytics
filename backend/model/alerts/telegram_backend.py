@@ -126,14 +126,14 @@ async def init(stop_event: asyncio.Event):
     await queue.put(Sentinel())
 
 emojiMap = {
-    AlertSeverity.emergency: "🆘🚨🚨",
-    AlertSeverity.alert    : "🚨🚨",
-    AlertSeverity.critical : "🚨",
-    AlertSeverity.error    : "🚩",
-    AlertSeverity.warning  : "⚠️",
-    AlertSeverity.notice   : "ℹ️",
-    AlertSeverity.debug    : "🕸️",
-    AlertSeverity.unknown  : "❔"
+    AlertSeverity.EMERGENCY: "🆘🚨🚨",
+    AlertSeverity.ALERT    : "🚨🚨",
+    AlertSeverity.CRITICAL : "🚨",
+    AlertSeverity.ERROR    : "🚩",
+    AlertSeverity.WARNING  : "⚠️",
+    AlertSeverity.NOTICE   : "ℹ️",
+    AlertSeverity.DEBUG    : "🕸️",
+    AlertSeverity.UNKNOWN  : "❔"
 }
 
 def format_alert(event: AlertEvent) -> str:

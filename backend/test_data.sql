@@ -70,10 +70,10 @@ INSERT INTO Analytics.dashboard(dashboard_id, dashboard_name)
 -- TRUNCATE Analytics.dashboard_items;
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition)
     VALUES
-        (1, 0, 1, 0, 3, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "field":"icmp_rtt", "device-id":1}');
+        (1, 0, 1, 0, 3, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "field":"icmp_rtt", "device-id":1, "type": "metric"}');
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition)
     VALUES
-        (1, 1, 1, 0, 1, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "field":"icmp_rtt", "device-id":1}');
+        (1, 1, 1, 0, 1, '{"update-interval-s": 60, "field":"icmp_rtt", "device-id":1, "type":"metadata"}');
 
 -- TODO: Handle actual parent-child recursion
 -- INSERT INTO Analytics.group_members(group_id, item_id) VALUES (203, 203);

@@ -105,12 +105,12 @@ async def __api_ws_router():
             try:
                 data = await websocket.receive_json()
             except json.JSONDecodeError as e:
-                msg = {"type": "error","msg": "malformed json message, e="+str(e)}
+                msg = {"type": "error","msg": "[BACKEND]malformed json message, e="+str(e)}
                 await data_out_queue.async_q.put(json.dumps(msg))
                 continue
 
             except Exception as e:
-                msg = {"type": "error","msg": "Exception found at message receiver, e="+str(e)}
+                msg = {"type": "error","msg": "[BACKEND]Exception found at message receiver, e="+str(e)}
                 await data_out_queue.async_q.put(json.dumps(msg))
                 continue
             inner_data = data.get("msg", {})
@@ -131,6 +131,20 @@ async def __api_ws_router():
                 case "metrics":
                     await ws_operations.query_metrics(data_out_queue, inner_data)
 
+                case "facts":
+                    await ws_operations.query_facts(data_out_queue, inner_data)
+
+                case "metadata":
+                    # TODO: Change this, so metadata comes from database, facts come from local cache ? (is it useful?)
+                    await ws_operations.query_facts(data_out_queue, inner_data)
+
+
+                case _:
+                    msg = {
+                        "type": "error",
+                        "msg": "[BACKEND]unmatched route type='"+data["type"] + "', ignoring..."
+                    }
+                    await websocket.send(json.dumps(msg))
 
     async def tx():
         while True:
@@ -151,7 +165,7 @@ async def __api_ws_router():
         await asyncio.gather(producer, consumer, syslog_thread, alert_thread, alerts_rt, syslog_rt)
     except Exception as e:
         print("[ERROR][WS]Websocket encountered error=", e)
-        msg = {"type": "error", "msg": "websocket router encountered a fatal error="+str(e)}
+        msg = {"type": "error", "msg": "[BACKEND]websocket router encountered a fatal error="+str(e)}
         await websocket.send(json.dumps(msg))
 
     finally:

@@ -25,12 +25,12 @@
           "type": "number",
           "minimum": 0
         },
-        "is-metric": {
-          "type": "boolean",
-          "const": true
+        "type": {
+          "type": "string",
+          "const": "metric"
         }
       },
-      "required": ["field", "device-id", "is-metric"],
+      "required": ["field", "device-id", "type"],
       "additionalProperties": false
     }
   },

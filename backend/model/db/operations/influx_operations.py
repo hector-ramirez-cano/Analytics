@@ -74,7 +74,7 @@ def get_metric_data(influx_filter: InfluxFilter) -> dict:
         |> filter(fn: (r) => r["_measurement"] == "metrics")
         |> filter(fn: (r) => r["_field"] == "{params["metric"]}")
         |> filter(fn: (r) => r["device_id"] == "{params["device_id"]}")
-        |> aggregateWindow(every: {params["aggregate_interval"]}, fn: mean, createEmpty: false)
+        |> aggregateWindow(every: {params["aggregate_interval"]}, fn: mean, createEmpty: true)
         |> yield(name: "mean")
     '''
     query_api = influx_db_query_api()

@@ -3,9 +3,15 @@ import asyncio
 import threading
 import janus
 
+from enum import Enum
+
+from typing import List
+
 from model.db.operations.dashboard_operations import get_dashboards_as_dict
 from model.db.health_check import check_connections
 from model.db.operations.influx_operations import InfluxFilter, get_metric_data
+from model.cache import Cache
+from model.facts.fact_gathering_backend import FactGatheringBackend
 from controller.sentinel import Sentinel
 
 async def get_dashboards(data_out_queue: janus.Queue):
@@ -28,7 +34,7 @@ async def query_metrics(data_out_queue: janus.Queue, filters: dict):
     if filters is None:
         error = {
             "type": "error",
-            "msg": "malformed metric filters array"
+            "msg": "[BACKEND]malformed metric filters array"
         }
         await data_out_queue.async_q.put(json.dumps(error))
         return
@@ -44,10 +50,63 @@ async def query_metrics(data_out_queue: janus.Queue, filters: dict):
 
         await data_out_queue.async_q.put(json.dumps(metrics))
     except Exception as e:
-        msg = {"type": "error", "msg": "Influx DB query encountered and exception="+str(e)}
+        msg = {"type": "error", "msg": "[BACKEND]Influx DB query encountered and exception="+str(e)}
         await data_out_queue.async_q.put(json.dumps(msg))
 
 
+async def query_facts(data_out_queue: janus.Queue, inner_data : dict):
+    try:
+        device_id = inner_data.get("device-id")
+        facts = inner_data.get("facts")
+
+        # Failsafe, if only one is provided
+        if isinstance(facts, str):
+            facts = [facts]
+
+        if not isinstance(facts, (list, tuple)):
+            msg = {
+                "type": "error",
+                "msg": "[BACKEND]Query facts was called with neither a string, or an array as facts"
+            }
+
+        if device_id is None or facts is None or not isinstance(device_id, int):
+            await data_out_queue.async_q.put("{}")
+            return
+
+        device = Cache().get_item(device_id)
+
+        if device is None:
+            await data_out_queue.async_q.put("{}")
+            return
+
+        metrics_cache = FactGatheringBackend().metrics_cache.get(device.management_hostname, None)
+
+        if metrics_cache is None:
+            await data_out_queue.async_q.put("{}")
+            return
+
+        result = {}
+
+        for fact in facts:
+            value = metrics_cache.get(fact, None)
+            result[fact] = value
+
+            if issubclass(type(value), Enum):
+                result[fact] = str(value)
+
+        result = {
+            "type": "facts",
+            "msg": result
+        }
+
+        await data_out_queue.async_q.put(json.dumps(result))
+
+    except Exception as e:
+        msg = {
+            "type": "error",
+            "msg": "[BACKEND]Query facts encountered an error="+str(e)
+        }
+        await data_out_queue.async_q.put(msg)
 
 
 

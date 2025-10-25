@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS Analytics.dashboard_items(
     row_span     INT NOT NULL,
     col_start    INT NOT NULL,
     col_span     INT NOT NULL,
+    style_defintion    JSONB NOT NULL,
     polling_definition JSONB NOT NULL,
 
     FOREIGN KEY (dashboard_id) REFERENCES Analytics.dashboard (dashboard_id) ON DELETE CASCADE,

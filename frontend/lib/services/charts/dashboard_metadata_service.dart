@@ -2,21 +2,24 @@
 import 'dart:async';
 
 import 'package:network_analytics/extensions/semaphore.dart';
-import 'package:network_analytics/models/charts/chart_metric_polling_definition.dart';
+import 'package:network_analytics/models/charts/metadata_polling_definition.dart';
 import 'package:network_analytics/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'chart_metric_service.g.dart';
+part 'dashboard_metadata_service.g.dart';
 
 @riverpod
-class ChartMetricService extends _$ChartMetricService {
-  late Map<String, dynamic> _data;
+class DashboardMetadataService extends _$DashboardMetadataService {
+  late dynamic _data;
   final Semaphore _dataReady = Semaphore();
   final Semaphore _firstRun = Semaphore();
   Timer? _refreshTimer;
 
   void handleUpdate(dynamic json) {
-    if (json is! Map<String, dynamic> || json["metric"] != definition.field) { return; }
+    // TODO: change subscription type to "metadata" when backend separates facts from metadata
+    if (json is! Map<String, dynamic>) { return; } 
+    if (json["msg"] is! Map<String, dynamic> || !(json["msg"] as Map<String, dynamic>).containsKey(definition.metadata)) { return; }
+    
 
     // extract dem datapoints and call for state change
     final msg = json["msg"];
@@ -39,29 +42,28 @@ class ChartMetricService extends _$ChartMetricService {
 
   void refresh() {
     final notifier = ref.read(websocketServiceProvider.notifier);
+    // TODO: change subscription type to "metadata" when backend separates facts from metadata
     notifier.post(
-      "metrics",
+      "facts",
       {
-        "start": definition.start,
-        "metric": definition.field,
+        "facts": [definition.metadata],
         "device-id": definition.deviceId,
-        "aggregate-interval": "${definition.aggregateInterval.inSeconds}s",
       });
   }
 
   @override
-  Future<Map<String, dynamic>> build({required ChartMetricPollingDefinition definition}) async {
+  Future<Map<String, dynamic>> build({required MetadataPollingDefinition definition}) async {
     ref.watch(websocketServiceProvider);
     final notifier = ref.watch(websocketServiceProvider.notifier);
 
     _dataReady.reset();
     _firstRun.reset();
 
-    notifier.attachListener("metrics", "metrics_${definition.field}", handleUpdate);
+    notifier.attachListener("facts", "metadata_${definition.metadata}", handleUpdate);
     
     refresh();
     ref.onDispose(() {
-      notifier.removeListener("metrics_${definition.field}");
+      notifier.removeListener("metadata_${definition.metadata}");
       _refreshTimer?.cancel();
     });
 

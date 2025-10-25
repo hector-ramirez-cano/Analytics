@@ -6,3 +6,17 @@ class AnsibleStatus(Enum):
     DARK      = 2
 
     UNKNOWN = -1
+
+    def __str__(self):
+        match self:
+            case AnsibleStatus.SKIPPED:
+                return "SKIPPED"
+
+            case AnsibleStatus.REACHABLE:
+                return "REACHABLE"
+
+            case AnsibleStatus.DARK:
+                return "DARK"
+
+            case _:
+                return "UNKNOWN"
