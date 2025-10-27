@@ -9,7 +9,7 @@ from typing import Literal, Any, Coroutine
 import janus
 
 from model.alerts.alert_event import AlertEvent
-from model.alerts.alert_operations import AlertOperation, AlertReduceLogic
+from model.alerts.alert_predicate_operation import AlertPredicateOperation, AlertReduceLogic
 from model.alerts.alert_rules import AlertRule
 from model.alerts.alert_severity import AlertSeverity
 from model.data.device import Device
@@ -256,7 +256,7 @@ class AlertBackend:
                     severity: AlertSeverity,
                     target_item: int,
                     reduce_logic: AlertReduceLogic,
-                    predicates: list[tuple[AlertOperation, Any, Any, str]],
+                    predicates: list[tuple[AlertPredicateOperation, Any, Any, str]],
                     data_source: Literal["facts", "syslog"],
                 ):
         """
@@ -325,13 +325,13 @@ class AlertBackend:
             print(f"[ERROR][ALERTS][LOADS]Named rule = '{name}' contains invalid data_source, skipping...")
             return
 
-        predicates: list[tuple[AlertOperation, Any, Any, str]] = []
+        predicates: list[tuple[AlertPredicateOperation, Any, Any, str]] = []
         for predicate in definition["predicates"]:
             left        = predicate["left"]
             right       = predicate["right"]
             left_const  = (not isinstance(left, str)) or "&" not in left
             right_const = (not isinstance(right, str)) or "&" not in right
-            op          = AlertOperation[predicate["op"].upper()]
+            op          = AlertPredicateOperation[predicate["op"].upper()]
             const_str   = "left" if left_const else "right" if right_const else ""
 
             if op is None:

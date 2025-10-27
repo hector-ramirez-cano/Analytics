@@ -1,7 +1,7 @@
 import ast
 from typing import Literal
 
-from model.alerts.alert_operations import AlertOperation
+from model.alerts.alert_predicate_operation import AlertPredicateOperation
 
 
 def compile_accessor(path: str, sep='>'):
@@ -30,7 +30,7 @@ def compile_accessor(path: str, sep='>'):
 
 class AlertPredicate:
     def __init__(self,
-                op: AlertOperation,
+                op: AlertPredicateOperation,
                 left,
                 right,
                 const: Literal["left", "right", ""]

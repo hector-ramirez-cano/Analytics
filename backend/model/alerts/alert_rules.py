@@ -1,6 +1,6 @@
 from typing import Any, Callable
 
-from model.alerts.alert_operations import AlertOperation, AlertReduceLogic
+from model.alerts.alert_predicate_operation import AlertPredicateOperation, AlertReduceLogic
 from model.alerts.alert_predicate import AlertPredicate
 from model.alerts.alert_severity import AlertSeverity
 
@@ -14,7 +14,7 @@ class AlertRule:
             severity: AlertSeverity,
             target_item : int,
             reduce_logic: AlertReduceLogic,
-            predicates: tuple[AlertOperation, Any, Any, str]
+            predicates: tuple[AlertPredicateOperation, Any, Any, str]
     ):
         self.rule_id = rule_id
         self.name = name

@@ -35,8 +35,7 @@ class AlertReduceLogic(Enum):
                 return "UNKNOWN"
 
 
-# TODO: Rename to alert Predicate Operation
-class AlertOperation(Enum):
+class AlertPredicateOperation(Enum):
     MORE_THAN = "more_than"
     MORE_THAN_EQUAL = "more_than_equal"
     LESS_THAN = "less_than"
@@ -47,25 +46,25 @@ class AlertOperation(Enum):
 
     def __str__(self):
         match self:
-            case AlertOperation.MORE_THAN:
+            case AlertPredicateOperation.MORE_THAN:
                 return "MORE_THAN"
 
-            case AlertOperation.MORE_THAN_EQUAL:
+            case AlertPredicateOperation.MORE_THAN_EQUAL:
                 return "MORE_THAN_EQUAL"
 
-            case AlertOperation.LESS_THAN:
+            case AlertPredicateOperation.LESS_THAN:
                 return "LESS_THAN"
 
-            case AlertOperation.LESS_THAN_EQUAL:
+            case AlertPredicateOperation.LESS_THAN_EQUAL:
                 return "LESS_THAN_EQUAL"
 
-            case AlertOperation.EQUAL:
+            case AlertPredicateOperation.EQUAL:
                 return "EQUAL"
 
-            case AlertOperation.NOT_EQUAL:
+            case AlertPredicateOperation.NOT_EQUAL:
                 return "NOT_EQUAL"
 
-            case AlertOperation.CONTAINS:
+            case AlertPredicateOperation.CONTAINS:
                 return "CONTAINS"
 
             case _:
@@ -84,59 +83,59 @@ class AlertOperation(Enum):
         """
         if const == "left":
             match self:
-                case AlertOperation.MORE_THAN:
+                case AlertPredicateOperation.MORE_THAN:
                     return lambda right: const_input > right
 
-                case AlertOperation.MORE_THAN_EQUAL:
+                case AlertPredicateOperation.MORE_THAN_EQUAL:
                     return lambda right: const_input >= right
 
-                case AlertOperation.LESS_THAN:
+                case AlertPredicateOperation.LESS_THAN:
                     return lambda right: const_input < right
 
-                case AlertOperation.LESS_THAN_EQUAL:
+                case AlertPredicateOperation.LESS_THAN_EQUAL:
                     return lambda right: const_input <= right
 
-                case AlertOperation.EQUAL:
+                case AlertPredicateOperation.EQUAL:
                     return lambda right: const_input == right
 
-                case AlertOperation.CONTAINS:
+                case AlertPredicateOperation.CONTAINS:
                     return lambda right: const_input in right
 
-                case AlertOperation.NOT_EQUAL:
+                case AlertPredicateOperation.NOT_EQUAL:
                     return lambda right: const_input != right
 
                 case _:
                     # keep "unreachable" code, in case new operations are added, so it doesn't silently fail
                     # noinspection PyUnreachableCode
-                    raise Exception("Unhandled case in AlertOperations Predicate")
+                    raise Exception("Unhandled case in AlertPredicateOperations Predicate")
 
         elif const == "right":
             match self:
-                case AlertOperation.MORE_THAN:
+                case AlertPredicateOperation.MORE_THAN:
                     return lambda left: left > const_input
 
-                case AlertOperation.MORE_THAN_EQUAL:
+                case AlertPredicateOperation.MORE_THAN_EQUAL:
                     return lambda left: left >= const_input
 
-                case AlertOperation.LESS_THAN:
+                case AlertPredicateOperation.LESS_THAN:
                     return lambda left: left < const_input
 
-                case AlertOperation.LESS_THAN_EQUAL:
+                case AlertPredicateOperation.LESS_THAN_EQUAL:
                     return lambda left: left <= const_input
 
-                case AlertOperation.EQUAL:
+                case AlertPredicateOperation.EQUAL:
                     return lambda left: left == const_input
 
-                case AlertOperation.CONTAINS:
+                case AlertPredicateOperation.CONTAINS:
                     return lambda left: left in const_input
 
-                case AlertOperation.NOT_EQUAL:
+                case AlertPredicateOperation.NOT_EQUAL:
                     return lambda left: left != const_input
 
                 case _:
                     # keep "unreachable" code, in case new operations are added, so it doesn't silently fail
                     # noinspection PyUnreachableCode
-                    raise Exception("Unhandled case in AlertOperations Predicate")
+                    raise Exception("Unhandled case in AlertPredicateOperations Predicate")
 
     def to_predicate(self) -> Callable[[Any, Any], bool]:
         """
@@ -146,43 +145,43 @@ class AlertOperation(Enum):
             :returns: Callable as unary predicate (lambda left, right: ...) where ... contains a logic operation between left and right
         """
         match self:
-            case AlertOperation.MORE_THAN:
+            case AlertPredicateOperation.MORE_THAN:
                 return lambda left_param, right_param: left_param > right_param
 
-            case AlertOperation.MORE_THAN_EQUAL:
+            case AlertPredicateOperation.MORE_THAN_EQUAL:
                 return lambda left_param, right_param: left_param >= right_param
 
-            case AlertOperation.LESS_THAN:
+            case AlertPredicateOperation.LESS_THAN:
                 return lambda left_param, right_param: left_param < right_param
 
-            case AlertOperation.LESS_THAN_EQUAL:
+            case AlertPredicateOperation.LESS_THAN_EQUAL:
                 return lambda left_param, right_param: left_param <= right_param
 
-            case AlertOperation.EQUAL:
+            case AlertPredicateOperation.EQUAL:
                 return lambda left_param, right_param: left_param == right_param
 
-            case AlertOperation.NOT_EQUAL:
+            case AlertPredicateOperation.NOT_EQUAL:
                 return lambda left_param, right_param: left_param != right_param
 
-            case AlertOperation.CONTAINS:
+            case AlertPredicateOperation.CONTAINS:
                 return lambda left_param, right_param: left_param in right_param
 
             case _:
                 # keep "unreachable" code, in case new operations are added, so it doesn't silently fail
                 # noinspection PyUnreachableCode
-                raise Exception("Unhandled case in AlertOperations Predicate")
+                raise Exception("Unhandled case in AlertPredicateOperations Predicate")
 
     @staticmethod
-    def from_str(value: str) -> "AlertOperation":
+    def from_str(value: str) -> "AlertPredicateOperation":
         """Parses from string
 
         Args:
-            value (str): String representation of the AlertOperation
+            value (str): String representation of the AlertPredicateOperation
 
         Returns:
-            AlertOperation: AlertOperation instance, or null if no value matches
+            AlertPredicateOperation: AlertPredicateOperation instance, or null if no value matches
         """
         try:
-            return AlertOperation(value.lower())
+            return AlertPredicateOperation(value.lower())
         except ValueError:
             return None
