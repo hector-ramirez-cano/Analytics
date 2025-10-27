@@ -30,7 +30,7 @@ class AlertReduceLogic(Enum):
 
             case AlertReduceLogic.ANY:
                 return "ANY"
-            
+
             case _:
                 return "UNKNOWN"
 
@@ -174,6 +174,14 @@ class AlertOperation(Enum):
 
     @staticmethod
     def from_str(value: str) -> "AlertOperation":
+        """Parses from string
+
+        Args:
+            value (str): String representation of the AlertOperation
+
+        Returns:
+            AlertOperation: AlertOperation instance, or null if no value matches
+        """
         try:
             return AlertOperation(value.lower())
         except ValueError:

@@ -1,3 +1,5 @@
+"""Alert Event definition to be raised upon the completion of a predicate with a value of True.
+"""
 import datetime
 import json
 from dataclasses import dataclass
@@ -7,7 +9,9 @@ from model.alerts.alert_severity import AlertSeverity
 #TODO: ADD ACKACTOR
 @dataclass
 class AlertEvent:
-    def __init__(self, requires_ack: bool, severity: AlertSeverity, message: str, target_id: int, ack_time: datetime.datetime, rule_id: int):
+    """Representation of a single event raised by an Alert after fact gathering was performed
+    """
+    def __init__(self, requires_ack: bool, severity: AlertSeverity, message: str, target_id: int, ack_time: datetime.datetime, rule_id: int, value: str):
         self.alert_id = -1
         self.alert_time = datetime.datetime.now()
         self.ack_time = ack_time
@@ -19,8 +23,17 @@ class AlertEvent:
         self.db_notified = False
         self.acked = not requires_ack
         self.rule_id = rule_id
+        self.value = value
 
     def to_dict(self, stringify = False) -> dict:
+        """Converts to dict representation
+
+        Args:
+            stringify (bool, optional): whether to convert to string enum values. Defaults to False.
+
+        Returns:
+            dict: dictionary representation of this event
+        """
         alert_time = self.alert_time
         ack_time = self.ack_time
         if self.alert_time is not None:
@@ -42,6 +55,7 @@ class AlertEvent:
             "message": self.message,
             "target-id": self.target_id,
             "acked": self.acked,
+            "value": self.value,
         }
 
     def __str__(self):

@@ -94,7 +94,10 @@ async def query_facts(data_out_queue: janus.Queue, inner_data : dict):
             result["device-id"] = device.device_id
 
             if not device is None:
-                metrics_cache = FactGatheringBackend().metrics_cache.get(device.management_hostname, None)
+                metrics_cache = FactGatheringBackend().metrics_cache.get(device.management_hostname, {})
+
+            if metrics_cache is None:
+                metrics_cache = {}
 
             for fact in facts:
                 value = metrics_cache.get(fact, None)

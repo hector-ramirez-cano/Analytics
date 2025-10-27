@@ -115,28 +115,33 @@ class AlertBackend:
             await listener.put(event)
 
     @staticmethod
-    async def __eval_rules(rules : list[AlertRule], value, alert_queue : asyncio.Queue):
+    async def __eval_rules(rules : list[AlertRule], value: dict, alert_queue : asyncio.Queue):
         """
         Evaluates a rule against the rules list, and inserts a new AlertEvent if a rule is met.
         If a rule raises, it gets skipped.
         :param rules list of rules (subset) to be evaluated
-        :param value input param used to evaluate rules
+        :param value input dict used to evaluate rules, as produced by the facts backend
         :param alert_queue queue to which new events will be posted to
         """
         for rule in rules:
             target: Device | Group = Cache().get_item(rule.target_item)
 
             try:
-                result, devices = target.eval_rule(rule, value, Cache().get_item)
+                result, alerting_devices = target.eval_rule(rule, value, Cache().get_item)
                 if not result:
                     continue
 
                 # rule matched, issue an alert for each target that alerted
-                for device in devices:
-                    await AlertBackend.raise_alert(rule, alert_queue, device)
+                for device in alerting_devices:
+                    # we know the rule alerted, but we want to know which predicate(s) were raised
+                    predicate_values = device.which_eval_raised(rule, value)
+                    predicate_values = [f"{a} {str(op)} {b}" for a, op, b in predicate_values]
 
-            except Exception as _:
-                pass
+                    await AlertBackend.raise_alert(rule, alert_queue, device, str(predicate_values))
+
+            except Exception as e:
+                print("[ERROR][ALERTS][RULE]Evaluation raised e=",str(e))
+
 
     @staticmethod
     async def eval_facts(stop_event : asyncio.Event, queue: asyncio.Queue, alert_queue: asyncio.Queue):
@@ -183,7 +188,7 @@ class AlertBackend:
 
 
     @staticmethod
-    async def raise_alert(rule : AlertRule, alert_queue: asyncio.Queue, device : Device):
+    async def raise_alert(rule : AlertRule, alert_queue: asyncio.Queue, device : Device, value: str):
         """
         Raises an alert and posts it to the alert_queue for processing.
         :param rule AlertRule that matched
@@ -197,7 +202,8 @@ class AlertBackend:
             message=f"'{rule.name}' triggered for device='{device.device_name}'!",
             target_id=device.device_id,
             ack_time=None,
-            rule_id = rule.rule_id
+            rule_id = rule.rule_id,
+            value=value,
         )
 
         # put into the queue, for someone else to handle

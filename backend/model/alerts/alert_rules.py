@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Callable
 
 from model.alerts.alert_operations import AlertOperation, AlertReduceLogic
 from model.alerts.alert_predicate import AlertPredicate
@@ -23,6 +23,7 @@ class AlertRule:
         self.target_item = target_item
         self.severity = severity
         self.__predicates : list[AlertPredicate] = []
+        self.eval : Callable[[dict], bool]
 
         for predicate in predicates:
             self.__predicates.append(AlertPredicate(predicate[0], predicate[1], predicate[2], predicate[3]))
@@ -54,6 +55,25 @@ class AlertRule:
                 # noinspection PyUnreachableCode
                 raise Exception("Unhandled AlertBooleanOperation variant")
 
+    def raising_values(self, d: dict) -> list[tuple]:
+        """Evaluates manually each predicate of the rule, 
+        and gathers which predicates caused the alert to raise
+
+        Args:
+            d (dict): facts dictionary to be evaluated
+
+        Returns:
+            list: list of evaluated predicates that yielded a true value
+        """
+        raising = []
+        for predicate in self.__predicates:
+            if predicate.eval(d):
+                left_value = predicate.eval_left(d)
+                right_value = predicate.eval_right(d)
+                raising.append((left_value, predicate.op, right_value))
+
+        return raising
+
     @staticmethod
     def from_dict(d: dict) -> "AlertRule":
         return AlertRule(
@@ -65,3 +85,5 @@ class AlertRule:
             requires_ack=d["requires-ack"],
             predicates=AlertPredicate.from_dict(d["predicates"])
         )
+
+    

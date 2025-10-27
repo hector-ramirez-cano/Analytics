@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS Analytics.alerts (
     message      VARCHAR,
     ack_actor    VARCHAR,
     target_id    INT,
+    value        VARCHAR NOT NULL,
 
     FOREIGN KEY (target_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE
 );

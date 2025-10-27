@@ -147,7 +147,8 @@ def format_alert(event: AlertEvent) -> str:
         f"🖥️ : {device.device_name}@{device.management_hostname}\n\n"
         f"{emojiMap[event.severity]} {event.severity}\n"
         f"{event.message}\n\n"
-        f"Regla = {rule.name}```"
+        f"Regla = {rule.name}\n"
+        f"Evaluado={event.value}```"
     )
 
     return message

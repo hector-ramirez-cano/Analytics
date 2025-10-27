@@ -12,6 +12,7 @@ class AlertEvent {
   final String?       ackActor;
   final int           targetId;
   final bool          acked;
+  final String        value;
 
   const AlertEvent({
     required this.id,
@@ -23,6 +24,7 @@ class AlertEvent {
     required this.ackActor,
     required this.targetId,
     required this.acked,
+    required this.value,
   });
 
   factory AlertEvent.fromJson(Map<String, dynamic> json) {
@@ -40,6 +42,7 @@ class AlertEvent {
       ackActor: json["ackActor"],
       targetId: json["target-id"],
       acked: json["acked"] != null,
+      value: json["value"]?? ""
     );
   }
 
@@ -55,8 +58,9 @@ class AlertEvent {
       severity: AlertSeverity.fromString(json[4]),
       message: json[5],
       ackActor: json[6],
-      targetId: json[7],
       acked: json[6] != null,
+      targetId: json[7],
+      value: json[8],
     );
   }
 }

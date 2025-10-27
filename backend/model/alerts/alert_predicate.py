@@ -20,29 +20,12 @@ def compile_accessor(path: str, sep='>'):
     """
     keys = path.lstrip("&").split(sep)
 
-    # create the tree with just `d` as a token
-    tree = ast.parse("d", mode="eval").body
+    def accessor(d):
+        for key in keys:
+            d = d[key]
+        return d
 
-    # Create nested subscript `d[1][2][3]...[n]` and append to tree
-    for key in keys:
-        tree = ast.Subscript( value=tree, slice=ast.Constant(value=key), ctx=ast.Load() )
-
-    # create the ast
-    func_ast = ast.Expression(
-        body=ast.Lambda(
-            args=ast.arguments(
-                posonlyargs=[], args=[ast.arg(arg="d")],
-                vararg=None, kwonlyargs=[], kw_defaults=[],
-                kwarg=None, defaults=[]
-            ),
-            body=tree
-        )
-    )
-
-    # add lineno and some other pesky things python needs, even if the ast is not found in an actual file
-    fixed_ast = ast.fix_missing_locations(func_ast)
-    code = compile(fixed_ast, filename="<string>", mode="eval")
-    return eval(code) # FIXME: REPLACE EVAL
+    return accessor
 
 
 class AlertPredicate:
@@ -52,7 +35,7 @@ class AlertPredicate:
                 right,
                 const: Literal["left", "right", ""]
         ):
-
+        self.op = op
         # if const == "", then it's a binary predicate,
         # both left and right are to be fetched from the datasets
         if const == "":

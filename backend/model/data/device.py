@@ -45,6 +45,8 @@ class Device:
     def eval_rule(self, rule: AlertRule, d: dict, _get_item_fn) -> tuple[bool, tuple["Device"]]:
         return rule.eval(d.get(self.management_hostname, {})), (self,)
 
+    def which_eval_raised(self, rule: AlertRule, d: dict) -> list[tuple]:
+        return rule.raising_values(d.get(self.management_hostname, {}))
 
     @staticmethod
     def from_dict(d: dict):

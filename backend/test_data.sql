@@ -72,10 +72,13 @@ INSERT INTO Analytics.dashboard(dashboard_id, dashboard_name)
 -- TRUNCATE Analytics.dashboard_items;
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition)
     VALUES
-        (1, 0, 1, 0, 3, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "field":"icmp_rtt", "device-ids":1, "type": "metric"}');
+        (1, 0, 1, 0, 3, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "field":"icmp_rtt", "device-ids":1, "type": "metric", "chart-type":"line"}');
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition)
     VALUES
-        (1, 1, 1, 0, 1, '{"update-interval-s": 60, "field":"icmp_rtt", "device-ids":1, "type":"metadata"}');
+        (1, 1, 1, 0, 1, '{"update-interval-s": 60, "field":"icmp_rtt", "device-ids":1, "type":"metadata", "chart-type": "label"}');
+INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition)
+    VALUES
+        (1, 1, 1, 1, 1, '{"update-interval-s": 60, "field":"icmp_status", "device-ids":203, "type":"metadata", "chart-type": "pie"}');
 
 -- TODO: Handle actual parent-child recursion
 -- INSERT INTO Analytics.group_members(group_id, item_id) VALUES (203, 203);
@@ -84,7 +87,7 @@ TRUNCATE Analytics.alert_rules;
 
 -- TRUNCATE Analytics.alert_rules;
 INSERT INTO Analytics.alert_rules (rule_id, rule_name, requires_ack, rule_definition)
-    VALUES (1, 'ICMP_RTT > 500ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":500}]}');
+    VALUES (1, 'ICMP_RTT > 500ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":60}]}');
 
 SELECT * FROM Analytics.alert_rules;
 

@@ -134,11 +134,11 @@ def insert_alert(alert: AlertEvent) -> bool:
         with postgres_db_pool().connection() as conn, conn.cursor() as cur:
             cur.execute(
                 """
-                    INSERT INTO Analytics.alerts(alert_time, requires_ack, severity, message, target_id) 
-                    VALUES (%s, %s , %s , %s, %s)
+                    INSERT INTO Analytics.alerts(alert_time, requires_ack, severity, message, target_id, value) 
+                    VALUES (%s, %s , %s , %s, %s, %s)
                     RETURNING alert_id;
                 """,
-                (alert.alert_time, alert.requires_ack, alert.severity.value, alert.message, alert.target_id)
+                (alert.alert_time, alert.requires_ack, alert.severity.value, alert.message, alert.target_id, alert.value)
             )
 
             alert.alert_id = cur.fetchone()[0]
