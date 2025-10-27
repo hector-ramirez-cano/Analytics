@@ -15,10 +15,12 @@ class DashboardMetadataService extends _$DashboardMetadataService {
   final Semaphore _firstRun = Semaphore();
   Timer? _refreshTimer;
 
+  String notifierKey = "";
+
   void handleUpdate(dynamic json) {
     // TODO: change subscription type to "metadata" when backend separates facts from metadata
     if (json is! Map<String, dynamic>) { return; } 
-    if (json["msg"] is! Map<String, dynamic> || !(json["msg"] as Map<String, dynamic>).containsKey(definition.metadata)) { return; }
+    if (json["msg"] is! Map<String, dynamic> || !(json["msg"]["metadata"]).contains(definition.metadata)) { return; }
     
 
     // extract dem datapoints and call for state change
@@ -46,8 +48,8 @@ class DashboardMetadataService extends _$DashboardMetadataService {
     notifier.post(
       "facts",
       {
-        "facts": [definition.metadata],
-        "device-id": definition.deviceId,
+        "facts": definition.metadata,
+        "device-ids": definition.groupableId,
       });
   }
 
@@ -59,11 +61,13 @@ class DashboardMetadataService extends _$DashboardMetadataService {
     _dataReady.reset();
     _firstRun.reset();
 
-    notifier.attachListener("facts", "metadata_${definition.metadata}", handleUpdate);
+    notifierKey = "metadata_${definition.metadata}_${definition.itemIds}_${definition.chartType}";
+
+    notifier.attachListener("facts", notifierKey, handleUpdate);
     
     refresh();
     ref.onDispose(() {
-      notifier.removeListener("metadata_${definition.metadata}");
+      notifier.removeListener(notifierKey);
       _refreshTimer?.cancel();
     });
 

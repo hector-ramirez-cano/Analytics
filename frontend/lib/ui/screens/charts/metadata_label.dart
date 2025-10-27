@@ -13,21 +13,24 @@ class MetadataLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer(builder:(context, ref, child) {
-
-      final value = ref.watch(dashboardMetadataServiceProvider(definition: definition));
-
-      return value.when(
-        error: (Object error, StackTrace stackTrace) => Text("Error en cargar datos"),
-        loading: () => Text("Cargando..."),
-        data: (Map<String, dynamic> data) {
-          if (data[definition.metadata] != null) {
-            return Text("${definition.metadata}:\n${data[definition.metadata].toString()}");
-          }
-          return Text("No hay datos");
-        },
-      );
-    });
+    return Center(
+      child: Consumer(builder:(context, ref, child) {
+      
+        final value = ref.watch(dashboardMetadataServiceProvider(definition: definition));
+      
+        return value.when(
+          error: (Object error, StackTrace stackTrace) => Text("Error en cargar datos"),
+          loading: () => Text("Cargando..."),
+          data: (Map<String, dynamic> data) {
+            final value = data['data']?[0]?[definition.metadata];
+            if (value != null) {
+              return Text("${definition.metadata}:\n${value.toString()}");
+            }
+            return Text("No hay datos");
+          },
+        );
+      }),
+    );
   }
 
 }

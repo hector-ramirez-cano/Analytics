@@ -27,3 +27,11 @@ class DeviceConfiguration:
             requested_metrics=set(d["requested-metrics"]),
             requested_metadata=set(d["requested-metadata"])
         )
+
+    def __hash__(self):
+        return hash((
+            frozenset(self.data_sources),
+            frozenset(self.available_values),
+            frozenset(self.requested_metadata),
+            frozenset(self.requested_metrics)
+        ))

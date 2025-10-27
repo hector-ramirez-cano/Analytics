@@ -105,7 +105,7 @@ class FactGatheringBackend:
         loop = asyncio.get_running_loop()
 
         # Update database
-        await  loop.run_in_executor(None, update_topology_cache, )
+        await loop.run_in_executor(None, update_topology_cache, )
 
         metadata  = loop.run_in_executor(None, update_device_metadata,exposed_fields,metrics,status)
         analytics = loop.run_in_executor(None, update_device_analytics, metrics)

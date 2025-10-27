@@ -115,6 +115,8 @@ async def __api_ws_router():
                 continue
             inner_data = data.get("msg", {})
 
+            print(f"\033[0;37;46m{json.dumps(data)} \033[0m")
+
             match data["type"]:
                 case "syslog":
                     await ws_operations.syslog_ws(syslog_signal_queue, inner_data)

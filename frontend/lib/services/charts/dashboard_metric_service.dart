@@ -44,7 +44,7 @@ class DashboardMetricService extends _$DashboardMetricService {
       {
         "start": definition.start,
         "metric": definition.metric,
-        "device-id": definition.deviceId,
+        "device-id": definition.groupableId,
         "aggregate-interval": "${definition.aggregateInterval.inSeconds}s",
       });
   }

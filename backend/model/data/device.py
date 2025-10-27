@@ -58,3 +58,15 @@ class Device:
             management_hostname=d["management-hostname"],
             configuration=DeviceConfiguration.from_dict(d)
         )
+
+    def __hash__(self):
+        return hash((
+            self.device_id,
+            self.device_name or '',
+            round(self.position_x, 6),
+            round(self.position_y, 6),
+            round(self.latitude, 6),
+            round(self.longitude, 6),
+            self.management_hostname,
+            hash(self.configuration)
+        ))

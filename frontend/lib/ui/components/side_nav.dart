@@ -58,6 +58,7 @@ class SideNav extends StatelessWidget {
     Widget _buildChild(NavigationRailItem? selectedPanel, NavigationRailItem panel, WidgetRef ref) {
     final isSelected = panel == selectedPanel;
     return Padding(
+      key: ValueKey(panel),
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: IconButton(
         icon: Icon(panel.icon),

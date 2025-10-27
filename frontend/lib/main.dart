@@ -22,6 +22,7 @@ void main() async {
   runApp(ProviderScope(child: const MyApp()));
 }
 
+// TODO: Rename
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

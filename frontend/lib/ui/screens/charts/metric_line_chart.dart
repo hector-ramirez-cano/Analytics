@@ -15,17 +15,17 @@ class MetricLineChart extends StatelessWidget {
 
   Map<String, Variable> _makeVariableDefinition() {
     return {
+      // TODO: Retrieve range from backend
       "time": Variable(
         accessor: (row) => row["time"] as DateTime,
         scale: TimeScale(
           formatter: (time) => "-${DateTime.now().add(Duration(seconds: 30)).difference(time).inMinutes} min",
           marginMin: 0.0,
           marginMax: 0.0,
-
         )
       ),
       "value": Variable(
-        accessor: (row) => row['value'] as num,
+        accessor: (row) => (row['value'] ?? 0.0) as num,
         scale: LinearScale(niceRange: true)
       )
     };
@@ -62,7 +62,7 @@ class MetricLineChart extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer(builder: (context, ref, child) {
       final datapoints = ref.watch(dashboardMetricServiceProvider(definition: definition));
-
+    
       return datapoints.when(
         data: (Map<String, dynamic> data)  => _makeGraph(data),
         error: (error, _) => RetryIndicator(onRetry: () async => onRetry(ref), isLoading: false, error: error,),

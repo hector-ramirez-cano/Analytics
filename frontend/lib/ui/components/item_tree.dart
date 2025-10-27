@@ -182,6 +182,7 @@ class ItemTree extends StatelessWidget {
     var iconPadding = node.isLeaf ? EdgeInsets.only(left: 0) : EdgeInsets.only(left: 8);
 
     return ListTile(
+          key: ValueKey("edit_section_$title"),
           title: text,
           visualDensity: VisualDensity(horizontal: -4, vertical: -4),
           leading: Padding(padding: iconPadding, child: node.icon,)

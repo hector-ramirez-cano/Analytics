@@ -56,7 +56,7 @@ async def query_metrics(data_out_queue: janus.Queue, filters: dict):
 
 async def query_facts(data_out_queue: janus.Queue, inner_data : dict):
     try:
-        device_id = inner_data.get("device-id")
+        device_ids = inner_data.get("device-ids")
         facts = inner_data.get("facts")
 
         # Failsafe, if only one is provided
@@ -69,34 +69,48 @@ async def query_facts(data_out_queue: janus.Queue, inner_data : dict):
                 "msg": "[BACKEND]Query facts was called with neither a string, or an array as facts"
             }
 
-        if device_id is None or facts is None or not isinstance(device_id, int):
+        # Failsafe, if a group is provided instead of a device
+        if isinstance(device_ids, int) and Cache().get_group(device_ids) is not None:
+            device_ids = Cache().get_devices_in_group(device_ids)
+            device_ids = [device.device_id for device in device_ids]
+
+        # Failsafe, if only one is provided
+        if isinstance(device_ids, int):
+            device_ids = [device_ids]
+
+
+        if device_ids is None or facts is None or not isinstance(device_ids, list|tuple|set):
             await data_out_queue.async_q.put("{}")
             return
 
-        device = Cache().get_item(device_id)
 
-        if device is None:
-            await data_out_queue.async_q.put("{}")
-            return
+        results = []
+        for device_id in device_ids:
+            device = Cache().get_item(device_id)
+            metrics_cache = {}
 
-        metrics_cache = FactGatheringBackend().metrics_cache.get(device.management_hostname, None)
+            result = {}
+            result["management-hostname"] = device.management_hostname
+            result["device-id"] = device.device_id
 
-        if metrics_cache is None:
-            await data_out_queue.async_q.put("{}")
-            return
+            if not device is None:
+                metrics_cache = FactGatheringBackend().metrics_cache.get(device.management_hostname, None)
 
-        result = {}
+            for fact in facts:
+                value = metrics_cache.get(fact, None)
+                if issubclass(type(value), Enum):
+                    result[fact] = str(value)
+                else:
+                    result[fact] = value
 
-        for fact in facts:
-            value = metrics_cache.get(fact, None)
-            result[fact] = value
-
-            if issubclass(type(value), Enum):
-                result[fact] = str(value)
+            results.append(result)
 
         result = {
             "type": "facts",
-            "msg": result
+            "msg": {
+                "data": results,
+                "metadata": facts,
+            }
         }
 
         await data_out_queue.async_q.put(json.dumps(result))

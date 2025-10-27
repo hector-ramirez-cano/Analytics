@@ -5,9 +5,15 @@ import 'package:network_analytics/models/charts/dashboard_polling_definition.dar
 class MetadataPollingDefinition extends DashboardPollingDefinition {
   final Duration updateInterval;
 
+  /// List of item ids for which metadata will be queried.
+  /// If groupableId in the constructor is a deviceId, it will become exactly one device on the itemIds
+  /// If groupableId in the constructor is a groupId, it will become to as many devices as the group contains
+  final itemIds = [];
+
   MetadataPollingDefinition({
-    required super.deviceId,
+    required super.groupableId,
     required super.field,
+    required super.chartType,
     required this.updateInterval,
   });
 
@@ -17,11 +23,19 @@ class MetadataPollingDefinition extends DashboardPollingDefinition {
     
     // must have, if they're not present, definition is invalid
     var field = json["field"];
-    var deviceId = json["device-id"];
+    var deviceId = json["device-ids"];
     var type = json["type"];
+    var chartTypeStr = json["chart-type"];
 
-    if (field == null || deviceId == null || type == null) {
-      Logger().e("Parsed ChartMetadataPollingDefinition fromJson with missing required values. 'field'=$field, deviceId=$deviceId, type='$type'");
+    if (field == null || deviceId == null || type == null || chartTypeStr == null) {
+      Logger().e("Parsed MetadataPollingDefinition fromJson with missing required values. 'field'=$field, deviceId=$deviceId, type='$type', chartType='$chartTypeStr'");
+      return null;
+    }
+
+    final chartType = ChartType.fromString(chartTypeStr.toString());
+
+    if (chartType == null) {
+      Logger().e("Parsed MetadataPollingDefinition from json with invalid chartType = $chartTypeStr");
       return null;
     }
 
@@ -33,8 +47,9 @@ class MetadataPollingDefinition extends DashboardPollingDefinition {
 
     return MetadataPollingDefinition(
       field: field,
-      deviceId: deviceId,
+      groupableId: deviceId,
       updateInterval: Duration(seconds: updateInterval),
+      chartType: chartType,
     );
   }
 

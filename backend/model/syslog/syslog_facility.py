@@ -35,7 +35,7 @@ class SyslogFacility(Enum):
 
     @staticmethod
     def from_json(json: dict) -> list["SyslogFacility"]:
-        return [SyslogFacility[facility] for facility in json]
+        return [SyslogFacility[facility.upper()] for facility in json]
 
 
     def __str__(self) -> str:
