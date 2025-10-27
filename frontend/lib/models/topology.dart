@@ -39,6 +39,7 @@ class Topology {
     return Topology(items: {});
   }
 
+
   Map<String, dynamic> toMap() {
     Map<String, dynamic> items = {};
 
@@ -85,4 +86,6 @@ class Topology {
       throw Exception("Unexpected type for gathering all available values");
     }
   }
+
+  
 }

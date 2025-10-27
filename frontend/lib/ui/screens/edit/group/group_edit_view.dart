@@ -131,10 +131,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
     final notifier = ref.watch(itemEditSelectionProvider.notifier);
     if (!itemEditSelection.editingGroupMembers) { return; }
 
-    var devices = widget.topology.devices;
-    var groups = widget.topology.groups;
-
-    Set<GroupableItem> options = {...devices, ...groups};
+    Set<GroupableItem> options = notifier.group.memberCandidates(widget.topology);
 
     isSelectedFn(option) => notifier.group.memberKeys.contains(option.id);
     onClose() => notifier.set(editingGroupMembers: false);
@@ -189,7 +186,7 @@ class _GroupEditViewState extends ConsumerState<GroupEditView> {
   Widget build(BuildContext context) {
       // if item changed, reset the text fields
       ref.listen(itemEditSelectionProvider, (previous, next) {
-        if (previous?.selectedStack != next.selectedStack && next.selectedStack.last is Group) {
+        if (previous?.selectedStack != next.selectedStack && next.selectedStack.isNotEmpty && next.selectedStack.last is Group) {
           _nameInputController.text = (next.selectedStack.last as Group).name;
         }
       });

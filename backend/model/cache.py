@@ -1,4 +1,5 @@
 import time
+import copy
 
 from typing import Set
 
@@ -110,6 +111,9 @@ class Cache(object):
         self.__groups = groups
         self.__last_update = time.time()
 
+        self.purge_cyclic_references(groups)
+
+
 
     def get_item(self, item_id: int) -> Device | Group | None:
         """Retrieves an item from the cache, whether it be a group or a device
@@ -172,6 +176,52 @@ class Cache(object):
 
         return result
 
+    def purge_cyclic_references(self, groups: dict):
+        """Iterates over all the groups, and calls for the removal of cyclic references
+
+        Args:
+            groups (dict): Removes cyclic references all devices
+        """
+        for group_id in groups:
+            parents = set()
+            group = self.get_item(group_id)
+            self.purge_single_cyclic_references(group, parents)
+
+
+    def purge_single_cyclic_references(self, group: Group, parents : set) -> bool:
+        """Recusively goes through each group and removes any cyclic references found. This is a last resort, in case the database enters an inconsistent state
+
+        Args:
+            group (Group): Group to inspect
+            parents (set): Set of parents containing this group, in any vertical form
+
+        Returns:
+            bool: whether a cyclic reference was found
+        """
+
+        if group.group_id in parents:
+            # group has already been tried in this line, it means there's a cyclic reference
+            # we need to remove the group from the parent
+            print("[ERRRO][CACHE]Found group with cyclic reference, removed cyclic reference from top-bottom")
+            return False
+
+        # add group to visited groups
+        parents.add(group.group_id)
+
+        group_members = [member for member in group.members if isinstance(self.get_item(member), Group)]
+
+        for group_id in group_members:
+            inner_group = self.get_item(group_id)
+            inner_parents = copy.deepcopy(parents)
+
+            if not self.purge_single_cyclic_references(inner_group, inner_parents):
+                # a children has notified us that it has already been visited
+                # means we have a duplicate
+                group.members.remove(group_id)
+
+        return True
+
+
 
     def update(self, devices : dict[Device], links : dict, groups : dict[Group]):
         """Updates the cache information, and resets the time until next update
@@ -184,5 +234,6 @@ class Cache(object):
         self.__devices = devices
         self.__links = links
         self.__groups = groups
+        self.purge_cyclic_references(groups)
 
         self.__last_update = time.time()

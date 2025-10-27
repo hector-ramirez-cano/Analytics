@@ -46,6 +46,7 @@ class Group:
             "members": self.members,
         }
 
+
     @staticmethod
     def from_dict(d: dict) -> "Group":
         return Group(

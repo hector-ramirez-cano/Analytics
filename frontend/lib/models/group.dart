@@ -103,6 +103,11 @@ class Group extends GroupableItem<Group>{
     return devices.any((dev) => dev.id == device.id) || groups.any((group) => group.hasDevice(device));
   }
 
+  /// Returns whether this particular group contains another group, be it directly or via nested groups
+  bool hasGroup(Group other) {
+    return memberKeys.contains(other.id) || groups.any((group) => group.hasGroup(other));
+  }
+
   /// Returns the count of children only in this group
   num childrenCount() {
     return members.length +
@@ -110,8 +115,22 @@ class Group extends GroupableItem<Group>{
   }
 
   bool isModifiedName(Topology topology) {
-    
+
     return name != (topology.items[id] as Group?)?.name;
+  }
+
+  /// Returns whether the group contains itself, be it directly or via nested groups
+  /// Under normal circumstances, this is expected to be false
+  bool containsItself() {
+    return hasGroup(this);
+  }
+
+  /// Returns the members which are candidates to be held by this group
+  /// that is, groups that don't contain the group, or itself
+  Set<GroupableItem> memberCandidates(Topology topology) {
+    return topology.items.values.where((item) {
+      return item is Device || (item is Group && item.id != id && !item.hasGroup(this));
+    }).map((item) => item as GroupableItem).toSet();
   }
 
   @override
@@ -131,8 +150,11 @@ class Group extends GroupableItem<Group>{
   @override
   bool operator ==(Object other) {
     return other is Group
-    && (other as GroupableItem) == (this as GroupableItem)
     && isDisplayGroup == other.isDisplayGroup
     && setEquals(members, other.members);
   }
+  
+  @override
+  int get hashCode => super.hashCode;
+  
 }
