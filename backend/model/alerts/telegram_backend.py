@@ -108,9 +108,20 @@ async def init(stop_event: asyncio.Event):
     Args:
         stop_event (asyncio.Event): Notifies the bot to exit
     """
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
+    global app
+    is_init = False
+
+    while not is_init:
+        try:
+            app = ApplicationBuilder().token(Config.get("backend/controller/telegram/API-token")).build()
+            await app.initialize()
+            await app.start()
+            await app.updater.start_polling()
+            is_init = True
+
+        except TimeoutError as e:
+            print(f"[ERROR]Telegram bot api timed out during initialization with e={str(e)}. Retrying...")
+
     app.add_handler(CommandHandler("start", __start))
     app.add_handler(CommandHandler("auth", __auth))
     app.add_handler(CommandHandler("subscribe", __suscribe))
