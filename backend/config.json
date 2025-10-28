@@ -8,6 +8,9 @@
       "private_data_dir": "ansible",
       "playbooks": {
         "fact_gathering": "fact_gathering.yml"
+      },
+      "cache":{
+        "rule_set_cache_invalidation_s": 3600
       }
     },
     "controller": {

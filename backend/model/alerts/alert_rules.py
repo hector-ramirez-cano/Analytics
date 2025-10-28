@@ -86,4 +86,3 @@ class AlertRule:
             predicates=AlertPredicate.from_dict(d["predicates"])
         )
 
-    

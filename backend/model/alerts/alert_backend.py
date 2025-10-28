@@ -21,6 +21,8 @@ from model.db.operations import alert_operations
 from Config import Config
 
 class AlertBackend:
+    """Singleton class to handle alert events and rule evaluation based on facts provided by the Facts Backend
+    """
     __instance = None
     __last_update = 0 # Epoch
 
@@ -86,10 +88,20 @@ class AlertBackend:
 
     @staticmethod
     def should_update() -> bool:
-        return time.time() - AlertBackend.__last_update > Config.get("backend/controller/cache/cache_invalidation_s", 60)
+        """Returns whether the rule set configuration should be recreated
+
+        Returns:
+            bool: whether an update is due
+        """
+        return time.time() - AlertBackend.__last_update > Config.get("backend/model/cache/rule_set_cache_invalidation_s", 3600)
 
     @staticmethod
     def update_ruleset(forced: bool):
+        """Call to update the ruleset from the database
+
+        Args:
+            forced (bool): whether update cache invalidation should be bypassed
+        """
         if (AlertBackend.should_update() or forced):
             rules = alert_operations.update_alert_config()
 
@@ -101,16 +113,31 @@ class AlertBackend:
 
     @staticmethod
     def register_listener(queue: asyncio.Queue):
+        """Registers a queue to which alert events will be dispatched in a multicast way
+
+        Args:
+            queue (asyncio.Queue): Queue to which the events will be posted to
+        """
         print("[INFO ][ALERTS][WS]Registered listener")
         AlertBackend().listeners.append(queue)
 
     @staticmethod
     def remove_listener(queue: asyncio.Queue):
+        """Removes a listener from the list, typically when the listener is no longer valid
+
+        Args:
+            queue (asyncio.Queue): Queue to be removed
+        """
         print("[INFO ][ALERTS][WS]Removed listener")
         AlertBackend().listeners.remove(queue)
 
     @staticmethod
     async def notify_listeners(event: AlertEvent):
+        """Notify all the registered listeners of a new Alert Event
+
+        Args:
+            event (AlertEvent): AlertEvent instance which was most recently raised
+        """
         for listener in AlertBackend().listeners:
             await listener.put(event)
 
@@ -123,6 +150,9 @@ class AlertBackend:
         :param value input dict used to evaluate rules, as produced by the facts backend
         :param alert_queue queue to which new events will be posted to
         """
+        
+        AlertBackend.update_ruleset(forced=False)
+
         for rule in rules:
             target: Device | Group = Cache().get_item(rule.target_item)
 
@@ -246,6 +276,16 @@ class AlertBackend:
 
     @staticmethod
     def spawn_log_stream(data_queue: janus.SyncQueue, signal_queue: janus.SyncQueue, finished: threading.Event) -> Coroutine:
+        """Spawns the thread which will query logs from the database without blocking the current thread
+
+        Args:
+            data_queue (janus.SyncQueue): Queue to which logs will be posted to
+            signal_queue (janus.SyncQueue): Queue from which message/signals are read in
+            finished (threading.Event): Threading Event indicating whether the program is considered "Finished", and should gracefully exit
+
+        Returns:
+            Coroutine: Coroutine from the thread spawned to handle log requests
+        """
         return asyncio.to_thread(lambda: alert_operations.get_alert_stream(data_queue, signal_queue, finished))
 
 
