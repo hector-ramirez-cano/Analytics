@@ -67,7 +67,7 @@ def __init_baseline_tasks(org: str):
         task_name = f"task_baseline_{window}"
         task_definition = f"""
             from(bucket: "analytics")
-            |> range(start: -task.every)
+            |> range(start: -{window})
             |> filter(fn: (r) => r._measurement == "metrics")
             |> filter(fn: (r) => r._field == "value")
             |> aggregateWindow(every: {window}, fn: mean, createEmpty: false)

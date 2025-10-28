@@ -46,7 +46,7 @@ class DashboardMetadataService extends _$DashboardMetadataService {
     final notifier = ref.read(websocketServiceProvider.notifier);
     // TODO: change subscription type to "metadata" when backend separates facts from metadata
     notifier.post(
-      "facts",
+      "metadata",
       {
         "facts": definition.metadata,
         "device-ids": definition.groupableId,

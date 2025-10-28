@@ -35,11 +35,14 @@ class _SyslogViewerState extends ConsumerState<SyslogViewer> {
   }
 
   List<ResizableChild> _makeContainers(WidgetRef ref) {
-
     return [
       ResizableChild(
         size: ResizableSize.shrink(min: 250),
-        child: _makeSyslogRealtimeViewer(ref)
+        child: _makeSyslogRealtimeViewer(ref),
+        divider: const ResizableDivider(
+          thickness: 2,
+          color: Color.fromRGBO(100, 100, 100, 0.5)
+        )
       ),
       ResizableChild(
         size: ResizableSize.expand(min: 300),
