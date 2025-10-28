@@ -83,7 +83,7 @@ async def __ping_devices(hosts) -> tuple[dict, dict]:
 async def gather_facts():
     """
         Calls for the execution of ICMP Echo tests for devices found on cache that match
-         with "icmp" in data_sources.
+        with "icmp" in data_sources.
     """
 
     targets = Cache().icmp_inventory

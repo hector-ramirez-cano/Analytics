@@ -8,3 +8,4 @@ influxdb2/*
 *.g.dart
 /syslog_*
 backend/ansible/env/ssh_key
+backend/ansible/inventory/hosts

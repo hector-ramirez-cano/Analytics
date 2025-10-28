@@ -3,6 +3,7 @@ from typing import Optional
 from influxdb_client import WriteApi, InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb_client.client.query_api import QueryApi
+from influxdb_client.client.tasks_api import TasksApi
 from psycopg_pool import ConnectionPool
 
 import Config
@@ -11,10 +12,11 @@ import Config
 _postgres_db_pool: Optional[ConnectionPool] = None
 _influx_db_client: Optional[InfluxDBClient] = None
 _influx_db_write_api : Optional[WriteApi]   = None
-_influx_db_query_api : Optional[QueryApi] = None
+_influx_db_query_api : Optional[QueryApi]   = None
+_influx_db_task_api  : Optional[TasksApi]   = None
 
 def init_db_pool(check_postgres_connection):
-    global _postgres_db_pool, _influx_db_write_api, _influx_db_client, _influx_db_query_api
+    global _postgres_db_pool, _influx_db_write_api, _influx_db_client, _influx_db_query_api, _influx_db_task_api
 
     if _postgres_db_pool is not None:
         return
@@ -49,7 +51,38 @@ def init_db_pool(check_postgres_connection):
     _influx_db_client = InfluxDBClient(url=conn_uri, token=token, org=org)
     _influx_db_write_api = _influx_db_client.write_api(write_options=SYNCHRONOUS)
     _influx_db_query_api = _influx_db_client.query_api()
+    _influx_db_task_api  = _influx_db_client.tasks_api()
     print("[INFO ]Acquired DB client for InfluxDB at='" + schema + host + ":" + str(port) + "'")
+
+    __init_baseline_tasks(org)
+
+
+def __init_baseline_tasks(org: str):
+    tasks_api = influx_db_tasks_api()
+    orgs_api = influx_db_client().organizations_api()
+    organization =next((o for o in orgs_api.find_organizations() if o.name == org), None)
+    aggregate_windows = ("1h", "1d","15d", "30d", "180d", "365d")
+
+    for window in aggregate_windows:
+        task_name = f"task_baseline_{window}"
+        task_definition = f"""
+            from(bucket: "analytics")
+            |> range(start: -task.every)
+            |> filter(fn: (r) => r._measurement == "metrics")
+            |> filter(fn: (r) => r._field == "value")
+            |> aggregateWindow(every: {window}, fn: mean, createEmpty: false)
+            |> to(bucket: "baselines")
+        """
+
+        existing_tasks = tasks_api.find_tasks(name=task_name)
+
+        if not existing_tasks:
+            tasks_api.create_task_every(name=task_name, flux=task_definition, every=window, organization=organization)
+            print(f"[INFO ][InfluxDB]Created task: {task_name}")
+        else:
+            print(f"[INFO ][InfluxDB]Task '{task_name}' already exists. Skipping creation.")
+
+
 
 
 def postgres_db_pool():
@@ -63,6 +96,9 @@ def influx_db_write_api():
 
 def influx_db_query_api():
     return _influx_db_query_api
+
+def influx_db_tasks_api():
+    return _influx_db_task_api
 
 def graceful_shutdown():
     global _postgres_db_pool, _influx_db_client, _influx_db_write_api

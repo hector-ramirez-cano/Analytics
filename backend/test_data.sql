@@ -54,16 +54,19 @@ INSERT INTO Analytics.groups (group_id, group_name, is_display_group)
 UPDATE Analytics.groups SET is_display_group=0<>1 WHERE group_id = 202;
 
 SELECT * FROM Analytics.group_members;
+TRUNCATE Analytics.group_members;
 INSERT INTO Analytics.group_members(group_id, item_id)
     VALUES
         (201, 1),
         (201, 2),
-        (202, 3);
+        (202, 3),
+        (203, 201),
+        (203, 202);
+        -- Cyclic reference, the system should recognize it, and ignore it at the backend level
+        --(201, 203); -- 203 parents 201, 201 parents 203. 201 will remove 203 from its children, or vice versa depending which gets evaluated first
 
 INSERT INTO Analytics.group_members(group_id, item_id)
     VALUES
-        (203, 201),
-        (203, 202);
 
 INSERT INTO Analytics.dashboard(dashboard_id, dashboard_name)
     VALUES
@@ -87,7 +90,7 @@ TRUNCATE Analytics.alert_rules;
 
 -- TRUNCATE Analytics.alert_rules;
 INSERT INTO Analytics.alert_rules (rule_id, rule_name, requires_ack, rule_definition)
-    VALUES (1, 'ICMP_RTT > 500ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":60}]}');
+    VALUES (1, 'ICMP_RTT > 500ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":160}]}');
 
 SELECT * FROM Analytics.alert_rules;
 

@@ -1,5 +1,3 @@
-from typing import Generator
-
 from model.db.pools import influx_db_query_api
 
 class InfluxFilter:
@@ -16,6 +14,14 @@ class InfluxFilter:
 
     @staticmethod
     def from_json(json: dict) -> "InfluxFilter":
+        """Creates a new InfluxFilter instance based off a dictionary
+
+        Args:
+            json (dict): dictionary, typically parsed from a json, with the definition
+
+        Returns:
+            InfluxFilter | None: Instance, or None if any component is missing
+        """
         start = json.get("start")
         metric = json.get("metric")
         device_id = json.get("device-id")
@@ -27,6 +33,11 @@ class InfluxFilter:
         return InfluxFilter(start, metric, device_id, aggregate_interval)
 
     def to_dict(self) -> dict:
+        """Converts the instance into dict representation
+
+        Returns:
+            dict: dict representation
+        """
         return {
             "start": self.start,
             "metric": self.metric,
@@ -35,6 +46,14 @@ class InfluxFilter:
         }
 
 def get_metric_range(influx_filter: InfluxFilter) -> dict:
+    """Gets the range of a metric, in terms of min and max
+
+    Args:
+        influx_filter (InfluxFilter): Filter to be applied, to which the range will be queried
+
+    Returns:
+        dict: dict containing both "min-y" and "max-y" as results
+    """
     params = influx_filter.to_dict()
     query = f'''
     minData = from(bucket: "analytics")
@@ -64,8 +83,16 @@ def get_metric_range(influx_filter: InfluxFilter) -> dict:
 
 
 def get_metric_data(influx_filter: InfluxFilter) -> dict:
-    # 2025/oct/23 - Unsafe, apparently the client still doesn't support param queries
+    """Queries the InfluxDB for metrics in a given timeframe, defined by the influxFilter instance
+
+    Args:
+        influx_filter (InfluxFilter): Filter to be applied for data
+
+    Returns:
+        dict: data series as given by the influxDB, following {"range": [range], "data": [{"time": [timestamp], "value": [value], ...}]}
+    """
     # TODO: Implement param queries when the client implements it
+    # 2025/oct/23 - Unsafe, apparently the client still doesn't support param queries
 
     params = influx_filter.to_dict()
     query = f'''
