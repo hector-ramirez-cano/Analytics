@@ -82,7 +82,7 @@ class WebsocketService extends _$WebsocketService {
   static final wsLogger = Logger(filter: ConfigFilter.fromConfig("debug/enable_ws_logging", false));
   final Map<String, WsListener> listeners = {};
 
-  late StreamSubscription _streamSubscription;
+  StreamSubscription? _streamSubscription;
   late WsState _state;
 
   Timer? _retryTimer;
@@ -112,7 +112,7 @@ class WebsocketService extends _$WebsocketService {
 
       ref.onDispose(() {
         channel.sink.close();
-        _streamSubscription.cancel();
+        _streamSubscription?.cancel();
         listeners.clear();
       });
 
