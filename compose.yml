@@ -25,7 +25,20 @@ services:
     environment:
       - TZ=America/Mexico_City
 
+  rsyslog:
+    image: rsyslog/rsyslog:latest
+    container_name: rsyslog
+    ports:
+      - "514:514/udp"
+      - "1514:1514"
+    volumes:
+      - ./rsyslog.conf:/etc/rsyslog.conf:ro
+    networks:
+      - syslognet
 
+networks:
+  syslognet:
+    driver: bridge
 
 volumes: 
   postgres_data:

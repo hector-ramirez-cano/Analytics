@@ -112,7 +112,7 @@ async def query_facts(data_out_queue: janus.Queue, inner_data : dict, label: str
             "type": "facts",
             "msg": {
                 "data": results,
-                label: facts,
+                label : facts,
             }
         }
 
@@ -193,17 +193,17 @@ async def syslog_rt(data_out_queue: janus.Queue, queue_in: asyncio.Queue, finish
                 break
 
             packet = {
-                "Facility": msg["Facility"],
-                "Priority": msg["Priority"],
-                "FromHost": msg["FromHost"],
-                "ReceivedAt": msg["ReceivedAt"].timestamp(),
-                "SysLogTag": msg["SysLogTag"],
-                "ProcessID": int(msg["ProcessID"]),
-                "DeviceReportedTime": msg["DeviceReportedTime"].timestamp(),
-                "Msg": msg["Message"]
+                "facility": msg["Facility"],
+                "priority": msg["Priority"],
+                "from-host": msg["FromHost"],
+                "received-at": msg["ReceivedAt"].timestamp(),
+                "syslog-tag": msg["SysLogTag"],
+                "pid": int(msg["ProcessID"]),
+                "device-reported-time": msg["DeviceReportedTime"].timestamp(),
+                "msg": msg["Message"]
             }
 
-            packet = { "syslog-rt" : packet }
+            packet = { "type": "syslog-rt", "msg" : packet }
             await data_out_queue.async_q.put(json.dumps(packet))
 
         except Exception as e:

@@ -22,7 +22,7 @@
       },
       "syslog": {
         "RFC5424-port":1514,
-        "db_path" : ".."
+        "db_path" : "."
       },
       "fact-gathering":{
         "polling_time_s": 5

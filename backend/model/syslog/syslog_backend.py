@@ -92,7 +92,7 @@ class SyslogBackend(SyslogUDPServer):
     async def syslog_server_task(stop_event : asyncio.Event):
 
         host = "0.0.0.0"
-        port = Config.get("backend/controller/syslog/RFC5424-port", 5541)
+        port = Config.get("backend/controller/syslog/RFC5424-port", 1541)
 
         loop = asyncio.get_running_loop()
 

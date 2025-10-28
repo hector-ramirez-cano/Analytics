@@ -155,7 +155,7 @@ async def __api_ws_router():
             if data == Sentinel():
                 break
 
-            #print(f"\033[0;33;43m{data}\033[0m")
+            print(f"\033[0;33;43m{data}\033[0m")
 
             await websocket.send(data)
 

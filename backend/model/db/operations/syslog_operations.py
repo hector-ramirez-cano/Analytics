@@ -96,6 +96,7 @@ def __handle_log_stream_request_size(filters: SyslogFilters, data_queue: janus.S
         count = get_row_count(filters)
         data_queue.put_nowait(json.dumps({'type': 'syslog', 'msg': {'type': 'request-size', 'count': count}}))
     except Exception as e:
+        print("[ERROR][SYSLOG][WS]Encountered an error =", str(e))
         data_queue.put_nowait(json.dumps({'type': 'error', 'msg': str(e)}))
 
 
@@ -155,6 +156,10 @@ def get_row_count(filters : SyslogFilters) -> int:
             databases.append(alias)
 
         query, params = filters.get_sql_query(target='count(1) AS count', databases=databases)
+
+        if len(months) == 0:
+            conn.close()
+            return 0
 
         cursor = conn.execute(
             query,
