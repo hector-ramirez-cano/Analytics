@@ -242,7 +242,7 @@ class AlertPredicate {
 
   AlertPredicate setRightForced(bool value) => copyWith(right: right.copyWith(isForced: value));
 
-  AlertPredicate setOperation(AlertPredicateOperation operation) => copyWith(op: operation);
+  AlertPredicate setOperation(AlertPredicateOperation? operation) => copyWith(op: operation);
 
   AlertPredicate setLeftValue(dynamic value) => copyWith(left: left.setValue(value));
 
@@ -250,6 +250,9 @@ class AlertPredicate {
 
   AlertPredicate copyWith({AlertRuleOperand? left, AlertRuleOperand? right, AlertPredicateOperation? op}) 
     => AlertPredicate(left: left ?? this.left, right: right ?? this.right, op: op ?? this.op);
+
+  AlertPredicate forcedCopy({required AlertRuleOperand left, required AlertRuleOperand right, required AlertPredicateOperation? op}) 
+    => AlertPredicate(left: left, right: right, op: op);
 
   AlertPredicate setValue (dynamic value, bool isLeft) 
     => isLeft ? setLeftValue (value) : setRightValue (value);
@@ -262,6 +265,9 @@ class AlertPredicate {
   AlertPredicate setConst (bool    value, bool isLeft) => isLeft ? setLeftConst (value) : setRightConst (value);
 
   bool isConst(bool isLeft) => isLeft ? left.isConst : right.isConst;
+  bool isLeftConst() => left.isConst;
+  bool isRightConst() => right.isConst;
+  bool hasConst() => left.isConst || right.isConst;
 
   AlertRuleOperand? get constValue => left.isConst ? left : right.isConst ? right : null;
 

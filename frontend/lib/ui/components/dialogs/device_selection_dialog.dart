@@ -13,6 +13,7 @@ class DeviceSelectionDialog extends SelectionDialog<Device>{
     required super.onClose,
     required super.isSelectedFn,
     required super.isAvailable,
+    super.subtitleBuilder,
     super.onTristateToggle,
   });
   
@@ -39,6 +40,7 @@ class DeviceSelectionDialog extends SelectionDialog<Device>{
         toText: toText,
         isAvailable: isAvailable,
         onTristateToggle: onTristateToggle,
+        subtitleBuilder: subtitleBuilder,
       ),
     );
     

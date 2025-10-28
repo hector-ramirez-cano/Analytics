@@ -8,6 +8,7 @@ enum ListSelectorType {
   radio,
 }
 Icon? noIcon(dynamic _) => null;
+Widget? noSubtitle(dynamic _) => null;
 
 class ListSelector<T> extends ConsumerStatefulWidget {
 
@@ -18,7 +19,8 @@ class ListSelector<T> extends ConsumerStatefulWidget {
   final String Function(dynamic) toText;
   final VoidCallback? onClose;
   final void Function(bool)? onTristateToggle;
-  final Icon? Function(dynamic) leadingIconFn;
+  final Icon? Function(dynamic) leadingIconBuilder;
+  final Widget? Function(dynamic) subtitleBuilder;
   final bool Function(dynamic) isAvailable;
 
   static TextStyle unavailableValueStyle = TextStyle(color: Colors.blueGrey, fontStyle: FontStyle.italic, decoration: TextDecoration.lineThrough);
@@ -33,7 +35,8 @@ class ListSelector<T> extends ConsumerStatefulWidget {
     required this.toText,
     required this.isAvailable,
     this.onTristateToggle,
-    this.leadingIconFn = noIcon,
+    this.subtitleBuilder = noSubtitle,
+    this.leadingIconBuilder = noIcon,
   });
 
   @override
@@ -108,7 +111,7 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
             onChanged: (state) => widget.onChanged(option, state),
             title: ListTile(
               key: ValueKey(option),
-              leading: widget.leadingIconFn(option),
+              leading: widget.leadingIconBuilder(option),
               title: Text(
                 widget.toText(option),
                 style: widget.isAvailable(option)
@@ -126,8 +129,9 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
   Widget _makeRadioList(List<T> list) {
     var radioButtons = list.map((option) {
       return ListTile(
+        subtitle: widget.subtitleBuilder(option as dynamic),
         key: ValueKey(option),
-        leading: widget.leadingIconFn(option as dynamic),
+        leading: widget.leadingIconBuilder(option as dynamic),
         title: Text(widget.toText(option)),
         onTap: () => widget.onChanged(option, null),
         trailing: Radio(value: option,),

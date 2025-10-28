@@ -54,7 +54,7 @@ async def query_metrics(data_out_queue: janus.Queue, filters: dict):
         await data_out_queue.async_q.put(json.dumps(msg))
 
 
-async def query_facts(data_out_queue: janus.Queue, inner_data : dict):
+async def query_facts(data_out_queue: janus.Queue, inner_data : dict, label: str):
     try:
         device_ids = inner_data.get("device-ids")
         facts = inner_data.get("facts")
@@ -112,7 +112,7 @@ async def query_facts(data_out_queue: janus.Queue, inner_data : dict):
             "type": "facts",
             "msg": {
                 "data": results,
-                "metadata": facts,
+                label: facts,
             }
         }
 

@@ -134,11 +134,11 @@ async def __api_ws_router():
                     await ws_operations.query_metrics(data_out_queue, inner_data)
 
                 case "facts":
-                    await ws_operations.query_facts(data_out_queue, inner_data)
+                    await ws_operations.query_facts(data_out_queue, inner_data, "facts")
 
                 case "metadata":
                     # TODO: Change this, so metadata comes from database, facts come from local cache ? (is it useful?)
-                    await ws_operations.query_facts(data_out_queue, inner_data)
+                    await ws_operations.query_facts(data_out_queue, inner_data, "metadata")
 
 
                 case _:

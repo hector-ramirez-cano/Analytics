@@ -46,6 +46,8 @@ class MetricLineChart extends StatelessWidget {
       axes: [Defaults.horizontalAxis, Defaults.verticalAxis],
       marks: [
         LineMark(
+          // transition: Transition(duration: const Duration(seconds: 1)),
+          // entrance: {MarkEntrance.x},
           position: Varset('time') * Varset('value'),
           shape: ShapeEncode(value: BasicLineShape(smooth: true) ),
           color: ColorEncode(value: const Color.fromRGBO(35, 109, 119, 1))

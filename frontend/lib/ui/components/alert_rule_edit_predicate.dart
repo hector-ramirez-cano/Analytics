@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:network_analytics/extensions/string_extensions.dart';
 import 'package:network_analytics/models/alerts/alert_predicate.dart';
 import 'package:network_analytics/models/alerts/alert_predicate_operation.dart';
 import 'package:network_analytics/models/analytics_item.dart';
+import 'package:network_analytics/models/charts/dashboard_polling_definition.dart';
+import 'package:network_analytics/models/charts/metadata_polling_definition.dart';
 import 'package:network_analytics/models/enums/facts_const_types.dart';
+import 'package:network_analytics/models/facts/facts_polling_definition.dart';
 import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/services/charts/dashboard_metadata_service.dart';
+import 'package:network_analytics/services/facts/facts_service.dart';
 import 'package:network_analytics/ui/components/badge_button.dart';
 import 'package:network_analytics/ui/components/list_selector.dart';
 
 class AlertRuleEditPredicate extends StatefulWidget {
-  final Topology topology;
-  final GroupableItem target;
-  final Function(AlertPredicate op) onSave;
-  final AlertPredicate? initialValue;
-  
   const AlertRuleEditPredicate({
     super.key,
     required this.topology,
@@ -21,22 +23,34 @@ class AlertRuleEditPredicate extends StatefulWidget {
     required this.onSave,
   });
 
-  static bool defaultValidator(dynamic _) => true;
+  final AlertPredicate? initialValue;
+  final Function(AlertPredicate op) onSave;
+  final GroupableItem target;
+  final Topology topology;
 
   @override
   State<AlertRuleEditPredicate> createState() => _AlertRuleEditPredicateState();
+
+  static bool defaultValidator(dynamic _) => true;
 }
 
 class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
   late final TextEditingController _leftController;
-  late final TextEditingController _rightController;
   AlertPredicate _predicate = AlertPredicate.empty();
+  late final TextEditingController _rightController;
+  late final FactsPollingDefinition _definition;
 
   @override
   void initState() {
     super.initState();
     _leftController  = TextEditingController();
     _rightController = TextEditingController();
+    _definition = FactsPollingDefinition(
+      groupableId: widget.target.id,
+      fields: widget.topology.getAllAvailableValues(widget.target),
+      chartType: ChartType.label,
+      updateInterval: const Duration(seconds: 15)
+    );
 
     if (widget.initialValue != null) {
       _predicate = widget.initialValue!;
@@ -52,11 +66,51 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
   }
 
   void _handleConstLeftToggle (bool value)  => setState(() { _predicate = _predicate.setLeftConst(value);   });
+
   void _handleConstRightToggle(bool value)  => setState(() { _predicate = _predicate.setRightConst (value); });
+
   void _handleForcedLeftToggle (bool value) => setState(() { _predicate = _predicate.setLeftForced (value); });
+
   void _handleForcedRightToggle(bool value) => setState(() { _predicate = _predicate.setRightForced(value); });
+
   void _handleOpToggle(AlertPredicateOperation op) => setState(() { _predicate = _predicate.setOperation(op); });
-  
+
+  void _handleTypeChange(String? typeAsString, bool isLeft) {
+    if (typeAsString == "unknown") { return; }
+    final type = FactsDataType.fromString(typeAsString ?? "");
+
+    if (type == null) { return; }
+
+    if (type == FactsDataType.nullable) {
+      _predicate = _predicate.setValue(null, isLeft);
+    }
+
+    if (type == FactsDataType.number || type == FactsDataType.string) {
+      String input = isLeft ? _leftController.text : _rightController.text;
+      _predicate = _predicate.setValue(input, isLeft);
+    }
+
+    setState(() { _predicate = _predicate.setConstType(type); });
+
+    // if changing the type causes the op to be disabled, set op to null
+    if (_predicate.op != null && !_isOpEnabled(_predicate.op!)) {
+      setState(() {
+        _predicate = _predicate.forcedCopy(left: _predicate.left, right: _predicate.right, op: null);
+      });
+    }
+  }
+
+  /// Returns whether a given operation is valid for the types
+  /// Currently only checks if the operation is valid only if the predicate is const
+  bool _isOpEnabled(AlertPredicateOperation op) {
+    // TODO: Check if is valid if non-const is valid
+      return !_predicate.hasConst()
+      || (
+        _predicate.constValue != null
+        && op.isValidFor(_predicate.constValue!.dataType)
+      );
+  }
+
   void _handleDirectInputChanged(bool isLeft, String text, bool Function(dynamic) validator) {
     setState(() {
       if (validator(text)) {
@@ -70,7 +124,6 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
       _predicate = _predicate.setValue(val, isLeft);
     });
   }
-
 
   Widget _makeToggle(String label, bool value, bool enabled, Function(bool) onToggle, {double leftPadding = 64.0}) {
     return Padding(
@@ -115,14 +168,35 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
         onChanged: (text) => _handleDirectInputChanged(isLeft, text, validator)
-        
+
       ),
     );
   }
 
+
+
+
+  Widget _makeVariableSubtitle(dynamic item) {
+    
+    return Consumer(builder:(context, ref, child) {
+      final facts = ref.watch(factsServiceProvider(definition: _definition));
+
+      return facts.when(
+        error: (e, _) => Text(e.toString()),
+        loading: () => Text("Cargando..."),
+        data: (Map<String, dynamic> values) {
+          final sample = (values[item] ?? item);
+          final sampleStr = sample.toString().truncate(100);
+          return Text(sampleStr);
+        } ,
+      );
+    },);
+    
+  }
+
   Widget _makeVariableSelector(bool forced, bool isLeft) {
     Widget child;
-    if (forced) { 
+    if (forced) {
       child = _makeDirectInput(isLeft, "Variable", Icon(Icons.import_contacts_outlined));
     }
     else {
@@ -133,14 +207,15 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
         onClose: null,
         isAvailable: (_) => true,
         isSelectedFn: (val) => isLeft ? val == _predicate.left.value : val == _predicate.right.value,
-        onChanged: (val, _) => _handleVariableInputSelect(isLeft, val)
+        onChanged: (val, _) => _handleVariableInputSelect(isLeft, val),
+        subtitleBuilder: (val) => _makeVariableSubtitle(val),
       );
     }
 
     final onToggle = isLeft ? _handleConstLeftToggle : _handleConstRightToggle;
     final onToggleForced = isLeft ? _handleForcedLeftToggle : _handleForcedRightToggle;
     final enabled = isLeft ? !_predicate.right.isConst : !_predicate.left.isConst;
-    
+
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.42,
       child: Column(
@@ -168,23 +243,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
           items: FactsDataType.values
               .map((type) => DropdownMenuItem(value: type.name, child: Text(type.name)))
               .toList(),
-          onChanged: (val) {
-            if (val == "unknown") { return; }
-            final type = FactsDataType.fromString(val ?? "");
-            
-            if (type == null) { return; }
-
-            if (type == FactsDataType.nullable) {
-              _predicate = _predicate.setValue(null, isLeft);
-            }
-
-            if (type == FactsDataType.number || type == FactsDataType.string) {
-              String input = isLeft ? _leftController.text : _rightController.text;
-              _predicate = _predicate.setValue(input, isLeft);
-            }
-
-            setState(() { _predicate = _predicate.setConstType(type); });
-          },
+          onChanged: (val) => _handleTypeChange(val, isLeft),
           isExpanded: true,
         ),
     );
@@ -192,12 +251,12 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
 
   Widget _makeBooleanToggle(bool isLeft, bool? initial) {
     _predicate = _predicate.setValue(initial ?? false, isLeft);
-    
+
     return _makeToggle("Valor", initial ?? false, true, (state) => setState(() {
       _predicate = _predicate.setValue(state, isLeft);
     }), leftPadding: MediaQuery.of(context).size.width * 0.125);
   }
-  
+
   Widget _makeConstantSelector(bool isLeft) {
     AlertRuleOperand? constOperand = _predicate.constValue;
 
@@ -240,10 +299,10 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
       case FactsDataType.string:
         child = _makeDirectInput(isLeft, "Constante", Icon(Icons.sync_disabled));
     }
-    
+
     final onToggle = isLeft ? _handleConstLeftToggle : _handleConstRightToggle;
     final enabled = isLeft ? !_predicate.right.isConst  : !_predicate.left.isConst;
-    
+
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.42,
       child: Column(
@@ -259,7 +318,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
         ],
       ),
     );
-    
+
   }
 
   Widget _makeSide(AlertRuleOperand operand, bool isLeft,bool forced) {
@@ -274,15 +333,15 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
     TextStyle style = TextStyle(fontSize: 18);
     TextStyle selectedStyle = TextStyle(fontSize: 18, color: Colors.white);
 
-    selected(op) => op == _predicate.op;
+    selected(AlertPredicateOperation op) => op == _predicate.op;
 
     final ops = AlertPredicateOperation.values
-      .map((op) => 
+      .map((op) =>
         BadgeButton(
           text: op.toPrettyString(),
           textStyle: selected(op) ? selectedStyle : style,
           backgroundColor: selected(op) ? Color.fromRGBO(41, 99, 138, 1) : Colors.white,
-          onPressed: () => _handleOpToggle(op),
+          onPressed: _isOpEnabled(op) ? () => _handleOpToggle(op) : null,
         )).toList();
 
     return Padding(

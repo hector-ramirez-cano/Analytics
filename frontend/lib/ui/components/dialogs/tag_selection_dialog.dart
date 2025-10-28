@@ -13,6 +13,7 @@ class TagSelectionDialog extends SelectionDialog<String>{
     required super.isSelectedFn,
     required super.isAvailable,
     super.onTristateToggle,
+    super.subtitleBuilder
   });
   
   @override

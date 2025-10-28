@@ -14,6 +14,7 @@ class ChecklistDialog<T> extends SelectionDialog<T>{
     required super.onClose,
     required super.isSelectedFn,
     required super.isAvailable,
+    super.subtitleBuilder,
     super.selectorType = ListSelectorType.checkbox,
     super.onTristateToggle,
   });
@@ -44,6 +45,7 @@ class ChecklistDialog<T> extends SelectionDialog<T>{
           toText: toText,
           isAvailable: isAvailable,
           onTristateToggle: onTristateToggle,
+          subtitleBuilder: subtitleBuilder,
         ),
       );
       

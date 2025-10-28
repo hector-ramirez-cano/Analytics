@@ -3,6 +3,8 @@ import 'package:network_analytics/ui/components/list_selector.dart';
 
 
 Icon? noIcon(dynamic _) => null;
+Widget? noSubtitle (dynamic _) => null;
+
 abstract class SelectionDialog<T> {
 
   final Set<T> options;
@@ -11,7 +13,8 @@ abstract class SelectionDialog<T> {
   final VoidCallback onClose;
   final bool Function(dynamic) isSelectedFn;
   final void Function(bool)? onTristateToggle;
-  final Icon? Function(dynamic) leadingIconFn;
+  final Icon? Function(dynamic) leadingIconBuilder;
+  final Widget? Function(dynamic) subtitleBuilder;
   final bool Function(dynamic) isAvailable;
 
   const SelectionDialog({
@@ -22,8 +25,8 @@ abstract class SelectionDialog<T> {
     required this.isSelectedFn,
     required this.onTristateToggle,
     required this.isAvailable,
-
-    this.leadingIconFn = noIcon,
+    this.subtitleBuilder = noSubtitle,
+    this.leadingIconBuilder = noIcon,
   });
   
 

@@ -2,7 +2,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/services/app_config.dart';

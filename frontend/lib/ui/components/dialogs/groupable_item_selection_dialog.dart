@@ -13,6 +13,8 @@ Icon? defaultIcons(dynamic item) {
   return null;
 }
 
+Widget? defaultSubtitle(dynamic _) => null;
+
 class GroupableItemSelectionDialog extends SelectionDialog<GroupableItem>{
 
   const GroupableItemSelectionDialog({
@@ -22,7 +24,8 @@ class GroupableItemSelectionDialog extends SelectionDialog<GroupableItem>{
     required super.onClose,
     required super.isSelectedFn,
     required super.isAvailable,
-    super.leadingIconFn = defaultIcons,
+    super.leadingIconBuilder = defaultIcons,
+    super.subtitleBuilder = defaultSubtitle,
     super.onTristateToggle,
   });
   
@@ -49,7 +52,8 @@ class GroupableItemSelectionDialog extends SelectionDialog<GroupableItem>{
         toText: toText,
         isAvailable: isAvailable,
         onTristateToggle: onTristateToggle,
-        leadingIconFn: leadingIconFn,
+        leadingIconBuilder: leadingIconBuilder,
+        subtitleBuilder: subtitleBuilder,
       ),
     );
     
