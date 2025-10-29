@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum
 
 from psycopg_pool import PoolTimeout
 
@@ -15,6 +16,7 @@ class FactGatheringBackend:
     instance = None
     listeners = []
     metrics_cache = {}
+    status_cache = {}
 
     def __new__(cls, *_, **__):
         if cls.instance is None:
@@ -32,10 +34,33 @@ class FactGatheringBackend:
         FactGatheringBackend().instance.listeners.append(queue)
 
     @staticmethod
+    def remove_listener(queue: asyncio.Queue[tuple]):
+        FactGatheringBackend().instance.listeners.remove(queue)
+
+
+    @staticmethod
     async def notify_listeners(metrics: dict):
         for listener in FactGatheringBackend().listeners:
-            await listener.put(metrics)
 
+            if callable(listener):
+                await listener(metrics)
+
+            elif isinstance(listener, asyncio.Queue):
+                await listener.put(metrics)
+
+            else:
+                print("[ERROR]Called to notify listener that is neither callable, nor an async queue")
+
+    @staticmethod
+    def to_dict(obj):
+        if isinstance(obj, dict):
+            return {k: FactGatheringBackend.to_dict(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [FactGatheringBackend.to_dict(v) for v in obj]
+        elif isinstance(obj, Enum):
+            return obj.name  # or str(obj), or obj.value depending on desired format
+        else:
+            return obj
 
     @staticmethod
     def __recursive_merge(dict1, dict2):
@@ -111,7 +136,9 @@ class FactGatheringBackend:
         analytics = loop.run_in_executor(None, update_device_analytics, metrics)
 
         # TODO: Update local cache for ws requests
-        FactGatheringBackend().metrics_cache = FactGatheringBackend.__recursive_merge(FactGatheringBackend().metrics_cache, metrics)
+        singleton = FactGatheringBackend()
+        singleton.metrics_cache = FactGatheringBackend.__recursive_merge(singleton.metrics_cache, metrics)
+        singleton.status_cache  = FactGatheringBackend.__recursive_merge(singleton.status_cache, status)
 
         await metadata
         await analytics

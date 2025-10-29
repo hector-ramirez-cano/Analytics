@@ -10,6 +10,7 @@ from typing import List
 from model.db.operations.dashboard_operations import get_dashboards_as_dict
 from model.db.health_check import check_connections
 from model.db.operations.influx_operations import InfluxFilter, get_metric_data
+from model.db.fetch_topology import get_topology_as_dict
 from model.cache import Cache
 from model.facts.fact_gathering_backend import FactGatheringBackend
 from controller.sentinel import Sentinel
@@ -133,7 +134,7 @@ async def check_backend_ws(data_out_queue : janus.Queue):
     Args:
         data_out_queue (janus.Queue): Queue instance to which the check will be posted
     """
-    await data_out_queue.async_q.put(str(check_connections))
+    await data_out_queue.async_q.put(str(check_connections()))
 
 async def syslog_ws(signal_queue: janus.Queue, data: dict | list):
     """Executes commands related to syslog db access for past syslog messages.
@@ -171,6 +172,24 @@ async def alerts_ws(signal_queue: janus.Queue, data: dict):
     elif isinstance(data, dict):
         # if 'dict', it's only one, so only execute once
         await signal_queue.async_q.put(data)
+
+async def device_health_rt(data_out_queue: janus.Queue, _data: dict):
+    msg = {
+        "type": "link",
+        "msg": FactGatheringBackend.to_dict(FactGatheringBackend().status_cache)
+    }
+    await data_out_queue.async_q.put(json.dumps(msg))
+
+
+async def get_topology(data_out_queue: janus.Queue):
+    topology = get_topology_as_dict()
+    topology = json.dumps(topology)
+    msg = {
+        "type": "topology",
+        "msg": topology
+    }
+    await data_out_queue.async_q.put(json.dumps(msg))
+
 
 
 async def syslog_rt(data_out_queue: janus.Queue, queue_in: asyncio.Queue, finished: threading.Event):

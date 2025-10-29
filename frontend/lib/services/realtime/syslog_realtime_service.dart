@@ -30,10 +30,7 @@ class WsSyslogMessageQueue {
 
 @riverpod
 class SyslogRealtimeService extends _$SyslogRealtimeService {
-
-
   Semaphore serviceReady = Semaphore();
-
 
   void _attachRxMessageListener() {
     ref.read(websocketServiceProvider.notifier).attachListener('syslog-rt', 'syslog-rt', (json) {

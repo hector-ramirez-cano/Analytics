@@ -8,6 +8,7 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/canvas/canvas_state_notifier.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
+import 'package:network_analytics/services/topology/topology_provider.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/components/universal_detector.dart';
 import 'package:network_analytics/ui/screens/canvas/topology_canvas_painter.dart';
@@ -118,11 +119,11 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
       (context, ref, child) {
         final canvasInteractionService = ref.watch(canvasInteractionServiceProvider);
         final canvasItemSelection = ref.watch(itemSelectionProvider);
-        final topologyAsync = ref.watch(topologyProvider);
+        final topologyAsync = ref.watch(topologyServiceProvider);
         final canvasState = ref.watch(canvasStateProvider);
 
         onRetry () async => {
-          ref.refresh(topologyProvider.future)
+          ref.refresh(topologyServiceProvider.future)
         };
 
         return topologyAsync.when(

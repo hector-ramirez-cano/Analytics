@@ -9,6 +9,7 @@ from controller import get_operations, post_operations, ws_operations
 from controller.sentinel import Sentinel
 from model.alerts.alert_backend import AlertBackend
 from model.syslog.syslog_backend import SyslogBackend
+from model.facts.fact_gathering_backend import FactGatheringBackend
 from model.db.health_check import health_check_listeners
 
 
@@ -74,14 +75,19 @@ async def __api_configure():
 @app.websocket("/ws/router")
 async def __api_ws_router():
 
-    health_check_subscription_queue = asyncio.Queue()
+    backend_health_check_subscription_queue = asyncio.Queue()
     alerts_subscription_queue = asyncio.Queue()
     syslog_subscription_queue = asyncio.Queue()
 
+    # TODO: Kill all sons o' bitches, those are my official instructions
+    # TODO: Move listeners to raw functions where it's viable
     data_out_queue = janus.Queue()
     syslog_signal_queue = janus.Queue()
     alert_signal_queue = janus.Queue()
     finished_event = threading.Event()
+
+    async def device_health_rt(d: dict):
+        await ws_operations.device_health_rt(data_out_queue, d)
 
     syslog_thread = SyslogBackend.spawn_log_stream(
         data_out_queue.sync_q,
@@ -96,9 +102,10 @@ async def __api_ws_router():
     )
 
     # Subscribe to event notifiers
-    health_check_listeners.append(health_check_subscription_queue)
+    health_check_listeners.append(backend_health_check_subscription_queue)
     SyslogBackend.register_listener(syslog_subscription_queue)
     AlertBackend.register_listener(alerts_subscription_queue)
+    FactGatheringBackend.register_listener(device_health_rt)
 
     async def rx(finished_event: asyncio.Event):
         while not finished_event.is_set():
@@ -137,9 +144,10 @@ async def __api_ws_router():
                     await ws_operations.query_facts(data_out_queue, inner_data, "facts")
 
                 case "metadata":
-                    # TODO: Change this, so metadata comes from database, facts come from local cache ? (is it useful?)
                     await ws_operations.query_facts(data_out_queue, inner_data, "metadata")
 
+                case "topology":
+                    await ws_operations.get_topology(data_out_queue)
 
                 case _:
                     msg = {
@@ -164,7 +172,6 @@ async def __api_ws_router():
     syslog_rt = asyncio.create_task(ws_operations.syslog_rt(data_out_queue, syslog_subscription_queue, finished_event))
     alerts_rt = asyncio.create_task(ws_operations.alerts_rt(data_out_queue, alerts_subscription_queue , finished_event))
 
-
     try:
         await asyncio.gather(producer, consumer, syslog_thread, alert_thread, alerts_rt, syslog_rt)
     except Exception as e:
@@ -175,9 +182,10 @@ async def __api_ws_router():
     finally:
         # remove subscriptions
 
-        health_check_listeners.remove(health_check_subscription_queue) # TODO: Change this to stop interacting directly with the queue
+        health_check_listeners.remove(backend_health_check_subscription_queue) # TODO: Change this to stop interacting directly with the queue
         SyslogBackend.remove_listener(syslog_subscription_queue)
         AlertBackend.remove_listener(alerts_subscription_queue)
+        FactGatheringBackend.remove_listener(device_health_rt)
 
         # task queues to close via sentinels
         sentinel = Sentinel()
@@ -196,11 +204,6 @@ async def __api_ws_router():
         await data_out_queue.aclose()
         await websocket.close(-1)
 
-
-@app.websocket("/ws/topology")
-async def __api_topology_ws():
-    # TODO: Handle topology via websocket
-    pass
 
 
 @app.route("/api/schema/<selected>")

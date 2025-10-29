@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_analytics/extensions/circular_ring_buffer.dart';
-import 'package:network_analytics/services/syslog/syslog_realtime_service.dart';
+import 'package:network_analytics/services/realtime/syslog_realtime_service.dart';
 
 class LiveLogViewer extends ConsumerStatefulWidget {
   final ValueNotifier<double> height;

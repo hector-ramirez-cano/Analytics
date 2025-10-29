@@ -67,7 +67,7 @@ class WsState {
 }
 
 class WsListener{
-  Function(dynamic) callback;
+  Function(Map<String, dynamic>) callback;
   String filterString;
 
   WsListener({
@@ -150,7 +150,7 @@ class WebsocketService extends _$WebsocketService {
     );
   }
 
-  void attachListener(String typeFilter, String key, Function(dynamic) listener, ) => listeners[key] = (WsListener(callback: listener, filterString: typeFilter));
+  void attachListener(String typeFilter, String key, Function(Map<String, dynamic>) listener, ) => listeners[key] = (WsListener(callback: listener, filterString: typeFilter));
   
   void removeListener(String key) => listeners.remove(key);
 

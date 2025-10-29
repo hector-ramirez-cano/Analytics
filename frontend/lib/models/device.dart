@@ -9,9 +9,10 @@ import 'package:network_analytics/services/canvas/canvas_interaction_service.dar
 import 'package:network_analytics/theme/app_colors.dart';
 
 class Device extends GroupableItem<Device> implements HoverTarget{
-  final Offset position;    // x, y
-  final LatLng geoPosition; // Lat , Long
+  final Offset position;     // x, y
+  final LatLng geoPosition;  // Lat , Long
   final String mgmtHostname;
+  final bool? reachable;      // null => unknown
 
   final Set<String> requestedMetadata;
   final Set<String> requestedMetrics;
@@ -24,11 +25,11 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     required this.position,
     required this.geoPosition,
     required this.mgmtHostname,
+    required this.reachable,
     required Set<String> requestedMetadata,
     required Set<String> requestedMetrics,
     required Set<String> availableValues,
     required Set<String> dataSources,
-    
   }): 
     requestedMetadata = Set.unmodifiable(requestedMetadata),
     requestedMetrics = Set.unmodifiable(requestedMetrics),
@@ -45,6 +46,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     Set? requestedMetrics,
     Set? availableValues,
     Set? dataSources,
+    bool? reachable,
   }) {
     return Device(
       id               : id ?? this.id,
@@ -56,6 +58,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
       requestedMetrics : Set.from(requestedMetrics ?? this.requestedMetrics),
       availableValues  : Set.from(availableValues ?? this.availableValues),
       dataSources      : Set.from(dataSources ?? this.dataSources),
+      reachable        : reachable,
     );
   }
 
@@ -91,6 +94,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
       requestedMetrics:  Set<String>.from(json['configuration']['requested-metrics']),
       availableValues:   Set<String>.from(json['configuration']['available-values']),
       dataSources:       Set<String>.from(json['configuration']['data-sources']),
+      reachable: json['reachable'],
     );
   }
 
@@ -120,7 +124,8 @@ class Device extends GroupableItem<Device> implements HoverTarget{
       requestedMetadata: {},
       requestedMetrics: {},
       availableValues: {},
-      dataSources: {}
+      dataSources: {},
+      reachable: null,
     );
   }
 
@@ -152,8 +157,17 @@ class Device extends GroupableItem<Device> implements HoverTarget{
   Paint getPaint(Offset position, Size size) {
     final rect = Rect.fromCircle(center: position, radius: 6);
 
+    if (reachable == true) {
+      return Paint()
+        ..shader = AppColors.deviceUpGradient.createShader(rect);  
+    }
+    if (reachable == false) {
+      return Paint()
+        ..shader = AppColors.deviceDownGradient.createShader(rect);  
+    }
     return Paint()
-      ..shader = AppColors.deviceGradient.createShader(rect);
+      ..shader = AppColors.deviceUnknownGradient.createShader(rect);  
+    
 
   }
 

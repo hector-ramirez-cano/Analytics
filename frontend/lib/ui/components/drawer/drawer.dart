@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/alerts/alert_rules_service.dart';
 import 'package:network_analytics/services/screen_selection_notifier.dart';
+import 'package:network_analytics/services/topology/topology_provider.dart';
 import 'package:network_analytics/ui/components/drawer/item_edit_drawer.dart';
 import 'package:network_analytics/ui/components/drawer/listing_drawer.dart';
 import 'package:network_analytics/models/enums/navigation_rail_item.dart';
@@ -23,7 +23,7 @@ class SideDrawer extends ConsumerStatefulWidget{
 class _SideDrawerState extends ConsumerState<SideDrawer> {
 
   void _onRetry() {
-    var _ = ref.refresh(topologyProvider.future);
+    var _ = ref.refresh(topologyServiceProvider.future);
   }
 
   Widget _buildContent(AsyncValue<Topology> topology, AsyncValue<AlertRuleSet> ruleSet,) {
@@ -108,7 +108,7 @@ class _SideDrawerState extends ConsumerState<SideDrawer> {
 
     return Consumer(builder: 
       (context, ref, child) {
-        var topology = ref.watch(topologyProvider);
+        var topology = ref.watch(topologyServiceProvider);
         var ruleSet = ref.watch(alertRulesServiceProvider);
 
         SideDrawer.logger.d("1 Triggered a drawer rebuild with topology=$topology");

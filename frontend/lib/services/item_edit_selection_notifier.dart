@@ -14,6 +14,7 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/alerts/alert_rules_service.dart';
 import 'package:network_analytics/services/app_config.dart';
+import 'package:network_analytics/services/topology/topology_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'item_edit_selection_notifier.g.dart';
@@ -301,7 +302,7 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
       discard();
 
       // force update topology and ruleset
-      ref.invalidate(topologyProvider);
+      ref.invalidate(topologyServiceProvider);
       ref.invalidate(alertRulesServiceProvider);
 
     } catch (exception, _) {

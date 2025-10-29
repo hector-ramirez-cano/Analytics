@@ -8,8 +8,18 @@ class AppColors {
   static const Color backgroundColor = Color(0xFFF5F5F5);
   static const Color selectedIconColor = Colors.blueAccent;
 
-  static final Gradient deviceGradient = RadialGradient(
+  static final Gradient deviceUpGradient = RadialGradient(
     colors: [Color.fromRGBO(0, 128, 0, 1), Color.fromRGBO(0, 128, 0, 0.90)],
+    stops: [0.0, 1.0]
+  );
+
+  static final Gradient deviceDownGradient = RadialGradient(
+    colors: [Color.fromRGBO(255, 0, 0, 1), Color.fromRGBO(255, 86, 86, 0.894)],
+    stops: [0.0, 1.0]
+  );
+
+  static final Gradient deviceUnknownGradient = RadialGradient(
+    colors: [Color.fromRGBO(196, 148, 17, 1), Color.fromRGBO(207, 115, 8, 0.898)],
     stops: [0.0, 1.0]
   );
 

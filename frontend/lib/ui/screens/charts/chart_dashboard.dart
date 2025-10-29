@@ -4,8 +4,8 @@ import 'package:network_analytics/models/charts/dashboard_polling_definition.dar
 import 'package:network_analytics/models/charts/metadata_polling_definition.dart';
 import 'package:network_analytics/models/charts/metric_polling_definition.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/dashboard_service.dart';
+import 'package:network_analytics/services/topology/topology_provider.dart';
 import 'package:network_analytics/services/websocket_service.dart';
 import 'package:network_analytics/ui/components/dashboard.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
@@ -26,7 +26,7 @@ class ChartDashboard extends ConsumerStatefulWidget {
 
 class _ChartDashboardState extends ConsumerState<ChartDashboard> {
 
-  void onRetry() async { ref.invalidate(websocketServiceProvider); ref.invalidate(topologyProvider); }
+  void onRetry() async { ref.invalidate(websocketServiceProvider); ref.invalidate(topologyServiceProvider); }
 
   DashboardWidget _widgetFromDashboardItem(DashboardItem item, Topology topology) {
     final Widget child;
@@ -65,7 +65,7 @@ class _ChartDashboardState extends ConsumerState<ChartDashboard> {
   }
 
   Widget _fromLayouts(List<DashboardLayout> layouts) {
-    final topologyAsync = ref.watch(topologyProvider);
+    final topologyAsync = ref.watch(topologyServiceProvider);
 
     return topologyAsync.when(
       error: (e, _) => RetryIndicator(onRetry: () async => onRetry, isLoading: false, error: e),

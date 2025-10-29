@@ -19,7 +19,7 @@ class Device:
 
     state: DeviceStatus = field(default_factory=DeviceStatus)
     metadata: Dict[str, Any] = field(default_factory=dict)
-
+    
 
 
     @staticmethod

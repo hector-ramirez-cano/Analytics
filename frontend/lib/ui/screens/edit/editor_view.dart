@@ -10,6 +10,7 @@ import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/alerts/alert_rules_service.dart';
 import 'package:network_analytics/services/item_edit_selection_notifier.dart';
+import 'package:network_analytics/services/topology/topology_provider.dart';
 import 'package:network_analytics/ui/components/retry_indicator.dart';
 import 'package:network_analytics/ui/screens/edit/alert/alert_edit_view.dart';
 import 'package:network_analytics/ui/screens/edit/device/device_edit_view.dart';
@@ -67,11 +68,11 @@ class ItemEditView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer (builder: 
       (context, ref, child) {
-        final topologyAsync = ref.watch(topologyProvider);
+        final topologyAsync = ref.watch(topologyServiceProvider);
         final ruleSetAsync  = ref.watch(alertRulesServiceProvider);
 
         onRetry () async {
-          final _ = ref.refresh(topologyProvider.future);
+          final _ = ref.refresh(topologyServiceProvider.future);
           final _ = ref.refresh(alertRulesServiceProvider.future);
         }
 

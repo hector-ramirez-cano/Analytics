@@ -7,11 +7,12 @@ import 'package:network_analytics/models/link.dart';
 
 class Topology {
   Map<int, dynamic> items;
+  Map<String, Device>? _deviceHostnames;
 
   Topology({
     required Map<int, dynamic> items,
-  }) : items = Map.unmodifiable(items);
-
+  }) :  items = Map.unmodifiable(items);
+  
   Topology copyWith({Map<int, dynamic>? items, List<Group>? groups}) {
     return Topology(items: items ?? this.items);
   }
@@ -52,26 +53,38 @@ class Topology {
     return items;
   }
 
+  // TODO: Memoize
   Set<Device> get devices {
     return items.values.whereType<Device>().toSet();
   }
 
+  // TODO: Memoize
   Set<Link> get links {
     return items.values.whereType<Link>().toSet();
   }
 
+  // TODO: Memoize
   Set<Group> get groups {
     return items.values.whereType<Group>().toSet();
   }
 
+  // TODO: Memoize
   Set<Link> getDeviceLinks(Device device) {
     return links.where((link) => link.sideA.id == device.id || link.sideB.id == device.id).toSet();
   }
 
+  // TODO: Memoize
   Set<Group> getDeviceGroups(Device device) {
     return groups.where((group) => group.hasDevice(device)).toSet();
   }
 
+  Map<String, Device> get deviceHostnames {
+    _deviceHostnames ??= Map.fromEntries(devices.map((device) => MapEntry(device.mgmtHostname, device)));
+
+    return _deviceHostnames!;
+  }
+
+  // TODO: Memoize
   Set<String> getAllAvailableValues(GroupableItem item) {
     if (item is Device) {
       return item.availableValues;
@@ -85,6 +98,10 @@ class Topology {
     else {
       throw Exception("Unexpected type for gathering all available values");
     }
+  }
+
+  Device? getDeviceByHostname(String hostname) {
+    return deviceHostnames[hostname];
   }
 
   
