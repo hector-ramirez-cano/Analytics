@@ -1,0 +1,36 @@
+import 'package:network_analytics/models/device.dart';
+import 'package:network_analytics/models/link.dart';
+import 'package:network_analytics/models/topology.dart';
+import 'package:network_analytics/models/topology_view/topology_view_template.dart';
+
+class TopologyView {
+  final TopologyViewTemplate template;
+  final Topology topology;
+  // TODO: Add things like zoom, and other state things
+
+  Set<Device>? _devices;
+  Set<Link>? _links;
+
+  TopologyView({
+    required this.template,
+    required this.topology
+  });
+
+  TopologyView copyWith({Topology? topology, TopologyViewTemplate? template}) {
+    return TopologyView(template: template ?? this.template, topology: topology ?? this.topology);
+  }
+
+  // TODO: Memoize
+  Set<Device> get devices {
+    _devices = topology.devices.where((Device d) => template.members.containsKey(d.id)).toSet();
+
+    return _devices!;
+  }
+
+  // TODO: Memoize
+  Set<Link> get links {
+    _links = topology.links.where((Link link) => devices.contains(link.sideA) || devices.contains(link.sideB)).toSet();
+
+    return  _links!;
+  }
+}

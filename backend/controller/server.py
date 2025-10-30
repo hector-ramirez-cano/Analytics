@@ -149,6 +149,9 @@ async def __api_ws_router():
                 case "topology":
                     await ws_operations.get_topology(data_out_queue)
 
+                case "topology-view":
+                    await ws_operations.get_topology_view(data_out_queue)
+
                 case _:
                     msg = {
                         "type": "error",

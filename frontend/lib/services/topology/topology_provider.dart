@@ -1,7 +1,3 @@
-
-
-import 'dart:convert';
-
 import 'package:network_analytics/extensions/semaphore.dart';
 import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/device.dart';
@@ -20,7 +16,7 @@ class TopologyService extends _$TopologyService {
   
   void onTopology(Map<String, dynamic> response) {
     // TODO: Status on initial response
-    _parsed = Topology.fromJson(json.decode(response["msg"]));
+    _parsed = Topology.fromJson(response["msg"]);
 
     state = AsyncValue.data(_parsed!);
     _firstRun.signal();
@@ -53,7 +49,10 @@ class TopologyService extends _$TopologyService {
     }
 
     _parsed = _parsed!.copyWith(items: itemsCopy);
-    state = AsyncValue.data(_parsed!);
+
+    if (_firstRun.isComplete) {
+      state = AsyncValue.data(_parsed!);
+    }
   }
 
   @override

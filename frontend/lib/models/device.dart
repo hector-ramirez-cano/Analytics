@@ -9,7 +9,6 @@ import 'package:network_analytics/services/canvas/canvas_interaction_service.dar
 import 'package:network_analytics/theme/app_colors.dart';
 
 class Device extends GroupableItem<Device> implements HoverTarget{
-  final Offset position;     // x, y
   final LatLng geoPosition;  // Lat , Long
   final String mgmtHostname;
   final bool? reachable;      // null => unknown
@@ -22,7 +21,6 @@ class Device extends GroupableItem<Device> implements HoverTarget{
   Device({
     required super.id,
     required super.name,
-    required this.position,
     required this.geoPosition,
     required this.mgmtHostname,
     required this.reachable,
@@ -50,7 +48,6 @@ class Device extends GroupableItem<Device> implements HoverTarget{
   }) {
     return Device(
       id               : id ?? this.id,
-      position         : position ?? this.position,
       name             : name ?? this.name,
       geoPosition      : geoPosition ?? this.geoPosition,
       mgmtHostname     : mgmtHostname ?? this.mgmtHostname,
@@ -81,10 +78,6 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     return Device(
       id  : json['id'] as int,
       name: json['name'] as String,
-      position: Offset(
-        json['coordinates'][0] as double,
-        json['coordinates'][1] as double,
-      ),
       geoPosition: LatLng(
         json['geocoordinates'][0] as double,
         json['geocoordinates'][1] as double,
@@ -102,7 +95,6 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     return {
       'id': id,
       'name': name,
-      'coordinates': [position.dx, position.dy],
       'geocoordinates': [geoPosition.latitude, geoPosition.longitude],
       'management-hostname': mgmtHostname,
       'configuration': {
@@ -117,7 +109,6 @@ class Device extends GroupableItem<Device> implements HoverTarget{
   factory Device.empty() {
     return Device(
       id: -1*Random(2).nextInt(10000),
-      position: Offset.zero,
       name: "Nuevo Dispositivo",
       geoPosition: LatLng(0, 0),
       mgmtHostname: "",
@@ -140,7 +131,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
   }
 
   @override
-  bool hitTest(Offset point) {
+  bool hitTest(Offset point, Offset position) {
     return (point - position).distanceSquared <= 0.0001;
   }
 
@@ -222,13 +213,6 @@ class Device extends GroupableItem<Device> implements HoverTarget{
       return false;
     }
     return geoPosition != (topology.items[id] as Device?)?.geoPosition; 
-  }
-
-  bool isModifiedPosition(Topology topology) {
-    if (!topology.items.containsKey(id)) {
-      return false;
-    }
-    return position != (topology.items[id] as Device?)?.position; 
   }
 
   @override

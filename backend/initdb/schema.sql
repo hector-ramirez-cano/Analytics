@@ -1,19 +1,27 @@
 CREATE SCHEMA IF NOT EXISTS Analytics;
 
+-- Custom function to validate ID is device or group
+CREATE OR REPLACE FUNCTION validate_item_id(item_id BIGINT)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (SELECT 1 FROM Analytics.devices WHERE device_id = item_id)
+        OR EXISTS (SELECT 1 FROM Analytics.groups WHERE group_id = item_id);
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TYPE ItemType AS ENUM ('device', 'link', 'group');
 CREATE TYPE LinkType AS ENUM ('optical', 'copper', 'wireless');
 CREATE TYPE DataSource AS ENUM('ssh', 'snmp', 'icmp');
 
+CREATE SEQUENCE global_item_id_seq;
 CREATE TABLE IF NOT EXISTS Analytics.items (
     id SERIAL PRIMARY KEY,
     item_type ItemType NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.devices (
-    device_id           SERIAL PRIMARY KEY,
+    device_id           INT PRIMARY KEY DEFAULT nextval('global_item_id_seq'),
     device_name         VARCHAR(254),
-    position_x          FLOAT        NOT NULL,
-    position_y          FLOAT        NOT NULL,
     latitude            FLOAT        NOT NULL,
     longitude           FLOAT        NOT NULL,
     management_hostname VARCHAR(254) NOT NULL,
@@ -31,16 +39,35 @@ CREATE TABLE IF NOT EXISTS Analytics.devices (
     CONSTRAINT chk_lng_in_range CHECK (longitude >= -180 AND longitude <= 180)
 );
 
+CREATE TABLE IF NOT EXISTS Analytics.topology_views(
+    topology_views_id SERIAL PRIMARY KEY,
+    is_physical_view  BOOLEAN NOT NULL,
+    name              VARCHAR NOT NULL
+);
+
+-- DROP TABLE Analytics.topology_views_member;
+CREATE TABLE IF NOT EXISTS Analytics.topology_views_member(
+    topology_views_id INT NOT NULL,
+    item_id           INT NOT NULL,
+    position_x        FLOAT DEFAULT 0.0,
+    position_y        FLOAT DEFAULT 0.0,
+
+    FOREIGN KEY (topology_views_id) REFERENCES Analytics.topology_views ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES Analytics.items ON DELETE CASCADE,
+
+    CONSTRAINT chk_topology_view_members CHECK (validate_item_id(item_id))
+);
+
 
 CREATE TABLE IF NOT EXISTS Analytics.device_data_sources(
-    device_id           SERIAL     NOT NULL,
-    data_source         DataSource NOT NULL,
+    device_id    INT        NOT NULL,
+    data_source  DataSource NOT NULL,
 
     FOREIGN KEY (device_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.links (
-    link_id   SERIAL PRIMARY KEY,
+    link_id   INT PRIMARY KEY DEFAULT nextval('global_item_id_seq'),
     side_a    INT NOT NULL,
     side_b    INT NOT NULL,
     side_a_iface VARCHAR(254) NOT NULL,
@@ -83,8 +110,8 @@ CREATE TABLE IF NOT EXISTS Analytics.alert_rules (
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.groups (
-    group_id SERIAL PRIMARY KEY,
-    group_name VARCHAR(254) NOT NULL,
+    group_id         INT PRIMARY KEY DEFAULT nextval('global_item_id_seq'),
+    group_name       VARCHAR(254) NOT NULL,
     is_display_group BOOLEAN NOT NULL,
 
     FOREIGN KEY (group_id) REFERENCES Analytics.items(id) ON DELETE CASCADE
@@ -92,7 +119,7 @@ CREATE TABLE IF NOT EXISTS Analytics.groups (
 
 CREATE TABLE IF NOT EXISTS Analytics.group_members (
     group_id INT NOT NULL,
-    item_id INT NOT NULL,
+    item_id  INT NOT NULL,
 
     FOREIGN KEY (group_id) REFERENCES Analytics.groups(group_id) ON DELETE CASCADE,
     FOREIGN KEY (item_id) REFERENCES Analytics.items(id) ON DELETE CASCADE,

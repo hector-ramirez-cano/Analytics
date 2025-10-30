@@ -14,7 +14,22 @@ class Topology {
   }) :  items = Map.unmodifiable(items);
   
   Topology copyWith({Map<int, dynamic>? items, List<Group>? groups}) {
-    return Topology(items: items ?? this.items);
+    // update inner references
+    
+    final itemsMap = items ?? this.items;
+
+    // Resolve new references into links for devices
+    for (var entry in itemsMap.entries) {
+      if (entry.value is! Link) continue;
+      Link l = entry.value;
+      Device sideA = itemsMap[l.sideA.id];
+      Device sideB = itemsMap[l.sideB.id];
+      l = l.copyWith(sideA: sideA, sideB: sideB);
+      
+      itemsMap[l.id] = l;
+    }
+
+    return Topology(items: itemsMap);
   }
 
   factory Topology.fromJson(Map<String, dynamic> json) {

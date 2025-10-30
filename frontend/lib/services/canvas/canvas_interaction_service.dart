@@ -9,7 +9,7 @@ import 'package:logger/web.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
 import 'package:network_analytics/extensions/offset.dart';
 import 'package:network_analytics/services/app_config.dart';
-import 'package:network_analytics/services/canvas/canvas_state_notifier.dart';
+import 'package:network_analytics/services/canvas/canvas_tabs_notifier.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
 
 typedef ItemChangedCallback = Function(bool);
@@ -18,7 +18,7 @@ typedef CanvasSizeChangedCallback = Function(Size size);
 typedef ScaleChangedCallback = Function(Offset cursorPixel, double scaleDelta, Size canvasSize);
 
 abstract class HoverTarget {
-  bool hitTest(Offset position);
+  bool hitTest(Offset point, Offset position);
   int getId();
 }
 
@@ -36,11 +36,21 @@ class CanvasInteractionService {
 
   /// 
   /// Retrieves the first target over which the position (in global space) is colliding with. If no collision is detected, null will be returned
-  /// [position] global-space position of the cursor, for which collision will be detected
+  /// [point] global-space position of the cursor, for which collision will be detected
   /// 
-  HoverTarget? getHoveredTarget(Offset position) {
+  HoverTarget? getHoveredTarget(Offset point, CanvasTabs canvasTabs) {
+    final selectedTab = canvasTabs.selectedTab;
+    if (selectedTab == null) return null;
+
     for (final target in targets) {
-      if (target.hitTest(position)) return target;
+
+      // we need to calculate the position of the target in the current selectedTab
+      final viewMember = selectedTab.template.members[target.getId()];
+      if (viewMember == null) continue;
+
+      final position = viewMember.position;
+
+      if (target.hitTest(point, position)) return target;
     }
 
     return null;
@@ -56,24 +66,23 @@ class CanvasInteractionService {
   /// 
   /// Example: If zooming-in to the canvas with the focalPoint on the top-left of the canvas, the center will be shifted towards the top-left
   void zoomAt(Offset focalPoint, Offset focalPointDelta, double scaleDelta, Size canvasSize, WidgetRef ref) {
-    var state = ref.read(canvasStateProvider.notifier);
+    final canvasTab = ref.read(canvasTabsProvider.notifier);
+    final canvasState = canvasTab.canvasState!;
+    final newScale = (canvasState.scale * scaleDelta).clamp(0.1, 10.0);
+    final globalBefore = focalPoint.pixelToGlobal(canvasSize, canvasState.scale, canvasState.centerOffset);
 
-    final newScale = (state.scale * scaleDelta).clamp(0.1, 10.0);
+    canvasTab.setCanvasPosition(newScale, null);
 
-    final globalBefore = focalPoint.pixelToGlobal(canvasSize, state.scale, state.centerOffset);
-
-    state.setState(newScale, null);
-
-    final globalAfter = focalPoint.pixelToGlobal(canvasSize, state.scale, state.centerOffset);
+    final globalAfter = focalPoint.pixelToGlobal(canvasSize, canvasState.scale, canvasState.centerOffset);
 
     final panGlobalDelta = Offset(
-       focalPointDelta.dx / (canvasSize.width / 2 * state.scale),
-       focalPointDelta.dy / (canvasSize.height / 2 * state.scale),
+       focalPointDelta.dx / (canvasSize.width / 2 * canvasState.scale),
+       focalPointDelta.dy / (canvasSize.height / 2 * canvasState.scale),
     );
 
     // Adjust offset so zoom pivots around cursor
     final offsetDelta = globalAfter - globalBefore;
-    state.setState(null, state.centerOffset - offsetDelta - panGlobalDelta,);
+    canvasTab.setCanvasPosition(null, canvasState.centerOffset - offsetDelta - panGlobalDelta,);
   }
 
   ///
@@ -81,14 +90,15 @@ class CanvasInteractionService {
   /// [scaleDelta] multiplicative zoom delta
   /// [ref] WidgetRef to ripple-notify state to other widgets via Riverpod
   void zoom(double scaleDelta, WidgetRef ref) {
-    var state = ref.read(canvasStateProvider.notifier);
-    final newScale = (state.scale * scaleDelta).clamp(0.1, 10.0);
+    final canvasTab = ref.read(canvasTabsProvider.notifier);
+    final canvasState = canvasTab.canvasState!;
+    final newScale = (canvasState.scale * scaleDelta).clamp(0.1, 10.0);
 
-    state.setState(newScale, null);
+    canvasTab.setCanvasPosition(newScale, null);
   }
 
   void resetCanvasState(WidgetRef ref) {
-    ref.read(canvasStateProvider.notifier).reset();
+    ref.read(canvasTabsProvider.notifier).resetCanvasState();
   }
 
   void registerTarget(HoverTarget target) => targets.add(target);
@@ -100,7 +110,7 @@ class CanvasInteractionService {
   }
 
   void onCanvasStateChanged(double? scale, Offset? center, WidgetRef ref) {
-    ref.read(canvasStateProvider.notifier).setState(scale, center);
+    ref.read(canvasTabsProvider.notifier).setCanvasPosition(scale, center);
   }
   
   void onEnter(PointerEvent event, ItemChangedCallback onChangeSelection) {
@@ -118,10 +128,13 @@ class CanvasInteractionService {
     _hoverTimer = null;
   }
 
-  void onHover(PointerEvent event, ItemChangedCallback onChangeSelection, ItemSelection? itemSelection, Size canvasSize, CanvasState state, Offset? positionPx) {
-    if (positionPx != null) {
-      var position = positionPx.pixelToGlobal(canvasSize, state.scale, state.centerOffset);
-      var curr = getHoveredTarget(position);
+  void onHover(PointerEvent event, ItemChangedCallback onChangeSelection, ItemSelection? itemSelection, Size canvasSize, CanvasTabs tabs, Offset? cursorPx) {
+    final state = tabs.selectedState;
+    if (state == null) return;
+
+    if (cursorPx != null) {
+      var cursorPosition = cursorPx.pixelToGlobal(canvasSize, state.scale, state.centerOffset);
+      var curr = getHoveredTarget(cursorPosition, tabs);
 
       if (itemSelection != null && itemSelection.forced) {
         logger.d("Skipped interaction, selection is forced");
@@ -144,8 +157,11 @@ class CanvasInteractionService {
     }
   }
 
-  void onTapUp(TapUpDetails details, ItemChangedCallback onChangeSelection, ItemSelection? itemSelection, Size canvasSize, CanvasState state) {
-    hovered = getHoveredTarget(details.localPosition.pixelToGlobal(canvasSize, state.scale, state.centerOffset));
+  void onTapUp(TapUpDetails details, ItemChangedCallback onChangeSelection, ItemSelection? itemSelection, Size canvasSize, CanvasTabs tabs) {
+    final state = tabs.selectedState;
+    if (state == null) return;
+
+    hovered = getHoveredTarget(details.localPosition.pixelToGlobal(canvasSize, state.scale, state.centerOffset), tabs);
 
     bool forced = hovered != null;
     onChangeSelection(forced);

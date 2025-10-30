@@ -10,7 +10,7 @@ from typing import List
 from model.db.operations.dashboard_operations import get_dashboards_as_dict
 from model.db.health_check import check_connections
 from model.db.operations.influx_operations import InfluxFilter, get_metric_data
-from model.db.fetch_topology import get_topology_as_dict
+from model.db.fetch_topology import get_topology_as_dict, get_topology_view_as_dict
 from model.cache import Cache
 from model.facts.fact_gathering_backend import FactGatheringBackend
 from controller.sentinel import Sentinel
@@ -183,11 +183,34 @@ async def device_health_rt(data_out_queue: janus.Queue, _data: dict):
 
 async def get_topology(data_out_queue: janus.Queue):
     topology = get_topology_as_dict()
-    topology = json.dumps(topology)
     msg = {
         "type": "topology",
         "msg": topology
     }
+    await data_out_queue.async_q.put(json.dumps(msg))
+
+async def get_topology_view(data_out_queue: janus.Queue):
+    view = get_topology_view_as_dict()
+    msg = {}
+    if isinstance(view, list):
+        msg = {
+            "type": "topology-view",
+            "msg": {
+                "type": "get",
+                "msg": view
+            }
+        }
+    elif isinstance(view, str):
+        msg = {
+            "type": "error",
+            "msg": f"[BACKEND]{view}"
+        }
+    else:
+        msg = {
+            "type": "error",
+            "msg": f"[BACKEND]Encountered error, topology view db consult returned value='{str(view)}'"
+        }
+
     await data_out_queue.async_q.put(json.dumps(msg))
 
 

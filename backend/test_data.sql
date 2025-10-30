@@ -11,14 +11,14 @@ UPDATE Analytics.devices SET available_values = NULL;
 
 SELECT requested_metadata from Analytics.devices WHERE device_id = 1;
 
-SELECT Analytics.devices.device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, available_values 
+SELECT Analytics.devices.device_id, device_name, latitude, longitude, management_hostname, requested_metadata, available_values 
                 FROM Analytics.devices;
 
-INSERT INTO Analytics.devices (device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, requested_metrics) 
+INSERT INTO Analytics.devices (device_id, device_name, latitude, longitude, management_hostname, requested_metadata, requested_metrics) 
     VALUES 
-        (1, 'Xochimilco-lan',  0.5,  0.5, 21.159425, -101.645852, '10.144.1.222' , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]'),
-        (2, 'Tlatelolco-lan',  0.7, -0.2, 21.159425, -101.645852, '10.144.1.1'   , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]'),
-        (3, 'Obsidian-lan'  , -0.3 , 0.3, 21.159425, -101.645852, '10.144.1.225' , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]');
+        (1, 'Xochimilco-lan', 21.159425, -101.645852, '10.144.1.222' , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]'),
+        (2, 'Tlatelolco-lan', 21.159425, -101.645852, '10.144.1.1'   , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]'),
+        (3, 'Obsidian-lan'  , 21.159425, -101.645852, '10.144.1.225' , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]');
 
 SELECT * FROM Analytics.device_data_sources;
 INSERT INTO Analytics.device_data_sources (device_id, data_source)
@@ -102,8 +102,25 @@ SELECT count(1) AS count FROM Analytics.alerts OFFSET 0;
 -- DROP TABLE Analytics.telegram_receiver;
 -- TRUNCATE Analytics.telegram_receiver;
 select * from Analytics.telegram_receiver;
-INSERT INTO Analytics.telegram_receiver(telegram_user_id, authenticated, subscribed) 
-VALUES (6879383639, TRUE, TRUE) 
-ON CONFLICT(telegram_user_id) 
-    DO UPDATE SET authenticated = TRUE WHERE Analytics.telegram_receiver.telegram_user_id = 1;
 
+SELECT * FROM Analytics.topology_views;
+TRUNCATE Analytics.topology_views;
+INSERT INTO Analytics.topology_views(topology_views_id, is_physical_view, name)
+    VALUES  (0, FALSE, 'Hasta la vista'),
+            (1, FALSE, 'Baby'),
+            (2, TRUE , 'Globbus');
+
+-- DROP TABLE Analytics.topology_views_member;
+TRUNCATE Analytics.topology_views_member;
+
+SELECT * FROM Analytics.topology_views_member;
+INSERT INTO Analytics.topology_views_member(topology_views_id, item_id, position_x, position_y)
+    VALUES  (0, 1,  0.5,  0.5),
+            (0, 2,  0.7, -0.2),
+            (0, 3, -0.3 , 0.3), 
+
+            (1, 1, -0.5 , 0.5),
+            (1, 2,  0.7 , 0.5),
+            (1, 3, -0.3 , 0.3),
+
+            (2, 201, 0, 0);

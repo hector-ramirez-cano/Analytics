@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/services/canvas/canvas_tab_notifier.dart';
+import 'package:network_analytics/services/canvas/canvas_tabs_notifier.dart';
 import 'package:network_analytics/ui/components/chip_tab.dart';
 import 'package:network_analytics/ui/components/closable_chip.dart';
 import 'package:reorderables/reorderables.dart';
@@ -8,10 +8,10 @@ class ChipTabBar extends StatelessWidget {
 
   const ChipTabBar({super.key});
 
-  List<Widget> _makeChipTabs(CanvasTabNotifier notifier, UniqueKey? selected) {
+  List<Widget> _makeChipTabs(CanvasTabsNotifier notifier, UniqueKey? selected) {
 
-    closeTab(id) => notifier.remove(id);
-    selectTab(id) => notifier.setSelected(id);
+    closeTab(id) => notifier.removeTab(id);
+    selectTab(id) => notifier.setSelectedTab(id);
 
     return notifier.getTabsByOrder()
       .map(
@@ -25,9 +25,9 @@ class ChipTabBar extends StatelessWidget {
       ).toList();
   }
 
-  Widget _makeTabBar(CanvasTabNotifier notifier, List<Widget> children) {
-    openTab() => notifier.append("Nueva Vista");
-    onReorder(oldIndex, newIndex) => notifier.reoder(oldIndex, newIndex);
+  Widget _makeTabBar(CanvasTabsNotifier notifier, List<Widget> children) {
+    openTab() => {};//notifier.append("Nueva Vista"); // TODO: Add append on tab add
+    onReorder(oldIndex, newIndex) => notifier.reoderTabs(oldIndex, newIndex);
 
     return SizedBox(
 
@@ -57,9 +57,8 @@ class ChipTabBar extends StatelessWidget {
     return 
       Consumer(builder: 
         (context, ref, child) {
-          var _ = ref.watch(canvasTabProvider).tabs;
-          var selected = ref.watch(canvasTabProvider).selected;
-          var notifier = ref.watch(canvasTabProvider.notifier);
+          final selected = ref.watch(canvasTabsProvider).selected;
+          final notifier = ref.watch(canvasTabsProvider.notifier);
           var children = _makeChipTabs(notifier, selected);
 
           return Scrollbar(

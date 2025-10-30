@@ -11,7 +11,6 @@ import 'package:network_analytics/models/group.dart';
 import 'package:network_analytics/models/link.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/providers/providers.dart';
 import 'package:network_analytics/services/alerts/alert_rules_service.dart';
 import 'package:network_analytics/services/app_config.dart';
 import 'package:network_analytics/services/topology/topology_provider.dart';

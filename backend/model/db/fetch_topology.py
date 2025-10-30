@@ -7,14 +7,14 @@ from model.data.group import Group
 from model.data.link import Link
 from model.data.device_configuration import DeviceConfiguration
 from model.db.update_devices import update_topology_cache
+from model.db.pools import postgres_db_pool
 
 def get_topology_as_dict():
     """
     Acquires topology from database, and converts it into a dict
     """
-    devices, links, groups = Cache().topology
-
     update_topology_cache()
+    devices, links, groups = Cache().topology
 
     return {
         "devices": [device.to_dict() for device in devices.values()],
@@ -22,7 +22,39 @@ def get_topology_as_dict():
         "groups": [group.to_dict() for group in groups.values()]
     }
 
+def get_topology_view_as_dict():
+    """Acquires the topology views from the database, and converts them into a dict
+    """
+    try:
+        views : dict = {}
+        with postgres_db_pool().connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT topology_views_id, is_physical_view, name FROM Analytics.topology_views;"
+                )
+                for row in cur.fetchall():
+                    views[row[0]] = {
+                        "id": int(row[0]),
+                        "is-physical-view": row[1],
+                        "name": row[2],
+                        "members": []
+                    }
 
+                cur.execute(
+                    "SELECT topology_views_id, item_id, position_x, position_y FROM Analytics.topology_views_member;"
+                )
+                for row in cur.fetchall():
+                    pos = {
+                        "id": int(row[1]),
+                        "x": float(row[2]),
+                        "y": float(row[3])
+                    }
+                    views[row[0]]["members"].append(pos)
+
+        return list(views.values())
+
+    except Exception as e:
+        return str(e)
 
 
 def parse_devices(cur: ServerCursor):

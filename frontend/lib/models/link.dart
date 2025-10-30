@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:network_analytics/extensions/development_filter.dart';
+import 'package:network_analytics/extensions/offset.dart';
 import 'package:network_analytics/models/analytics_item.dart';
 import 'package:network_analytics/models/topology.dart';
 import 'package:network_analytics/services/item_selection_notifier.dart';
@@ -13,7 +14,6 @@ import 'package:logger/web.dart';
 import 'package:network_analytics/models/device.dart';
 import 'package:network_analytics/models/link_type.dart';
 import 'package:network_analytics/services/canvas/canvas_interaction_service.dart';
-import 'package:network_analytics/extensions/offset.dart';
 
 class Link extends AnalyticsItem<Link> implements HoverTarget {
   final Device sideA;
@@ -35,10 +35,10 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
     required this.sideAIface,
     required this.sideBIface,
   }) {
-
+    // TODO: Make this available again
     // equation of a line given two points
     // m = (y2 - y1) / (x2 - x1) 
-    double m = (sideB.position.dy - (sideA.position.dy + 0.0001)) / (sideB.position.dx - (sideA.position.dx + 0.0001));
+    // double m = (sideB.position.dy - (sideA.position.dy + 0.0001)) / (sideB.position.dx - (sideA.position.dx + 0.0001));
 
     // equation of a line given a point and the slope
     // y - y1 = m (x - x1) 
@@ -46,12 +46,12 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
     // point-slope to general form
     // mx -  y + (y1-mx1) = 0
     // Ax + By + C        = 0
-    A = m;
-    B = -1;
-    C = sideA.position.dy + 0.0001 - m * (sideA.position.dx + 0.0001);
-
-    logger.d("A=$A, B=$B, C=$C");
-    logger.d("sideA=${sideA.position}, sideB=${sideB.position}, m=$m");
+    // A = m;
+    // B = -1;
+    // C = sideA.position.dy + 0.0001 - m * (sideA.position.dx + 0.0001);
+    // 
+    // logger.d("A=$A, B=$B, C=$C");
+    // logger.d("sideA=${sideA.position}, sideB=${sideB.position}, m=$m");
   }
 
   Link copyWith({int? id, Device? sideA, Device? sideB, LinkType? linkType, String? sideAIface, String? sideBIface}) {
@@ -118,15 +118,17 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
     // d = | Axp + Byp + C |  / sqrt (A²+B²)
     // d²= ( Axp + Byp + C )² / (A² + B²)
 
-    double numerator   = A * point.dx + B * point.dy + C;
-    double denominator = A * A + B * B;
-    
-    logger.d("A=$A, B=$B, C=$C, Point=$point");
-    logger.d("Numerator = $numerator, Denominator=$denominator");
-
-    if (denominator == 0) return 10e23;
-
-    return numerator * numerator / denominator;
+    // TODO: Make this available again
+    // double numerator   = A * point.dx + B * point.dy + C;
+    // double denominator = A * A + B * B;
+    // 
+    // logger.d("A=$A, B=$B, C=$C, Point=$point");
+    // logger.d("Numerator = $numerator, Denominator=$denominator");
+    // 
+    // if (denominator == 0) return 10e23;
+    // 
+    // return numerator * numerator / denominator;
+    return double.infinity;
   }
 
   bool isModifiedAIface(Topology topology) {
@@ -138,17 +140,18 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
   }
 
   @override
-  bool hitTest(Offset point) {
+  bool hitTest(Offset point, Offset position) {
     // checks whether the point is within the square bounding box of the line
     final withinBounds = dist2(point) < 0.0005;
     
+    // TODO: Make this available again
     // Check bounding box overlap (i.e. P within X and Y bounds)
-    final withinX = (point.dx - sideA.position.dx) * (point.dx - sideB.position.dx) <= 0.01;
-    final withinY = (point.dy - sideA.position.dy) * (point.dy - sideB.position.dy) <= 0.01;
+    // final withinX = (point.dx - sideA.position.dx) * (point.dx - sideB.position.dx) <= 0.01;
+    // final withinY = (point.dy - sideA.position.dy) * (point.dy - sideB.position.dy) <= 0.01;
 
-    logger.d("Hit test, withinBounds $withinBounds, withinX=$withinX, withinY=$withinY");
+    //logger.d("Hit test, withinBounds $withinBounds, withinX=$withinX, withinY=$withinY");
 
-    return withinBounds && withinX && withinY;
+    return withinBounds; // && withinX && withinY;
   }
 
   @override
@@ -156,9 +159,9 @@ class Link extends AnalyticsItem<Link> implements HoverTarget {
     return id;
   }
 
-  Path getPath(Size canvasSize, double scale, Offset centerOffset) {
-    final start = sideA.position.globalToPixel(canvasSize, scale, centerOffset);
-    final end   = sideB.position.globalToPixel(canvasSize, scale, centerOffset);
+  Path getPath(Size canvasSize, double scale, Offset centerOffset, Offset sideAPosition, Offset sideBPosition) {
+    final start = sideAPosition.globalToPixel(canvasSize, scale, centerOffset);
+    final end   = sideBPosition.globalToPixel(canvasSize, scale, centerOffset);
     final path = Path()
           ..moveTo(start.dx, start.dy)
           ..lineTo(end.dx, end.dy);
