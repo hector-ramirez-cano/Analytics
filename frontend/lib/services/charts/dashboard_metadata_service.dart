@@ -18,7 +18,6 @@ class DashboardMetadataService extends _$DashboardMetadataService {
   String notifierKey = "";
 
   void handleUpdate(dynamic json) {
-    // TODO: change subscription type to "metadata" when backend separates facts from metadata
     if (json is! Map<String, dynamic>) { return; } 
     if (json["msg"] is! Map<String, dynamic> || !(json["msg"]["metadata"]).contains(definition.metadata)) { return; }
     

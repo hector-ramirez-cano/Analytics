@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ChipTab extends StatelessWidget {
   final String label;
   final bool selected;
-  final VoidCallback onClick;
+  final VoidCallback? onClick;
 
   const ChipTab({
     super.key,
@@ -16,7 +16,7 @@ class ChipTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return ActionChip(
         label: Text(label),
-        onPressed: () => onClick(),
+        onPressed: onClick,
         tooltip: "",
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(1),

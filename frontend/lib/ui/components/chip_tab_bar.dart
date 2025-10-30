@@ -28,7 +28,7 @@ class ChipTabBar extends StatelessWidget {
   Widget _makeTabBar(CanvasTabsNotifier notifier, List<Widget> children) {
     openTab() => {};//notifier.append("Nueva Vista"); // TODO: Add append on tab add
     onReorder(oldIndex, newIndex) => notifier.reoderTabs(oldIndex, newIndex);
-
+    bool hasTopology = notifier.hasTopology;
     return SizedBox(
 
         height: 32,
@@ -45,8 +45,8 @@ class ChipTabBar extends StatelessWidget {
                 children: children,
               ),
 
-              // Fixed
-              ChipTab(key: UniqueKey(), label: "+", selected: false, onClick: openTab)
+              // Fixed at the end
+              ChipTab(key: UniqueKey(), label: "+", selected: false, onClick: hasTopology ? openTab : null)
             ],
         ),
       );

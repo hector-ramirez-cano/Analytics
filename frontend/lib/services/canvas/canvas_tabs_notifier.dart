@@ -100,10 +100,11 @@ class CanvasTabsNotifier extends _$CanvasTabsNotifier {
     return values;
   }
 
-  Topology? _currentTopology; // TODO: Disable add tab button if no topology is present
+  Topology? _currentTopology;
   CanvasTabs? _oldState;
 
   CanvasState? get canvasState => state.canvasStates[state.selected];
+  bool get hasTopology => _currentTopology != null;
 
   void setSelectedTab(UniqueKey id) {
     state = state.copyWith(selected: id);

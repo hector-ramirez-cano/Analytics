@@ -195,7 +195,6 @@ class AlertDbService extends _$AlertDbService {
     );
   }
 
-  // TODO: Range filters
   void onMsgFilterChange(String value, WidgetRef ref) {
     _msgDebouncer.run(() {
       final filters = ref.read(alertFilterProvider);
