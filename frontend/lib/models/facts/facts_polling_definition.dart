@@ -1,6 +1,6 @@
 
 import 'package:logger/logger.dart';
-import 'package:network_analytics/models/charts/dashboard_polling_definition.dart';
+import 'package:aegis/models/charts/dashboard_polling_definition.dart';
 
 class FactsPollingDefinition extends DashboardPollingDefinition {
   final Duration updateInterval;

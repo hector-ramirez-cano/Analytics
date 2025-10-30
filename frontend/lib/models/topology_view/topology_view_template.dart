@@ -2,7 +2,7 @@
 import 'dart:ui';
 
 import 'package:logger/web.dart';
-import 'package:network_analytics/models/topology_view/topology_view_member.dart';
+import 'package:aegis/models/topology_view/topology_view_member.dart';
 
 
 class TopologyViewTemplate {

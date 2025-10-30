@@ -1,7 +1,7 @@
-import 'package:network_analytics/models/device.dart';
-import 'package:network_analytics/models/link.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/models/topology_view/topology_view_template.dart';
+import 'package:aegis/models/device.dart';
+import 'package:aegis/models/link.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/models/topology_view/topology_view_template.dart';
 
 class TopologyView {
   final TopologyViewTemplate template;

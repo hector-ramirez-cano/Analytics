@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/services/drawer_state_notifier.dart';
-import 'package:network_analytics/ui/components/drawer/drawer.dart';
-import 'package:network_analytics/ui/components/side_nav.dart';
-import 'package:network_analytics/ui/screens/content_area.dart';
+import 'package:aegis/services/drawer_state_notifier.dart';
+import 'package:aegis/ui/components/drawer/drawer.dart';
+import 'package:aegis/ui/components/side_nav.dart';
+import 'package:aegis/ui/screens/content_area.dart';
 
 class ContentBody extends StatelessWidget {
   const ContentBody({super.key});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import 'package:network_analytics/ui/components/dialogs/selection_dialog.dart';
-import 'package:network_analytics/ui/components/list_selector.dart';
+import 'package:aegis/ui/components/dialogs/selection_dialog.dart';
+import 'package:aegis/ui/components/list_selector.dart';
 
 class TagSelectionDialog extends SelectionDialog<String>{
 

@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:network_analytics/extensions/debouncer.dart';
-import 'package:network_analytics/extensions/semaphore.dart';
-import 'package:network_analytics/models/alerts/alert_event.dart';
-import 'package:network_analytics/services/alerts/alert_db_service.dart';
-import 'package:network_analytics/services/websocket_service.dart';
+import 'package:aegis/extensions/debouncer.dart';
+import 'package:aegis/extensions/semaphore.dart';
+import 'package:aegis/models/alerts/alert_event.dart';
+import 'package:aegis/services/alerts/alert_db_service.dart';
+import 'package:aegis/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'alerts_realtime_service.g.dart';

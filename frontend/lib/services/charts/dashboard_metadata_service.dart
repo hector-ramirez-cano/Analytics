@@ -1,9 +1,9 @@
 
 import 'dart:async';
 
-import 'package:network_analytics/extensions/semaphore.dart';
-import 'package:network_analytics/models/charts/metadata_polling_definition.dart';
-import 'package:network_analytics/services/websocket_service.dart';
+import 'package:aegis/extensions/semaphore.dart';
+import 'package:aegis/models/charts/metadata_polling_definition.dart';
+import 'package:aegis/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'dashboard_metadata_service.g.dart';

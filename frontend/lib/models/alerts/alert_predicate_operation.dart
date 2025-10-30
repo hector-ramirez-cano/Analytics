@@ -1,4 +1,4 @@
-import 'package:network_analytics/models/enums/facts_const_types.dart';
+import 'package:aegis/models/enums/facts_const_types.dart';
 
 final RegExp _nameRegex = RegExp("AlertPredicateOperation.");
 

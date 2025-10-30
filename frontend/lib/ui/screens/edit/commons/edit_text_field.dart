@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:network_analytics/ui/components/universal_detector.dart';
+import 'package:aegis/ui/components/universal_detector.dart';
 
 class EditTextField extends StatelessWidget {
   final String initialText;

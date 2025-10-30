@@ -1,4 +1,4 @@
-import 'package:network_analytics/models/enums/navigation_rail_item.dart';
+import 'package:aegis/models/enums/navigation_rail_item.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'screen_selection_notifier.g.dart';

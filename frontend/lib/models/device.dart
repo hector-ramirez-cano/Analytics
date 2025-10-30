@@ -3,10 +3,10 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:free_map/free_map.dart';
-import 'package:network_analytics/models/analytics_item.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/canvas/canvas_interaction_service.dart';
-import 'package:network_analytics/theme/app_colors.dart';
+import 'package:aegis/models/analytics_item.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/services/canvas/canvas_interaction_service.dart';
+import 'package:aegis/theme/app_colors.dart';
 
 class Device extends GroupableItem<Device> implements HoverTarget{
   final LatLng geoPosition;  // Lat , Long

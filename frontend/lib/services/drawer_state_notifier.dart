@@ -1,4 +1,4 @@
-import 'package:network_analytics/models/enums/workplace_screen.dart';
+import 'package:aegis/models/enums/workplace_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'drawer_state_notifier.g.dart';

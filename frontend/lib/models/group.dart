@@ -1,10 +1,10 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:network_analytics/models/analytics_item.dart';
-import 'package:network_analytics/models/device.dart';
-import 'package:network_analytics/models/link.dart';
-import 'package:network_analytics/models/topology.dart';
+import 'package:aegis/models/analytics_item.dart';
+import 'package:aegis/models/device.dart';
+import 'package:aegis/models/link.dart';
+import 'package:aegis/models/topology.dart';
 
 class Group extends GroupableItem<Group>{
   final Set<GroupableItem> members;

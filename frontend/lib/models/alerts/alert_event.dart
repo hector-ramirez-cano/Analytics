@@ -1,5 +1,5 @@
 
-import 'package:network_analytics/models/alerts/alert_severity.dart';
+import 'package:aegis/models/alerts/alert_severity.dart';
 
 class AlertEvent {
 

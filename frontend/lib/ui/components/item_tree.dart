@@ -5,14 +5,14 @@ import 'package:animated_tree_view/tree_view/widgets/indent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
-import 'package:network_analytics/models/alerts/alert_rule.dart';
-import 'package:network_analytics/models/device.dart';
-import 'package:network_analytics/models/group.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/alerts/alert_rules_service.dart';
-import 'package:network_analytics/services/item_edit_selection_notifier.dart';
-import 'package:network_analytics/ui/components/universal_detector.dart';
-import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
+import 'package:aegis/models/alerts/alert_rule.dart';
+import 'package:aegis/models/device.dart';
+import 'package:aegis/models/group.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/services/alerts/alert_rules_service.dart';
+import 'package:aegis/services/item_edit_selection_notifier.dart';
+import 'package:aegis/ui/components/universal_detector.dart';
+import 'package:aegis/ui/screens/edit/commons/edit_commons.dart';
 
 class Section {
   final String name;

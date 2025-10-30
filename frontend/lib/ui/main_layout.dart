@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:network_analytics/theme/app_colors.dart';
-import 'package:network_analytics/ui/components/alert_badge_icon.dart';
-import 'package:network_analytics/ui/screens/content_body.dart';
+import 'package:aegis/theme/app_colors.dart';
+import 'package:aegis/ui/components/alert_badge_icon.dart';
+import 'package:aegis/ui/screens/content_body.dart';
 
 class MainLayout extends StatelessWidget {
   const MainLayout({super.key});

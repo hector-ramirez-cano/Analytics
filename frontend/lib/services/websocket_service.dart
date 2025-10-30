@@ -3,8 +3,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:logger/web.dart';
-import 'package:network_analytics/extensions/development_filter.dart';
-import 'package:network_analytics/services/app_config.dart';
+import 'package:aegis/extensions/development_filter.dart';
+import 'package:aegis/services/app_config.dart';
 import 'package:oxidized/oxidized.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';

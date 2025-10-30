@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:free_map/free_map.dart';
 import 'package:logger/logger.dart';
-import 'package:network_analytics/ui/components/universal_detector.dart';
-import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
+import 'package:aegis/ui/components/universal_detector.dart';
+import 'package:aegis/ui/screens/edit/commons/edit_text_field.dart';
 
 class GeoSelector extends ConsumerStatefulWidget {
 

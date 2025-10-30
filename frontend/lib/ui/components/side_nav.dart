@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // ignore: unused_import
 import 'package:logger/web.dart';
-import 'package:network_analytics/services/drawer_state_notifier.dart';
-import 'package:network_analytics/services/item_edit_selection_notifier.dart';
-import 'package:network_analytics/services/screen_selection_notifier.dart';
-import 'package:network_analytics/ui/components/drawer/drawer.dart';
-import 'package:network_analytics/models/enums/navigation_rail_item.dart';
-import 'package:network_analytics/theme/app_colors.dart';
+import 'package:aegis/services/drawer_state_notifier.dart';
+import 'package:aegis/services/item_edit_selection_notifier.dart';
+import 'package:aegis/services/screen_selection_notifier.dart';
+import 'package:aegis/ui/components/drawer/drawer.dart';
+import 'package:aegis/models/enums/navigation_rail_item.dart';
+import 'package:aegis/theme/app_colors.dart';
 
 class SideNav extends StatelessWidget {
 

@@ -1,7 +1,7 @@
 
-import 'package:network_analytics/extensions/semaphore.dart';
-import 'package:network_analytics/models/topology_view/topology_view_template.dart';
-import 'package:network_analytics/services/websocket_service.dart';
+import 'package:aegis/extensions/semaphore.dart';
+import 'package:aegis/models/topology_view/topology_view_template.dart';
+import 'package:aegis/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'topology_view_template_provider.g.dart';

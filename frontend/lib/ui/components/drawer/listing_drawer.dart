@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/ui/components/item_tree.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/ui/components/item_tree.dart';
 
 class ListingDrawer extends StatelessWidget {
 

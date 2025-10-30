@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphic/graphic.dart';
-import 'package:network_analytics/models/charts/metadata_polling_definition.dart';
-import 'package:network_analytics/services/charts/dashboard_metadata_service.dart';
-import 'package:network_analytics/ui/components/retry_indicator.dart';
+import 'package:aegis/models/charts/metadata_polling_definition.dart';
+import 'package:aegis/services/charts/dashboard_metadata_service.dart';
+import 'package:aegis/ui/components/retry_indicator.dart';
 
 class MetadataPieChart extends StatelessWidget {
   final MetadataPollingDefinition definition;
@@ -119,7 +119,7 @@ class MetadataPieChart extends StatelessWidget {
             ],
             marks: [
               IntervalMark(
-                transition: Transition(duration: const Duration(milliseconds: 600)),
+                transition: Transition(duration: const Duration(milliseconds: 1000), curve: Curves.linearToEaseOut),
                 entrance: {MarkEntrance.x, MarkEntrance.y},
                 position: Varset('percent') / Varset('value'),
                 color: ColorEncode(

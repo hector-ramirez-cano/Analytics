@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/services/canvas/canvas_tabs_notifier.dart';
-import 'package:network_analytics/ui/components/chip_tab.dart';
-import 'package:network_analytics/ui/components/closable_chip.dart';
+import 'package:aegis/services/canvas/canvas_tabs_notifier.dart';
+import 'package:aegis/ui/components/chip_tab.dart';
+import 'package:aegis/ui/components/closable_chip.dart';
 import 'package:reorderables/reorderables.dart';
 class ChipTabBar extends StatelessWidget {
 

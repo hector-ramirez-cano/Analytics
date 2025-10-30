@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/extensions/string_extensions.dart';
-import 'package:network_analytics/models/alerts/alert_predicate.dart';
-import 'package:network_analytics/models/alerts/alert_predicate_operation.dart';
-import 'package:network_analytics/models/analytics_item.dart';
-import 'package:network_analytics/models/charts/dashboard_polling_definition.dart';
-import 'package:network_analytics/models/enums/facts_const_types.dart';
-import 'package:network_analytics/models/facts/facts_polling_definition.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/facts/facts_service.dart';
-import 'package:network_analytics/ui/components/badge_button.dart';
-import 'package:network_analytics/ui/components/list_selector.dart';
+import 'package:aegis/extensions/string_extensions.dart';
+import 'package:aegis/models/alerts/alert_predicate.dart';
+import 'package:aegis/models/alerts/alert_predicate_operation.dart';
+import 'package:aegis/models/analytics_item.dart';
+import 'package:aegis/models/charts/dashboard_polling_definition.dart';
+import 'package:aegis/models/enums/facts_const_types.dart';
+import 'package:aegis/models/facts/facts_polling_definition.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/services/facts/facts_service.dart';
+import 'package:aegis/ui/components/badge_button.dart';
+import 'package:aegis/ui/components/list_selector.dart';
 
 class AlertRuleEditPredicate extends StatefulWidget {
   const AlertRuleEditPredicate({

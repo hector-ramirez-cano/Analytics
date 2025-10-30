@@ -1,5 +1,5 @@
-import 'package:network_analytics/models/alerts/alert_predicate_operation.dart';
-import 'package:network_analytics/models/enums/facts_const_types.dart';
+import 'package:aegis/models/alerts/alert_predicate_operation.dart';
+import 'package:aegis/models/enums/facts_const_types.dart';
 
 
 class AlertRuleOperand {

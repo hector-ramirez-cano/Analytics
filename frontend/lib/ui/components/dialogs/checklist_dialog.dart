@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
-import 'package:network_analytics/services/dialog_change_notifier.dart';
-import 'package:network_analytics/ui/components/dialogs/selection_dialog.dart';
-import 'package:network_analytics/ui/components/list_selector.dart';
+import 'package:aegis/services/dialog_change_notifier.dart';
+import 'package:aegis/ui/components/dialogs/selection_dialog.dart';
+import 'package:aegis/ui/components/list_selector.dart';
 
 class ChecklistDialog<T> extends SelectionDialog<T>{
 

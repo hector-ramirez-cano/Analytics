@@ -6,11 +6,11 @@ import 'dart:async';
 
 // ignore: unused_import
 import 'package:logger/web.dart';
-import 'package:network_analytics/extensions/development_filter.dart';
-import 'package:network_analytics/extensions/offset.dart';
-import 'package:network_analytics/services/app_config.dart';
-import 'package:network_analytics/services/canvas/canvas_tabs_notifier.dart';
-import 'package:network_analytics/services/item_selection_notifier.dart';
+import 'package:aegis/extensions/development_filter.dart';
+import 'package:aegis/extensions/offset.dart';
+import 'package:aegis/services/app_config.dart';
+import 'package:aegis/services/canvas/canvas_tabs_notifier.dart';
+import 'package:aegis/services/item_selection_notifier.dart';
 
 typedef ItemChangedCallback = Function(bool);
 typedef CanvasStateChangedCallback = Function(double? scale, Offset? center);

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/services/item_edit_selection_notifier.dart';
+import 'package:aegis/services/item_edit_selection_notifier.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class DeleteSection extends StatelessWidget {

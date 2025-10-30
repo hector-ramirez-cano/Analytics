@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/services/realtime/alerts_realtime_service.dart';
-import 'package:network_analytics/ui/components/badge_icon.dart';
+import 'package:aegis/services/realtime/alerts_realtime_service.dart';
+import 'package:aegis/ui/components/badge_icon.dart';
 
 class AlertBadgeIcon extends StatelessWidget {
   const AlertBadgeIcon({super.key});

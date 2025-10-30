@@ -1,11 +1,11 @@
 import 'dart:math';
 
-import 'package:network_analytics/models/alerts/alert_predicate.dart';
-import 'package:network_analytics/models/alerts/alert_reduce_logic.dart';
-import 'package:network_analytics/models/alerts/alert_severity.dart';
-import 'package:network_analytics/models/alerts/alert_source.dart';
-import 'package:network_analytics/models/analytics_item.dart';
-import 'package:network_analytics/services/alerts/alert_rules_service.dart';
+import 'package:aegis/models/alerts/alert_predicate.dart';
+import 'package:aegis/models/alerts/alert_reduce_logic.dart';
+import 'package:aegis/models/alerts/alert_severity.dart';
+import 'package:aegis/models/alerts/alert_source.dart';
+import 'package:aegis/models/analytics_item.dart';
+import 'package:aegis/services/alerts/alert_rules_service.dart';
 
 class AlertRule extends AnalyticsItem<AlertRule> {
   const AlertRule({

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:network_analytics/ui/components/universal_detector.dart';
+import 'package:aegis/ui/components/universal_detector.dart';
 
 class BadgeIcon extends StatelessWidget{
   final Icon icon;

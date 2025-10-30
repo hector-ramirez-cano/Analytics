@@ -1,9 +1,9 @@
 // ignore: unused_import
 import 'package:logger/web.dart';
-import 'package:network_analytics/models/analytics_item.dart';
-import 'package:network_analytics/models/device.dart';
-import 'package:network_analytics/models/group.dart';
-import 'package:network_analytics/models/link.dart';
+import 'package:aegis/models/analytics_item.dart';
+import 'package:aegis/models/device.dart';
+import 'package:aegis/models/group.dart';
+import 'package:aegis/models/link.dart';
 
 class Topology {
   Map<int, dynamic> items;
@@ -55,7 +55,6 @@ class Topology {
     return Topology(items: {});
   }
 
-
   Map<String, dynamic> toMap() {
     Map<String, dynamic> items = {};
 
@@ -68,29 +67,41 @@ class Topology {
     return items;
   }
 
-  // TODO: Memoize
+  Set<Device>? _devicesCache;
   Set<Device> get devices {
-    return items.values.whereType<Device>().toSet();
+    _devicesCache ??= items.values.whereType<Device>().toSet();
+    return _devicesCache!;
   }
 
-  // TODO: Memoize
+  Set<Link>? _linksCache;
   Set<Link> get links {
-    return items.values.whereType<Link>().toSet();
+    _linksCache ??= items.values.whereType<Link>().toSet();
+
+    return _linksCache!;
   }
 
-  // TODO: Memoize
+  Set<Group>? _groups;
   Set<Group> get groups {
-    return items.values.whereType<Group>().toSet();
+    _groups ??= items.values.whereType<Group>().toSet();
+
+    return _groups!;
   }
 
-  // TODO: Memoize
+  final Map<int, Set<Link>> _deviceLinksCache = {};
   Set<Link> getDeviceLinks(Device device) {
-    return links.where((link) => link.sideA.id == device.id || link.sideB.id == device.id).toSet();
+    if (!_deviceLinksCache.containsKey(device.id)) {
+      _deviceLinksCache[device.id] = links.where((link) => link.sideA.id == device.id || link.sideB.id == device.id).toSet();
+    }
+
+    return _deviceLinksCache[device.id]!;
   }
 
-  // TODO: Memoize
+  final Map<int, Set<Group>> _deviceGroupsCache = {};
   Set<Group> getDeviceGroups(Device device) {
-    return groups.where((group) => group.hasDevice(device)).toSet();
+    if (!_deviceGroupsCache.containsKey(device.id)) {
+      _deviceGroupsCache[device.id] = groups.where((group) => group.hasDevice(device)).toSet();
+    }
+    return _deviceGroupsCache[device.id]!;
   }
 
   Map<String, Device> get deviceHostnames {
@@ -99,20 +110,24 @@ class Topology {
     return _deviceHostnames!;
   }
 
-  // TODO: Memoize
+  final Map<int, Set<String>> _allAvailableValuesCache = {};
   Set<String> getAllAvailableValues(GroupableItem item) {
-    if (item is Device) {
-      return item.availableValues;
+    if (!_allAvailableValuesCache.containsKey(item.id)) {
+      if (item is Device) {
+        _allAvailableValuesCache[item.id] = item.availableValues;
+      }
+
+      if (item is Group) {
+        final values = item.allDescendants.map((device) => getAllAvailableValues(device));
+        _allAvailableValuesCache[item.id] = values.expand((inner) => inner).toSet();
+      }
+
+      else {
+        throw Exception("Unexpected type for gathering all available values");
+      }
     }
 
-    if (item is Group) {
-      final values = item.allDescendants.map((device) => getAllAvailableValues(device));
-      return values.expand((inner) => inner).toSet();
-    }
-
-    else {
-      throw Exception("Unexpected type for gathering all available values");
-    }
+    return _allAvailableValuesCache[item.id]!;
   }
 
   Device? getDeviceByHostname(String hostname) {

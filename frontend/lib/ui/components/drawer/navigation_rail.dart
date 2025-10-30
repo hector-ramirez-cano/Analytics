@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/services/drawer_state_notifier.dart';
-import 'package:network_analytics/services/screen_selection_notifier.dart';
-import 'package:network_analytics/models/enums/navigation_rail_item.dart';
+import 'package:aegis/services/drawer_state_notifier.dart';
+import 'package:aegis/services/screen_selection_notifier.dart';
+import 'package:aegis/models/enums/navigation_rail_item.dart';
 
 class AnalyticsNavigationRail extends StatelessWidget {
   const AnalyticsNavigationRail({super.key});

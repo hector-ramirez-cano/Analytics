@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/models/alerts/alert_event.dart';
-import 'package:network_analytics/models/alerts/alert_severity.dart';
-import 'package:network_analytics/models/alerts/alert_table_page.dart';
-import 'package:network_analytics/services/alerts/alert_db_service.dart';
-import 'package:network_analytics/services/websocket_service.dart';
-import 'package:network_analytics/ui/components/date_range_picker.dart';
-import 'package:network_analytics/ui/components/dialogs/checklist_dialog.dart';
-import 'package:network_analytics/ui/components/dialogs/syslog_table_info_dialog.dart';
-import 'package:network_analytics/ui/screens/syslog/log_table_columns.dart';
+import 'package:aegis/models/alerts/alert_event.dart';
+import 'package:aegis/models/alerts/alert_severity.dart';
+import 'package:aegis/models/alerts/alert_table_page.dart';
+import 'package:aegis/services/alerts/alert_db_service.dart';
+import 'package:aegis/services/websocket_service.dart';
+import 'package:aegis/ui/components/date_range_picker.dart';
+import 'package:aegis/ui/components/dialogs/checklist_dialog.dart';
+import 'package:aegis/ui/components/dialogs/syslog_table_info_dialog.dart';
+import 'package:aegis/ui/screens/syslog/log_table_columns.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 class AlertViewer extends ConsumerStatefulWidget {
@@ -230,7 +230,6 @@ class _AlertViewerState extends ConsumerState<AlertViewer> {
       ),
     ];
 
-    // TODO: handle retries and loading
     return TrinaGrid(
       columns: columns,
       rows: [],

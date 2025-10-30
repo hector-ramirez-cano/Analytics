@@ -1,8 +1,8 @@
-import 'package:network_analytics/extensions/semaphore.dart';
-import 'package:network_analytics/models/analytics_item.dart';
-import 'package:network_analytics/models/device.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/websocket_service.dart';
+import 'package:aegis/extensions/semaphore.dart';
+import 'package:aegis/models/analytics_item.dart';
+import 'package:aegis/models/device.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'topology_provider.g.dart';

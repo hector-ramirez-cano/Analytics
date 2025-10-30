@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:network_analytics/models/enums/workplace_screen.dart';
+import 'package:aegis/models/enums/workplace_screen.dart';
 
 enum NavigationRailItem {
   canvas   (Icons.segment       , 'Topología'      , bottom: false, hasDrawer: true , screen: WorkplaceScreen.canvas  ),

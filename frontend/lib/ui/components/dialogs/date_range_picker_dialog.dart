@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:network_analytics/ui/components/date_range_picker.dart';
+import 'package:aegis/ui/components/date_range_picker.dart';
 
 /// Shows a dialog for selecting a date range with optional start/end times.
 Future<DateTimeRange?> showDateRangeWithTimeDialog(BuildContext context) async {

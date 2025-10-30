@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/models/charts/metadata_polling_definition.dart';
-import 'package:network_analytics/services/charts/dashboard_metadata_service.dart';
+import 'package:aegis/models/charts/metadata_polling_definition.dart';
+import 'package:aegis/services/charts/dashboard_metadata_service.dart';
 
 class MetadataLabel extends StatelessWidget {
   final MetadataPollingDefinition definition;

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/models/charts/dashboard_polling_definition.dart';
-import 'package:network_analytics/models/charts/metadata_polling_definition.dart';
-import 'package:network_analytics/models/charts/metric_polling_definition.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/dashboard_service.dart';
-import 'package:network_analytics/services/topology/topology_provider.dart';
-import 'package:network_analytics/services/websocket_service.dart';
-import 'package:network_analytics/ui/components/dashboard.dart';
-import 'package:network_analytics/ui/components/retry_indicator.dart';
-import 'package:network_analytics/ui/screens/charts/metadata_label.dart';
-import 'package:network_analytics/ui/screens/charts/metadata_pie_chart.dart';
-import 'package:network_analytics/ui/screens/charts/metric_line_chart.dart';
+import 'package:aegis/models/charts/dashboard_polling_definition.dart';
+import 'package:aegis/models/charts/metadata_polling_definition.dart';
+import 'package:aegis/models/charts/metric_polling_definition.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/services/dashboard_service.dart';
+import 'package:aegis/services/topology/topology_provider.dart';
+import 'package:aegis/services/websocket_service.dart';
+import 'package:aegis/ui/components/dashboard.dart';
+import 'package:aegis/ui/components/retry_indicator.dart';
+import 'package:aegis/ui/screens/charts/metadata_label.dart';
+import 'package:aegis/ui/screens/charts/metadata_pie_chart.dart';
+import 'package:aegis/ui/screens/charts/metric_line_chart.dart';
 
 class ChartDashboard extends ConsumerStatefulWidget {
   

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
-import 'package:network_analytics/services/screen_selection_notifier.dart';
-import 'package:network_analytics/models/enums/workplace_screen.dart';
-import 'package:network_analytics/ui/screens/alerts/alert_viewer.dart';
-import 'package:network_analytics/ui/screens/canvas/topology_tab_view.dart';
-import 'package:network_analytics/ui/screens/charts/chart_dashboard.dart';
-import 'package:network_analytics/ui/screens/edit/editor_view.dart';
-import 'package:network_analytics/ui/screens/settings/settings.dart';
-import 'package:network_analytics/ui/screens/syslog/syslog_viewer.dart';
+import 'package:aegis/services/screen_selection_notifier.dart';
+import 'package:aegis/models/enums/workplace_screen.dart';
+import 'package:aegis/ui/screens/alerts/alert_viewer.dart';
+import 'package:aegis/ui/screens/canvas/topology_tab_view.dart';
+import 'package:aegis/ui/screens/charts/chart_dashboard.dart';
+import 'package:aegis/ui/screens/edit/editor_view.dart';
+import 'package:aegis/ui/screens/settings/settings.dart';
+import 'package:aegis/ui/screens/syslog/syslog_viewer.dart';
 
 class ContentArea extends StatelessWidget {
 

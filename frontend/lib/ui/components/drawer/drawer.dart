@@ -1,15 +1,15 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
-import 'package:network_analytics/extensions/development_filter.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/alerts/alert_rules_service.dart';
-import 'package:network_analytics/services/screen_selection_notifier.dart';
-import 'package:network_analytics/services/topology/topology_provider.dart';
-import 'package:network_analytics/ui/components/drawer/item_edit_drawer.dart';
-import 'package:network_analytics/ui/components/drawer/listing_drawer.dart';
-import 'package:network_analytics/models/enums/navigation_rail_item.dart';
-import 'package:network_analytics/ui/components/retry_indicator.dart';
+import 'package:aegis/extensions/development_filter.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/services/alerts/alert_rules_service.dart';
+import 'package:aegis/services/screen_selection_notifier.dart';
+import 'package:aegis/services/topology/topology_provider.dart';
+import 'package:aegis/ui/components/drawer/item_edit_drawer.dart';
+import 'package:aegis/ui/components/drawer/listing_drawer.dart';
+import 'package:aegis/models/enums/navigation_rail_item.dart';
+import 'package:aegis/ui/components/retry_indicator.dart';
 
 class SideDrawer extends ConsumerStatefulWidget{
   static Logger logger = Logger(filter: ConfigFilter.fromConfig("debug/enable_drawer_logging", false));

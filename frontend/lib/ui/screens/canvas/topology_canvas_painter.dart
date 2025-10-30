@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 // ignore: unused_import
 import 'package:logger/web.dart';
-import 'package:network_analytics/models/topology_view/topology_view.dart';
-import 'package:network_analytics/services/canvas/canvas_interaction_service.dart';
-import 'package:network_analytics/services/canvas/canvas_tabs_notifier.dart';
-import 'package:network_analytics/services/item_selection_notifier.dart';
+import 'package:aegis/models/topology_view/topology_view.dart';
+import 'package:aegis/services/canvas/canvas_interaction_service.dart';
+import 'package:aegis/services/canvas/canvas_tabs_notifier.dart';
+import 'package:aegis/services/item_selection_notifier.dart';
 
-import 'package:network_analytics/theme/app_colors.dart';
-import 'package:network_analytics/extensions/offset.dart';
+import 'package:aegis/theme/app_colors.dart';
+import 'package:aegis/extensions/offset.dart';
 
 class TopologyCanvasPainter extends CustomPainter {
   TopologyView topologyView;

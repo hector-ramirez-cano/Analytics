@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
-import 'package:network_analytics/models/device.dart';
-import 'package:network_analytics/models/link.dart';
-import 'package:network_analytics/models/link_type.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/dialog_change_notifier.dart';
-import 'package:network_analytics/services/item_edit_selection_notifier.dart';
-import 'package:network_analytics/ui/components/dialogs/device_selection_dialog.dart';
-import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
-import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
-import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
-import 'package:network_analytics/ui/components/list_selector.dart';
+import 'package:aegis/models/device.dart';
+import 'package:aegis/models/link.dart';
+import 'package:aegis/models/link_type.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/services/dialog_change_notifier.dart';
+import 'package:aegis/services/item_edit_selection_notifier.dart';
+import 'package:aegis/ui/components/dialogs/device_selection_dialog.dart';
+import 'package:aegis/ui/screens/edit/commons/delete_section.dart';
+import 'package:aegis/ui/screens/edit/commons/edit_commons.dart';
+import 'package:aegis/ui/screens/edit/commons/edit_text_field.dart';
+import 'package:aegis/ui/components/list_selector.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class LinkEditView extends ConsumerStatefulWidget {

@@ -1,24 +1,24 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/models/alerts/alert_predicate.dart';
-import 'package:network_analytics/models/alerts/alert_reduce_logic.dart';
-import 'package:network_analytics/models/alerts/alert_rule.dart';
-import 'package:network_analytics/models/alerts/alert_severity.dart';
-import 'package:network_analytics/models/alerts/alert_source.dart';
-import 'package:network_analytics/models/analytics_item.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/alerts/alert_rules_service.dart';
-import 'package:network_analytics/services/dialog_change_notifier.dart';
-import 'package:network_analytics/services/item_edit_selection_notifier.dart';
-import 'package:network_analytics/ui/components/alert_rule_edit_predicate.dart';
-import 'package:network_analytics/ui/components/badge_button.dart';
-import 'package:network_analytics/ui/components/dialogs/empty_dialog.dart';
-import 'package:network_analytics/ui/components/dialogs/groupable_item_selection_dialog.dart';
-import 'package:network_analytics/ui/components/list_selector.dart';
-import 'package:network_analytics/ui/screens/edit/commons/delete_section.dart';
-import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
-import 'package:network_analytics/ui/screens/edit/commons/edit_text_field.dart';
+import 'package:aegis/models/alerts/alert_predicate.dart';
+import 'package:aegis/models/alerts/alert_reduce_logic.dart';
+import 'package:aegis/models/alerts/alert_rule.dart';
+import 'package:aegis/models/alerts/alert_severity.dart';
+import 'package:aegis/models/alerts/alert_source.dart';
+import 'package:aegis/models/analytics_item.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/services/alerts/alert_rules_service.dart';
+import 'package:aegis/services/dialog_change_notifier.dart';
+import 'package:aegis/services/item_edit_selection_notifier.dart';
+import 'package:aegis/ui/components/alert_rule_edit_predicate.dart';
+import 'package:aegis/ui/components/badge_button.dart';
+import 'package:aegis/ui/components/dialogs/empty_dialog.dart';
+import 'package:aegis/ui/components/dialogs/groupable_item_selection_dialog.dart';
+import 'package:aegis/ui/components/list_selector.dart';
+import 'package:aegis/ui/screens/edit/commons/delete_section.dart';
+import 'package:aegis/ui/screens/edit/commons/edit_commons.dart';
+import 'package:aegis/ui/screens/edit/commons/edit_text_field.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 class AlertEditView extends ConsumerStatefulWidget {

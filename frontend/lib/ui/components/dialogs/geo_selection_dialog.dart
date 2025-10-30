@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:free_map/free_map.dart';
-import 'package:network_analytics/services/dialog_change_notifier.dart';
-import 'package:network_analytics/ui/components/geo_selector.dart';
+import 'package:aegis/services/dialog_change_notifier.dart';
+import 'package:aegis/ui/components/geo_selector.dart';
 
 class GeoSelectionDialog {
   LatLng initialPosition;

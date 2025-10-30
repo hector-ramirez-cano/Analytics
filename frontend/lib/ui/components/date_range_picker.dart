@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:network_analytics/ui/components/dialogs/date_range_picker_dialog.dart';
+import 'package:aegis/ui/components/dialogs/date_range_picker_dialog.dart';
 
 String _formatTimeOfDay(DateTime dt) {
   final String hour = dt.hour < 10 ? "0${dt.hour}" : "${dt.hour}";

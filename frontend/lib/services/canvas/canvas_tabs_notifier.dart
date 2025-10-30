@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:logger/web.dart';
-import 'package:network_analytics/extensions/development_filter.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/models/topology_view/topology_view.dart';
-import 'package:network_analytics/models/topology_view/topology_view_template.dart';
-import 'package:network_analytics/services/topology/topology_provider.dart';
-import 'package:network_analytics/services/topology/topology_view_template_provider.dart';
+import 'package:aegis/extensions/development_filter.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/models/topology_view/topology_view.dart';
+import 'package:aegis/models/topology_view/topology_view_template.dart';
+import 'package:aegis/services/topology/topology_provider.dart';
+import 'package:aegis/services/topology/topology_view_template_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'canvas_tabs_notifier.g.dart';

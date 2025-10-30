@@ -1,5 +1,5 @@
 import 'package:logger/web.dart';
-import 'package:network_analytics/models/charts/dashboard_polling_definition.dart';
+import 'package:aegis/models/charts/dashboard_polling_definition.dart';
 
 class MetricPollingDefinition extends DashboardPollingDefinition {
   final String start;

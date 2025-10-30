@@ -1,4 +1,4 @@
-import 'package:network_analytics/models/device.dart';
+import 'package:aegis/models/device.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'syslog_device_filter_notifier.g.dart';

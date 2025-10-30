@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/ui/screens/syslog/live_log_view.dart';
-import 'package:network_analytics/ui/screens/syslog/log_table.dart';
+import 'package:aegis/ui/screens/syslog/live_log_view.dart';
+import 'package:aegis/ui/screens/syslog/log_table.dart';
 
 class SyslogViewer extends ConsumerStatefulWidget {
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/item_edit_selection_notifier.dart';
-import 'package:network_analytics/ui/components/dialogs/option_dialog.dart';
-import 'package:network_analytics/ui/components/universal_detector.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/services/item_edit_selection_notifier.dart';
+import 'package:aegis/ui/components/dialogs/option_dialog.dart';
+import 'package:aegis/ui/components/universal_detector.dart';
 
 const Color addedItemColor = Colors.green;
 const Color deletedItemColor = Color.fromRGBO(233, 104, 95, 1);

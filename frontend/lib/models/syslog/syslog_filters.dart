@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
-import 'package:network_analytics/models/syslog/syslog_facility.dart';
-import 'package:network_analytics/models/syslog/syslog_severity.dart';
+import 'package:aegis/models/syslog/syslog_facility.dart';
+import 'package:aegis/models/syslog/syslog_severity.dart';
 
 class SyslogFilters {
   /// Datetime range of syslog messages to include

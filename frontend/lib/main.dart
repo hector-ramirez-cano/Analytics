@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/services/app_config.dart' show AppConfig;
+import 'package:aegis/services/app_config.dart' show AppConfig;
 
 import 'ui/main_layout.dart';
 
@@ -19,12 +19,11 @@ void main() async {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   
 
-  runApp(ProviderScope(child: const MyApp()));
+  runApp(ProviderScope(child: const Aegis()));
 }
 
-// TODO: Rename
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class Aegis extends StatelessWidget {
+  const Aegis({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/item_edit_selection_notifier.dart';
-import 'package:network_analytics/ui/screens/edit/commons/edit_commons.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/services/item_edit_selection_notifier.dart';
+import 'package:aegis/ui/screens/edit/commons/edit_commons.dart';
 
 class EmptyEditView extends StatelessWidget {
   final Topology topology;

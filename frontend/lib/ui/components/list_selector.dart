@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/services/dialog_change_notifier.dart';
+import 'package:aegis/services/dialog_change_notifier.dart';
 import 'package:string_similarity/string_similarity.dart';
 
 enum ListSelectorType {

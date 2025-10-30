@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphic/graphic.dart';
-import 'package:network_analytics/models/charts/metric_polling_definition.dart';
-import 'package:network_analytics/services/charts/dashboard_metric_service.dart';
-import 'package:network_analytics/ui/components/retry_indicator.dart';
+import 'package:aegis/models/charts/metric_polling_definition.dart';
+import 'package:aegis/services/charts/dashboard_metric_service.dart';
+import 'package:aegis/ui/components/retry_indicator.dart';
 
 class MetricLineChart extends StatelessWidget {
   final MetricPollingDefinition definition;

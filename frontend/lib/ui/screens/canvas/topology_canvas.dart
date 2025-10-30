@@ -3,16 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // ignore: unused_import
 import 'package:logger/web.dart';
-import 'package:network_analytics/models/topology_view/topology_view.dart';
-import 'package:network_analytics/services/canvas/canvas_interaction_service.dart';
-import 'package:network_analytics/providers/providers.dart';
-import 'package:network_analytics/services/canvas/canvas_tabs_notifier.dart';
-import 'package:network_analytics/services/item_selection_notifier.dart';
-import 'package:network_analytics/services/topology/topology_provider.dart';
-import 'package:network_analytics/services/topology/topology_view_template_provider.dart';
-import 'package:network_analytics/ui/components/retry_indicator.dart';
-import 'package:network_analytics/ui/components/universal_detector.dart';
-import 'package:network_analytics/ui/screens/canvas/topology_canvas_painter.dart';
+import 'package:aegis/models/topology_view/topology_view.dart';
+import 'package:aegis/services/canvas/canvas_interaction_service.dart';
+import 'package:aegis/providers/providers.dart';
+import 'package:aegis/services/canvas/canvas_tabs_notifier.dart';
+import 'package:aegis/services/item_selection_notifier.dart';
+import 'package:aegis/services/topology/topology_provider.dart';
+import 'package:aegis/services/topology/topology_view_template_provider.dart';
+import 'package:aegis/ui/components/retry_indicator.dart';
+import 'package:aegis/ui/components/universal_detector.dart';
+import 'package:aegis/ui/screens/canvas/topology_canvas_painter.dart';
 
 class TopologyCanvas extends StatefulWidget {
   const TopologyCanvas({

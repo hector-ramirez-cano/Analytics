@@ -1,5 +1,5 @@
 import 'package:logger/logger.dart';
-import 'package:network_analytics/services/app_config.dart';
+import 'package:aegis/services/app_config.dart';
 
 class ConfigFilter extends DevelopmentFilter{
   bool configSaysShouldLog;

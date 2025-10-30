@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:network_analytics/models/syslog/syslog_filters.dart';
-import 'package:network_analytics/models/syslog/syslog_message.dart';
+import 'package:aegis/models/syslog/syslog_filters.dart';
+import 'package:aegis/models/syslog/syslog_message.dart';
 
 
 class SyslogTablePage {

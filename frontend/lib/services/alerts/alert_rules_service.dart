@@ -2,10 +2,10 @@
 import 'dart:convert';
 
 import 'package:logger/web.dart';
-import 'package:network_analytics/extensions/development_filter.dart';
-import 'package:network_analytics/models/alerts/alert_rule.dart';
-import 'package:network_analytics/services/app_config.dart';
-import 'package:network_analytics/services/http_fetcher.dart';
+import 'package:aegis/extensions/development_filter.dart';
+import 'package:aegis/models/alerts/alert_rule.dart';
+import 'package:aegis/services/app_config.dart';
+import 'package:aegis/services/http_fetcher.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'alert_rules_service.g.dart';

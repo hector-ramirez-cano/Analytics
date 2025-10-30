@@ -1,19 +1,19 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:network_analytics/extensions/development_filter.dart';
-import 'package:network_analytics/extensions/offset.dart';
-import 'package:network_analytics/models/analytics_item.dart';
-import 'package:network_analytics/models/topology.dart';
-import 'package:network_analytics/services/item_selection_notifier.dart';
-import 'package:network_analytics/theme/app_colors.dart';
+import 'package:aegis/extensions/development_filter.dart';
+import 'package:aegis/extensions/offset.dart';
+import 'package:aegis/models/analytics_item.dart';
+import 'package:aegis/models/topology.dart';
+import 'package:aegis/services/item_selection_notifier.dart';
+import 'package:aegis/theme/app_colors.dart';
 import 'package:path_drawing/path_drawing.dart';
 
 // ignore: unused_import
 import 'package:logger/web.dart';
-import 'package:network_analytics/models/device.dart';
-import 'package:network_analytics/models/link_type.dart';
-import 'package:network_analytics/services/canvas/canvas_interaction_service.dart';
+import 'package:aegis/models/device.dart';
+import 'package:aegis/models/link_type.dart';
+import 'package:aegis/services/canvas/canvas_interaction_service.dart';
 
 class Link extends AnalyticsItem<Link> implements HoverTarget {
   final Device sideA;

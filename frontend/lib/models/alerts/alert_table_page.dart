@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:network_analytics/models/alerts/alert_event.dart';
-import 'package:network_analytics/models/alerts/alert_filters.dart';
+import 'package:aegis/models/alerts/alert_event.dart';
+import 'package:aegis/models/alerts/alert_filters.dart';
 
 
 class AlertTablePage {

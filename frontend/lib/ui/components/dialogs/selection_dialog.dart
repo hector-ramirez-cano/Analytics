@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:network_analytics/ui/components/list_selector.dart';
+import 'package:aegis/ui/components/list_selector.dart';
 
 
 Icon? noIcon(dynamic _) => null;

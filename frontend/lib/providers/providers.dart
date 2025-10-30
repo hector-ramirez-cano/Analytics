@@ -1,6 +1,6 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:network_analytics/services/canvas/canvas_interaction_service.dart';
+import 'package:aegis/services/canvas/canvas_interaction_service.dart';
 
 
 
