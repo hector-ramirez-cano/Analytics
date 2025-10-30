@@ -215,6 +215,7 @@ def __commit_device(device: Device, cur):
                 (device_id, data_source)
             VALUES
                 (%s, %s)
+            ON CONFLICT (device_id, data_source) DO NOTHING
         """, (device.device_id, source)
         )
 
@@ -263,6 +264,7 @@ def __commit_group(group: Group, cur):
                         (group_id, item_id)
                     VALUES
                         (%s, %s)
+                    ON CONFLICT (group_id, item_id) DO NOTHING
                 """, (group_id, member))
 
     else:
@@ -284,6 +286,7 @@ def __commit_group(group: Group, cur):
                         (group_id, item_id)
                     VALUES
                         (%s, %s)
+                    ON CONFLICT (group_id, item_id) DO NOTHING
                 """, (group.group_id, member))
 
 def __commit_rule(rule, cur):

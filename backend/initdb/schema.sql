@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS Analytics.topology_views_member(
     FOREIGN KEY (topology_views_id) REFERENCES Analytics.topology_views ON DELETE CASCADE,
     FOREIGN KEY (item_id) REFERENCES Analytics.items ON DELETE CASCADE,
 
-    CONSTRAINT chk_topology_view_members CHECK (validate_item_id(item_id))
+    CONSTRAINT chk_topology_view_members CHECK (validate_item_id(item_id)),
+    CONSTRAINT unique_topology_item_pair UNIQUE (topology_views_id, item_id);
 );
 
 
@@ -63,7 +64,8 @@ CREATE TABLE IF NOT EXISTS Analytics.device_data_sources(
     device_id    INT        NOT NULL,
     data_source  DataSource NOT NULL,
 
-    FOREIGN KEY (device_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE
+    FOREIGN KEY (device_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE,
+    CONSTRAINT unique_device_data_source_pair UNIQUE (device_id, data_source);
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.links (
@@ -124,7 +126,8 @@ CREATE TABLE IF NOT EXISTS Analytics.group_members (
     FOREIGN KEY (group_id) REFERENCES Analytics.groups(group_id) ON DELETE CASCADE,
     FOREIGN KEY (item_id) REFERENCES Analytics.items(id) ON DELETE CASCADE,
 
-    CONSTRAINT chk_group_no_recurse CHECK (group_id <> item_id)
+    CONSTRAINT chk_group_no_recurse CHECK (group_id <> item_id),
+    CONSTRAINT unique_group_item_pair UNIQUE (group_id, item_id);
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.dashboard(
