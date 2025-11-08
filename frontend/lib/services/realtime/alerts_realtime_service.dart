@@ -31,19 +31,33 @@ class AlertsRealtimeService extends _$AlertsRealtimeService {
   final Debouncer _unseenDebouncer = Debouncer();
 
   Semaphore serviceReady = Semaphore();
+  Timer? _pollerTimer;
 
   @override
   Future<UnseenAlerts> build() async {
     
-    final _ = ref.watch(websocketServiceProvider);
+    final wsState = ref.watch(websocketServiceProvider);
     serviceReady.reset();
 
+    await wsState.connected.future;
+    
     _attachRxMessageListener();
+    _pollerTimer = _createPoller();
 
     ref.onDispose(() {
+      _pollerTimer?.cancel();
     });
 
+    serviceReady.signal();
+
     return UnseenAlerts.empty();
+  }
+
+  Timer _createPoller() {
+    final notifier = ref.watch(websocketServiceProvider.notifier);
+    notifier.post('health-rt', "");
+
+    return Timer.periodic(const Duration(seconds: 10), (_) => notifier.post('health-rt', ""));
   }
 
   void _attachRxMessageListener() {

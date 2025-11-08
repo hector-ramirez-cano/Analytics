@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aegis/ui/components/universal_detector.dart';
+import 'package:flutter/services.dart';
 
 class BadgeIcon extends StatelessWidget{
   final Icon icon;
@@ -11,11 +12,13 @@ class BadgeIcon extends StatelessWidget{
   final String? badgeContent;
   final TextStyle badgeStyle;
   final String? tooltip;
+  final SystemMouseCursor Function()? cursor;
   const BadgeIcon({
     super.key,
     required this.icon,
     required this.badgeContent,
     this.tooltip,
+    this.cursor,
     this.iconPadding = const EdgeInsets.all(8),
     this.badgePadding = const EdgeInsets.all(4),
     this.badgeColor = Colors.red,
@@ -37,7 +40,7 @@ class BadgeIcon extends StatelessWidget{
         right: -2, top: -2,
         child: Container(
           padding: badgePadding,
-          decoration : BoxDecoration( color: Colors.red, shape: BoxShape.circle, ),
+          decoration : BoxDecoration( color: badgeColor, shape: BoxShape.circle, ),
           constraints: BoxConstraints( minWidth: 16, minHeight: 16, ),
           child: Text( badgeContent!, textAlign: TextAlign.center,
             style: TextStyle( color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, ),
@@ -48,7 +51,7 @@ class BadgeIcon extends StatelessWidget{
 
   Widget _makeBadgeIcon() {
     return UniversalDetector(
-      setCursor: badgeContent != null ? () => SystemMouseCursors.click : null,
+      setCursor: cursor,
       child:  Stack(
         clipBehavior: Clip.none, // allow badge to overflow
         children: [ icon, _makeBadge() ],

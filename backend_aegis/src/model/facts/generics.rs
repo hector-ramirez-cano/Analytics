@@ -1,0 +1,234 @@
+use std::{collections::HashMap, fmt};
+
+use influxdb2::models::FieldValue;
+use serde::{Serialize, Serializer, ser::SerializeSeq};
+
+use crate::model::facts::{ansible::ansible_status::AnsibleStatus, icmp::icmp_status::IcmpStatus, snmp::snmp_status::SnmpStatus};
+
+#[derive(Debug, Clone)]
+pub enum MetricValue{
+    String(String),
+    Number(f64),
+    Integer(i64),
+    Boolean(bool),
+    Array(Vec<MetricValue>),
+    Null(),
+}
+
+impl Default for MetricValue {
+    fn default() -> Self {
+        MetricValue::Null()
+    }
+}
+
+
+impl Serialize for MetricValue {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            MetricValue::String(s) => serializer.serialize_str(s),
+            MetricValue::Number(n) => serializer.serialize_f64(*n),
+            MetricValue::Integer(i) => serializer.serialize_i64(*i),
+            MetricValue::Boolean(b) => serializer.serialize_bool(*b),
+            MetricValue::Array(arr) => {
+                let mut seq = serializer.serialize_seq(Some(arr.len()))?;
+                for item in arr {
+                    seq.serialize_element(item)?;
+                }
+                seq.end()
+            }
+            MetricValue::Null() => serializer.serialize_unit(),
+        }
+    }
+}
+
+impl Into<serde_json::Value> for MetricValue {
+    fn into(self) -> serde_json::Value {
+        match self {
+            MetricValue::String(v) => serde_json::json!(v),
+            MetricValue::Number(v)    => serde_json::json!(v),
+            MetricValue::Integer(v)   => serde_json::json!(v),
+            MetricValue::Boolean(v)  => serde_json::json!(v),
+            MetricValue::Array(metric_values) => serde_json::json!(metric_values),
+            MetricValue::Null() => serde_json::Value::Null,
+        }
+    }
+}
+
+impl fmt::Display for MetricValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MetricValue::String(s) => write!(f, "\"{}\"", s),
+            MetricValue::Number(n) => write!(f, "{}", n),
+            MetricValue::Integer(i) => write!(f, "{}", i),
+            MetricValue::Boolean(b) => write!(f, "{}", b),
+            MetricValue::Array(arr) => {
+                write!(f, "[")?;
+                for (i, val) in arr.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", val)?;
+                }
+                write!(f, "]")
+            }
+            MetricValue::Null() => write!(f, "null"),
+        }
+    }
+}
+/* impl Into<influxdb_rs::Value<'_>> for MetricValue {
+    fn into(self) -> influxdb_rs::Value<'static> {
+        match self {
+            MetricValue::String(s) => influxdb_rs::Value::String(s.into()),
+            MetricValue::Number(n) => influxdb_rs::Value::Float(n.into()),
+            MetricValue::Integer(i) => influxdb_rs::Value::Integer(i.into()),
+            MetricValue::Boolean(b) => influxdb_rs::Value::Boolean(b.into()),
+            MetricValue::Array(_) => influxdb_rs::Value::String("Unsupported type".into()),
+            MetricValue::Null() => influxdb_rs::Value::String("Unsupported type".into()),
+        }
+    }
+} */
+
+impl Into<FieldValue> for MetricValue {
+    fn into(self) -> FieldValue {
+        match self {
+            MetricValue::String(m) => FieldValue::String(m),
+            MetricValue::Number(m) => FieldValue::F64(m),
+            MetricValue::Integer(m) => FieldValue::I64(m),
+            MetricValue::Boolean(m) => FieldValue::Bool(m),
+            MetricValue::Array(_) => FieldValue::String("Unsupported type".to_string()),
+            MetricValue::Null() => FieldValue::String("Unsupported type".to_string()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Status {
+    pub ansible: AnsibleStatus,
+    pub icmp: IcmpStatus,
+    pub snmp: SnmpStatus,
+}
+
+impl Status {
+    pub fn merge(&mut self, other: &Status) {
+        self.ansible.merge(&other.ansible);
+        self.icmp.merge(&other.icmp);
+        self.snmp.merge(&other.snmp);
+    }
+
+    pub fn new_ansible(status : AnsibleStatus) -> Self {
+        Status { ansible: status, icmp: IcmpStatus::Unknown(String::new()), snmp: SnmpStatus::Unknown }
+    }
+
+    pub fn new_icmp(status : IcmpStatus) -> Self {
+        Status { ansible: AnsibleStatus::Unknown(String::new()), icmp: status, snmp: SnmpStatus::Unknown }
+    }
+
+    pub fn new_snmp(status: SnmpStatus) -> Self {
+        Status { ansible: AnsibleStatus::Unknown(String::new()), icmp: IcmpStatus::Unknown(String::new()), snmp: status }
+    }
+}
+
+impl Default for Status {
+    fn default() -> Self {
+        Self { ansible: Default::default(), icmp: Default::default(), snmp: Default::default() }
+    }
+}
+
+
+//                          Device    ->    { metric_name -> Metric}
+pub type MetricsT = HashMap<String, HashMap<String        , MetricValue>>;
+pub type StatusT: = HashMap<String, Status>;
+
+pub trait ToMetrics {
+    /// Convert `self` into MetricValue entries, using `prefix` as the current metric name.
+    /// Pass `None` for top-level to avoid a leading separator.
+    fn to_metrics(&self, prefix: Option<&str>) -> HashMap<String, MetricValue>;
+}
+
+impl ToMetrics for serde_json::Value {
+    fn to_metrics(&self, prefix: Option<&str>) -> HashMap<String, MetricValue> {
+        fn join(prefix: Option<&str>, key: &str) -> String {
+            match prefix {
+                Some(p) if !p.is_empty() => format!("{}_{}", p, key),
+                _ => key.to_string(),
+            }
+        }
+
+        let mut out: HashMap<String, MetricValue> = HashMap::new();
+
+        match self {
+            serde_json::Value::Object(map) => {
+                for (k, v) in map {
+                    let name = join(prefix, k);
+                    out.extend( v.to_metrics(Some(&name)));
+                }
+            }
+
+            serde_json::Value::Array(arr) => {
+                let name = prefix.unwrap_or_default().to_string();
+                let mut children = Vec::with_capacity(arr.len());
+                for (idx, item) in arr.iter().enumerate() {
+                    // Use index to keep element names unique; change if you prefer another scheme
+                    let item_name = if name.is_empty() {
+                        idx.to_string()
+                    } else {
+                        format!("{}_{}", name, idx)
+                    };
+                    children.extend(item.to_metrics(Some(&item_name)).into_values());
+                }
+                out.insert(name, MetricValue::Array(children));
+            }
+
+            serde_json::Value::String(s) => {
+                let name = prefix.unwrap_or_default().to_string();
+                out.insert(name, MetricValue::String(s.clone()));
+            }
+
+            serde_json::Value::Number(n) => {
+                let f = n.as_f64()
+                    .or_else(|| n.as_i64().map(|i| i as f64))
+                    .or_else(|| n.as_u64().map(|u| u as f64))
+                    .unwrap_or(0.0);
+                let name = prefix.unwrap_or_default().to_string();
+                out.insert(name, MetricValue::Number(f));
+            }
+
+            serde_json::Value::Bool(b) => {
+                let name = prefix.unwrap_or_default().to_string();
+                out.insert(name, MetricValue::Boolean(*b));
+            }
+
+            serde_json::Value::Null => {
+                let name = prefix.unwrap_or_default().to_string();
+                out.insert(name, MetricValue::Null());
+            }
+        }
+
+        out
+    }
+}
+
+/// Recursively merges `src` into `dst`.
+/// - If both values are arrays, merges them element-wise.
+/// - Otherwise, `src` overwrites `dst`.
+pub fn recursive_merge(
+    dst: &mut HashMap<String, MetricValue>,
+    src: &HashMap<String, MetricValue>,
+) {
+    for (key, src_val) in src {
+        match (dst.get_mut(key), src_val) {
+            // Merge arrays element-wise (optional: customize strategy)
+            (Some(MetricValue::Array(dst_arr)), MetricValue::Array(src_arr)) => {
+                dst_arr.extend(src_arr.clone()); // or use a smarter merge strategy
+            }
+
+            // Overwrite or insert
+            _ => {
+                dst.insert(key.clone(), src_val.clone());
+            }
+        }
+    }
+}

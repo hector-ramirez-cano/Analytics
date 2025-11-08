@@ -1,0 +1,62 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT Analytics.devices.device_id, device_name, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values \n        FROM Analytics.devices;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "device_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "device_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 4,
+        "name": "management_hostname",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "requested_metadata",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 6,
+        "name": "requested_metrics",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "available_values",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "8f3cad09bfe5499c77832bedf38cdb3ac410d708a7fe438babe88b282d38b911"
+}

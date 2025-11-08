@@ -11,3 +11,6 @@ backend/ansible/env/ssh_key
 backend/ansible/inventory/hosts
 *.sqlite3-shm
 *.sqlite3-wal
+backend_aegis/Cargo.lock
+backend/ansible/inventory/hosts
+backend_aegis/target

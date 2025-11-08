@@ -134,7 +134,8 @@ async def check_backend_ws(data_out_queue : janus.Queue):
     Args:
         data_out_queue (janus.Queue): Queue instance to which the check will be posted
     """
-    await data_out_queue.async_q.put(str(check_connections()))
+    msg = {"type": "health-rt", "msg": check_connections()}
+    await data_out_queue.async_q.put(json.dumps(msg))
 
 async def syslog_ws(signal_queue: janus.Queue, data: dict | list):
     """Executes commands related to syslog db access for past syslog messages.

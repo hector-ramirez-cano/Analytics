@@ -1,0 +1,2 @@
+ANSIBLE_SSH_ARGS="-o IdentitiesOnly=yes -i ./env/ssh_key"
+ANSIBLE_FORKS=20

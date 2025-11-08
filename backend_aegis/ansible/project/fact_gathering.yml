@@ -1,0 +1,32 @@
+---
+- name: Ping all Hosts
+  hosts: all
+  gather_facts: yes
+  strategy: free
+
+  tasks:
+    - name: Ping
+      ansible.builtin.ping:
+
+    - name: Gather IPs
+      ansible.builtin.setup:
+        gather_subset:
+          - network
+
+    - name: Measure latency with ping
+      ansible.builtin.command: ping -c 4 -A -q 8.8.8.8
+      register: ping_result
+      changed_when: false
+
+    - name: Extract avg latency
+      ansible.builtin.set_fact:
+        avg_latency: "{{ ping_result.stdout | regex_search('rtt.* = .*?/([0-9.]+)/', '\\1') }}"
+
+    - name: Extract jitter (mdev)
+      ansible.builtin.set_fact:
+        jitter: "{{ ping_result.stdout | regex_search('rtt.* = .*?/.*?/.*?/([0-9.]+)', '\\1') }}"
+
+    - name: Gather interface stats
+      ansible.builtin.command: ip -s link
+      register: iface_stats
+      changed_when: false

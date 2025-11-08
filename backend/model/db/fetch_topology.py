@@ -69,7 +69,7 @@ def parse_devices(cur: ServerCursor):
     devices = Cache().devices
     cur.execute(
         """
-            SELECT Analytics.devices.device_id, device_name, position_x, position_y, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values 
+            SELECT Analytics.devices.device_id, device_name, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values 
                 FROM Analytics.devices;
         """)
     for row in cur.fetchall():
@@ -80,15 +80,15 @@ def parse_devices(cur: ServerCursor):
             devices[device_id] = Device(
                 device_id=int(row[0]),
                 device_name=row[1],
-                position_x=float(row[2]),
-                position_y=float(row[3]),
-                latitude=float(row[4]),
-                longitude=float(row[5]),
-                management_hostname=row[6],
+                position_x=0,#float(row[2]),
+                position_y=0,#float(row[3]),
+                latitude=float(row[2]),
+                longitude=float(row[3]),
+                management_hostname=row[4],
                 configuration=DeviceConfiguration(
-                    requested_metadata=set(row[7]),
-                    requested_metrics=set(row[8]),
-                    available_values=set(row[9]) if (row[9] is not None) else {},
+                    requested_metadata=set(row[5]),
+                    requested_metrics=set(row[6]),
+                    available_values=set(row[7]) if (row[7] is not None) else {},
                     data_sources=set(),
                 )
             )
@@ -110,7 +110,7 @@ def parse_devices(cur: ServerCursor):
     # we extract the data sources, the database is normalized, so it's a separate table
     cur.execute(
         """
-            SELECT device_id, data_source FROM Analytics.device_data_sources;
+            SELECT device_id, fact_data_source FROM Analytics.device_data_sources;
         """)
     for row in cur.fetchall():
         device_id = int(row[0])
@@ -128,7 +128,7 @@ def parse_device_datasource(cur: ServerCursor):
     :return: None
     """
     devices = Cache().devices
-    cur.execute("SELECT device_id, data_source FROM Analytics.device_data_sources")
+    cur.execute("SELECT device_id, fact_data_source FROM Analytics.device_data_sources")
     for row in cur.fetchall():
         device_id = int(row[0])
 

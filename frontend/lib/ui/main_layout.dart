@@ -1,3 +1,4 @@
+import 'package:aegis/ui/components/backend_health_badge_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:aegis/theme/app_colors.dart';
 import 'package:aegis/ui/components/alert_badge_icon.dart';
@@ -5,9 +6,6 @@ import 'package:aegis/ui/screens/content_body.dart';
 
 class MainLayout extends StatelessWidget {
   const MainLayout({super.key});
-
-
-  
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +15,8 @@ class MainLayout extends StatelessWidget {
         automaticallyImplyLeading: false,
         backgroundColor: AppColors.appBarColor,
         actions: [
-          AlertBadgeIcon()
+          BackendHealthBadgeIcon(),
+          AlertBadgeIcon(),
         ],
       ),
       body: ContentBody()

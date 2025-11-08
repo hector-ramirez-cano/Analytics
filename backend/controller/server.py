@@ -131,7 +131,7 @@ async def __api_ws_router():
                 case "alerts":
                     await ws_operations.alerts_ws(alert_signal_queue, inner_data)
 
-                case "health":
+                case "health-rt":
                     await ws_operations.check_backend_ws(data_out_queue)
 
                 case "dashboards":

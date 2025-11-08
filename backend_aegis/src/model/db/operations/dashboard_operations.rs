@@ -1,0 +1,47 @@
+use std::collections::HashMap;
+
+use crate::model::data::dashboard::{Dashboard, DashboardItem};
+
+pub async fn get_dashboards_as_json(pool: &rocket::State<sqlx::PgPool>) -> Result<HashMap<i64, Dashboard>, ()>{
+    let dashboard_members = sqlx::query_as!(DashboardItem, "SELECT dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition FROM Analytics.dashboard_items")
+    .fetch_all(&**pool)
+    .await
+    .map_err(|e| {
+        log::error!("[DB]Failed to load dashboards from database with error = '{e}'");
+        ()
+    })?;
+
+    let mut items = HashMap::new();
+    for member in dashboard_members {
+        if !items.contains_key(&member.dashboard_id) {
+            items.insert(member.dashboard_id, vec![member]);
+        } else {
+            let members = items.get_mut(&member.dashboard_id).expect("Unreachable code");
+            members.push(member);
+        };
+    }
+    
+    let rows = sqlx::query!(r#"
+        SELECT dashboard_id, dashboard_name FROM Analytics.dashboard;"#
+    )
+    .fetch_all(&**pool)
+    .await
+    .map_err(|e| {
+        let e = e.to_string();
+        log::error!("[DB]Failed to SELECT devices from database with error = '{e}'");
+        ()
+    })?;
+
+    let mut dashboards = HashMap::new();
+    for row in rows {
+        let dashboard_id = row.dashboard_id;
+        let dashboard_name = row.dashboard_name;
+        let members = items.remove(&dashboard_id).unwrap_or(Vec::new());
+        let dashboard = Dashboard::new(dashboard_id, dashboard_name, members);
+
+        dashboards.insert(dashboard_id, dashboard);
+    }
+
+    return Ok(dashboards);
+}
+
