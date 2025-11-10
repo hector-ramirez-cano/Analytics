@@ -3,11 +3,11 @@ use std::env;
 use influxdb2::models::DataPoint;
 use rocket::futures::stream;
 
-use crate::{config::Config, model::{cache::Cache, db::fetch_topology::{query_devices, query_groups, query_links}, facts::generics::MetricsT}};
+use crate::{config::Config, model::{cache::Cache, db::fetch_topology::{query_devices, query_groups, query_links}, facts::generics::Metrics}};
 
 pub async fn update_topology_cache(pool: &sqlx::PgPool, forced : bool) -> Result<(), rocket::http::Status>{
     if let Some(mut last_update_guard) = Cache::instance().try_claim_update(forced).await {
-        log::info!("Updating topology cache!");
+        println!("[INFO ][CACHE] Updating topology cache!");
 
         let devices = query_devices(pool).await?;
         let links   = query_links(pool).await?;
@@ -21,7 +21,7 @@ pub async fn update_topology_cache(pool: &sqlx::PgPool, forced : bool) -> Result
     Ok(())
 }
 
-pub async fn update_device_analytics(influx_client : &influxdb2::Client, metrics : &MetricsT) {
+pub async fn update_device_analytics(influx_client : &influxdb2::Client, metrics : &Metrics) {
 
     log::info!("[INFO ][FACTS] Updating Influx with metrics, from inside the update device analytics function");
     
@@ -40,10 +40,10 @@ pub async fn update_device_analytics(influx_client : &influxdb2::Client, metrics
 
     let mut points = Vec::new();
 
-    log::debug!("[DEBUG][FACTS][INFLUX] THIS is a bucket = '{}'", &bucket);
-    log::debug!("[DEBUG][FACTS][INFLUX] Dear god...");
-    log::debug!("[DEBUG][FACTS][INFLUX] There's more...");
-    log::debug!("[DEBUG][FACTS][INFLUX] Nooo...");
+    log::info!("[DEBUG][FACTS][INFLUX] THIS is a bucket = '{}'", &bucket);
+    log::info!("[DEBUG][FACTS][INFLUX] Dear god...");
+    log::info!("[DEBUG][FACTS][INFLUX] There's more...");
+    log::info!("[DEBUG][FACTS][INFLUX] Nooo...");
 
 
     for device in metrics {

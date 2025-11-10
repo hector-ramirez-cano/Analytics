@@ -7,12 +7,13 @@ use tokio::sync::{RwLock, RwLockWriteGuard};
 use serde::Serialize;
 
 use crate::config::Config;
+use crate::model::alerts::EvaluableItem;
 use crate::model::data::data_source::DataSource;
 use crate::model::data::device::Device;
 use crate::model::data::link::Link;
 use crate::model::data::group::Group;
 use crate::model::db::update_topology::update_topology_cache;
-use crate::model::facts::generics::{MetricValue, MetricsT};
+use crate::model::facts::generics::{MetricValue, Metrics};
 
 async fn serialize_map<T: Serialize>(lock: &RwLock<HashMap<i64, T>>) -> Result<String, serde_json::Error> {
     serde_json::to_string(&*lock.read().await)
@@ -22,7 +23,7 @@ pub struct Cache {
     devices: RwLock<HashMap<i64, Device>>,
     links: RwLock<HashMap<i64, Link>>,
     groups: RwLock<HashMap<i64, Group>>,
-    facts: RwLock<MetricsT>,
+    facts: RwLock<Metrics>,
     last_update: RwLock<u64>, // epoch seconds
 }
 
@@ -152,6 +153,34 @@ impl Cache {
         Some(r.get(&id)?.members.clone()?)
     }
 
+    pub fn get_group_device_ids(&self, id: i64) -> Option<HashSet<i64>> {
+        let mut set: HashSet<i64> = {
+            let d = self.devices.blocking_read();
+            let g = self.groups.blocking_read();
+            
+            let members = g.get(&id)?.members.clone()?;
+            let devices : HashSet<i64>= members.iter().filter(|id| d.contains_key(*id)).map(|id| *id).collect();
+            devices
+        };
+        
+        let inner_groups: HashSet<i64> = {
+            let g = self.groups.blocking_read();
+            let members = g.get(&id)?.members.clone().unwrap_or_default();
+            let groups : HashSet<i64>= members.iter().filter(|id| g.contains_key(*id)).map(|id| *id).collect();
+            groups
+        };
+
+        for group in inner_groups {
+            let children = match self.get_group_device_ids(group) { Some(c) => c, None => continue };
+            
+            set.extend(children);
+        }
+
+        Some(set)
+    }
+
+    
+
     pub async fn has_group(&self, id: i64) -> bool {
         let r = self.groups.read().await;
         r.contains_key(&id)
@@ -168,6 +197,21 @@ impl Cache {
 
     pub async fn groups_json(&self) -> Result<String, serde_json::Error> {
         serialize_map(&self.groups).await
+    }
+
+    pub async fn get_evaluable_item(&self, id: i64) -> Option<EvaluableItem> {
+        let r = self.devices.read().await;
+        
+        match r.get(&id) {
+            Some(d) => Some(EvaluableItem::Device(d.clone())),
+            None=> {
+                let r = self.groups.read().await;
+                match r.get(&id) {
+                    Some(g) => Some(EvaluableItem::Group(g.clone())),
+                    None => None
+                }
+            }
+        }
     }
 
     // Cache API
@@ -203,7 +247,7 @@ impl Cache {
         w.extend(groups);
     }
 
-    pub async fn update_facts(&self, metrics: MetricsT) {
+    pub async fn update_facts(&self, metrics: Metrics) {
         let mut w = self.facts.write().await;
         w.clear();
         w.extend(metrics);

@@ -6,7 +6,7 @@ use crate::controller::get_operations::api_get_topology;
 use crate::model::cache::Cache;
 use crate::model::db::operations::dashboard_operations::get_dashboards_as_json;
 use crate::model::db::operations::influx_operations::{self, InfluxFilter};
-use crate::model::facts::generics::MetricsT;
+use crate::model::facts::generics::Metrics;
 
 
 #[derive(serde::Deserialize)]
@@ -100,7 +100,7 @@ pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg_in: W
     }
 
     // Extract facts
-    let mut extracted : MetricsT = HashMap::new();
+    let mut extracted : Metrics = HashMap::new();
     let facts : HashSet<String> = facts.as_array()?.iter().map(|s| s.as_str().unwrap_or("").to_owned()).collect();
     for device_id in devices {
         // Filter and extract facts

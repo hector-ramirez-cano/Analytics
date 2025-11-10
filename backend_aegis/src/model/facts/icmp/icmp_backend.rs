@@ -6,7 +6,7 @@ use tokio::task;
 use futures::future::join_all;
 
 use crate::model::cache::Cache;
-use crate::model::facts::generics::{MetricValue, MetricsT, Status, StatusT};
+use crate::model::facts::generics::{MetricValue, Metrics, Status, StatusT};
 use crate::model::facts::icmp::icmp_status::IcmpStatus;
 
 lazy_static::lazy_static! {
@@ -88,7 +88,7 @@ fn ping_host_once(host: &str) -> io::Result<(i32, String, IcmpStatus, f64, f64)>
 
 async fn ping_devices(
     hosts: Vec<String>,
-) -> (MetricsT, StatusT) {
+) -> (Metrics, StatusT) {
     // spawn_blocking for each host (equivalent to loop.run_in_executor(None, func, host))
     let tasks: Vec<_> = hosts
         .into_iter()
@@ -107,7 +107,7 @@ async fn ping_devices(
     let join_results = join_all(tasks).await;
 
     // prepare output maps
-    let mut metrics_map: MetricsT = HashMap::new();
+    let mut metrics_map: Metrics = HashMap::new();
     let mut status_map: StatusT = HashMap::new();
 
     for join_res in join_results {
@@ -121,8 +121,8 @@ async fn ping_devices(
                             host.clone(),
                             HashMap::from([
                                 ("icmp_status".to_string(), MetricValue::Integer(icmp_status.to_i32().into())),
-                                ("icmp_rtt".to_string(), MetricValue::Number(rtt)),
-                                ("icmp_loss_percent".to_string(), MetricValue::Number(loss))
+                                ("icmp_rtt".to_string(), MetricValue::Number(rtt.into())),
+                                ("icmp_loss_percent".to_string(), MetricValue::Number(loss.into()))
                             ])
                         );
 
@@ -138,8 +138,8 @@ async fn ping_devices(
                             host.clone(),
                             HashMap::from([
                                 ("icmp_status".to_string(), MetricValue::Integer(IcmpStatus::Unreachable(_e.to_string()).to_i32().into())),
-                                ("icmp_rtt".to_string(), MetricValue::Number(0.0)),
-                                ("icmp_loss_percent".to_string(), MetricValue::Number(100.0))
+                                ("icmp_rtt".to_string(), MetricValue::Number(0.0.into())),
+                                ("icmp_loss_percent".to_string(), MetricValue::Number(100.0.into()))
                             ])
                         );
                         status_map.insert(
@@ -162,7 +162,7 @@ async fn ping_devices(
 
 pub async fn gather_facts(
     // TODO: Change Metric into MetricValue to make it generic
-) -> (MetricsT, StatusT) {
+) -> (Metrics, StatusT) {
     log::info!("[INFO ][FACTS][ICMP] Starting ping sweep...");
     let targets = Cache::instance().icmp_inventory().await;
 
@@ -175,7 +175,7 @@ pub async fn gather_facts(
 
 pub fn init() {
 
-    log::info!("[INFO ][FACTS][ICMP] Init ICMP backend");
+    println!("[INFO ][FACTS][ICMP] Init ICMP backend");
 }
 
 #[cfg(test)]

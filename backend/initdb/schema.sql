@@ -100,13 +100,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_link_pair
 ON Analytics.links (LEAST(side_a, side_b), GREATEST(side_a, side_b));
 
 
-CREATE TYPE AlertSeverity AS ENUM('emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug');
 CREATE TABLE IF NOT EXISTS Analytics.alerts (
     alert_id     BIGSERIAL,
     alert_time   TIMESTAMP NOT NULL,
     ack_time     TIMESTAMP,
     requires_ack BOOLEAN NOT NULL,
-    severity     AlertSeverity NOT NULL,
+    severity     SMALLINT NOT NULL,
     message      VARCHAR,
     ack_actor    VARCHAR,
     target_id    BIGINT,
@@ -115,11 +114,12 @@ CREATE TABLE IF NOT EXISTS Analytics.alerts (
     FOREIGN KEY (target_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE
 );
 
+-- DROP TABLE Analytics.alert_rules;
 CREATE TABLE IF NOT EXISTS Analytics.alert_rules (
     rule_id         BIGSERIAL PRIMARY KEY,
-    rule_name       VARCHAR(128),
+    rule_name       VARCHAR(128) NOT NULL,
     requires_ack    BOOLEAN NOT NULL,
-    rule_definition JSONB
+    rule_definition JSONB NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Analytics.groups (

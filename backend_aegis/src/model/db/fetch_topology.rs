@@ -74,7 +74,7 @@ pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<i64, Device>, 
     .await
     .map_err(|e| {
         let e = e.to_string();
-        log::error!("[DB]Failed to SELECT devices from database with error = '{e}'");
+        println!("[ERROR][DB]Failed to SELECT devices from database with error = '{e}'");
         rocket::http::Status::InternalServerError
     })?;
 

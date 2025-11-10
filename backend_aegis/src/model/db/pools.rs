@@ -54,14 +54,14 @@ pub async fn init_influx_client() -> influxdb2::Client {
     let port = match config.get::<i16>("backend/controller/influx/port", "/")  {
         Ok(v) => v,
         Err(_) => {
-            log::warn!("[WARN ][DB] Influx port not found in configuration, fallback to TCP:8086");
+            println!("[WARN ][DB] Influx port not found in configuration, fallback to TCP:8086");
             8086
         }
     };
     let schema = match config.get::<String>("backend/controller/influx/schema", "/")  {
         Ok(v) => v,
         Err(_) => {
-            log::warn!("[WARN ][DB] Influx schema not found in configuration, fallback to 'http://'");
+            println!("[WARN ][DB] Influx schema not found in configuration, fallback to 'http://'");
             "http://".to_string()
         }
     };
@@ -75,7 +75,7 @@ pub async fn init_influx_client() -> influxdb2::Client {
     let token = match config.get::<String>("backend/controller/influx/token", "/") {
         Ok(v) => v, Err(_) => { handle_fatal("[FATAL] Failed to create Influx Client. Token is not found in config file").unwrap(); unreachable!() } ,
     };
-    let bucket = match config.get::<String>("backend/controller/influx/bucket", "/") {
+    let _bucket = match config.get::<String>("backend/controller/influx/bucket", "/") {
         Ok(v) => v, Err(_) => { handle_fatal("[FATAL] Failed to create Influx Client. Bucket is not found in config file").unwrap(); unreachable!() } ,
     };
 

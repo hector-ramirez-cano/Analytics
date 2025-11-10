@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM Analytics.alert_rules;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "rule_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "rule_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "requires_ack",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 3,
+        "name": "rule_definition",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c2a9d68e159306e4bb40c6f3fb893fcefe77dcc02ae493e3e2147ac04143a780"
+}

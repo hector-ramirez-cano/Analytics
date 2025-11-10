@@ -33,7 +33,7 @@ impl SyslogBackend {
     pub fn init() {
         let _ = Self::instance();
 
-        log::info!("[INFO ][SYSLOG] Init Syslog Backend");
+        println!("[INFO ][SYSLOG] Init Syslog Backend");
     }
 
         //  __        __              __                                                     ______   _______   ______ 
@@ -82,7 +82,7 @@ impl SyslogBackend {
         // Attempt sends; collect ids that failed so we can prune them
         let mut failed_ids = Vec::new();
         for (id, tx) in keys_and_senders {
-            // try_send avoids awaiting; if it fails because buffer is full, consider spawning a task to await.
+            
             // Here we try a non-blocking send first, then fallback to try_send semantics.
             match tx.try_send(msg.clone()) {
                 Ok(_) => {}
@@ -154,7 +154,7 @@ impl SyslogBackend {
         let port = match config.get("backend/controller/api/syslog/RFC5424-port", "/") {
             Ok(v) => v,
             Err(_) => {
-                log::error!("[ERROR][SYSLOG] During init: Syslog port not found, defaulting to 1514...");
+                println!("[ERROR][SYSLOG] During init: Syslog port not found, defaulting to 1514...");
                 1514
             }
         };
@@ -162,7 +162,7 @@ impl SyslogBackend {
         let addr = match config.get("backend/controller/api/syslog/bind_address", "/") {
             Ok(v) => v,
             Err(_) => {
-                log::error!("[ERROR][SYSLOG] During init: Syslog bind address not found, defaulting to 0.0.0.0...");
+                println!("[ERROR][SYSLOG] During init: Syslog bind address not found, defaulting to 0.0.0.0...");
                 "0.0.0.0".to_owned()
             }
         };
@@ -171,12 +171,12 @@ impl SyslogBackend {
         let mut buf = [0u8; 2048];
         let socket = match UdpSocket::bind(&bind_addr).await {
             Ok(socket) => {
-                log::info!("[INFO ][SYSLOG] Spawning syslog listener task bound to={}", &bind_addr);
+                println!("[INFO ][SYSLOG] Spawning syslog listener task bound to={}", &bind_addr);
                 socket
             },
             Err(e) => {
                 let e = format!("[ERROR][SYSLOG] Failed to bind to {} for syslog messages, e='{}'", &bind_addr, e);
-                log::error!("{}", e);
+                println!("{}", e);
                 panic!("{}", e);
             }
         };
