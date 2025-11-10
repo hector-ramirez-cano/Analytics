@@ -1,3 +1,4 @@
+use chrono::FixedOffset;
 use sqlx::prelude::FromRow;
 use syslog_loose::ProcId;
 use std::fmt;
@@ -19,7 +20,7 @@ use sqlx::types::chrono::{DateTime, Utc};
 //                                                                 /  \__$$ |
 //                                                                 $$    $$/ 
 //                                                                  $$$$$$/  
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, Hash)]
 #[repr(i16)]
 pub enum SyslogSeverity {
     Emerg = 0,
@@ -95,7 +96,7 @@ impl fmt::Display for SyslogSeverity {
 //                                                  /  \__$$ |
 //                                                  $$    $$/ 
 //                                                   $$$$$$/  
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, Hash)]
 #[repr(i16)]
 pub enum SyslogFacility {
     Kern = 0,
@@ -246,6 +247,7 @@ impl<'a> From<syslog_loose::Message<&'a str>> for SyslogMessage {
         let severity = if let Some(s) = m.severity { Some(s.into()) } else { None };
 
         let msg = m.msg.to_string();
+
         SyslogMessage {
             facility: facility,
             severity: severity,

@@ -120,8 +120,6 @@ impl SyslogBackend {
     }
 
     pub async fn update_database(postgres_pool: &Pool<Postgres>, msg: &SyslogMessage) {
-        log::info!("[INFO ][SYSLOG] Updating Postgres with syslog message!");
-
         match db::operations::syslog_operations::update_database(postgres_pool, msg).await {
             Ok(_) => (),
             Err(_) => {
@@ -181,9 +179,8 @@ impl SyslogBackend {
             }
         };
 
-        // Syslog RFC5424, if RFC3164 support is needed, another thread can be spawned that sets 
-        // syslog_loose::parse_message to Variant::RFC3164 and run it along side it, on a different port
-        tokio::task::spawn_blocking(async move || {
+        println!("[DEBUG][SYSLOG] Spawning syslog receiver");
+        tokio::task::spawn(async move {
             loop{
                 let (len, _) = match socket.recv_from(&mut buf).await {
                     Ok((len, addr)) => (len, addr),
@@ -193,7 +190,8 @@ impl SyslogBackend {
                     }
                 };
                 let message = String::from_utf8_lossy(&mut buf[..len]);
-                let message = syslog_loose::parse_message(&message, syslog_loose::Variant::RFC5424);
+                log::info!("[DEBUG][SYSLOG] Received message {}", &message);
+                let message = syslog_loose::parse_message(&message, syslog_loose::Variant::Either);
                 let message: SyslogMessage = message.into();
 
                 Self::update_database(&postgres_pool, &message).await;

@@ -30,7 +30,7 @@ services:
     container_name: rsyslog
     ports:
       - "514:514/udp"
-      - "1514:1514"
+      - "514:514/tcp"
     volumes:
       - ./rsyslog.conf:/etc/rsyslog.conf:ro
     networks:
@@ -40,5 +40,5 @@ networks:
   syslognet:
     driver: bridge
 
-volumes: 
+volumes:
   postgres_data:

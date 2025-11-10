@@ -239,10 +239,10 @@ EXECUTE FUNCTION create_item_on_group_insert();
 --           $$    $$/                         $$    $$/ 
 --            $$$$$$/                           $$$$$$/  
 
-DROP SCHEMA Syslog;
 CREATE SCHEMA IF NOT EXISTS Syslog;
 
 -- DROP TABLE Syslog.system_events;
+-- SELECT * FROM Syslog.system_events;
 CREATE TABLE IF NOT EXISTS Syslog.system_events (
     id BIGSERIAL PRIMARY KEY,
     facility SMALLINT,
