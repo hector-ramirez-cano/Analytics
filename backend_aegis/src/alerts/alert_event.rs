@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 
-use crate::model::alerts::{AlertEvent, AlertSeverity};
+use crate::alerts::{AlertEvent, AlertSeverity};
 
 
 impl AlertEvent {

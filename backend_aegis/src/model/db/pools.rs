@@ -45,6 +45,8 @@ pub async fn init_posgres_pool() -> Result<Pool<Postgres>, sqlx::Error> {
         .connect(&conn_url)
         .await?;
 
+    sqlx::query!("SET TIMEZONE TO 'UTC';").execute(&pool).await?;
+
     Ok(pool)
 }
 

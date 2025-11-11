@@ -18,8 +18,8 @@ class SyslogMessage {
     required this.severity,
     required this.source,
     required this.recievedAt,
-    required this.reportedTime,
-    required this.syslogTag,
+    required this.reportedTime, // TODO: Removed from backend, remove frmo here too
+    required this.syslogTag, // TODO: Removed from backend, remove frmo here too
     required this.processId,
     required this.message,
   });

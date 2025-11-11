@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use crate::model::data::dashboard::{Dashboard, DashboardItem};
 
-pub async fn get_dashboards_as_json(pool: &rocket::State<sqlx::PgPool>) -> Result<HashMap<i64, Dashboard>, ()>{
+pub async fn get_dashboards_as_json(pool: &sqlx::PgPool) -> Result<HashMap<i64, Dashboard>, ()>{
     let dashboard_members = sqlx::query_as!(DashboardItem, "SELECT dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition FROM Analytics.dashboard_items")
-    .fetch_all(&**pool)
+    .fetch_all(&*pool)
     .await
     .map_err(|e| {
         log::error!("[DB]Failed to load dashboards from database with error = '{e}'");
@@ -24,7 +24,7 @@ pub async fn get_dashboards_as_json(pool: &rocket::State<sqlx::PgPool>) -> Resul
     let rows = sqlx::query!(r#"
         SELECT dashboard_id, dashboard_name FROM Analytics.dashboard;"#
     )
-    .fetch_all(&**pool)
+    .fetch_all(&*pool)
     .await
     .map_err(|e| {
         let e = e.to_string();

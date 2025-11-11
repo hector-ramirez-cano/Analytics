@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-use crate::model::{alerts::{AlertPredicate, AlertPredicateOperation, AlertReduceLogic, AlertRule, AlertSeverity}, facts::generics::{MetricSet, MetricValue}};
+use crate::model::facts::generics::{MetricSet, MetricValue};
+use crate::{alerts::{AlertPredicate, AlertPredicateOperation, AlertReduceLogic, AlertRule, AlertSeverity}};
 
 impl AlertRule {
     pub fn from_json(rule_id: i64, name: String, requires_ack: bool, definition: serde_json::Value) -> Option<Self> {

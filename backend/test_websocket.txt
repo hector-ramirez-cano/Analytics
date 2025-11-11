@@ -2,7 +2,35 @@
 {"type": "facts", "msg": {"facts": ["icmp_rtt"], "device-ids": 1}}
 {"type": "facts", "msg": {"facts": ["icmp_rtt"], "device-ids": [1, 2, 3]}}
 {"type": "metrics", "msg": {"start": "-1h", "metric": "icmp_rtt", "device-id": 1, "aggregate-interval": "60s"}}
-{"type": "syslog", "msg": [{"type": "set-filters", "start": "1761544800.0", "end": "1761544800.0", "facility": ["kern", "user", "mail", "daemon", "auth", "syslog", "lpr", "news", "uucp", "cron", "authpriv", "ftp", "ntp", "security", "console", "solaris", "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"], "severity": ["emerg", "alert", "crit", "err", "warning", "notice", "info", "debug"], "message": "", "origin": "", "offset": 0, "pid": ""}, {"type": "request-size"}]}
-{"type": "syslog", "msg": {"type": "request-data", "count": 30}}
-{"type": "alerts", "msg": [{"type": "set-filters", "start": "1761544800.0", "end": "1761544800.0", "severity": ["emergency", "alert", "critical", "error", "warning", "notice", "info", "debug", "unknown"]}, {"type": "request-size"}]}
-{"type": "alerts", "msg": {"type": "request-data", "count": 30}}
+
+
+
+
+{"type": "syslog",
+    "msg": [
+        {
+            "type": "set-filters",
+            "msg": {
+                "start": 1761544800.0,
+                "end": 1762886099.0,
+                "facility": ["kern", "user", "mail", "daemon", "syslog", "lpr", "news", "uucp", "cron", "authpriv", "ftp", "ntp", "audit", "alert", "clockd", "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"],
+                "severity": ["emerg", "alert", "crit", "err", "warning", "notice", "info"],
+                "message": "s",
+                "origin": "",
+                "offset": 0,
+                "pid": ""
+            }
+        },
+        {
+            "type": "request-size",
+            "msg": {}
+        },
+        {
+            "type": "alerts",
+            "msg": {
+                "type": "request-data",
+                "count": 30
+            }
+        }
+    ]
+}

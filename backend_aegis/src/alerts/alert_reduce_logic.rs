@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::model::alerts::AlertReduceLogic;
+use crate::alerts::AlertReduceLogic;
 
 impl AlertReduceLogic {
     /// Parse from string, returning None if invalid

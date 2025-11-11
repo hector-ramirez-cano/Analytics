@@ -8,13 +8,13 @@ use tokio::sync::Mutex;
 use tokio::sync::mpsc;
 
 use crate::config::Config;
-use crate::model::alerts::{AlertDataSource, AlertEvent, AlertRule};
+use crate::alerts::{AlertDataSource, AlertEvent, AlertRule};
 use crate::model::cache::Cache;
 use crate::model::data::device::Device;
 use crate::model::facts::fact_gathering_backend::{FactGatheringBackend, FactMessage};
 use crate::model::facts::generics::MetricValue;
 use crate::syslog::syslog_backend::SyslogBackend;
-use crate::syslog::syslog_types::SyslogMessage;
+use crate::syslog::SyslogMessage;
 
 
 
@@ -223,7 +223,7 @@ impl AlertBackend {
             let mut new_facts = (HashMap::new(), HashMap::new());
             let mut syslog_fact = HashMap::new();
             syslog_fact.insert("syslog_message".to_string(), MetricValue::String(message.msg));
-            new_facts.0.insert(message.hostname.unwrap_or("Unknown device!".to_string()), syslog_fact);
+            new_facts.0.insert(message.source.unwrap_or("Unknown device!".to_string()), syslog_fact);
 
             AlertBackend::eval_rules(&syslog_rules, &old_facts, &new_facts, &event_tx).await;
         }});
@@ -288,11 +288,11 @@ impl AlertBackend {
                 if let Some(t) = triggered {
                     for (item, which) in t {
                         match item {
-                            crate::model::alerts::EvaluableItem::Group(_) => {
+                            crate::alerts::EvaluableItem::Group(_) => {
                                 log::warn!("[WARN ][ALERTS] Alert triggered for group. This behavor is unexpected, as only devices can raise. Skipping...");
                                 continue;
                             },
-                            crate::model::alerts::EvaluableItem::Device(device) => {
+                            crate::alerts::EvaluableItem::Device(device) => {
                                 let which = which.iter().map(|(lhs, op, rhs)| format!("[{} {} {}]", lhs, op, rhs)).collect::<Vec<_>>().join(", ");
 
 
@@ -392,15 +392,6 @@ impl AlertBackend {
     pub async fn last_update(&self) -> u64 {
         let guard = self.last_update.read().await;
         *guard
-    }
-
-    async fn update_last(&self) {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs();
-        let mut w: RwLockWriteGuard<'_, u64> = self.last_update.write().await;
-        *w = now;
     }
 
     /// Try to claim the update. If this returns Some(write_guard) the caller won the right

@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 use ordered_float::OrderedFloat;
 
-use crate::model::alerts::AlertPredicateOperation;
+use crate::alerts::AlertPredicateOperation;
 use crate::model::facts::generics::MetricValue;
 
 impl AlertPredicateOperation {

@@ -1,6 +1,6 @@
 use sqlx::types::chrono::DateTime;
 
-use crate::model::alerts::AlertEvent;
+use crate::alerts::AlertEvent;
 
 
 

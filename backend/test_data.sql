@@ -128,3 +128,8 @@ INSERT INTO Analytics.topology_views_member(topology_views_id, item_id, position
             (1, 3, -0.3 , 0.3),
 
             (2, 201, 0, 0);
+
+SET TIMEZONE TO 'America/Mexico_City';
+-- TRUNCATE Syslog.system_events;
+SELECT * FROM Syslog.system_events;
+SELECT * FROM Syslog.system_events WHERE received_at BETWEEN '2025-10-27T06:00:00Z' AND '2025-11-11T21:13:45Z';

@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::model::alerts::AlertSeverity;
+use crate::alerts::AlertSeverity;
 
 impl AlertSeverity {
     /// Returns severity level where 0 is most severe

@@ -1,34 +1,10 @@
-use chrono::{DateTime, FixedOffset, TimeZone, Utc};
+
+use chrono::{DateTime, TimeZone, Utc};
 use serde::Deserialize;
-use std::collections::HashSet;
 
-use crate::syslog::syslog_types::{SyslogFacility, SyslogSeverity};
+use crate::syslog::{SyslogFacility, SyslogFilters, SyslogSeverity};
 
-#[derive(Debug, Deserialize)]
-pub struct SyslogFilters {
-    #[serde(deserialize_with = "ts_to_datetime_utc6")]
-    pub start_time: DateTime<Utc>,
-
-    #[serde(deserialize_with = "ts_to_datetime_utc6")]
-    pub end_time: DateTime<Utc>,
-
-    pub facilities: HashSet<SyslogFacility>,
-    pub severities: HashSet<SyslogSeverity>,
-
-    #[serde(default)]
-    pub offset: i64,
-
-    #[serde(default)]
-    pub origin: String,
-
-    #[serde(default)]
-    pub pid: String,
-
-    #[serde(default)]
-    pub message: String,
-}
-
-fn ts_to_datetime_utc6<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+pub fn ts_to_datetime_utc6<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
@@ -36,12 +12,33 @@ where
     let secs = ts as i64;
     let nanos = ((ts.fract()) * 1e9) as u32;
 
-    let fixed_offset = FixedOffset::west_opt(6 * 3600)
-        .ok_or_else(|| serde::de::Error::custom("invalid UTC-6 offset"))?;
-
-    let local_dt = fixed_offset.timestamp_opt(secs, nanos)
+    let local_dt = Utc.timestamp_opt(secs, nanos)
         .single()
         .ok_or_else(|| serde::de::Error::custom("invalid timestamp"))?;
 
     Ok(local_dt.with_timezone(&Utc))
+}
+
+impl SyslogFilters {
+    pub fn has_facility_filters(&self) -> bool {
+        SyslogFacility::all().len() != self.facilities.len()
+    }
+
+    pub fn has_severity_filters(&self) -> bool {
+        SyslogSeverity::all().len() != self.severities.len()
+    }
+
+    pub fn new_empty() -> Self {
+        Self {
+            start_time: DateTime::UNIX_EPOCH,
+            end_time: DateTime::UNIX_EPOCH,
+            facilities: SyslogFacility::all().iter().cloned().collect(),
+            severities: SyslogSeverity::all().iter().cloned().collect(),
+            offset: None,
+            origin: None,
+            pid: None,
+            message: None,
+            page_size: Some(30),
+        }
+    }
 }

@@ -1,13 +1,14 @@
-use tokio::sync::mpsc;
+use tokio::sync::mpsc::{self, Sender};
 use rocket::futures::SinkExt;
 use rocket::{State, response};
-use rocket::futures::stream::{SplitSink};
+use rocket::futures::stream::{SplitSink, SplitStream};
 use rocket::{futures::StreamExt, get, post};
 use rocket_ws::{Message, WebSocket, stream::DuplexStream};
 use tokio::task::JoinHandle;
 
 use crate::controller::get_operations::{api_get_topology};
-use crate::controller::ws_operations::{WsMsg, ws_get_dashboards, ws_get_topology, ws_query_facts, ws_query_metrics, ws_send_error_msg};
+use crate::controller::ws_operations::{WsMsg, ws_get_dashboards, ws_get_topology, ws_handle_syslog, ws_query_facts, ws_query_metrics, ws_send_error_msg};
+use crate::syslog::SyslogFilters;
 
 //  ________                  __                      __              __
 // /        |                /  |                    /  |            /  |
@@ -61,33 +62,19 @@ pub fn api_configure() {
 pub fn ws_router<'a>(ws: WebSocket, pool: &'a State<sqlx::PgPool>, influx_client : &'a State<influxdb2::Client>) -> rocket_ws::Channel<'a> {
     log::info!("[INFO ][WS] Websocket initiated connection, {}", ws.accept_key());
     ws.channel(move |stream| Box::pin(async move {
-        let (ws_sender, mut ws_receiver) = stream.split();
+        let (ws_sender, ws_receiver) = stream.split();
 
         // Channels (bounded capacity 64)
-        let (mut data_to_socket_tx, data_to_socket_rx) = mpsc::channel::<String>(64);
+        let (data_to_socket_tx, data_to_socket_rx) = mpsc::channel::<String>(64);
 
         // Spawn Sender task
         let tx_task: JoinHandle<()> = tokio::spawn(ws_send_task(ws_sender, data_to_socket_rx));
-        
-        while let Some(msg) = ws_receiver.next().await {
-            match msg {
-                Err(e) => {
-                    log::error!("[ERROR][WS][RX] Encountered an error, receiver is closing!");
-                    let error = e.to_string();
-                    if let Err(e) = data_to_socket_tx.send(serde_json::json![{"type": "error", "msg": error}].to_string()).await {
-                        let e = e.to_string();
-                        log::error!("[ERROR][WS][RX] Failed to send error message to websocket, e = '{e}'")
-                    }
-                },
-                Ok(msg) => {
-                    ws_handle_message(pool, influx_client, &mut data_to_socket_tx, msg).await;
-                }
-            }
-        }
+        let rx_task: JoinHandle<()> = tokio::spawn(ws_receive_task(ws_receiver, data_to_socket_tx, pool.inner().clone(), influx_client.inner().clone()));
 
         // Wait until any task finishes, then let the rest drop
         tokio::select! {
             _ = tx_task => {},
+            _ = rx_task => {},
         }
 
         Ok(())
@@ -107,8 +94,44 @@ async fn ws_send_task(
     }
 }
 
+async fn ws_receive_task(
+    mut ws_receiver: SplitStream<DuplexStream>,
+    mut data_to_socket_tx: Sender<String>,
 
-async fn ws_handle_message(pool: &State<sqlx::PgPool>, influx_client : &State<influxdb2::Client>, data_to_socket: &mut mpsc::Sender<String>, message: Message) {
+    pool: sqlx::PgPool,
+    influx_client : influxdb2::Client
+) {
+    // "State" items
+    let mut syslog_filters : Option<SyslogFilters> = None;
+    
+    while let Some(msg) = ws_receiver.next().await {
+        match msg {
+            Err(e) => {
+                log::error!("[ERROR][WS][RX] Encountered an error, receiver is closing!");
+                let error = e.to_string();
+                if let Err(e) = data_to_socket_tx.send(serde_json::json![{"type": "error", "msg": error}].to_string()).await {
+                    let e = e.to_string();
+                    log::error!("[ERROR][WS][RX] Failed to send error message to websocket, e = '{e}'")
+                }
+            },
+            Ok(msg) => {
+                ws_handle_message(&pool, &influx_client, &mut data_to_socket_tx, &mut syslog_filters, msg).await;
+            }
+        }
+    }
+}
+
+
+async fn ws_handle_message(
+    pool: &sqlx::PgPool,
+    influx_client : &influxdb2::Client,
+    
+    data_to_socket: &mut mpsc::Sender<String>,
+
+    syslog_filters: &mut Option<SyslogFilters>,
+    
+    message: Message
+) {
     let msg = message;
 
     match msg {
@@ -116,7 +139,7 @@ async fn ws_handle_message(pool: &State<sqlx::PgPool>, influx_client : &State<in
             let msg = serde_json::from_str::<WsMsg>(&msg);
             match msg {
                 Err(e) => ws_send_error_msg(data_to_socket, &format!("[BACKEND] Encountered error while handling message='{e}'")).await,
-                Ok(msg) => ws_route_message(pool, influx_client, data_to_socket, msg).await,
+                Ok(msg) => ws_route_message(pool, influx_client, data_to_socket, syslog_filters, msg).await,
             }
         }
 
@@ -124,9 +147,18 @@ async fn ws_handle_message(pool: &State<sqlx::PgPool>, influx_client : &State<in
     }
 }
 
-async fn ws_route_message(pool: &State<sqlx::PgPool>, influx_client : &State<influxdb2::Client>, data_to_socket: &mut mpsc::Sender<String>, msg: WsMsg) {
+async fn ws_route_message(
+    pool: &sqlx::PgPool,
+    influx_client : &influxdb2::Client,
+    
+    data_to_socket: &mut mpsc::Sender<String>,
+
+    syslog_filters: &mut Option<SyslogFilters>,
+    
+    msg: WsMsg
+) {
     match msg.kind.as_str() {
-        "syslog" => todo!(),
+        "syslog" => ws_handle_syslog(data_to_socket, pool, syslog_filters, msg).await.unwrap_or(()),
         "alerts" => todo!(),
         "health-rt" => todo!(),
         "dashboards" => ws_get_dashboards(data_to_socket, pool).await.unwrap_or(()),

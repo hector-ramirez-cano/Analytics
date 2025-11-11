@@ -1,6 +1,6 @@
 #[macro_use] extern crate rocket;
 
-use backend_aegis::model::alerts::alert_backend::AlertBackend;
+use backend_aegis::alerts::alert_backend::AlertBackend;
 use backend_aegis::model::cache::Cache;
 use backend_aegis::model::facts::fact_gathering_backend::FactGatheringBackend;
 use backend_aegis::syslog::syslog_backend::SyslogBackend;

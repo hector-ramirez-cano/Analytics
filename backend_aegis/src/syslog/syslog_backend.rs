@@ -8,7 +8,7 @@ use tokio::sync::Mutex;
 
 use crate::config::Config;
 use crate::model::db;
-use crate::syslog::syslog_types::SyslogMessage;
+use crate::syslog::SyslogMessage;
 
 
 pub struct SyslogBackend {

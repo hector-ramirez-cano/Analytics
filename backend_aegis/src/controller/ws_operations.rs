@@ -7,9 +7,10 @@ use crate::model::cache::Cache;
 use crate::model::db::operations::dashboard_operations::get_dashboards_as_json;
 use crate::model::db::operations::influx_operations::{self, InfluxFilter};
 use crate::model::facts::generics::Metrics;
+use crate::syslog::SyslogFilters;
 
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct WsMsg { 
     #[serde(rename = "type")]
     pub kind: String,
@@ -19,7 +20,7 @@ pub struct WsMsg {
 }
 
 impl WsMsg {
-    pub fn inner(self) -> Option<WsMsg> {
+    pub fn inner(&self) -> Option<WsMsg> {
         let in_type = self.body.get("type")?.as_str()?.to_owned();
         let in_msg = self.body.get("msg")?.to_owned();
 
@@ -27,6 +28,12 @@ impl WsMsg {
             kind: in_type,
             body: in_msg
         })
+    }
+}
+
+impl ToString for WsMsg {
+    fn to_string(&self) -> String {
+        serde_json::json!(self).to_string()
     }
 }
 
@@ -50,7 +57,7 @@ pub async fn ws_send_msg(data_to_socket: &mut mpsc::Sender<String>, msg_type: &s
 
 }
 
-pub async fn ws_get_topology(data_to_socket: &mut mpsc::Sender<String>, pool: &rocket::State<sqlx::PgPool>) -> Result<(), ()>  {
+pub async fn ws_get_topology(data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::PgPool) -> Result<(), ()>  {
     let topology = api_get_topology(pool).await.map_err(|_| ())?;
 
     ws_send_msg(data_to_socket, "topology", &topology).await;
@@ -58,7 +65,7 @@ pub async fn ws_get_topology(data_to_socket: &mut mpsc::Sender<String>, pool: &r
     Ok(())
 }
 
-pub async fn ws_get_dashboards(data_to_socket: &mut mpsc::Sender<String>, pool: &rocket::State<sqlx::PgPool>) -> Result<(), ()> {
+pub async fn ws_get_dashboards(data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::PgPool) -> Result<(), ()> {
     let dashboards = get_dashboards_as_json(pool).await?;
     let dashboards = serde_json::to_string(&dashboards.values().collect::<Vec<_>>());
     
@@ -120,14 +127,13 @@ pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg_in: W
     Some(())
 }
 
-// TODO: REMOVE All the option return types;
-pub async fn ws_query_metrics(data_to_socket: &mut mpsc::Sender<String>, influx_client: &influxdb2::Client, msg: WsMsg) -> Option<()> {
+pub async fn ws_query_metrics(data_to_socket: &mut mpsc::Sender<String>, influx_client: &influxdb2::Client, msg: WsMsg) -> Result<(), ()> {
     let filters = match InfluxFilter::from_json(&msg.body) {
         Some(f) => f,
         None => {
             let e = format!("[INFLUX] Failed to query metrics. Filters could not be obtained from message 'msg', parsed from = '{}'", &msg.body);
             ws_send_error_msg(data_to_socket, &e).await;
-            return None
+            return Err(())
         }
     };
 
@@ -139,11 +145,146 @@ pub async fn ws_query_metrics(data_to_socket: &mut mpsc::Sender<String>, influx_
     });
 
     match data_to_socket.send(msg.to_string()).await {
-        Ok(_) => return Some(()),
+        Ok(_) => return Ok(()),
         Err(e) => {
             log::error!("[ERROR][WS][METRICS] Failed to send metrics message with e = {}, msg='{}'", e.to_string(), msg.to_string())
         }
     }
 
-    Some(())
+    Ok(())
+}
+
+pub async fn ws_route_syslog(
+    data_to_socket: &mut mpsc::Sender<String>,
+    pool: &sqlx::PgPool,
+
+    syslog_filters: &mut Option<SyslogFilters>,
+    
+    msg_in: WsMsg
+)
+-> Result<(), ()> {
+    let msg = msg_in.inner();
+    let msg = match msg {
+        Some(m) => m,
+        None => {
+            let e = format!("[ERROR][WS][SYSLOG] Could not parse inner syslog message. Message was = '{}'", msg_in.to_string());
+            log::error!("{}", e);
+            ws_send_error_msg(data_to_socket, &e).await;
+            return Err(());
+        }
+    };
+
+    match msg.kind.as_str() {
+        "set-filters" => {
+            *syslog_filters = match serde_json::from_value(msg.body) {
+                Ok(filters) => Some(filters),
+                Err(e) => {
+                    log::error!("[ERROR][WS][SYSLOG] Failed to parse syslog filters with error = '{e}'");
+                    return Err(())
+                },
+            }
+        },
+        "request-data" => {
+            let filters = match syslog_filters {
+                Some(filters) => filters,
+                None => {
+                    let e = format!("[ERROR][WS][SYSLOG] Requested size before setting filters = '{}'", msg.kind);
+                    log::error!("{}", e);
+                    ws_send_error_msg(data_to_socket, &e).await;
+                    return Err(())
+                }
+            };
+            let page_size = filters.page_size.unwrap_or(30);
+            let data = crate::model::db::operations::syslog_operations::get_rows(page_size, filters, pool).await;
+
+            // TODO: Batch if possible
+            // TODO: Add inner type
+            for row in data {
+                let msg = serde_json::json!({
+                    "type": "syslog", "msg": row
+                });
+                log::info!("[INFO ][WS][SYSLOG] Sending Row...");
+
+                match data_to_socket.send(msg.to_string()).await {
+                    Ok(_) => (),
+                    Err(e) => {
+                        log::error!("[ERROR][WS][Syslog] Failed to send syslog message with e = {}, msg='{}'", e.to_string(), msg.to_string())
+                    }
+                }
+            }
+        },
+        "request-size" => {
+            let filters = match syslog_filters {
+                Some(filters) => filters,
+                None => {
+                    let e = format!("[ERROR][WS][SYSLOG] Requested size before setting filters = '{}'", msg.kind);
+                    log::error!("{}", e);
+                    ws_send_error_msg(data_to_socket, &e).await;
+                    return Err(())
+                }
+            };
+
+            let size = crate::model::db::operations::syslog_operations::get_row_count(filters, &pool).await;
+
+            let msg = serde_json::json!({
+                "type": "syslog",
+                "msg": {
+                    "type": "request-size",
+                    "count": size,
+                }
+            });
+
+            match data_to_socket.send(msg.to_string()).await {
+                Ok(_) => return Ok(()),
+                Err(e) => {
+                    log::error!("[ERROR][WS][Syslog] Failed to send syslog message with e = {}, msg='{}'", e.to_string(), msg.to_string())
+                }
+            }
+        },
+
+        _ => {
+            let e = format!("[ERROR][WS][SYSLOG] Inner syslog message contains invalid type. Expected ('set-filters', 'request-data', request-size') Actual = '{}'", msg.kind);
+            log::error!("{}", e);
+            ws_send_error_msg(data_to_socket, &e).await;
+
+            return Err(())
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn ws_handle_syslog(
+    data_to_socket: &mut mpsc::Sender<String>,
+    pool: &sqlx::PgPool,
+
+    syslog_filters: &mut Option<SyslogFilters>,
+    
+    msg: WsMsg
+) 
+-> Result<(), ()> {
+
+    match msg.body {
+        serde_json::Value::Null 
+        | serde_json::Value::Bool(_) 
+        | serde_json::Value::Number(_) 
+        | serde_json::Value::String(_) => {
+            let e = format!("[ERROR][WS][SYSLOG] Could not parse inner syslog message. Expected message types = (Object, Array). Message was = '{}'", msg.to_string());
+            log::error!("{}", e);
+            ws_send_error_msg(data_to_socket, &e).await;
+            return Err(());
+        },
+        serde_json::Value::Array(values) => {
+            // Convenience handling. If passed as an array, handle it as if it was sent separately
+            for value in values {
+                let inner = WsMsg { kind: "syslog".to_owned(), body: value  };
+                ws_route_syslog(data_to_socket, pool, syslog_filters, inner).await?;
+            }
+        },
+        serde_json::Value::Object(_) => {
+            ws_route_syslog(data_to_socket, pool, syslog_filters, msg).await?;
+        },
+    }
+
+    Ok(())
 }

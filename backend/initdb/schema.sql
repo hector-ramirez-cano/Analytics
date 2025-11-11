@@ -241,18 +241,19 @@ EXECUTE FUNCTION create_item_on_group_insert();
 
 CREATE SCHEMA IF NOT EXISTS Syslog;
 
--- DROP TABLE Syslog.system_events;
--- SELECT * FROM Syslog.system_events;
-CREATE TABLE IF NOT EXISTS Syslog.system_events (
+CREATE TABLE IF NOT EXISTS Syslog.system_events  (
     id BIGSERIAL PRIMARY KEY,
     facility SMALLINT,
-    priority SMALLINT,
+    severity SMALLINT,
     from_host TEXT,
-    info_unit_id INTEGER,
     received_at TIMESTAMPTZ,
-    syslog_tag TEXT,
     process_id TEXT,
     message TEXT,
+    
+    -- Not displayed, but stored for reference
+    message_id TEXT,
+    appname TEXT,
+
     message_tsv tsvector GENERATED ALWAYS AS (to_tsvector('english', message)) STORED
 );
 -- FTS Search index

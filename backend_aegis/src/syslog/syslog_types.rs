@@ -1,37 +1,9 @@
-use chrono::FixedOffset;
-use sqlx::prelude::FromRow;
-use syslog_loose::ProcId;
 use std::fmt;
 use std::convert::TryFrom;
-use serde::{Serialize, Deserialize};
-use sqlx::Type;
 use sqlx::types::chrono::{DateTime, Utc};
 
+use crate::syslog::{SyslogFacility, SyslogMessage, SyslogSeverity};
 
-//   ______                                           __    __               
-//  /      \                                         /  |  /  |              
-// /$$$$$$  |  ______   __     __  ______    ______  $$/  _$$ |_    __    __ 
-// $$ \__$$/  /      \ /  \   /  |/      \  /      \ /  |/ $$   |  /  |  /  |
-// $$      \ /$$$$$$  |$$  \ /$$//$$$$$$  |/$$$$$$  |$$ |$$$$$$/   $$ |  $$ |
-//  $$$$$$  |$$    $$ | $$  /$$/ $$    $$ |$$ |  $$/ $$ |  $$ | __ $$ |  $$ |
-// /  \__$$ |$$$$$$$$/   $$ $$/  $$$$$$$$/ $$ |      $$ |  $$ |/  |$$ \__$$ |
-// $$    $$/ $$       |   $$$/   $$       |$$ |      $$ |  $$  $$/ $$    $$ |
-//  $$$$$$/   $$$$$$$/     $/     $$$$$$$/ $$/       $$/    $$$$/   $$$$$$$ |
-//                                                                 /  \__$$ |
-//                                                                 $$    $$/ 
-//                                                                  $$$$$$/  
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, Hash)]
-#[repr(i16)]
-pub enum SyslogSeverity {
-    Emerg = 0,
-    Alert = 1,
-    Crit = 2,
-    Err = 3,
-    Warning = 4,
-    Notice = 5,
-    Info = 6,
-    Debug = 7,
-}
 
 impl From<syslog_loose::SyslogSeverity> for SyslogSeverity {
     fn from(value: syslog_loose::SyslogSeverity) -> Self {
@@ -82,47 +54,16 @@ impl fmt::Display for SyslogSeverity {
     }
 }
 
+impl SyslogSeverity {
+    pub fn all() -> &'static [SyslogSeverity] {
+        use SyslogSeverity::*;
 
-
-//  ________                   __  __  __    __               
-// /        |                 /  |/  |/  |  /  |              
-// $$$$$$$$/______    _______ $$/ $$ |$$/  _$$ |_    __    __ 
-// $$ |__  /      \  /       |/  |$$ |/  |/ $$   |  /  |  /  |
-// $$    | $$$$$$  |/$$$$$$$/ $$ |$$ |$$ |$$$$$$/   $$ |  $$ |
-// $$$$$/  /    $$ |$$ |      $$ |$$ |$$ |  $$ | __ $$ |  $$ |
-// $$ |   /$$$$$$$ |$$ \_____ $$ |$$ |$$ |  $$ |/  |$$ \__$$ |
-// $$ |   $$    $$ |$$       |$$ |$$ |$$ |  $$  $$/ $$    $$ |
-// $$/     $$$$$$$/  $$$$$$$/ $$/ $$/ $$/    $$$$/   $$$$$$$ |
-//                                                  /  \__$$ |
-//                                                  $$    $$/ 
-//                                                   $$$$$$/  
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, Hash)]
-#[repr(i16)]
-pub enum SyslogFacility {
-    Kern = 0,
-    User = 1,
-    Mail = 2,
-    Daemon = 3,
-    Auth = 4,
-    Syslog = 5,
-    Lpr = 6,
-    News = 7,
-    Uucp = 8,
-    Cron = 9,
-    AuthPriv = 10,
-    Ftp = 11,
-    Ntp = 12,
-    Audit = 13,
-    Alert = 14,
-    Clockd = 15,
-    Local0 = 16,
-    Local1 = 17,
-    Local2 = 18,
-    Local3 = 19,
-    Local4 = 20,
-    Local5 = 21,
-    Local6 = 22,
-    Local7 = 23,
+        &[
+            Emerg, Alert  , Crit  ,
+            Err  , Warning, Notice,
+            Info , Debug  ,
+        ]
+    }
 }
 
 impl From<syslog_loose::SyslogFacility> for SyslogFacility {
@@ -222,41 +163,43 @@ impl fmt::Display for SyslogFacility {
     }
 }
 
-
-
-// TODO: Serde
-#[derive(Debug, Clone, FromRow)]
-pub struct SyslogMessage {
-    pub facility: Option<SyslogFacility>,
-    pub severity: Option<SyslogSeverity>,
-    pub hostname: Option<String>,
-    pub appname: Option<String>,
-    pub procid: Option<ProcId<String>>,
-    pub msgid: Option<String>,
-    pub timestamp: Option<DateTime<Utc>>,
-    pub msg: String,
+impl SyslogFacility {
+    pub fn all() -> &'static [SyslogFacility] {
+        use SyslogFacility::*;
+        &[
+            Kern  , User  , Mail    , Daemon,
+            Auth  , Syslog, Lpr     , News  ,
+            Uucp  , Cron  , AuthPriv, Ftp   ,
+            Ntp   , Audit , Alert   , Clockd,
+            Local0, Local1, Local2  , Local3,
+            Local4, Local5, Local6  , Local7,
+        ]
+    }
 }
 
 impl<'a> From<syslog_loose::Message<&'a str>> for SyslogMessage {
     fn from(m: syslog_loose::Message<&'a str>) -> Self {
         let hostname = if let Some(h) = m.hostname { Some(h.to_string()) } else { None };
         let appname  = if let Some(h) = m.appname { Some(h.to_string()) } else { None };
-        let procid   = if let Some(h) = m.procid { Some(ProcId::Name(h.to_string())) } else { None };
+        let procid   = if let Some(h) = m.procid { Some(h.to_string()) } else { None };
         let msgid    = if let Some(h) = m.msgid { Some(h.to_string()) } else { None };
         let facility = if let Some(f) = m.facility { Some(f.into()) } else { None };
         let severity = if let Some(s) = m.severity { Some(s.into()) } else { None };
 
         let msg = m.msg.to_string();
 
+        dbg!(&m.timestamp, m.timestamp.map(|ts| ts.naive_local()));
+
         SyslogMessage {
+            id: -1,
             facility: facility,
             severity: severity,
-            hostname: hostname,
-            appname: appname,
+            source: hostname,
             procid: procid,
-            msgid: msgid,
-            timestamp: m.timestamp.map(|ts| DateTime::<Utc>::from(ts)),
+            received_at: m.timestamp.map(|ts|  DateTime::<Utc>::from_naive_utc_and_offset(ts.naive_local(), Utc)),
             msg: msg,
+            appname,
+            msgid,
         }
     }
 }

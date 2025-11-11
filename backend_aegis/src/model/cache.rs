@@ -7,7 +7,7 @@ use tokio::sync::{RwLock, RwLockWriteGuard};
 use serde::Serialize;
 
 use crate::config::Config;
-use crate::model::alerts::EvaluableItem;
+use crate::alerts::EvaluableItem;
 use crate::model::data::data_source::DataSource;
 use crate::model::data::device::Device;
 use crate::model::data::link::Link;

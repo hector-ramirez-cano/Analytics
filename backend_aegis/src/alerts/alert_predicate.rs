@@ -1,6 +1,7 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
-use crate::model::{alerts::{Accessor, AlertPredicate, AlertPredicateOperation}, facts::generics::{MetricSet, MetricValue}};
+use crate::alerts::{Accessor, AlertPredicate, AlertPredicateOperation};
+use crate::model::{facts::generics::{MetricSet, MetricValue}};
 
 impl AlertPredicate {
 
