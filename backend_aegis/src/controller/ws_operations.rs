@@ -2,13 +2,13 @@ use std::collections::{HashMap, HashSet};
 
 use tokio::sync::mpsc;
 
-use crate::alerts::AlertFilters;
+use crate::alerts::{AlertEvent, AlertFilters};
 use crate::controller::get_operations::api_get_topology;
 use crate::model::cache::Cache;
 use crate::model::db::operations::dashboard_operations::get_dashboards_as_json;
 use crate::model::db::operations::influx_operations::{self, InfluxFilter};
 use crate::model::facts::generics::Metrics;
-use crate::syslog::SyslogFilters;
+use crate::syslog::{SyslogFilters, SyslogMessage};
 
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
@@ -22,13 +22,10 @@ pub struct WsMsg {
 
 impl WsMsg {
     pub fn inner(&self) -> Option<WsMsg> {
-        let in_type = self.body.get("type")?.as_str()?.to_owned();
-        let in_msg = self.body.get("msg")?.to_owned();
+        let kind = self.body.get("type")?.as_str()?.to_owned();
+        let body = self.body.get("msg")?.to_owned();
 
-        Some(WsMsg{
-            kind: in_type,
-            body: in_msg
-        })
+        Some(WsMsg{ kind, body })
     }
 }
 
@@ -224,6 +221,48 @@ pub async fn ws_handle_alerts(
     Ok(())
 }
 
+
+pub async fn ws_syslog_rt(data_to_socket: mpsc::Sender<String>, mut receiver: mpsc::Receiver<SyslogMessage>) {
+    loop {
+        let msg = match receiver.recv().await {
+            None=> return,
+            Some(monosodiumglotamate) => monosodiumglotamate
+        };
+
+        let msg = serde_json::json!({
+            "type": "syslog-rt", "msg": serde_json::json!(msg)
+        });
+
+        match data_to_socket.send(msg.to_string()).await {
+            Ok(_) => (),
+            Err(e) => {
+                log::error!("[ERROR][WS][SYSLOG][REALTIME] Failed to send message to websocket listener! error='{e}'. Message will be ignored");
+            }
+        }
+    }
+}
+
+pub async fn ws_alerts_rt(data_to_socket: mpsc::Sender<String>, mut receiver: mpsc::Receiver<AlertEvent>) {
+    loop {
+        let msg = match receiver.recv().await {
+            None=> return,
+            Some(monosodiumglotamate) => monosodiumglotamate
+        };
+
+        let msg = serde_json::json!({
+            "type": "alert-rt", "msg": serde_json::json!(msg)
+        });
+
+        match data_to_socket.send(msg.to_string()).await {
+            Ok(_) => (),
+            Err(e) => {
+                log::error!("[ERROR][WS][ALERTS][REALTIME] Failed to send message to websocket listener! error='{e}'. Message will be ignored");
+            }
+        }
+    }
+}
+
+
 //  _______            __                        __                                                      __              
 // /       \          /  |                      /  |                                                    /  |             
 // $$$$$$$  | ______  $$/  __     __  ______   _$$ |_     ______          ______    ______    ______   _$$ |_    _______ 
@@ -372,7 +411,6 @@ async fn ws_route_alerts_request_data(
 ) -> Result<(), ()> {
     let filters = ws_route_alerts_check_filters(data_to_socket, filters, msg).await?;
     let page_size = filters.page_size.unwrap_or(30);
-    // TODO: Implement this mfer
     
     let data = crate::model::db::operations::alert_operations::get_rows(page_size, filters, pool).await;
 
@@ -398,7 +436,7 @@ async fn ws_route_alerts_request_size(
 ) -> Result<(), ()> {
     let filters = ws_route_alerts_check_filters(data_to_socket, filters, msg).await?;
 
-    /*
+    
     let size = crate::model::db::operations::alert_operations::get_row_count(filters, &pool).await;
 
     let msg = serde_json::json!({
@@ -414,7 +452,7 @@ async fn ws_route_alerts_request_size(
         Err(e) => {
             log::error!("[ERROR][WS][Syslog] Failed to send syslog message with e = {}, msg='{}'", e.to_string(), msg.to_string())
         }
-    }*/
+    }
 
     Ok(())
 }

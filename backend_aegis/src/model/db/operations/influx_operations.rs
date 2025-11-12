@@ -92,7 +92,6 @@ pub async fn get_metric_data(influx_client : &influxdb2::Client, influx_filter: 
 
     let data_range = get_metric_range(influx_client, influx_filter).await;
     let data = execute_query(influx_client, query).await;
-    dbg!(&data);
 
     let mut data_map = Vec::with_capacity(data.len());
     for object in data {

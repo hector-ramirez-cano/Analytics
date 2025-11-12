@@ -188,7 +188,6 @@ impl<'a> From<syslog_loose::Message<&'a str>> for SyslogMessage {
 
         let msg = m.msg.to_string();
 
-        dbg!(&m.timestamp, m.timestamp.map(|ts| ts.naive_local()));
 
         SyslogMessage {
             id: -1,

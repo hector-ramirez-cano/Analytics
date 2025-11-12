@@ -6,10 +6,12 @@ use rocket::{futures::StreamExt, get, post};
 use rocket_ws::{Message, WebSocket, stream::DuplexStream};
 use tokio::task::JoinHandle;
 
-use crate::alerts::AlertFilters;
+use crate::alerts::{AlertEvent, AlertFilters};
+use crate::alerts::alert_backend::AlertBackend;
 use crate::controller::get_operations::{api_get_topology};
-use crate::controller::ws_operations::{WsMsg, ws_get_dashboards, ws_get_topology, ws_handle_alerts, ws_handle_syslog, ws_query_facts, ws_query_metrics, ws_send_error_msg};
-use crate::syslog::SyslogFilters;
+use crate::controller::ws_operations::{WsMsg, ws_alerts_rt, ws_get_dashboards, ws_get_topology, ws_handle_alerts, ws_handle_syslog, ws_query_facts, ws_query_metrics, ws_send_error_msg, ws_syslog_rt};
+use crate::syslog::{SyslogFilters, SyslogMessage};
+use crate::syslog::syslog_backend::SyslogBackend;
 
 //  ________                  __                      __              __
 // /        |                /  |                    /  |            /  |
@@ -67,15 +69,25 @@ pub fn ws_router<'a>(ws: WebSocket, pool: &'a State<sqlx::PgPool>, influx_client
 
         // Channels (bounded capacity 64)
         let (data_to_socket_tx, data_to_socket_rx) = mpsc::channel::<String>(64);
+        let (syslog_rt_rx, syslog_rt_tx) = mpsc::channel::<SyslogMessage>(64);
+        let (alerts_rt_rx, alerts_rt_tx) = mpsc::channel::<AlertEvent>(64);
 
         // Spawn Sender task
         let tx_task: JoinHandle<()> = tokio::spawn(ws_send_task(ws_sender, data_to_socket_rx));
-        let rx_task: JoinHandle<()> = tokio::spawn(ws_receive_task(ws_receiver, data_to_socket_tx, pool.inner().clone(), influx_client.inner().clone()));
+        let rx_task: JoinHandle<()> = tokio::spawn(ws_receive_task(ws_receiver, data_to_socket_tx.clone(), pool.inner().clone(), influx_client.inner().clone()));
+
+        // Spawn realtime listener tasks
+        SyslogBackend::instance().add_listener(syslog_rt_rx).await;
+        AlertBackend::instance().add_listener(alerts_rt_rx).await;
+        let syslog_rt_task : JoinHandle<()> = tokio::spawn(ws_syslog_rt(data_to_socket_tx.clone(), syslog_rt_tx));
+        let alerts_rt_task : JoinHandle<()> = tokio::spawn(ws_alerts_rt(data_to_socket_tx.clone(), alerts_rt_tx));
 
         // Wait until any task finishes, then let the rest drop
         tokio::select! {
             _ = tx_task => {},
             _ = rx_task => {},
+            _ = syslog_rt_task => (),
+            _ = alerts_rt_task => (),
         }
 
         Ok(())

@@ -202,8 +202,6 @@ impl EvaluableItem {
 
     async fn eval_device<'a>(device: Device,  rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage) -> Option<(EvaluableItem, Vec<EvalResult<'a>>)> {
         #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating rule for device={}", device.management_hostname); }
-        dbg!(&dataset_right.0.get(&device.management_hostname));
-        dbg!(&device.management_hostname);
         let dataset_right = dataset_right.0.get(&device.management_hostname)?;
 
         if rule.is_delta_rule {
