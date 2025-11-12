@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use sqlx::Type;
 
-use crate::syslog::syslog_filters::ts_to_datetime_utc6;
+use crate::misc::ts_to_datetime_utc;
 
 pub mod syslog_backend;
 pub mod syslog_types;
@@ -91,10 +91,10 @@ pub enum SyslogFacility {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SyslogFilters {
-    #[serde(deserialize_with = "ts_to_datetime_utc6", rename="start")]
+    #[serde(deserialize_with = "ts_to_datetime_utc", rename="start")]
     pub start_time: DateTime<Utc>,
 
-    #[serde(deserialize_with = "ts_to_datetime_utc6", rename="end")]
+    #[serde(deserialize_with = "ts_to_datetime_utc", rename="end")]
     pub end_time: DateTime<Utc>,
 
     #[serde(rename="facility")]

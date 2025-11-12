@@ -179,7 +179,7 @@ impl SyslogBackend {
             }
         };
 
-        println!("[DEBUG][SYSLOG] Spawning syslog receiver");
+        println!("[INFO ][SYSLOG] Spawning syslog receiver");
         tokio::task::spawn(async move {
             loop{
                 let (len, _) = match socket.recv_from(&mut buf).await {
@@ -189,8 +189,8 @@ impl SyslogBackend {
                         continue
                     }
                 };
-                let message = String::from_utf8_lossy(&mut buf[..len]);
-                log::info!("[DEBUG][SYSLOG] Received message {}", &message);
+                let message: std::borrow::Cow<'_, str> = String::from_utf8_lossy(&mut buf[..len]);
+                log::info!("[INFO ][SYSLOG] Received message {}", &message);
                 let message = syslog_loose::parse_message(&message, syslog_loose::Variant::Either);
                 let message: SyslogMessage = message.into();
 

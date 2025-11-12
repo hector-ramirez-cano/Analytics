@@ -99,19 +99,20 @@ CREATE TABLE IF NOT EXISTS Analytics.links (
 CREATE UNIQUE INDEX IF NOT EXISTS unique_link_pair
 ON Analytics.links (LEAST(side_a, side_b), GREATEST(side_a, side_b));
 
-
 CREATE TABLE IF NOT EXISTS Analytics.alerts (
     alert_id     BIGSERIAL,
-    alert_time   TIMESTAMP NOT NULL,
-    ack_time     TIMESTAMP,
+    alert_time   TIMESTAMPTZ NOT NULL,
+    ack_time     TIMESTAMPTZ,
     requires_ack BOOLEAN NOT NULL,
     severity     SMALLINT NOT NULL,
     message      VARCHAR,
     ack_actor    VARCHAR,
     target_id    BIGINT,
     value        VARCHAR NOT NULL,
+    rule_id      BIGINT NOT NULL,
 
-    FOREIGN KEY (target_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE
+    FOREIGN KEY (target_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE,
+    FOREIGN KEY (rule_id) REFERENCES Analytics.alert_rules(rule_id) ON DELETE CASCADE
 );
 
 -- DROP TABLE Analytics.alert_rules;

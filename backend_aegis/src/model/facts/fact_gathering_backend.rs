@@ -86,6 +86,7 @@ impl FactGatheringBackend {
     /// Broadcast a message to all listeners; prune dead ones
     /// Best-effort: ignores per-send errors and removes disconnected senders
     pub async fn broadcast(&self, msg: &FactMessage) {
+        #[cfg(debug_assertions)] { log::info!("[DEBUG][FACTS] Broadcasting messages. Listener count = {}", self.listener_count().await); }
         // Snapshot keys to avoid holding lock while awaiting send
         let keys_and_senders: Vec<(usize, Sender<FactMessage>)> = {
             let guard = self.listeners.lock().await;

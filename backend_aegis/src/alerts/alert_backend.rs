@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
+use chrono::Utc;
 use tokio::sync::{RwLock, RwLockWriteGuard};
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::Mutex;
@@ -11,6 +12,7 @@ use crate::config::Config;
 use crate::alerts::{AlertDataSource, AlertEvent, AlertRule};
 use crate::model::cache::Cache;
 use crate::model::data::device::Device;
+use crate::model::db::operations::alert_operations;
 use crate::model::facts::fact_gathering_backend::{FactGatheringBackend, FactMessage};
 use crate::model::facts::generics::MetricValue;
 use crate::syslog::syslog_backend::SyslogBackend;
@@ -191,19 +193,28 @@ impl AlertBackend {
     pub fn spawn_eval_facts_task(mut receiver: Receiver<FactMessage>, event_tx : Sender<AlertEvent>,) {
         let _ = rocket::tokio::task::spawn(async move { 
             let instance = Self::instance();
+            println!("[INFO ][ALERTS] Spawned alert eval facts task");
             loop {
-            let new_facts = if let Some(msg) = receiver.recv().await { msg } else { continue; };
+                let new_facts = match receiver.recv().await {
+                    Some(msg) => msg,
+                    None => break
+                };
+                #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS] Alerts backend received facts..."); }
 
-            log::info!("[DEBUG][ALERTS] Alerts backend received facts...");
-            log::debug!("[DEBUG][ALERTS] Alerts backend received facts...");
+                // Critical area, requires locks
+                {
+                    let facts_rules = instance.facts_rules.read().await;
+                    let old_facts = instance.facts_cache.read().await;
+                    AlertBackend::eval_rules(&facts_rules, &old_facts, &new_facts, &event_tx).await;
+                } // Release dem locks so I can lock it again for write to update cache
 
-            let facts_rules = instance.facts_rules.read().await;
-            let old_facts = instance.facts_cache.read().await;
+                // Critical area, requires locks 
+                {
+                    let mut old_facts = instance.facts_cache.write().await;
+                    *old_facts = new_facts;
+                }
 
-            AlertBackend::eval_rules(&facts_rules, &old_facts, &new_facts, &event_tx).await;
-
-            let mut old_facts = instance.facts_cache.write().await;
-            *old_facts = new_facts;
+                #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS] Alerts backend finished rule eval..."); }
         }});
 
         log::info!("[INFO ][ALERTS] Spawned Eval Facts Task");
@@ -243,7 +254,7 @@ impl AlertBackend {
                 Some(e) => e, None => continue
             };
 
-            log::info!("[DEBUG][ALERTS] Received alert event!");
+            #[cfg(debug_assertions)] {log::info!("[DEBUG][ALERTS] Received alert event!");}
 
             // Write into db
             let id = crate::model::db::operations::alert_operations::insert_alert(&event, &instance.pool).await;
@@ -286,6 +297,7 @@ impl AlertBackend {
 
                 // if item trigered, raise an alert for each alerting item
                 if let Some(t) = triggered {
+                    log::info!("[INFO ][ALARTS] Alert id {} raised!", rule.rule_id);
                     for (item, which) in t {
                         match item {
                             crate::alerts::EvaluableItem::Group(_) => {
@@ -317,25 +329,19 @@ impl AlertBackend {
             Some(l) => l, None => return
         };
 
-        let rules = sqlx::query!("SELECT * FROM Analytics.alert_rules;").fetch_all(&self.pool).await;
-        let rules = match rules { Ok(r) => r, Err(e) => {
-            log::error!("[ERROR][ALERTS][LOADS] Failed to load rules from database with error = '{e}'");
-            println!("[ERROR][ALERTS][LOADS] Failed to load rules from database with error = '{e}'");
-            return;
-        }};
+        let rules = match alert_operations::get_alert_rules(&self.pool).await {
+            Ok(r) => r,
+            Err(_) => {
+                log::error!("[ERROR][ALERTS][LOADS] Failed to load alert rules!");
+                eprintln!("[ERROR][ALERTS][LOADS] Failed to load alert rules!");
+                return;
+            }
+        };
 
         let mut facts_rules : Vec<AlertRule> = Vec::new();
         let mut syslog_rules : Vec<AlertRule> = Vec::new();
 
-        for record in rules {
-            let rule = match AlertRule::from_json(record.rule_id, record.rule_name.clone(), record.requires_ack, record.rule_definition) {
-                Some(r) => r,
-                None => {
-                    log::warn!("[WARN ][ALERTS][LOADS] Failed to load rule {}-'{}' from database- Definition is invalid. Ignoring...", record.rule_id, record.rule_name);
-                    println!("[WARN ][ALERTS][LOADS] Failed to load rule {}-'{}' from database- Definition is invalid. Ignoring...", record.rule_id, record.rule_name);
-                    continue;
-                }
-            };
+        for rule in rules {
 
             match rule.data_source {
                 AlertDataSource::Facts => facts_rules.push(rule),
@@ -367,7 +373,7 @@ impl AlertBackend {
     async fn raise_alert(rule: &AlertRule, device: &Device, value: String, sender: &Sender<AlertEvent> ) {
         let event = AlertEvent {
             alert_id: -1,
-            alert_time: None,
+            alert_time: Some(Utc::now()),
             ack_time: None,
             requires_ack: rule.requires_ack,
             severity: rule.severity,

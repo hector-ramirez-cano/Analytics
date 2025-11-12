@@ -40,10 +40,12 @@ pub async fn update_device_analytics(influx_client : &influxdb2::Client, metrics
 
     let mut points = Vec::new();
 
-    log::info!("[DEBUG][FACTS][INFLUX] THIS is a bucket = '{}'", &bucket);
-    log::info!("[DEBUG][FACTS][INFLUX] Dear god...");
-    log::info!("[DEBUG][FACTS][INFLUX] There's more...");
-    log::info!("[DEBUG][FACTS][INFLUX] Nooo...");
+    #[cfg(debug_assertions)] {
+        log::info!("[DEBUG][FACTS][INFLUX] THIS is a bucket = '{}'", &bucket);
+        log::info!("[DEBUG][FACTS][INFLUX] Dear god...");
+        log::info!("[DEBUG][FACTS][INFLUX] There's more...");
+        log::info!("[DEBUG][FACTS][INFLUX] Nooo...");
+    }
 
 
     for device in metrics {
@@ -51,7 +53,9 @@ pub async fn update_device_analytics(influx_client : &influxdb2::Client, metrics
 
         let mut point = DataPoint::builder("metrics").tag("device_id", device_id.to_string());
         
-        log::debug!("[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>{}", device_id.to_string());
+        #[cfg(debug_assertions)] {
+            log::debug!("[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>{}", device_id.to_string());
+        }
 
         let device_requested_metrics = match Cache::instance().get_device_requested_metrics(device_id).await {
             Some(m) => m, None => continue

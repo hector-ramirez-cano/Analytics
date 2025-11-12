@@ -6,8 +6,9 @@ use rocket::{futures::StreamExt, get, post};
 use rocket_ws::{Message, WebSocket, stream::DuplexStream};
 use tokio::task::JoinHandle;
 
+use crate::alerts::AlertFilters;
 use crate::controller::get_operations::{api_get_topology};
-use crate::controller::ws_operations::{WsMsg, ws_get_dashboards, ws_get_topology, ws_handle_syslog, ws_query_facts, ws_query_metrics, ws_send_error_msg};
+use crate::controller::ws_operations::{WsMsg, ws_get_dashboards, ws_get_topology, ws_handle_alerts, ws_handle_syslog, ws_query_facts, ws_query_metrics, ws_send_error_msg};
 use crate::syslog::SyslogFilters;
 
 //  ________                  __                      __              __
@@ -24,13 +25,13 @@ use crate::syslog::SyslogFilters;
 //                               $$/
 #[get("/heartbeat")]
 pub fn heartbeat() -> &'static str {
-    print!("[DEBUG]Heartbeat!");
+    #[cfg(debug_assertions)] {print!("[DEBUG]Heartbeat!");}
     return "Bip bop"
 }
 
 #[get("/api/topology")]
 pub async fn get_topology(pool: &State<sqlx::PgPool>) -> Result<response::content::RawJson<String>, rocket::http::Status> {
-    log::debug!("[DEBUG]Get topology!");
+    #[cfg(debug_assertions)] {log::debug!("[DEBUG]Get topology!");}
     
     let topology = api_get_topology(pool).await?;
 
@@ -39,7 +40,7 @@ pub async fn get_topology(pool: &State<sqlx::PgPool>) -> Result<response::conten
 
 #[get("/api/rules")]
 pub fn get_rules() -> &'static str {
-    print!("[DEBUG]get topology!");
+    #[cfg(debug_assertions)]{print!("[DEBUG]get topology!");}
     todo!()
 }
 
@@ -103,6 +104,7 @@ async fn ws_receive_task(
 ) {
     // "State" items
     let mut syslog_filters : Option<SyslogFilters> = None;
+    let mut alert_filters: Option<AlertFilters> = None;
     
     while let Some(msg) = ws_receiver.next().await {
         match msg {
@@ -115,7 +117,7 @@ async fn ws_receive_task(
                 }
             },
             Ok(msg) => {
-                ws_handle_message(&pool, &influx_client, &mut data_to_socket_tx, &mut syslog_filters, msg).await;
+                ws_handle_message(&pool, &influx_client, &mut data_to_socket_tx, &mut syslog_filters, &mut alert_filters, msg).await;
             }
         }
     }
@@ -129,6 +131,7 @@ async fn ws_handle_message(
     data_to_socket: &mut mpsc::Sender<String>,
 
     syslog_filters: &mut Option<SyslogFilters>,
+    alert_filters: &mut Option<AlertFilters>,
     
     message: Message
 ) {
@@ -139,7 +142,7 @@ async fn ws_handle_message(
             let msg = serde_json::from_str::<WsMsg>(&msg);
             match msg {
                 Err(e) => ws_send_error_msg(data_to_socket, &format!("[BACKEND] Encountered error while handling message='{e}'")).await,
-                Ok(msg) => ws_route_message(pool, influx_client, data_to_socket, syslog_filters, msg).await,
+                Ok(msg) => ws_route_message(pool, influx_client, data_to_socket, syslog_filters, alert_filters, msg).await,
             }
         }
 
@@ -154,12 +157,13 @@ async fn ws_route_message(
     data_to_socket: &mut mpsc::Sender<String>,
 
     syslog_filters: &mut Option<SyslogFilters>,
+    alert_filters: &mut Option<AlertFilters>,
     
     msg: WsMsg
 ) {
     match msg.kind.as_str() {
         "syslog" => ws_handle_syslog(data_to_socket, pool, syslog_filters, msg).await.unwrap_or(()),
-        "alerts" => todo!(),
+        "alerts" => ws_handle_alerts(data_to_socket, pool, alert_filters, msg).await.unwrap_or(()),
         "health-rt" => todo!(),
         "dashboards" => ws_get_dashboards(data_to_socket, pool).await.unwrap_or(()),
         "metrics" => ws_query_metrics(data_to_socket, influx_client, msg).await.unwrap_or(()),

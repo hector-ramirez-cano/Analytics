@@ -1,7 +1,7 @@
 
-use sqlx::{FromRow, Pool, Postgres, QueryBuilder};
+use sqlx::{Pool, Postgres, QueryBuilder};
 
-use crate::syslog::{SyslogFilters, SyslogMessage};
+use crate::{model::db::operations::RowCount, syslog::{SyslogFilters, SyslogMessage}};
 
 
 pub async fn update_database(postgres_pool: &Pool<Postgres>, msg: &SyslogMessage) -> Result<(), ()> {
@@ -29,7 +29,10 @@ pub async fn update_database(postgres_pool: &Pool<Postgres>, msg: &SyslogMessage
 fn append_where_clause(filters: & SyslogFilters, query : & mut QueryBuilder<Postgres>, limit: Option<i64>, include_ordering_clause: bool) {
     let mut where_clause = query.separated(" AND ");
 
-    where_clause.push(" WHERE received_at BETWEEN ").push_bind_unseparated(filters.start_time).push( "").push_bind_unseparated(filters.end_time);
+    where_clause.push(" WHERE received_at BETWEEN ")
+        .push_bind_unseparated(filters.start_time)
+        .push( "")
+        .push_bind_unseparated(filters.end_time);
 
     if filters.has_facility_filters() {
         let fac : Vec<i16> = filters.facilities.iter().map(|f| *f as i16).collect();
@@ -70,21 +73,15 @@ fn append_where_clause(filters: & SyslogFilters, query : & mut QueryBuilder<Post
     }
 }
 
-#[derive(FromRow)]
-struct RowCount {
-    total : i64
-}
 
 pub async fn get_row_count(filters: &SyslogFilters, postgres_pool: &Pool<Postgres>) -> i64 {
     let mut query = QueryBuilder::<Postgres>::new("SELECT COUNT(1) as total FROM Syslog.system_events");
 
     append_where_clause(&filters, &mut query, None, false);
 
-    log::info!("[DEBUG][DB][SYSLOG] query={}", query.sql());
+    #[cfg(debug_assertions)] { log::info!("[DEBUG][DB][SYSLOG] query={}", query.sql()); }
 
     let query = query.build_query_as::<RowCount>();
-
-
     let result = query.fetch_one(postgres_pool).await;
 
     match result {
@@ -105,14 +102,10 @@ pub async fn get_rows(row_count_fetch: i64, filters: &SyslogFilters, postgres_po
     ));
 
     append_where_clause(filters, &mut query, Some(row_count_fetch), true);
-    log::info!("[DEBUG][DB][SYSLOG] query={}", query.sql());
+    #[cfg(debug_assertions)] { log::info!("[DEBUG][DB][SYSLOG] query={}", query.sql()); }
 
     let query = query.build_query_as::<SyslogMessage>();
-
     let result = query.fetch_all(postgres_pool).await;
-
-    dbg!(&result);
-    // dbg!(serde_json::json!(&filters));
 
     match result {
         Ok(r) => r,

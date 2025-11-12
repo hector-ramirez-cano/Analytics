@@ -1,23 +1,7 @@
 
-use chrono::{DateTime, TimeZone, Utc};
-use serde::Deserialize;
+use chrono::DateTime;
 
 use crate::syslog::{SyslogFacility, SyslogFilters, SyslogSeverity};
-
-pub fn ts_to_datetime_utc6<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let ts = f64::deserialize(deserializer)?;
-    let secs = ts as i64;
-    let nanos = ((ts.fract()) * 1e9) as u32;
-
-    let local_dt = Utc.timestamp_opt(secs, nanos)
-        .single()
-        .ok_or_else(|| serde::de::Error::custom("invalid timestamp"))?;
-
-    Ok(local_dt.with_timezone(&Utc))
-}
 
 impl SyslogFilters {
     pub fn has_facility_filters(&self) -> bool {

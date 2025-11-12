@@ -17,6 +17,15 @@ impl AlertSeverity {
             AlertSeverity::Unknown   => 8,
         }
     }
+
+    pub fn all() -> &'static [AlertSeverity] {
+        use AlertSeverity::*;
+        &[
+            Emergency, Alert  , Critical,
+            Error    , Warning, Notice  ,
+            Info     , Debug  , Unknown ,
+        ]
+    }
 }
 
 impl std::fmt::Display for AlertSeverity {

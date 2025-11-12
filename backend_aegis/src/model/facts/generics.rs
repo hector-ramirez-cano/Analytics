@@ -87,6 +87,19 @@ impl Into<serde_json::Value> for MetricValue {
     }
 }
 
+impl Into<MetricValue> for serde_json::Value {
+    fn into(self) -> MetricValue {
+        match self {
+            serde_json::Value::Null => MetricValue::Null(),
+            serde_json::Value::Bool(b) => MetricValue::Boolean(b),
+            serde_json::Value::Number(number) => MetricValue::Number(number.as_f64().unwrap_or(0.0).into()),
+            serde_json::Value::String(s) => MetricValue::String(s),
+            serde_json::Value::Array(values) => MetricValue::Array(values.iter().map(|v| { let v : MetricValue = v.clone().into(); v}).collect()),
+            serde_json::Value::Object(_) => MetricValue::Null(),
+        }
+    }
+}
+
 impl fmt::Display for MetricValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

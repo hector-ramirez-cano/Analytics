@@ -6,6 +6,7 @@ use crate::model::{facts::generics::{MetricSet, MetricValue}};
 impl AlertPredicate {
 
     pub fn eval(&self, dataset_left: &MetricSet, dataset_right: &MetricSet) -> bool {
+        
         // Resolve sides
         let (left, op, right) = match self {
             AlertPredicate::LeftConst(left, op, accessor) => {
@@ -18,6 +19,7 @@ impl AlertPredicate {
                 (accessor_left.access(&dataset_left), op, accesor_right.access(&dataset_right))
             },
         };
+        #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating predicate with actual = {:?} {:?} {:?}", left, op, right); }
 
         // Unwrap if valid
         let (left, right) = if let Some(left) = left && let Some(right) = right {
@@ -55,6 +57,16 @@ impl AlertPredicate {
     }
 }
 
+impl ToString for AlertPredicate {
+    fn to_string(&self) -> String {
+        match self {
+            AlertPredicate::LeftConst(metric_value, op, accessor) => format!("{} {} {}", metric_value.to_string(), op.to_string(), accessor.key),
+            AlertPredicate::RightConst(accessor, op, metric_value) => format!("{} {} {}", accessor.key, op.to_string(),metric_value.to_string() ),
+            AlertPredicate::Variable(accessor, op, accessor1) => format!("{} {} {}", accessor.key, op.to_string(), accessor1.key),
+        }
+    }
+}
+
 
 // --- Serialize ---
 impl Serialize for AlertPredicate {
@@ -87,17 +99,17 @@ impl Serialize for AlertPredicate {
 impl<'de> Deserialize<'de> for AlertPredicate {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where D: Deserializer<'de> {
-        #[derive(Deserialize)]
+        #[derive(Deserialize, Debug)]
         struct Raw {
-            left: String,
+            left: serde_json::Value,
             op: AlertPredicateOperation,
-            right: String,
+            right: serde_json::Value,
         }
 
         let raw = Raw::deserialize(deserializer)?;
 
-        let left_is_accessor = raw.left.starts_with('&');
-        let right_is_accessor = raw.right.starts_with('&');
+        let left_is_accessor = raw.left.is_string() && raw.left.as_str().unwrap().starts_with('&');
+        let right_is_accessor = raw.right.is_string() && raw.right.as_str().unwrap().starts_with('&');
 
         if left_is_accessor && right_is_accessor {
             log::warn!("Invalid AlertPredicate: both sides marked accessor (left={}, right={})", raw.left, raw.right);
@@ -105,18 +117,20 @@ impl<'de> Deserialize<'de> for AlertPredicate {
         }
 
         if left_is_accessor {
-            let left_acc = Accessor::new(raw.left.trim_start_matches('&'));
-            let right_val: MetricValue = serde_json::from_str(&raw.right)
-                .unwrap_or(MetricValue::String(raw.right.clone()));
+            let raw_left = raw.left.as_str().unwrap();
+            let left_acc = Accessor::new(raw_left.trim_start_matches('&'));
+            let right_val: MetricValue = raw.right.into();
             Ok(AlertPredicate::RightConst(left_acc, raw.op, right_val))
         } else if right_is_accessor {
-            let left_val: MetricValue = serde_json::from_str(&raw.left)
-                .unwrap_or(MetricValue::String(raw.left.clone()));
-            let right_acc = Accessor::new(raw.right.trim_start_matches('&'));
+            let raw_right = raw.right.as_str().unwrap();
+            let right_acc = Accessor::new(raw_right.trim_start_matches('&'));
+            let left_val: MetricValue = raw.left.into();
             Ok(AlertPredicate::LeftConst(left_val, raw.op, right_acc))
         } else {
-            let left_acc = Accessor::new(raw.left.trim_start_matches('&'));
-            let right_acc = Accessor::new(raw.right.trim_start_matches('&'));
+            let raw_left = raw.left.as_str().unwrap();
+            let raw_right = raw.right.as_str().unwrap();
+            let left_acc = Accessor::new(raw_left.trim_start_matches('&'));
+            let right_acc = Accessor::new(raw_right.trim_start_matches('&'));
             Ok(AlertPredicate::Variable(left_acc, raw.op, right_acc))
         }
     }
