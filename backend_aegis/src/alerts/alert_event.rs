@@ -25,7 +25,7 @@ impl AlertEvent {
             ws_notified: false,
             db_notified: false,
             acked: !requires_ack,
-            rule_id,
+            rule_id: Some(rule_id),
             value,
         }
     }

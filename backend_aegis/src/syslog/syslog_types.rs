@@ -188,7 +188,6 @@ impl<'a> From<syslog_loose::Message<&'a str>> for SyslogMessage {
 
         let msg = m.msg.to_string();
 
-
         SyslogMessage {
             id: -1,
             facility: facility,

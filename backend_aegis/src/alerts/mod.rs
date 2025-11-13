@@ -16,6 +16,7 @@ pub mod alert_event;
 pub mod accessor;
 pub mod alert_reduce_logic;
 pub mod alert_backend;
+pub mod telegram_backend;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, Hash)]
 #[sqlx(type_name = "AlertSeverity", rename_all = "lowercase")]
@@ -74,7 +75,7 @@ pub struct AlertEvent {
     pub acked: bool,
 
     #[serde(rename = "rule-id")]
-    pub rule_id: i64,
+    pub rule_id: Option<i64>,
 
     pub value: String,
 }
@@ -115,31 +116,31 @@ pub mod alert_rule;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AlertRule {
     #[serde(rename = "id")]
-    rule_id: i64,
+    pub rule_id: i64,
 
     #[serde(rename = "name")]
-    name: String,
+    pub name: String,
 
     #[serde(rename = "requires-ack")]
-    requires_ack: bool,
+    pub requires_ack: bool,
 
     #[serde(rename= "severity")]
-    severity: AlertSeverity,
+    pub severity: AlertSeverity,
 
     #[serde(rename = "target")]
-    target_item: i64,
+    pub target_item: i64,
 
     #[serde(rename = "reduce-logic")]
-    reduce_logic: AlertReduceLogic,
+    pub reduce_logic: AlertReduceLogic,
 
     #[serde(rename = "predicates")]
-    predicates: Vec<AlertPredicate>,
+    pub predicates: Vec<AlertPredicate>,
 
     #[serde(rename="data-source")]
-    data_source: AlertDataSource,
+    pub data_source: AlertDataSource,
 
     #[serde(rename="is-delta-rule")]
-    is_delta_rule: bool
+    pub is_delta_rule: bool
 }
 
 pub mod alert_filters;

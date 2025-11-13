@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS Analytics.links (
 CREATE UNIQUE INDEX IF NOT EXISTS unique_link_pair
 ON Analytics.links (LEAST(side_a, side_b), GREATEST(side_a, side_b));
 
+
 CREATE TABLE IF NOT EXISTS Analytics.alerts (
     alert_id     BIGSERIAL,
     alert_time   TIMESTAMPTZ NOT NULL,
@@ -109,10 +110,10 @@ CREATE TABLE IF NOT EXISTS Analytics.alerts (
     ack_actor    VARCHAR,
     target_id    BIGINT,
     value        VARCHAR NOT NULL,
-    rule_id      BIGINT NOT NULL,
+    rule_id      BIGINT,
 
     FOREIGN KEY (target_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE,
-    FOREIGN KEY (rule_id) REFERENCES Analytics.alert_rules(rule_id) ON DELETE CASCADE
+    FOREIGN KEY (rule_id) REFERENCES Analytics.alert_rules(rule_id)
 );
 
 -- DROP TABLE Analytics.alert_rules;
@@ -169,8 +170,9 @@ CREATE TABLE IF NOT EXISTS Analytics.dashboard_items(
 );
 
 
+-- DROP TABLE Analytics.telegram_receiver;
 CREATE TABLE IF NOT EXISTS Analytics.telegram_receiver(
-    telegram_user_id NUMERIC (32, 0) PRIMARY KEY, --managed by telegram, trusted to be unique
+    telegram_user_id BIGINT PRIMARY KEY, --managed by telegram, trusted to be unique
     authenticated    BOOLEAN NOT NULL,
     subscribed       BOOLEAN NOT NULL
 );

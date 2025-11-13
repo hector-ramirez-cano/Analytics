@@ -8,6 +8,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::Mutex;
 use tokio::sync::mpsc;
 
+use crate::alerts::telegram_backend::TelegramBackend;
 use crate::config::Config;
 use crate::alerts::{AlertDataSource, AlertEvent, AlertRule};
 use crate::model::cache::Cache;
@@ -27,6 +28,7 @@ pub struct AlertBackend {
     pool: sqlx::PgPool,
     facts_rules: RwLock<Vec<AlertRule>>,
     syslog_rules: RwLock<Vec<AlertRule>>,
+    rule_names : RwLock<HashMap<i64, String>>,
     last_update: RwLock<u64>, // epoch seconds
 
     facts_cache: RwLock<FactMessage>,
@@ -44,6 +46,7 @@ impl AlertBackend {
 
             facts_rules: RwLock::new(Vec::new()),
             syslog_rules: RwLock::new(Vec::new()),
+            rule_names: RwLock::new(HashMap::new()),
 
             last_update: RwLock::new(0),
 
@@ -61,10 +64,10 @@ impl AlertBackend {
     pub async fn init(pool: &sqlx::PgPool) {
 
         // Add listeners to react to events that require rule eval
-
         let (facts_channel_tx, facts_channel_rx) = mpsc::channel::<FactMessage>(64);
         let (syslog_channel_tx, syslog_channel_rx) = mpsc::channel::<SyslogMessage>(64);
-        let (internal_event_tx, internal_event_rx) = mpsc::channel::<AlertEvent>(32);
+        let (internal_event_tx, internal_event_rx) = mpsc::channel::<AlertEvent>(64);
+        let (telegram_event_tx, telegram_event_rx) = mpsc::channel::<AlertEvent>(64);
 
         // Try to set instance Arc with provided value
         let backend = Arc::new(AlertBackend::new(pool));
@@ -75,15 +78,25 @@ impl AlertBackend {
             return;
         }
 
+        // Force to update the ruleset before the first fact execution
         AlertBackend::instance().update_ruleset(true).await;
 
+        // Listener and task for evaluating tasks when the FactGatheringBackend provides new data
         FactGatheringBackend::instance().add_listener(facts_channel_tx).await;
         Self::spawn_eval_facts_task(facts_channel_rx, internal_event_tx.clone());
-
+        
+        // Listener and task for evaluating tasks when the SyslogBackend provides new data
         SyslogBackend::instance().add_listener(syslog_channel_tx).await;
         Self::spawn_eval_syslog_task(syslog_channel_rx, internal_event_tx.clone());
 
+        // Task for handling events when they're raised
         Self::spawn_event_handler(internal_event_tx, internal_event_rx);
+
+        // Attach to itself for the telegram task
+        Self::instance().add_listener(telegram_event_tx).await;
+
+        // Telegram notifier
+        TelegramBackend::init(pool.clone(), telegram_event_rx).await;
 
 
         log::info!("[INFO ][ALERTS] Init Alert Backend");
@@ -201,6 +214,10 @@ impl AlertBackend {
                 };
                 #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS] Alerts backend received facts..."); }
 
+                // Critical area, locks facts_rules, syslog_rules, rule_names and last_update
+                // Updates the rule set if needed, before evaluating anything
+                Self::instance().update_ruleset(false).await;
+                
                 // Critical area, requires locks
                 {
                     let facts_rules = instance.facts_rules.read().await;
@@ -288,8 +305,7 @@ impl AlertBackend {
     // $$/   $$/  $$$$$$/  $$/  $$$$$$$/ $$$$$$$/
 
     async fn eval_rules(rules: &Vec<AlertRule>, old_facts: &FactMessage, new_facts : &FactMessage, event_tx: &Sender<AlertEvent>) {
-        Self::instance().update_ruleset(false).await;
-
+        
         for rule in rules.iter() {
                 let item = match Cache::instance().get_evaluable_item(rule.target_item).await { Some(i) => i, None=> continue };
 
@@ -297,7 +313,7 @@ impl AlertBackend {
 
                 // if item trigered, raise an alert for each alerting item
                 if let Some(t) = triggered {
-                    log::info!("[INFO ][ALARTS] Alert id {} raised!", rule.rule_id);
+                    log::warn!("[WARN ][ALARTS] Alert id {} raised!", rule.rule_id);
                     for (item, which) in t {
                         match item {
                             crate::alerts::EvaluableItem::Group(_) => {
@@ -318,11 +334,14 @@ impl AlertBackend {
     }
 
     /// Updates the local definition of the rules, only if an update is due, or if the update is forced
-    async fn update_ruleset(&self, forced: bool) {
+    pub async fn update_ruleset(&self, forced: bool) {
         let instance = Self::instance();
 
-        // try to acquire a lock for the last_update lock  guard
+        // try to acquire a lock for the last_update lock guard
         let last_update_lock = instance.try_claim_update(forced).await;
+        let mut names_lock = instance.rule_names.write().await;
+
+        log::info!("[INFO ][ALERTS][LOADS] Refreshing ruleset");
 
         // as long as this mfer lives, no one can access the rules
         let _last_update_lock = match last_update_lock {
@@ -342,6 +361,7 @@ impl AlertBackend {
         let mut syslog_rules : Vec<AlertRule> = Vec::new();
 
         for rule in rules {
+            names_lock.insert(rule.rule_id, rule.name.clone());
 
             match rule.data_source {
                 AlertDataSource::Facts => facts_rules.push(rule),
@@ -382,7 +402,7 @@ impl AlertBackend {
             ws_notified: false,
             db_notified: false,
             acked: false,
-            rule_id: rule.rule_id,
+            rule_id: Some(rule.rule_id),
             value,
         };
 
@@ -392,6 +412,11 @@ impl AlertBackend {
                 log::error!("[ERROR][ALERTS] Failed to send raised alert into alert handler! e='{e}'");
             }
         }
+    }
+
+    pub async fn get_rule_name(&self, id: i64) -> Option<String> {
+        let w = self.rule_names.read().await;
+        Some(w.get(&id)?.clone())
     }
 
     /// Last update (epoch seconds)

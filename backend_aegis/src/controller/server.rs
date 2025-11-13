@@ -1,3 +1,4 @@
+use rocket::response::status;
 use tokio::sync::mpsc::{self, Sender};
 use rocket::futures::SinkExt;
 use rocket::{State, response};
@@ -9,6 +10,7 @@ use tokio::task::JoinHandle;
 use crate::alerts::{AlertEvent, AlertFilters};
 use crate::alerts::alert_backend::AlertBackend;
 use crate::controller::get_operations::{api_get_topology};
+use crate::controller::post_operations;
 use crate::controller::ws_operations::{WsMsg, ws_alerts_rt, ws_get_dashboards, ws_get_topology, ws_handle_alerts, ws_handle_syslog, ws_query_facts, ws_query_metrics, ws_send_error_msg, ws_syslog_rt};
 use crate::syslog::{SyslogFilters, SyslogMessage};
 use crate::syslog::syslog_backend::SyslogBackend;
@@ -46,9 +48,27 @@ pub fn get_rules() -> &'static str {
     todo!()
 }
 
-#[post("/api/configure")]
-pub fn api_configure() {
-    todo!()
+type RocketJson = rocket::serde::json::Json<serde_json::Value>;
+#[post("/api/configure", data = "<data>")]
+pub async fn api_configure(data: RocketJson, pool: &State<sqlx::PgPool>) -> status::Custom<RocketJson> {
+    let response = post_operations::api_configure(data.0, pool.inner()).await;
+
+    match response {
+        Ok(_) => {
+            let ok_body = serde_json::json!({
+                "code": "202",
+                "message": ""
+            });
+            status::Custom(rocket::http::Status::Accepted, RocketJson::from(ok_body))
+        },
+        Err(e) => {
+            let err_body = serde_json::json!({
+                "code": "400",
+                "message": e.0
+            });
+            status::Custom(rocket::http::Status::BadRequest, RocketJson::from(err_body))
+        }
+    }
 }
 
 //  __       __            __                                      __                    __

@@ -2,18 +2,12 @@ use sqlx::Type;
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
-#[sqlx(type_name = "linktype", rename_all = "lowercase")]
+#[sqlx(type_name = "link_type", rename_all = "lowercase")]
+#[serde(rename_all="lowercase")]
 pub enum LinkType {
-    #[serde(rename="optical")]
     Optical,
-
-    #[serde(rename="copper")]
     Copper,
-
-    #[serde(rename="wireless")]
     Wireless,
-
-    #[serde(rename="unknown")]
     Unknown,
 }
 

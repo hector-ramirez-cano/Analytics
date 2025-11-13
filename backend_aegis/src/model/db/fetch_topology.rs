@@ -1,8 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
 use rocket::futures::TryFutureExt;
-use serde_json::Value;
 
+use crate::misc::parse_json_array;
 use crate::model::cache::Cache;
 use crate::model::data::device::Device;
 use crate::model::data::link::Link;
@@ -30,16 +30,6 @@ pub async fn get_topology_as_json_str(pool: &sqlx::PgPool) -> Result<String, roc
 
     // returning from Cache, Cache handles it
     Cache::instance().as_json().map_err(|_| rocket::http::Status::InternalServerError).await
-}
-
-fn parse_json_array(field: Option<Value>) -> HashSet<String> {
-    match field {
-        Some(Value::Array(arr)) => arr
-            .into_iter()
-            .filter_map(|v| v.as_str().map(String::from))
-            .collect(),
-        _ => HashSet::new(),
-    }
 }
 
 pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<i64, Device>, rocket::http::Status>{

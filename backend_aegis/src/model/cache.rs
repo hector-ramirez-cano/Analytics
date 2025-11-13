@@ -53,6 +53,10 @@ impl Cache {
         update_topology_cache(pool, true).await.unwrap();
     }
 
+    pub async fn update_topology(&self, pool: &sqlx::Pool<sqlx::Postgres>, forced: bool) -> Result<(), rocket::http::Status>{
+        update_topology_cache(pool, forced).await
+    }
+
     /// Devices API
     pub async fn insert_device(&self, dev: Device) {
         let mut w = self.devices.write().await;
