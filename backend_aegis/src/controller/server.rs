@@ -9,7 +9,7 @@ use tokio::task::JoinHandle;
 
 use crate::alerts::{AlertEvent, AlertFilters};
 use crate::alerts::alert_backend::AlertBackend;
-use crate::controller::get_operations::{api_get_topology};
+use crate::controller::get_operations::{self, api_get_topology};
 use crate::controller::post_operations;
 use crate::controller::ws_operations::{WsMsg, ws_alerts_rt, ws_get_dashboards, ws_get_topology, ws_handle_alerts, ws_handle_syslog, ws_query_facts, ws_query_metrics, ws_send_error_msg, ws_syslog_rt};
 use crate::syslog::{SyslogFilters, SyslogMessage};
@@ -42,13 +42,25 @@ pub async fn get_topology(pool: &State<sqlx::PgPool>) -> Result<response::conten
     Ok(response::content::RawJson(topology))
 }
 
+type RocketJson = rocket::serde::json::Json<serde_json::Value>;
 #[get("/api/rules")]
-pub fn get_rules() -> &'static str {
-    #[cfg(debug_assertions)]{print!("[DEBUG]get topology!");}
-    todo!()
+pub async fn get_rules() -> status::Custom<RocketJson> {
+    let rules = get_operations::api_get_rules().await;
+
+    match rules {
+        Ok(json) => status::Custom(rocket::http::Status::Ok, RocketJson::from(json)),
+        Err(e) => {
+            let err_body = serde_json::json!({
+                "code": 500,
+                "message": "Failed to load rules"
+            });
+
+            status::Custom(e, RocketJson::from(err_body))
+        }
+    }
 }
 
-type RocketJson = rocket::serde::json::Json<serde_json::Value>;
+
 #[post("/api/configure", data = "<data>")]
 pub async fn api_configure(data: RocketJson, pool: &State<sqlx::PgPool>) -> status::Custom<RocketJson> {
     let response = post_operations::api_configure(data.0, pool.inner()).await;

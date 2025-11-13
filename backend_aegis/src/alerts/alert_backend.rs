@@ -387,6 +387,27 @@ impl AlertBackend {
         w.append(&mut syslog_rules);
     }
 
+    pub async fn get_rules_as_json() -> serde_json::Value {
+        let instance = AlertBackend::instance();
+        instance.update_ruleset(true).await;
+        
+        
+        let facts = instance.facts_rules.read().await;
+        let syslog = instance.syslog_rules.read().await;
+        
+        let mut result = Vec::with_capacity(facts.len() + syslog.len());
+
+        for fact in facts.iter() {
+            result.push(serde_json::json!(fact.clone()));
+        }
+
+        for syslog in syslog.iter() {
+            result.push(serde_json::json!(syslog.clone()));
+        }
+
+        serde_json::Value::Array(result)
+    }
+
     /// Calls to raise an alert. The alert is placed into the [sender] queue, to be written to the database
     /// db writes are guaranteed. If the write fails, the event is requeued
     /// ws writes are best effort. If it fails, it just keeps going.
