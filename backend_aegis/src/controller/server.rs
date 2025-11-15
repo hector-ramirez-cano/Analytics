@@ -11,7 +11,7 @@ use crate::alerts::{AlertEvent, AlertFilters};
 use crate::alerts::alert_backend::AlertBackend;
 use crate::controller::get_operations::{self, api_get_topology};
 use crate::controller::post_operations;
-use crate::controller::ws_operations::{WsMsg, ws_alerts_rt, ws_get_dashboards, ws_get_topology, ws_handle_alerts, ws_handle_syslog, ws_query_facts, ws_query_metrics, ws_send_error_msg, ws_syslog_rt};
+use crate::controller::ws_operations::{WsMsg, ws_alerts_rt, ws_check_backend_ws, ws_get_dashboards, ws_get_topology, ws_get_topology_view, ws_handle_alerts, ws_handle_syslog, ws_query_facts, ws_query_metrics, ws_send_error_msg, ws_syslog_rt};
 use crate::syslog::{SyslogFilters, SyslogMessage};
 use crate::syslog::syslog_backend::SyslogBackend;
 
@@ -37,7 +37,8 @@ pub fn heartbeat() -> &'static str {
 pub async fn get_topology(pool: &State<sqlx::PgPool>) -> Result<response::content::RawJson<String>, rocket::http::Status> {
     #[cfg(debug_assertions)] {log::debug!("[DEBUG]Get topology!");}
     
-    let topology = api_get_topology(pool).await?;
+    let topology = api_get_topology(pool).await.map_err(|_|rocket::http::Status::BadRequest)?;
+    let topology = topology.to_string();
 
     Ok(response::content::RawJson(topology))
 }
@@ -208,12 +209,13 @@ async fn ws_route_message(
     match msg.kind.as_str() {
         "syslog" => ws_handle_syslog(data_to_socket, pool, syslog_filters, msg).await.unwrap_or(()),
         "alerts" => ws_handle_alerts(data_to_socket, pool, alert_filters, msg).await.unwrap_or(()),
-        "health-rt" => todo!(),
+        "health-rt" => ws_check_backend_ws(data_to_socket, pool, influx_client).await.unwrap_or(()),
         "dashboards" => ws_get_dashboards(data_to_socket, pool).await.unwrap_or(()),
         "metrics" => ws_query_metrics(data_to_socket, influx_client, msg).await.unwrap_or(()),
         "facts"    => ws_query_facts(data_to_socket, msg).await.unwrap_or(()),
         "metadata" => ws_query_facts(data_to_socket, msg).await.unwrap_or(()),
         "topology" => ws_get_topology(data_to_socket, pool).await.unwrap_or(()),
+        "topology-view" => ws_get_topology_view(data_to_socket, pool).await.unwrap_or(()),
         _ => {
             let kind = msg.kind;
             let err = format!("[ERROR][RX] Received message with no valid type. Actual 'type'={kind}");

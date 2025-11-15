@@ -1,10 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
+use sqlx::Postgres;
 use tokio::sync::mpsc;
 
 use crate::alerts::{AlertEvent, AlertFilters};
-use crate::controller::get_operations::api_get_topology;
 use crate::model::cache::Cache;
+use crate::model::db::fetch_topology::{get_topology_as_json, get_topology_view_as_json};
+use crate::model::db::health_check::check_connections;
 use crate::model::db::operations::dashboard_operations::get_dashboards_as_json;
 use crate::model::db::operations::influx_operations::{self, InfluxFilter};
 use crate::model::facts::generics::Metrics;
@@ -46,27 +48,56 @@ pub async fn ws_send_error_msg(data_to_socket: &mut mpsc::Sender<String>, msg: &
 }
 
 pub async fn ws_send_msg(data_to_socket: &mut mpsc::Sender<String>, msg_type: &str, msg: &str) {
-    let msg = format!(r#""type":"{msg_type}", "msg": {msg}"#);
+    let msg = format!(r#"{{"type":"{msg_type}", "msg": {msg}}}"#);
 
     if let Err(e) = data_to_socket.send(msg).await {
         let msg = format!("Encountered error = '{e}' while sending message='{msg_type}'");
         ws_send_error_msg(data_to_socket, &msg).await;
     }
-
 }
 
-pub async fn ws_get_topology(data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::PgPool) -> Result<(), ()>  {
-    let topology = api_get_topology(pool).await.map_err(|_| ())?;
+pub async fn ws_get_topology(data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::Pool<Postgres>) -> Result<(), ()>  {
+    let topology = get_topology_as_json(pool).await;
+    let topology = match topology {
+        Ok(v) => v,
+        Err(e) => {
+            let e= format!("[BACKEND] Failed to retrieve topology with error = '{e}'");
+            ws_send_error_msg(data_to_socket, &e).await;
+            return Err(())
+        }
+    };
 
-    ws_send_msg(data_to_socket, "topology", &topology).await;
+    ws_send_msg(data_to_socket, "topology", &topology.to_string()).await;
     
     Ok(())
 }
 
-pub async fn ws_get_dashboards(data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::PgPool) -> Result<(), ()> {
-    let dashboards = get_dashboards_as_json(pool).await?;
+pub async fn ws_get_topology_view(data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::Pool<Postgres>) -> Result<(), ()> {
+    let view = get_topology_view_as_json(pool).await;
+
+    let view = match view {
+        Ok(v) => v,
+        Err(e) => {
+            let e= format!("[BACKEND] Failed to retrieve topology view with error = '{e}'");
+            ws_send_error_msg(data_to_socket, &e).await;
+            return Err(())
+        }
+    };
+
+    Ok(ws_send_msg(data_to_socket, "topology-view", &view.to_string()).await)
+}
+
+pub async fn ws_get_dashboards(data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::Pool<Postgres>) -> Result<(), ()> {
+    let dashboards = match get_dashboards_as_json(pool).await {
+        Ok(v) => v,
+        Err(e) => {
+            let e= format!("[BACKEND] Failed to retrieve dashboards with error = '{e}'");
+            ws_send_error_msg(data_to_socket, &e).await;
+            return Err(())
+        }
+    };
+
     let dashboards = serde_json::to_string(&dashboards.values().collect::<Vec<_>>());
-    
     match dashboards {
         Ok(dashboards) => { ws_send_msg(data_to_socket, "dashboard", &dashboards).await },
         Err(e) => { ws_send_error_msg(data_to_socket, &e.to_string()).await }
@@ -75,12 +106,31 @@ pub async fn ws_get_dashboards(data_to_socket: &mut mpsc::Sender<String>, pool: 
     Ok(())
 }
 
-pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg_in: WsMsg) -> Option<()> {
+pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg_in: WsMsg) -> Result<(), ()> {
     let original_starwalker = &msg_in.kind.clone();
 
-    let msg = msg_in.inner()?;
-    let mut facts = msg.body.get("facts")?.to_owned();
-    let mut device_ids = msg.body.get("device-ids")?.to_owned();
+    let msg = match msg_in.inner() {
+        Some(m) => m,
+        None => {
+            ws_send_error_msg(data_to_socket, "[BACKEND] Facts message contains no inner 'msg' component").await; 
+            return Err(())
+        }
+    };
+
+    let mut facts = match msg.body.get("facts") {
+        Some(f) => f.to_owned(),
+        None => {
+            ws_send_error_msg(data_to_socket, "[BACKEND] Facts message contains no 'facts' component to know which facts are being queried").await; 
+            return Err(())
+        }
+    };
+    let mut device_ids = match msg.body.get("device-ids") {
+        Some(ids) => ids.to_owned(),
+        None => {
+            ws_send_error_msg(data_to_socket, "[BACKEND] Facts message contains no 'device-ids' component to know which devices are being queried").await; 
+            return Err(())
+        }
+    };
     
     // Failsafe, convert into array
     if facts.is_string() {
@@ -92,21 +142,47 @@ pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg_in: W
         device_ids = serde_json::json!([&device_ids]);
     }
 
+    let device_ids = match device_ids.as_array() {
+        Some(ids) => ids,
+        None => {
+            ws_send_error_msg(data_to_socket, "[BACKEND] Facts message contains 'device-ids' component but is not of type 'array', 'string' or 'int'").await; 
+            return Err(())
+        }
+    };
+
+    let facts = match facts.as_array() {
+        Some(f) => f,
+        None => {
+            ws_send_error_msg(data_to_socket, "[BACKEND] Facts message contains 'facts' component, but is not of type 'array'").await;
+            return Err(())
+        }
+    };
+
     // Failsafe, if device_ids contains groups, replace with devices, otherwise, extract device ids
     let mut devices = Vec::<i64>::new();
     let cache = Cache::instance();
-    for device in device_ids.as_array()? {
+    for device in device_ids {
         let id = match device.as_i64() { Some(v) => v, None => continue };
         if cache.has_group(id).await {
-            devices.extend(cache.get_group_members(id).await?);
-        } else if cache.has_device(id).await {
+            let members = match cache.get_group_members(id).await {
+                Some(m) => m,
+                None => {
+                    ws_send_error_msg(data_to_socket, 
+                        format!("[BACKEND] Facts querying yielded no members for group").as_str()).await; 
+                    return Err(())
+                }
+            };
+            devices.extend(members);
+        } 
+        else if cache.has_device(id).await {
             devices.push(id);
-        } else {} // Explicitly do nothing 
+        }
+        else {} // Explicitly do nothing 
     }
 
     // Extract facts
     let mut extracted : Metrics = HashMap::new();
-    let facts : HashSet<String> = facts.as_array()?.iter().map(|s| s.as_str().unwrap_or("").to_owned()).collect();
+    let facts : HashSet<String> = facts.iter().map(|s| s.as_str().unwrap_or("").to_owned()).collect();
     for device_id in devices {
         // Filter and extract facts
         let hostname = match cache.get_device_hostname(device_id).await { Some(v) => v, None => continue };
@@ -119,10 +195,12 @@ pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg_in: W
         "type": original_starwalker,
         "msg": extracted
     });
-    data_to_socket.send(msg.to_string()).await.ok()?;
-
-
-    Some(())
+    if let Err(e) = data_to_socket.send(msg.to_string()).await {
+        log::error!("[ERROR][WS] Failed to send message with send error = {e}");
+        Err(())
+    } else {
+        Ok(())
+    }
 }
 
 pub async fn ws_query_metrics(data_to_socket: &mut mpsc::Sender<String>, influx_client: &influxdb2::Client, msg: WsMsg) -> Result<(), ()> {
@@ -154,7 +232,7 @@ pub async fn ws_query_metrics(data_to_socket: &mut mpsc::Sender<String>, influx_
 
 pub async fn ws_handle_syslog(
     data_to_socket: &mut mpsc::Sender<String>,
-    pool: &sqlx::PgPool,
+    pool: &sqlx::Pool<Postgres>,
 
     syslog_filters: &mut Option<SyslogFilters>,
     
@@ -189,7 +267,7 @@ pub async fn ws_handle_syslog(
 
 pub async fn ws_handle_alerts(
     data_to_socket: &mut mpsc::Sender<String>,
-    pool: &sqlx::PgPool,
+    pool: &sqlx::Pool<Postgres>,
 
     alert_filters: &mut Option<AlertFilters>,
 
@@ -216,6 +294,21 @@ pub async fn ws_handle_alerts(
         serde_json::Value::Object(_) => {
             ws_route_alerts(data_to_socket, pool, alert_filters, msg).await?;
         },
+    }
+
+    Ok(())
+}
+
+pub async fn ws_check_backend_ws(data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::Pool<Postgres>, influx_client: &influxdb2::Client) -> Result<(), ()>{
+    let msg = serde_json::json!({
+        "type": "health-rt", "msg": check_connections(pool, influx_client).await
+    });
+
+    match data_to_socket.send(msg.to_string()).await {
+        Ok(_) => (),
+        Err(e) => {
+            log::error!("[ERROR][WS][HEALTH] Failed to send message to websocket listener! error= '{e}'. Message will be dropped");
+        }
     }
 
     Ok(())
@@ -300,7 +393,7 @@ async fn ws_route_syslog_check_filters<'a>(data_to_socket: &'a mut mpsc::Sender<
 }
 
 async fn ws_route_syslog_request_data(
-    data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::PgPool, filters: &mut Option<SyslogFilters>, msg: WsMsg
+    data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::Pool<Postgres>, filters: &mut Option<SyslogFilters>, msg: WsMsg
 ) -> Result<(), ()> {
     let filters = ws_route_syslog_check_filters(data_to_socket, filters, msg).await?;
     let page_size = filters.page_size.unwrap_or(30);
@@ -324,7 +417,7 @@ async fn ws_route_syslog_request_data(
 }
 
 async fn ws_route_syslog_request_size(
-    data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::PgPool, filters: &mut Option<SyslogFilters>, msg: WsMsg
+    data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::Pool<Postgres>, filters: &mut Option<SyslogFilters>, msg: WsMsg
 ) -> Result<(), ()> {
     let filters = ws_route_syslog_check_filters(data_to_socket, filters, msg).await?;
 
@@ -350,7 +443,7 @@ async fn ws_route_syslog_request_size(
 
 async fn ws_route_syslog(
     data_to_socket: &mut mpsc::Sender<String>,
-    pool: &sqlx::PgPool,
+    pool: &sqlx::Pool<Postgres>,
 
     syslog_filters: &mut Option<SyslogFilters>,
     
@@ -407,7 +500,7 @@ async fn ws_route_alerts_check_filters<'a>(data_to_socket: &'a mut mpsc::Sender<
 }
 
 async fn ws_route_alerts_request_data(
-    data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::PgPool, filters: &mut Option<AlertFilters>, msg: WsMsg
+    data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::Pool<Postgres>, filters: &mut Option<AlertFilters>, msg: WsMsg
 ) -> Result<(), ()> {
     let filters = ws_route_alerts_check_filters(data_to_socket, filters, msg).await?;
     let page_size = filters.page_size.unwrap_or(30);
@@ -432,7 +525,7 @@ async fn ws_route_alerts_request_data(
 }
 
 async fn ws_route_alerts_request_size(
-    data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::PgPool, filters: &mut Option<AlertFilters>, msg: WsMsg
+    data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::Pool<Postgres>, filters: &mut Option<AlertFilters>, msg: WsMsg
 ) -> Result<(), ()> {
     let filters = ws_route_alerts_check_filters(data_to_socket, filters, msg).await?;
 
@@ -459,7 +552,7 @@ async fn ws_route_alerts_request_size(
 
 async fn ws_route_alerts (
     data_to_socket: &mut mpsc::Sender<String>,
-    pool: &sqlx::PgPool,
+    pool: &sqlx::Pool<Postgres>,
 
     alert_filters: &mut Option<AlertFilters>,
 

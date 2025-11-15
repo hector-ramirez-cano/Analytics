@@ -9,6 +9,7 @@ pub async fn commit(mut data: serde_json::Value, pool: &sqlx::Pool<Postgres>) ->
     // once this transaction goes out of scope, if a commit hasn't been performed
     // sqlx will automatically rollback. RAII
     // ain't that neat?
+    // TODO: Acquire instead of using the pool for each
     {
         let transaction: sqlx::Transaction<'_, Postgres> = pool.begin().await
             .map_err(|err| (format!("Could not begin commit transaction. Err = '{err}'").to_string(), 500))?;

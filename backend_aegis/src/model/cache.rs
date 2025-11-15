@@ -6,6 +6,7 @@ use tokio::sync::{RwLock, RwLockWriteGuard};
 
 use serde::Serialize;
 
+use crate::AegisError;
 use crate::config::Config;
 use crate::alerts::EvaluableItem;
 use crate::model::data::data_source::DataSource;
@@ -53,7 +54,7 @@ impl Cache {
         update_topology_cache(pool, true).await.unwrap();
     }
 
-    pub async fn update_topology(&self, pool: &sqlx::Pool<sqlx::Postgres>, forced: bool) -> Result<(), rocket::http::Status>{
+    pub async fn update_topology(&self, pool: &sqlx::Pool<sqlx::Postgres>, forced: bool) -> Result<(), AegisError>{
         update_topology_cache(pool, forced).await
     }
 
@@ -326,18 +327,16 @@ impl Cache {
         self.update_last().await;
     }
 
-    pub async fn as_json(&self) -> Result<String, serde_json::Error> {
+    pub async fn as_json(&self) -> Result<serde_json::Value, AegisError> {
         let devices = self.devices.read().await;
         let links = self.links.read().await;
         let groups = self.groups.read().await;
 
-        let value = serde_json::json!({
+        Ok(serde_json::json!({
             "devices": &*devices,
             "links": &*links,
             "groups": &*groups,
-        });
-
-        serde_json::to_string(&value)
+        }))
     }
 
     pub async fn icmp_inventory(&self) -> Vec<String> {

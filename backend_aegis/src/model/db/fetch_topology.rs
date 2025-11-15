@@ -1,7 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
 use rocket::futures::TryFutureExt;
+use sqlx::Postgres;
 
+use crate::AegisError;
 use crate::misc::parse_json_array;
 use crate::model::cache::Cache;
 use crate::model::data::device::Device;
@@ -18,21 +20,56 @@ struct DeviceDataSource {
     fact_data_source: DataSource,
 }
 
+
 impl From<Option<DeviceDataSource>> for DeviceDataSource {
     fn from(value: Option<DeviceDataSource>) -> Self {
         value.unwrap_or(DeviceDataSource { device_id: 0, fact_data_source: DataSource::Icmp })
     }
 }
 
-pub async fn get_topology_as_json_str(pool: &sqlx::PgPool) -> Result<String, rocket::http::Status> {
+pub async fn get_topology_as_json(pool: &sqlx::PgPool) -> Result<serde_json::Value, AegisError> {
     // Update before returning, if needed
     update_topology_cache(pool, false).await?;
 
     // returning from Cache, Cache handles it
-    Cache::instance().as_json().map_err(|_| rocket::http::Status::InternalServerError).await
+    Cache::instance().as_json().await
 }
 
-pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<i64, Device>, rocket::http::Status>{
+pub async fn get_topology_view_as_json(pool: &sqlx::Pool<Postgres>) -> Result<serde_json::Value, AegisError> {
+    // Return from sql, directly into JSON because there's not need to keep a local cache or create a struct
+    let rows: Vec<serde_json::Value> = sqlx::query_scalar(
+        r#"
+        SELECT json_build_object(
+            'topology_views_id', v.topology_views_id,
+            'is_physical_view', v.is_physical_view,
+            'name', v.name,
+            'members', COALESCE(
+                json_agg(
+                    json_build_object(
+                        'item_id', m.item_id,
+                        'position_x', m.position_x,
+                        'position_y', m.position_y
+                    )
+                ) FILTER (WHERE m.item_id IS NOT NULL),
+                '[]'
+            )
+        )
+        FROM Analytics.topology_views v
+        LEFT JOIN Analytics.topology_views_member m
+            ON v.topology_views_id = m.topology_views_id
+        GROUP BY v.topology_views_id, v.is_physical_view, v.name;
+        "#
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(|e| AegisError::Sql(e))?;
+
+    Ok(serde_json::Value::Array(rows))
+}
+
+
+
+pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<i64, Device>, AegisError>{
     // Query datasources
     let mut datasources : HashMap<i64, HashSet<DataSource>> = HashMap::new();
     let rows = sqlx::query_as!(
@@ -45,7 +82,7 @@ pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<i64, Device>, 
     )
         .fetch_all(&*pool)
         .await
-        .map_err(|_| rocket::http::Status::InternalServerError)?;
+        .map_err(|e| AegisError::Sql(e))?;
 
     for row in rows {
         let device_id = row.device_id;
@@ -63,9 +100,8 @@ pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<i64, Device>, 
     .fetch_all(&*pool)
     .await
     .map_err(|e| {
-        let e = e.to_string();
-        println!("[ERROR][DB]Failed to SELECT devices from database with error = '{e}'");
-        rocket::http::Status::InternalServerError
+        println!("[ERROR][DB]Failed to SELECT devices from database with error = '{}'", &e.to_string());
+        AegisError::Sql(e)
     })?;
 
     let mut devices = HashMap::new();
@@ -95,14 +131,14 @@ pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<i64, Device>, 
 }
 
 
-pub async fn query_links(pool: &sqlx::PgPool) -> Result<HashMap<i64, Link>, rocket::http::Status> {
+pub async fn query_links(pool: &sqlx::PgPool) -> Result<HashMap<i64, Link>, AegisError> {
     let rows = sqlx::query_as!(
         Link,
         r#"SELECT link_id, side_a, side_b, side_a_iface, side_b_iface, link_type::TEXT as "link_type: LinkType", link_subtype FROM Analytics.links;"#
     )
     .fetch_all(&*pool)
-    .map_err(|_| rocket::http::Status::InternalServerError)
-    .await?;
+    .await
+    .map_err(|e| AegisError::Sql(e))?;
 
     let mut links = HashMap::new();
     for row in rows {
@@ -112,7 +148,7 @@ pub async fn query_links(pool: &sqlx::PgPool) -> Result<HashMap<i64, Link>, rock
     Ok(links)
 }
 
-pub async fn query_groups(pool: &sqlx::PgPool) -> Result<HashMap<i64, Group>, rocket::http::Status>{
+pub async fn query_groups(pool: &sqlx::PgPool) -> Result<HashMap<i64, Group>, AegisError>{
     let rows = sqlx::query_as!(
         Group,
         r#"
@@ -123,7 +159,7 @@ pub async fn query_groups(pool: &sqlx::PgPool) -> Result<HashMap<i64, Group>, ro
         "#
     )
     .fetch_all(&*pool)
-    .map_err(|_| rocket::http::Status::InternalServerError)
+    .map_err(|e| AegisError::Sql(e))
     .await?;
 
     let mut groups = HashMap::new();

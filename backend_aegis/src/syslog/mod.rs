@@ -11,7 +11,6 @@ pub mod syslog_backend;
 pub mod syslog_types;
 pub mod syslog_filters;
 
-// TODO: Serde
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct SyslogMessage {
     pub id: i64,

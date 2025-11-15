@@ -7,16 +7,22 @@ use crate::model::data::link_type::LinkType;
 pub struct Link {
     #[serde(rename = "id")]
     pub link_id: i64,
+
     #[serde(rename = "side-a")]
     pub side_a: i64,
+
     #[serde(rename = "side-b")]
     pub side_b: i64,
+
     #[serde(rename = "side-a-iface")]
     pub side_a_iface: String,
+
     #[serde(rename = "side-b-iface")]
     pub side_b_iface: String,
+
     #[serde(rename = "link-type")]
     pub link_type: LinkType,
+    
     #[serde(rename = "link-subtype")]
     pub link_subtype: Option<String>,
 }

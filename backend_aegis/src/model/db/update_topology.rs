@@ -3,9 +3,9 @@ use std::env;
 use influxdb2::models::DataPoint;
 use rocket::futures::stream;
 
-use crate::{config::Config, model::{cache::Cache, db::fetch_topology::{query_devices, query_groups, query_links}, facts::generics::Metrics}};
+use crate::{AegisError, config::Config, model::{cache::Cache, db::fetch_topology::{query_devices, query_groups, query_links}, facts::generics::Metrics}};
 
-pub async fn update_topology_cache(pool: &sqlx::PgPool, forced : bool) -> Result<(), rocket::http::Status>{
+pub async fn update_topology_cache(pool: &sqlx::PgPool, forced : bool) -> Result<(), AegisError>{
     if let Some(mut last_update_guard) = Cache::instance().try_claim_update(forced).await {
         println!("[INFO ][CACHE] Updating topology cache!");
 
