@@ -1,10 +1,10 @@
 use ordered_float::OrderedFloat;
-use std::{collections::HashMap, fmt};
+use std::{collections::{HashMap, HashSet}, fmt};
 
 use influxdb2::models::FieldValue;
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de, ser::SerializeSeq};
 
-use crate::model::facts::{ansible::ansible_status::AnsibleStatus, icmp::icmp_status::IcmpStatus, snmp::snmp_status::SnmpStatus};
+use crate::model::data::device_state::DeviceStatus;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MetricValue{
@@ -121,18 +121,6 @@ impl fmt::Display for MetricValue {
         }
     }
 }
-/* impl Into<influxdb_rs::Value<'_>> for MetricValue {
-    fn into(self) -> influxdb_rs::Value<'static> {
-        match self {
-            MetricValue::String(s) => influxdb_rs::Value::String(s.into()),
-            MetricValue::Number(n) => influxdb_rs::Value::Float(n.into()),
-            MetricValue::Integer(i) => influxdb_rs::Value::Integer(i.into()),
-            MetricValue::Boolean(b) => influxdb_rs::Value::Boolean(b.into()),
-            MetricValue::Array(_) => influxdb_rs::Value::String("Unsupported type".into()),
-            MetricValue::Null() => influxdb_rs::Value::String("Unsupported type".into()),
-        }
-    }
-} */
 
 impl Into<FieldValue> for MetricValue {
     fn into(self) -> FieldValue {
@@ -147,48 +135,23 @@ impl Into<FieldValue> for MetricValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Status {
-    pub ansible: AnsibleStatus,
-    pub icmp: IcmpStatus,
-    pub snmp: SnmpStatus,
-}
+/// Holds the device Hostname. For clarity purposes
+pub type DeviceHostname = String;
 
-impl Status {
-    pub fn merge(&mut self, other: &Status) {
-        self.ansible.merge(&other.ansible);
-        self.icmp.merge(&other.icmp);
-        self.snmp.merge(&other.snmp);
-    }
+/// Holds the metric name. For clarity purposes
+pub type MetricName = String;
 
-    pub fn new_ansible(status : AnsibleStatus) -> Self {
-        Status { ansible: status, icmp: IcmpStatus::Unknown(String::new()), snmp: SnmpStatus::Unknown }
-    }
-
-    pub fn new_icmp(status : IcmpStatus) -> Self {
-        Status { ansible: AnsibleStatus::Unknown(String::new()), icmp: status, snmp: SnmpStatus::Unknown }
-    }
-
-    pub fn new_snmp(status: SnmpStatus) -> Self {
-        Status { ansible: AnsibleStatus::Unknown(String::new()), icmp: IcmpStatus::Unknown(String::new()), snmp: status }
-    }
-}
-
-impl Default for Status {
-    fn default() -> Self {
-        Self { ansible: Default::default(), icmp: Default::default(), snmp: Default::default() }
-    }
-}
-
+/// Holds the exposed fields a given device returned via Fact Gathreing
+pub type ExposedFields = HashSet<MetricName>;
 
 /// Contains all the recovered metrics for a given device, in order of metric -> metricValue
-pub type MetricSet = HashMap<String, MetricValue>;
+pub type MetricSet = HashMap<MetricName, MetricValue>;
 
 /// Contains all the recovered metrics for all the devices, in the order of device -> MetricSet
-pub type Metrics = HashMap<String, MetricSet>;
+pub type Metrics = HashMap<DeviceHostname, MetricSet>;
 
 /// Contains the status for all the given data sources, in the order of device -> Status
-pub type StatusT: = HashMap<String, Status>;
+pub type StatusT: = HashMap<DeviceHostname, DeviceStatus>;
 
 pub trait ToMetrics {
     /// Convert `self` into MetricValue entries, using `prefix` as the current metric name.

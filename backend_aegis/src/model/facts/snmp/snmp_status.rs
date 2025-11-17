@@ -1,4 +1,8 @@
+use serde::{Serialize, Deserialize, Serializer, Deserializer};
+use serde::ser::SerializeStruct;
+use serde::de::{self};
 use std::fmt;
+
 
 /// SNMP status codes
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -41,5 +45,41 @@ impl fmt::Display for SnmpStatus {
             SnmpStatus::Unknown => "UNKNOWN",
         };
         write!(f, "{}", s)
+    }
+}
+
+impl Serialize for SnmpStatus {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("SnmpStatus", 2)?;
+        match self {
+            SnmpStatus::Unknown => {
+                s.serialize_field("status", "unknown")?;
+                s.serialize_field("msg", "")?;
+            }
+        }
+        s.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for SnmpStatus {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct Helper {
+            status: String,
+            #[serde(default)]
+            msg: String,
+        }
+
+        let h = Helper::deserialize(deserializer)?;
+        match h.status.as_str() {
+            "unknown" => Ok(SnmpStatus::Unknown),
+            other => Err(de::Error::unknown_variant(other, &["unknown"])),
+        }
     }
 }

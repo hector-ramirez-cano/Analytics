@@ -10,7 +10,7 @@ pub struct Dashboard {
     #[serde(rename="name")]
     pub dashboard_name: String,
 
-    #[serde(rename="members")]
+    #[serde(rename="widgets")]
     pub members: Vec<DashboardItem>
 }
 

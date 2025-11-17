@@ -203,20 +203,22 @@ impl EvaluableItem {
 
     async fn eval_device<'a>(device: Device,  rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage) -> Option<(EvaluableItem, Vec<EvalResult<'a>>)> {
         #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating rule for device={}", device.management_hostname); }
-        let dataset_right = dataset_right.0.get(&device.management_hostname)?;
+        let dataset_right = &dataset_right.get(&device.management_hostname)?.metrics;
 
         if rule.is_delta_rule {
             #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating rule for device={} is delta", device.management_hostname); }
-            let dataset_left = &dataset_left.0;
-            let dataset_left = dataset_left.get(&device.management_hostname)?;
+            
+            let dataset_left = &dataset_left.get(&device.management_hostname)?.metrics;
             if rule.eval_delta(dataset_left, dataset_right) {
                 let which = rule.raising_values(dataset_left, dataset_right);
                 Some((EvaluableItem::Device(device), which))
             } else { None }
-        } else {
+        } 
+        // Not a delta rule
+        else {
             #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating rule for device={} is not delta", device.management_hostname); }
-            if rule.eval_single(dataset_right) {
-                let which = rule.raising_values(dataset_right, dataset_right);
+            if rule.eval_single(&dataset_right) {
+                let which = rule.raising_values(&dataset_right, &dataset_right);
                 Some((EvaluableItem::Device(device), which))
             } else { None }
         }
@@ -227,7 +229,7 @@ impl EvaluableItem {
         let cache = Cache::instance();
         match self {
             EvaluableItem::Group(group) => {
-                let members = cache.get_group_device_ids(group.group_id)?;
+                let members = cache.get_group_device_ids(group.group_id).await?;
                 let mut triggered = Vec::new();
                 for member in members {
                     let device = match cache.get_evaluable_item(member).await { Some(d) => d, None => continue };

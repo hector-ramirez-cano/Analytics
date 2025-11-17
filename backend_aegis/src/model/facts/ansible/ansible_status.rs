@@ -1,4 +1,6 @@
 use std::fmt;
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
+use serde::ser::SerializeStruct;
 
 /// Ansible status codes
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -8,6 +10,7 @@ pub enum AnsibleStatus {
     Dark(String),
     Unknown(String),
 }
+
 
 impl Default for AnsibleStatus {
     fn default() -> Self {
@@ -53,5 +56,56 @@ impl fmt::Display for AnsibleStatus {
             AnsibleStatus::Unknown(_) => "UNKNOWN",
         };
         write!(f, "{}", s)
+    }
+}
+
+impl Serialize for AnsibleStatus {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("AnsibleStatus", 2)?;
+        match self {
+            AnsibleStatus::Reachable => {
+                s.serialize_field("status", "reachable")?;
+                s.serialize_field("msg", "")?;
+            }
+            AnsibleStatus::Skipped(msg) => {
+                s.serialize_field("status", "skipped")?;
+                s.serialize_field("msg", msg)?;
+            }
+            AnsibleStatus::Dark(msg) => {
+                s.serialize_field("status", "dark")?;
+                s.serialize_field("msg", msg)?;
+            }
+            AnsibleStatus::Unknown(msg) => {
+                s.serialize_field("status", "unknown")?;
+                s.serialize_field("msg", msg)?;
+            }
+        }
+        s.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for AnsibleStatus {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct Helper {
+            status: String,
+            #[serde(default)]
+            msg: String,
+        }
+
+        let h = Helper::deserialize(deserializer)?;
+        match h.status.as_str() {
+            "reachable" => Ok(AnsibleStatus::Reachable),
+            "skipped" => Ok(AnsibleStatus::Skipped(h.msg)),
+            "dark" => Ok(AnsibleStatus::Dark(h.msg)),
+            "unknown" => Ok(AnsibleStatus::Unknown(h.msg)),
+            other => Err(de::Error::unknown_variant(other, &["reachable","skipped","dark","unknown"])),
+        }
     }
 }

@@ -6,7 +6,8 @@ use tokio::task;
 use futures::future::join_all;
 
 use crate::model::cache::Cache;
-use crate::model::facts::generics::{MetricValue, Metrics, Status, StatusT};
+use crate::model::data::device_state::DeviceStatus;
+use crate::model::facts::generics::{MetricValue, Metrics, StatusT};
 use crate::model::facts::icmp::icmp_status::IcmpStatus;
 
 lazy_static::lazy_static! {
@@ -120,7 +121,7 @@ async fn ping_devices(
                         metrics_map.insert(
                             host.clone(),
                             HashMap::from([
-                                ("icmp_status".to_string(), MetricValue::Integer(icmp_status.to_i32().into())),
+                                ("icmp_status".to_string(), MetricValue::String(icmp_status.type_to_string().to_string())),
                                 ("icmp_rtt".to_string(), MetricValue::Number(rtt.into())),
                                 ("icmp_loss_percent".to_string(), MetricValue::Number(loss.into()))
                             ])
@@ -129,7 +130,7 @@ async fn ping_devices(
                         // populate status wrapper (msg left empty like your Python)
                         status_map.insert(
                             host,
-                            Status::new_icmp(icmp_status)
+                            DeviceStatus::new_icmp(icmp_status)
                         );
                     }
                     // ping_host_once failed to run or parse; mark as unreachable and defaults
@@ -144,7 +145,7 @@ async fn ping_devices(
                         );
                         status_map.insert(
                             host,
-                            Status::new_icmp(IcmpStatus::Unreachable(_e.to_string()))
+                            DeviceStatus::new_icmp(IcmpStatus::Unreachable(_e.to_string()))
                         );
                     }
                 }

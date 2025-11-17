@@ -11,7 +11,8 @@ use crate::alerts::{AlertEvent, AlertFilters};
 use crate::alerts::alert_backend::AlertBackend;
 use crate::controller::get_operations::{self, api_get_topology};
 use crate::controller::post_operations;
-use crate::controller::ws_operations::{WsMsg, ws_alerts_rt, ws_check_backend_ws, ws_get_dashboards, ws_get_topology, ws_get_topology_view, ws_handle_alerts, ws_handle_syslog, ws_query_facts, ws_query_metrics, ws_send_error_msg, ws_syslog_rt};
+use crate::controller::ws_operations::{WsMsg, ws_alerts_rt, ws_check_backend_ws, ws_device_health_rt, ws_get_dashboards, ws_get_topology, ws_get_topology_view, ws_handle_alerts, ws_handle_syslog, ws_query_facts, ws_query_metadata, ws_query_metrics, ws_send_error_msg, ws_syslog_rt};
+use crate::model::facts::fact_gathering_backend::{FactGatheringBackend, FactMessage};
 use crate::syslog::{SyslogFilters, SyslogMessage};
 use crate::syslog::syslog_backend::SyslogBackend;
 
@@ -102,18 +103,21 @@ pub fn ws_router<'a>(ws: WebSocket, pool: &'a State<sqlx::PgPool>, influx_client
 
         // Channels (bounded capacity 64)
         let (data_to_socket_tx, data_to_socket_rx) = mpsc::channel::<String>(64);
-        let (syslog_rt_rx, syslog_rt_tx) = mpsc::channel::<SyslogMessage>(64);
-        let (alerts_rt_rx, alerts_rt_tx) = mpsc::channel::<AlertEvent>(64);
+        let (syslog_rt_tx, syslog_rt_rx) = mpsc::channel::<SyslogMessage>(64);
+        let (alerts_rt_tx, alerts_rt_rx) = mpsc::channel::<AlertEvent>(64);
+        let (device_health_rt_tx, device_health_rt_rx) = mpsc::channel::<FactMessage>(64);
 
         // Spawn Sender task
         let tx_task: JoinHandle<()> = tokio::spawn(ws_send_task(ws_sender, data_to_socket_rx));
         let rx_task: JoinHandle<()> = tokio::spawn(ws_receive_task(ws_receiver, data_to_socket_tx.clone(), pool.inner().clone(), influx_client.inner().clone()));
 
         // Spawn realtime listener tasks
-        SyslogBackend::instance().add_listener(syslog_rt_rx).await;
-        AlertBackend::instance().add_listener(alerts_rt_rx).await;
-        let syslog_rt_task : JoinHandle<()> = tokio::spawn(ws_syslog_rt(data_to_socket_tx.clone(), syslog_rt_tx));
-        let alerts_rt_task : JoinHandle<()> = tokio::spawn(ws_alerts_rt(data_to_socket_tx.clone(), alerts_rt_tx));
+        SyslogBackend::instance().add_listener(syslog_rt_tx).await;
+        AlertBackend::instance().add_listener(alerts_rt_tx).await;
+        FactGatheringBackend::instance().add_listener(device_health_rt_tx).await;
+        let syslog_rt_task : JoinHandle<()> = tokio::spawn(ws_syslog_rt(data_to_socket_tx.clone(), syslog_rt_rx));
+        let alerts_rt_task : JoinHandle<()> = tokio::spawn(ws_alerts_rt(data_to_socket_tx.clone(), alerts_rt_rx));
+        let device_health_rt_task : JoinHandle<()> = tokio::spawn(ws_device_health_rt(data_to_socket_tx.clone(), device_health_rt_rx));
 
         // Wait until any task finishes, then let the rest drop
         tokio::select! {
@@ -121,6 +125,7 @@ pub fn ws_router<'a>(ws: WebSocket, pool: &'a State<sqlx::PgPool>, influx_client
             _ = rx_task => {},
             _ = syslog_rt_task => (),
             _ = alerts_rt_task => (),
+            _ = device_health_rt_task => ()
         }
 
         Ok(())
@@ -132,6 +137,7 @@ async fn ws_send_task(
     mut data_to_socket: mpsc::Receiver<String>,
 ) {
     while let Some(msg) = data_to_socket.recv().await {
+        #[cfg(debug_assertions)] {log::info!("\x1b[33m[DEBUG][WS][TX] Sending msg='{}'\x1b[0m", &msg);}
         let result = ws_sender.send(Message::Text(msg)).await;
         if result.is_err() {
             log::error!("[ERROR][WS][TX] Encountered an error, sender is closing!");
@@ -162,6 +168,7 @@ async fn ws_receive_task(
                 }
             },
             Ok(msg) => {
+                #[cfg(debug_assertions)] {log::info!("\x1b[35m[DEBUG][WS][RX] Received msg='{}'\x1b[0m", msg);}
                 ws_handle_message(&pool, &influx_client, &mut data_to_socket_tx, &mut syslog_filters, &mut alert_filters, msg).await;
             }
         }
@@ -209,11 +216,11 @@ async fn ws_route_message(
     match msg.kind.as_str() {
         "syslog" => ws_handle_syslog(data_to_socket, pool, syslog_filters, msg).await.unwrap_or(()),
         "alerts" => ws_handle_alerts(data_to_socket, pool, alert_filters, msg).await.unwrap_or(()),
-        "health-rt" => ws_check_backend_ws(data_to_socket, pool, influx_client).await.unwrap_or(()),
+        "backend-health-rt" => ws_check_backend_ws(data_to_socket, pool, influx_client).await.unwrap_or(()),
         "dashboards" => ws_get_dashboards(data_to_socket, pool).await.unwrap_or(()),
         "metrics" => ws_query_metrics(data_to_socket, influx_client, msg).await.unwrap_or(()),
         "facts"    => ws_query_facts(data_to_socket, msg).await.unwrap_or(()),
-        "metadata" => ws_query_facts(data_to_socket, msg).await.unwrap_or(()),
+        "metadata" => ws_query_metadata(data_to_socket, msg).await.unwrap_or(()),
         "topology" => ws_get_topology(data_to_socket, pool).await.unwrap_or(()),
         "topology-view" => ws_get_topology_view(data_to_socket, pool).await.unwrap_or(()),
         _ => {

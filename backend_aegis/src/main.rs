@@ -29,7 +29,7 @@ async fn launch() -> _ {
     SyslogBackend::init();
 
     // start worker tasks
-    FactGatheringBackend::spawn_gather_task(influx_client.clone()).await;
+    FactGatheringBackend::spawn_gather_task(postgres_pool.clone(), influx_client.clone()).await;
     SyslogBackend::spawn_gather_task(postgres_pool.clone()).await;
 
     rocket::build()

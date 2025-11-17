@@ -16,7 +16,7 @@ impl InfluxFilter {
     pub fn from_json(json: &serde_json::Value) -> Option<Self> {
         let start = json.get("start")?.as_str()?.to_string();
         let metric = json.get("metric")?.as_str()?.to_string();
-        let device_id = json.get("device-id")?.as_str()?.to_string();
+        let device_id = json.get("device-id")?.as_i64()?.to_string();
         let aggregate_interval = json.get("aggregate-interval")?.as_str()?.to_string();
 
         Some(Self {

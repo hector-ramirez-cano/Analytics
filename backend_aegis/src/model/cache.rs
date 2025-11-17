@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::sync::{Arc, OnceLock};
 use tokio::sync::{RwLock, RwLockWriteGuard};
@@ -11,20 +11,22 @@ use crate::config::Config;
 use crate::alerts::EvaluableItem;
 use crate::model::data::data_source::DataSource;
 use crate::model::data::device::Device;
+use crate::model::data::device_state::DeviceStatus;
 use crate::model::data::link::Link;
 use crate::model::data::group::Group;
 use crate::model::db::update_topology::update_topology_cache;
-use crate::model::facts::generics::{MetricValue, Metrics};
+use crate::model::facts::fact_gathering_backend::FactMessage;
+use crate::model::facts::generics::{ExposedFields, MetricValue};
 
 async fn serialize_map<T: Serialize>(lock: &RwLock<HashMap<i64, T>>) -> Result<String, serde_json::Error> {
     serde_json::to_string(&*lock.read().await)
 }
 
 pub struct Cache {
+    pub facts: RwLock<FactMessage>,
     devices: RwLock<HashMap<i64, Device>>,
     links: RwLock<HashMap<i64, Link>>,
     groups: RwLock<HashMap<i64, Group>>,
-    facts: RwLock<Metrics>,
     last_update: RwLock<u64>, // epoch seconds
 }
 
@@ -72,6 +74,7 @@ impl Cache {
 
     pub async fn get_device_hostname(&self, id: i64) -> Option<String> {
         let r = self.devices.read().await;
+        
         Some(r.get(&id)?.management_hostname.clone())
     }
 
@@ -94,6 +97,15 @@ impl Cache {
         } 
         else {
             None
+        }
+    }
+
+    pub async fn set_device_status(&self, id: i64, status : &DeviceStatus, exposed_fields: &ExposedFields) {
+        let mut w = self.devices.write().await;
+
+        if let Some(device) = w.get_mut(&id) {
+            device.state = status.clone();
+            device.configuration.available_values = exposed_fields.clone();
         }
     }
 
@@ -158,33 +170,60 @@ impl Cache {
         Some(r.get(&id)?.members.clone()?)
     }
 
-    pub fn get_group_device_ids(&self, id: i64) -> Option<HashSet<i64>> {
-        let mut set: HashSet<i64> = {
-            let d = self.devices.blocking_read();
-            let g = self.groups.blocking_read();
-            
-            let members = g.get(&id)?.members.clone()?;
-            let devices : HashSet<i64>= members.iter().filter(|id| d.contains_key(*id)).map(|id| *id).collect();
-            devices
-        };
-        
-        let inner_groups: HashSet<i64> = {
-            let g = self.groups.blocking_read();
-            let members = g.get(&id)?.members.clone().unwrap_or_default();
-            let groups : HashSet<i64>= members.iter().filter(|id| g.contains_key(*id)).map(|id| *id).collect();
-            groups
-        };
-
-        for group in inner_groups {
-            let children = match self.get_group_device_ids(group) { Some(c) => c, None => continue };
-            
-            set.extend(children);
+    // TODO: Enforce no loops are held for any given group. Db already enforces this, but the backend should enforce this also, just in case
+    /// Recursively iterates into inner groups to get the device ids that are held within this group and this group's subgroups
+    pub async fn get_group_device_ids(&self, id: i64) -> Option<HashSet<i64>> {
+        // quick existence check for the start group (match original behavior)
+        {
+            let g = self.groups.read().await;
+            if !g.contains_key(&id) {
+                return None;
+            }
         }
 
-        Some(set)
-    }
+        let mut visited: HashSet<i64> = HashSet::new();
+        let mut result_devices: HashSet<i64> = HashSet::new();
+        let mut stack: VecDeque<i64> = VecDeque::new();
 
-    
+        // seed with the starting group id
+        visited.insert(id);
+        stack.push_back(id);
+
+        while let Some(gid) = stack.pop_back() {
+            // grab the members for this group and a snapshot of the devices map for lookups
+            let members_opt = {
+                let g = self.groups.read().await;
+                g.get(&gid).and_then(|gi| gi.members.clone())
+            };
+
+            let devices_map = self.devices.read().await;
+
+            let members = match members_opt {
+                Some(m) => m,
+                None => continue, // group has no members or disappeared; skip
+            };
+
+            for member_id in members.iter() {
+                // if member is a device, add to result
+                if devices_map.contains_key(member_id) {
+                    result_devices.insert(*member_id);
+                    continue;
+                }
+
+                // otherwise, if member is a group and not visited, enqueue it
+                {
+                    let g = self.groups.read().await;
+                    if g.contains_key(member_id) && !visited.contains(member_id) {
+                        visited.insert(*member_id);
+                        stack.push_back(*member_id);
+                    }
+                }
+            }
+            // devices_map lock dropped here (end of scope)
+        }
+
+        Some(result_devices)
+    }
 
     pub async fn has_group(&self, id: i64) -> bool {
         let r = self.groups.read().await;
@@ -224,6 +263,7 @@ impl Cache {
         let r = self.facts.read().await;
 
         let extracted_facts: HashMap<String, MetricValue> = r.get(management_hostname)?
+            .metrics
             .iter()
             .filter(|(key, _)| requested.contains(*key))
             .map(|(key, value)| (key.clone(), value.clone()))
@@ -252,11 +292,13 @@ impl Cache {
         w.extend(groups);
     }
 
-    pub async fn update_facts(&self, metrics: Metrics) {
+    pub async fn update_facts(&self, facts: FactMessage) {
         let mut w = self.facts.write().await;
         w.clear();
-        w.extend(metrics);
+        w.extend(facts);
     }
+
+
 
     /// Last update (epoch seconds)
     pub async fn last_update(&self) -> u64 {
@@ -332,10 +374,14 @@ impl Cache {
         let links = self.links.read().await;
         let groups = self.groups.read().await;
 
+        let device_vec: Vec<&Device> = devices.values().collect();
+        let link_vec: Vec<&Link> = links.values().collect();
+        let group_vec: Vec<&Group> = groups.values().collect();
+
         Ok(serde_json::json!({
-            "devices": &*devices,
-            "links": &*links,
-            "groups": &*groups,
+            "devices": &*device_vec,
+            "links": &*link_vec,
+            "groups": &*group_vec,
         }))
     }
 

@@ -4,6 +4,7 @@ use std::hash::{Hash, Hasher};
 use serde::{Deserialize, Serialize};
 
 use crate::model::data::device_configuration::DeviceConfiguration;
+use crate::model::data::device_state::DeviceStatus;
 
 #[derive(Debug)]
 pub enum DeviceError {
@@ -30,6 +31,9 @@ pub struct Device {
 
     #[serde (rename = "configuration")]
     pub configuration: DeviceConfiguration,
+
+    #[serde (rename = "state", default)]
+    pub state: DeviceStatus,
 }
 
 impl Device {
@@ -48,6 +52,7 @@ impl Device {
             longitude,
             management_hostname,
             configuration,
+            state: DeviceStatus::default()
         }
     }
     pub fn to_dict(&self) -> HashMap<String, serde_json::Value> {
@@ -67,69 +72,6 @@ impl Device {
             serde_json::json!(self.configuration.to_dict()),
         );
         map
-    }
-
-    /*
-    pub fn eval_rule<'a>(
-        &'a self,
-        rule: &AlertRule,
-        d: &HashMap<String, HashMap<String, serde_json::Value>>,
-        _get_item_fn: fn(),
-    ) -> (bool, (&'a Device,)) {
-        let data = d.get(&self.management_hostname).unwrap_or(&HashMap::new());
-        (rule.eval(data), (self,))
-    }
-
-    pub fn which_eval_raised(
-        &self,
-        rule: &AlertRule,
-        d: &HashMap<String, HashMap<String, serde_json::Value>>,
-    ) -> Vec<(String, String)> {
-        let data = d.get(&self.management_hostname).unwrap_or(&HashMap::new());
-        rule.raising_values(data)
-    }
-
-    */
-    pub fn from_dict(d: &HashMap<String, serde_json::Value>) -> Result<Self, DeviceError> {
-        let device_id = d.get("id")
-            .and_then(|v| v.as_i64())
-            .ok_or(DeviceError::MissingField("id"))?;
-
-        let device_name = d.get("name")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string()).ok_or(DeviceError::MissingField("name"))?;
-
-        let coords = d.get("coordinates")
-            .and_then(|v| v.as_array())
-            .ok_or(DeviceError::MissingField("coordinates"))?;
-        if coords.len() < 2 {
-            return Err(DeviceError::InvalidType("coordinates"));
-        }
-
-        let geocoords = d.get("geocoordinates")
-            .and_then(|v| v.as_array())
-            .ok_or(DeviceError::MissingField("geocoordinates"))?;
-        if geocoords.len() < 2 {
-            return Err(DeviceError::InvalidType("geocoordinates"));
-        }
-        let latitude = geocoords[0].as_f64().ok_or(DeviceError::InvalidType("geocoordinates[0]"))?;
-        let longitude = geocoords[1].as_f64().ok_or(DeviceError::InvalidType("geocoordinates[1]"))?;
-
-        let management_hostname = d.get("management-hostname")
-            .and_then(|v| v.as_str())
-            .ok_or(DeviceError::MissingField("management-hostname"))?
-            .to_string();
-
-        let configuration = DeviceConfiguration::from_dict(d).unwrap_or_default();
-
-        Ok(Self {
-            device_id,
-            device_name,
-            latitude,
-            longitude,
-            management_hostname,
-            configuration,
-        })
     }
 }
 

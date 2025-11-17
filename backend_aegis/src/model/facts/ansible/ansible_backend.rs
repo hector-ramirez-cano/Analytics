@@ -2,7 +2,7 @@ use std::{collections::{HashMap}, env, io, path::{Component, Path, PathBuf}};
 
 use pyo3::{Bound, PyAny, PyErr, Python, types::{PyAnyMethods, PyDict, PyIterator, PyModule}};
 
-use crate::{config::Config, model::{cache::Cache, facts::{ansible::ansible_status::{AnsibleStatus}, generics::{MetricValue, Metrics, Status, StatusT, ToMetrics}}}};
+use crate::{config::Config, model::{cache::Cache, data::device_state::DeviceStatus, facts::{ansible::ansible_status::AnsibleStatus, generics::{MetricValue, Metrics, StatusT, ToMetrics}}}};
 
 
 
@@ -179,13 +179,13 @@ async fn run_playbook(targets: Vec<String>) -> (Metrics, StatusT) {
 
                     // Update status, only if it hasn't been overriden
                     if !status.contains_key(&host) {
-                        status.insert(host, Status::new_ansible(AnsibleStatus::Reachable));
+                        status.insert(host, DeviceStatus::new_ansible(AnsibleStatus::Reachable));
                     }
                 } 
                 else if event_name == "runner_on_unreachable" {
                     // override status with dark, and inform what failed
                     let msg = res.get_item("msg").and_then(|v| Ok(v.extract::<String>()?)).unwrap_or("".to_owned()).to_string();
-                    status.insert(host, Status::new_ansible(AnsibleStatus::Dark(msg)));
+                    status.insert(host, DeviceStatus::new_ansible(AnsibleStatus::Dark(msg)));
                 }
             }
 

@@ -7,6 +7,7 @@ use crate::AegisError;
 use crate::misc::parse_json_array;
 use crate::model::cache::Cache;
 use crate::model::data::device::Device;
+use crate::model::data::device_state::DeviceStatus;
 use crate::model::data::link::Link;
 use crate::model::data::group::Group;
 use crate::model::data::link_type::LinkType;
@@ -40,15 +41,15 @@ pub async fn get_topology_view_as_json(pool: &sqlx::Pool<Postgres>) -> Result<se
     let rows: Vec<serde_json::Value> = sqlx::query_scalar(
         r#"
         SELECT json_build_object(
-            'topology_views_id', v.topology_views_id,
-            'is_physical_view', v.is_physical_view,
+            'id', v.topology_views_id,
+            'is-physical-view', v.is_physical_view,
             'name', v.name,
             'members', COALESCE(
                 json_agg(
                     json_build_object(
-                        'item_id', m.item_id,
-                        'position_x', m.position_x,
-                        'position_y', m.position_y
+                        'id', m.item_id,
+                        'x', m.position_x::DOUBLE PRECISION,
+                        'y', m.position_y::DOUBLE PRECISION
                     )
                 ) FILTER (WHERE m.item_id IS NOT NULL),
                 '[]'
@@ -104,6 +105,8 @@ pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<i64, Device>, 
         AegisError::Sql(e)
     })?;
 
+    let cache = Cache::instance();
+
     let mut devices = HashMap::new();
     for row in rows {
         let device_id = row.device_id;
@@ -115,6 +118,9 @@ pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<i64, Device>, 
             data_sources: datasources.get(&row.device_id).unwrap_or(&HashSet::new()).clone(),
         };
 
+        let old_device = cache.get_device(device_id).await;
+        let old_state = old_device.and_then(|d| Some(d.state)).unwrap_or(DeviceStatus::empty());
+
         let device = Device {
             device_id: device_id.into(),
             device_name: row.device_name.unwrap_or("Unnamed device".to_owned()),
@@ -122,6 +128,7 @@ pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<i64, Device>, 
             longitude: row.longitude,
             management_hostname: row.management_hostname,
             configuration: config,
+            state: old_state
         };
 
         devices.insert(device_id.into(), device);

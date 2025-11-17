@@ -2,10 +2,11 @@ use std::env;
 
 use influxdb2::models::DataPoint;
 use rocket::futures::stream;
+use sqlx::Postgres;
 
-use crate::{AegisError, config::Config, model::{cache::Cache, db::fetch_topology::{query_devices, query_groups, query_links}, facts::generics::Metrics}};
+use crate::{AegisError, config::Config, model::{cache::Cache, db::fetch_topology::{query_devices, query_groups, query_links}, facts::fact_gathering_backend::FactMessage}};
 
-pub async fn update_topology_cache(pool: &sqlx::PgPool, forced : bool) -> Result<(), AegisError>{
+pub async fn update_topology_cache(pool: &sqlx::Pool<Postgres>, forced : bool) -> Result<(), AegisError>{
     if let Some(mut last_update_guard) = Cache::instance().try_claim_update(forced).await {
         println!("[INFO ][CACHE] Updating topology cache!");
 
@@ -21,7 +22,36 @@ pub async fn update_topology_cache(pool: &sqlx::PgPool, forced : bool) -> Result
     Ok(())
 }
 
-pub async fn update_device_analytics(influx_client : &influxdb2::Client, metrics : &Metrics) {
+/// Inserts data that might change infrequently into the Postgres database, and updates local cache of devices
+pub async fn update_device_metadata(pool: &sqlx::Pool<Postgres>, msg: &FactMessage) {
+
+    // Set status and available values via exposed fields
+    for (hostname, facts) in msg {
+        let id = match Cache::instance().get_device_id(&hostname).await {
+            Some(id) => id,
+            None => {
+                log::warn!("[WARN ][FACTS] Tried to update device metadata for a device that doesn't exist in cache. This code should be unreachable!");
+                continue;
+            }
+        };
+        // TODO: Make metadata be equal to the filtering of metrics based on selected fields
+        let available_values = serde_json::json!(&facts.exposed_fields);
+        let metadata = serde_json::json!(&facts.exposed_fields);
+
+        let result = sqlx::query!("UPDATE Analytics.devices 
+                    SET metadata = $1, available_values = $2 
+                    WHERE device_id = $3",
+                    metadata, available_values, id,
+                ).execute(pool).await;
+
+        if let Err(e) = result {
+            log::error!("[ERROR][FACTS][DB] Failed to update metadata and available values for device = {}. SQL Error = {e}", &hostname);
+        }
+    }
+}
+
+/// Inserts datapoints into influxdb bucket. 
+pub async fn update_device_analytics(influx_client : &influxdb2::Client, message : &FactMessage) {
 
     log::info!("[INFO ][FACTS] Updating Influx with metrics, from inside the update device analytics function");
     
@@ -48,8 +78,8 @@ pub async fn update_device_analytics(influx_client : &influxdb2::Client, metrics
     }
 
 
-    for device in metrics {
-        let device_id = match Cache::instance().get_device_id(device.0).await { Some(v) => v, None => continue };
+    for (device, facts) in message {
+        let device_id = match Cache::instance().get_device_id(device).await { Some(v) => v, None => continue };
 
         let mut point = DataPoint::builder("metrics").tag("device_id", device_id.to_string());
         
@@ -62,7 +92,7 @@ pub async fn update_device_analytics(influx_client : &influxdb2::Client, metrics
         };
 
         for metric in device_requested_metrics {
-            let value = device.1
+            let value = facts.metrics
                 .get(&metric);
 
             let value = match value {

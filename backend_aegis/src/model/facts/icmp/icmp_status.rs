@@ -1,5 +1,10 @@
 use std::fmt;
 
+use serde::{Serialize, Deserialize, Serializer, Deserializer};
+use serde::ser::SerializeStruct;
+use serde::de::{self};
+
+
 /// ICMP status codes translated from Python Enum
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IcmpStatus {
@@ -42,6 +47,17 @@ impl IcmpStatus {
         }
     }
 
+    pub fn type_to_string(&self) -> &str{
+        match self {
+            IcmpStatus::Reachable => "Reachable",
+            IcmpStatus::Unreachable(_) => "Unreachable",
+            IcmpStatus::Timeout(_) => "Timeout",
+            IcmpStatus::HostNotFound(_) => "HostNotFound",
+            IcmpStatus::NameResolutionError(_) => "NameResolutionError",
+            IcmpStatus::Unknown(_) => "Unknown",
+        }
+    }
+
     pub fn merge(&mut self, other: &IcmpStatus) {
         if matches!(self, IcmpStatus::Unknown(_)) {
             *self = other.clone();
@@ -61,5 +77,68 @@ impl fmt::Display for IcmpStatus {
             IcmpStatus::Unknown(_) => "UNKNOWN",
         };
         write!(f, "{}", s)
+    }
+}
+
+impl Serialize for IcmpStatus {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("IcmpStatus", 2)?;
+        match self {
+            IcmpStatus::Reachable => {
+                s.serialize_field("status", "reachable")?;
+                s.serialize_field("msg", "")?;
+            }
+            IcmpStatus::Unreachable(msg) => {
+                s.serialize_field("status", "unreachable")?;
+                s.serialize_field("msg", msg)?;
+            }
+            IcmpStatus::Timeout(msg) => {
+                s.serialize_field("status", "timeout")?;
+                s.serialize_field("msg", msg)?;
+            }
+            IcmpStatus::HostNotFound(msg) => {
+                s.serialize_field("status", "hostnotfound")?;
+                s.serialize_field("msg", msg)?;
+            }
+            IcmpStatus::NameResolutionError(msg) => {
+                s.serialize_field("status", "nameresolutionerror")?;
+                s.serialize_field("msg", msg)?;
+            }
+            IcmpStatus::Unknown(msg) => {
+                s.serialize_field("status", "unknown")?;
+                s.serialize_field("msg", msg)?;
+            }
+        }
+        s.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for IcmpStatus {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct Helper {
+            status: String,
+            #[serde(default)]
+            msg: String,
+        }
+
+        let h = Helper::deserialize(deserializer)?;
+        match h.status.as_str() {
+            "reachable" => Ok(IcmpStatus::Reachable),
+            "unreachable" => Ok(IcmpStatus::Unreachable(h.msg)),
+            "timeout" => Ok(IcmpStatus::Timeout(h.msg)),
+            "hostnotfound" => Ok(IcmpStatus::HostNotFound(h.msg)),
+            "nameresolutionerror" => Ok(IcmpStatus::NameResolutionError(h.msg)),
+            "unknown" => Ok(IcmpStatus::Unknown(h.msg)),
+            other => Err(de::Error::unknown_variant(other, &[
+                "reachable","unreachable","timeout","hostnotfound","nameresolutionerror","unknown"
+            ])),
+        }
     }
 }

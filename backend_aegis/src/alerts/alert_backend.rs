@@ -13,9 +13,10 @@ use crate::config::Config;
 use crate::alerts::{AlertDataSource, AlertEvent, AlertRule};
 use crate::model::cache::Cache;
 use crate::model::data::device::Device;
+use crate::model::data::device_state::DeviceStatus;
 use crate::model::db::operations::alert_operations;
-use crate::model::facts::fact_gathering_backend::{FactGatheringBackend, FactMessage};
-use crate::model::facts::generics::MetricValue;
+use crate::model::facts::fact_gathering_backend::{DeviceFacts, FactGatheringBackend, FactMessage};
+use crate::model::facts::generics::{ExposedFields, MetricValue};
 use crate::syslog::syslog_backend::SyslogBackend;
 use crate::syslog::SyslogMessage;
 
@@ -31,7 +32,6 @@ pub struct AlertBackend {
     rule_names : RwLock<HashMap<i64, String>>,
     last_update: RwLock<u64>, // epoch seconds
 
-    facts_cache: RwLock<FactMessage>,
 }
 
 static INSTANCE: OnceLock<Arc<AlertBackend>> = OnceLock::new();
@@ -49,8 +49,6 @@ impl AlertBackend {
             rule_names: RwLock::new(HashMap::new()),
 
             last_update: RwLock::new(0),
-
-            facts_cache : RwLock::new((HashMap::new(), HashMap::new())),
 
         }
     }
@@ -220,16 +218,11 @@ impl AlertBackend {
                 
                 // Critical area, requires locks
                 {
+                    let cache = Cache::instance();
                     let facts_rules = instance.facts_rules.read().await;
-                    let old_facts = instance.facts_cache.read().await;
+                    let old_facts = cache.facts.read().await;
                     AlertBackend::eval_rules(&facts_rules, &old_facts, &new_facts, &event_tx).await;
                 } // Release dem locks so I can lock it again for write to update cache
-
-                // Critical area, requires locks 
-                {
-                    let mut old_facts = instance.facts_cache.write().await;
-                    *old_facts = new_facts;
-                }
 
                 #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS] Alerts backend finished rule eval..."); }
         }});
@@ -247,11 +240,14 @@ impl AlertBackend {
             let syslog_rules = instance.syslog_rules.read().await;
 
             // To emulate Metrics behavior, dynamically create a "MetricSet" with the given device, into a Metrics
-            let old_facts = (HashMap::new(), HashMap::new());
-            let mut new_facts = (HashMap::new(), HashMap::new());
+            let old_facts = FactMessage::new();
+            let mut new_facts = FactMessage::new();
             let mut syslog_fact = HashMap::new();
             syslog_fact.insert("syslog_message".to_string(), MetricValue::String(message.msg));
-            new_facts.0.insert(message.source.unwrap_or("Unknown device!".to_string()), syslog_fact);
+            new_facts.insert(
+                message.source.unwrap_or("Unknown device!".to_string()), 
+                DeviceFacts { metrics: syslog_fact, status: DeviceStatus::empty(), exposed_fields: ExposedFields::new() }
+            );
 
             AlertBackend::eval_rules(&syslog_rules, &old_facts, &new_facts, &event_tx).await;
         }});

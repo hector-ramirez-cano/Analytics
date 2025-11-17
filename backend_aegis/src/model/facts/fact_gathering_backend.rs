@@ -1,21 +1,30 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 use rocket::futures::future::join_all;
+use sqlx::Postgres;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 
 use crate::config::Config;
 use crate::model::cache::Cache;
-use crate::model::db::update_topology::update_device_analytics;
+use crate::model::data::device_state::DeviceStatus;
+use crate::model::db;
 use crate::model::facts::ansible::ansible_backend;
-use crate::model::facts::generics::{Metrics, Status, StatusT, recursive_merge};
+use crate::model::facts::generics::{DeviceHostname, ExposedFields, MetricSet, Metrics, StatusT, recursive_merge};
 use crate::model::facts::icmp::icmp_backend;
 
 
 /// Message variants sent to listeners
-pub type FactMessage = (Metrics, StatusT);
+pub type FactMessage = HashMap<DeviceHostname, DeviceFacts>;
+
+#[derive(Clone, Debug)]
+pub struct DeviceFacts {
+    pub metrics: MetricSet,
+    pub status: DeviceStatus,
+    pub exposed_fields: ExposedFields,
+}
 
 /// Singleton that stores listeners only
 #[derive(Clone)]
@@ -133,14 +142,28 @@ impl FactGatheringBackend {
         }
     }
 
-    pub async fn update_database(influx_client : &influxdb2::Client, msg: &FactMessage) {
+    pub async fn update_database(pool: &sqlx::Pool<Postgres>, influx_client : &influxdb2::Client, msg: &FactMessage) {
         log::info!("[INFO ][FACTS] Updating Influx with metrics.");
-        update_device_analytics(influx_client, &msg.0).await;
+        db::update_topology::update_device_analytics(influx_client, &msg).await;
+        db::update_topology::update_device_metadata(pool, msg).await;
     }
 
     pub async fn update_cache(msg: FactMessage) {
         log::info!("[INFO ][FACTS] Updating local facts cache.");
-        Cache::instance().update_facts(msg.0).await;
+        let cache = Cache::instance();
+        
+        for (hostname, facts) in &msg {
+            let id = match cache.get_device_id(&hostname).await {
+                Some(id) => id,
+                None => {
+                    log::error!("[ERROR][FACTS][CACHE] While updating device cache/status and exposed fields: Device wasn't found in cache. This should be unreachable!");
+                    continue
+                }
+            };
+            cache.set_device_status(id, &facts.status, &facts.exposed_fields).await;
+        }
+
+        cache.update_facts(msg).await;
     }
 
     /// Return the number of registered listeners (utility)
@@ -163,7 +186,7 @@ impl FactGatheringBackend {
     //                                                                           /  \__$$ |
     //                                                                           $$    $$/ 
     //                                                                            $$$$$$/  
-    pub async fn spawn_gather_task(influx_client : influxdb2::Client) {
+    pub async fn spawn_gather_task(pool: sqlx::Pool<Postgres>, influx_client : influxdb2::Client) {
         rocket::tokio::spawn(async move { 
             println!("[INFO ][FACTS] Waiting for web bindings to finish to begin fact gathering loop...");
             tokio::time::sleep(Duration::from_secs(2)).await;
@@ -183,11 +206,10 @@ impl FactGatheringBackend {
             log::info!("[INFO ][FACTS] Gathered facts!");
 
             let results = Self::join_results(results);
-            let exposed_fields = Self::extract_exposed_fields(&results.0);
 
             // Broadcast to listeners
             FactGatheringBackend::instance().broadcast(&results).await;
-            Self::update_database(&influx_client, &results).await;
+            Self::update_database(&pool, &influx_client, &results).await;
             Self::update_cache(results).await; // should be the last one, as it takes ownership
 
             let timeout_s = Config::instance().get("backend/controller/fact-gathering/polling_time_s", "/").unwrap_or(6);
@@ -197,14 +219,8 @@ impl FactGatheringBackend {
     }
 
 
-    pub fn join_results(results: Vec<Result<(Metrics, StatusT), tokio::task::JoinError>>) -> (Metrics, StatusT) {
+    pub fn join_results(results: Vec<Result<(Metrics, StatusT), tokio::task::JoinError>>) -> FactMessage {
 
-        // Remember:
-        //                             Device ->        { metric_name -> Metric}
-        // pub type MetricsT = HashMap<String  , HashMap<String        , MetricValue>>;
-        // pub type StatusT: = HashMap<String  , Status>;
-        //
-        // Results = [ Ansible MetricsT, ICMP MetricsT ]
         let mut combined_metrics = Metrics::new();
         let mut combined_status = StatusT::new();
         for source_results in results {
@@ -226,22 +242,35 @@ impl FactGatheringBackend {
             for device in status {
                 let entry = combined_status
                     .entry(device.0)
-                    .or_insert_with(Status::default);
+                    .or_insert_with(DeviceStatus::default);
 
-                entry.merge(&device.1);
+                entry.merge(device.1);
             }
         }
 
-        (combined_metrics, combined_status)
-    }
+        let mut result = FactMessage::with_capacity(combined_metrics.len());
+        for (hostname, metrics) in combined_metrics {
+            let exposed_fields = Self::extract_exposed_fields(&metrics);
+            let status = match combined_status.remove(&hostname) {
+                Some(s) => s,
+                None => {
+                    log::error!("[ERROR][FACTS] While merging, device {} did not contain status. This coud should be unreachable!", &hostname);
+                    continue;
+                }
+            };
 
-    pub fn extract_exposed_fields(metrics : &Metrics) -> HashMap<String, HashSet<String>> {
-        let mut exposed = HashMap::new();
-
-        for device in metrics {
-            exposed.insert(device.0.clone(), device.1.keys().map(|k| k.to_string()).collect());
+            result.insert(hostname, DeviceFacts { 
+                metrics,
+                status,
+                exposed_fields
+            });
         }
 
-        exposed
+        result
+
+    }
+
+    pub fn extract_exposed_fields(metrics : &MetricSet) -> ExposedFields {
+        metrics.iter().map(|(name, _)| name.clone().to_string()).collect()
     }
 }

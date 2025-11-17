@@ -5,11 +5,13 @@ use tokio::sync::mpsc;
 
 use crate::alerts::{AlertEvent, AlertFilters};
 use crate::model::cache::Cache;
+use crate::model::data::device_state::DeviceStatus;
 use crate::model::db::fetch_topology::{get_topology_as_json, get_topology_view_as_json};
 use crate::model::db::health_check::check_connections;
 use crate::model::db::operations::dashboard_operations::get_dashboards_as_json;
 use crate::model::db::operations::influx_operations::{self, InfluxFilter};
-use crate::model::facts::generics::Metrics;
+use crate::model::facts::fact_gathering_backend::FactMessage;
+use crate::model::facts::generics::{DeviceHostname, MetricValue, Metrics};
 use crate::syslog::{SyslogFilters, SyslogMessage};
 
 
@@ -84,7 +86,12 @@ pub async fn ws_get_topology_view(data_to_socket: &mut mpsc::Sender<String>, poo
         }
     };
 
-    Ok(ws_send_msg(data_to_socket, "topology-view", &view.to_string()).await)
+    let msg = serde_json::json!({
+        "type": "get",
+        "msg": view
+    });
+
+    Ok(ws_send_msg(data_to_socket, "topology-view", &msg.to_string()).await)
 }
 
 pub async fn ws_get_dashboards(data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::Pool<Postgres>) -> Result<(), ()> {
@@ -99,23 +106,19 @@ pub async fn ws_get_dashboards(data_to_socket: &mut mpsc::Sender<String>, pool: 
 
     let dashboards = serde_json::to_string(&dashboards.values().collect::<Vec<_>>());
     match dashboards {
-        Ok(dashboards) => { ws_send_msg(data_to_socket, "dashboard", &dashboards).await },
+        Ok(dashboards) => { 
+            dbg!(&dashboards);
+            ws_send_msg(data_to_socket, "dashboards", &dashboards).await 
+        },
         Err(e) => { ws_send_error_msg(data_to_socket, &e.to_string()).await }
     }
 
     Ok(())
 }
 
-pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg_in: WsMsg) -> Result<(), ()> {
-    let original_starwalker = &msg_in.kind.clone();
-
-    let msg = match msg_in.inner() {
-        Some(m) => m,
-        None => {
-            ws_send_error_msg(data_to_socket, "[BACKEND] Facts message contains no inner 'msg' component").await; 
-            return Err(())
-        }
-    };
+/// Extracts facts from local cache of facts. Fact Gathering loop must've run at least once for this to yield useful results
+pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg: WsMsg) -> Result<(), ()> {
+    let original_starwalker = &msg.kind.clone();
 
     let mut facts = match msg.body.get("facts") {
         Some(f) => f.to_owned(),
@@ -191,9 +194,15 @@ pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg_in: W
         extracted.insert(hostname, extracted_facts);
     }
 
+    dbg!(&original_starwalker);
+
     let msg = serde_json::json!({
         "type": original_starwalker,
-        "msg": extracted
+        "msg": {
+            "type": "get",
+            original_starwalker: facts,
+            "msg": extracted,
+        }
     });
     if let Err(e) = data_to_socket.send(msg.to_string()).await {
         log::error!("[ERROR][WS] Failed to send message with send error = {e}");
@@ -203,11 +212,111 @@ pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg_in: W
     }
 }
 
+/// Extracts metadata from local cache of metadata. Fact Gathering loop must've run at least once for this to yield useful results
+pub async fn ws_query_metadata(data_to_socket: &mut mpsc::Sender<String>, msg: WsMsg) -> Result<(), ()> {
+    let mut metadata = match msg.body.get("metadata") {
+        Some(f) => f.to_owned(),
+        None => {
+            ws_send_error_msg(data_to_socket, "[BACKEND] metadata message contains no 'metadata' component to know which metadata are being queried").await; 
+            return Err(())
+        }
+    };
+    let mut device_ids = match msg.body.get("device-ids") {
+        Some(ids) => ids.to_owned(),
+        None => {
+            ws_send_error_msg(data_to_socket, "[BACKEND] Facts message contains no 'device-ids' component to know which devices are being queried").await; 
+            return Err(())
+        }
+    };
+    
+    // Failsafe, convert into array
+    if metadata.is_string() {
+        metadata = serde_json::json!([&metadata]);
+    }
+
+    // Failsafe, convert into array
+    if device_ids.is_number() {
+        device_ids = serde_json::json!([&device_ids]);
+    }
+
+    let device_ids = match device_ids.as_array() {
+        Some(ids) => ids,
+        None => {
+            ws_send_error_msg(data_to_socket, "[BACKEND] metadata message contains 'device-ids' component but is not of type 'array', 'string' or 'int'").await; 
+            return Err(())
+        }
+    };
+
+    let metadata = match metadata.as_array() {
+        Some(f) => f,
+        None => {
+            ws_send_error_msg(data_to_socket, "[BACKEND] Metadata message contains 'Metadata' component, but is not of type 'array'").await;
+            return Err(())
+        }
+    };
+
+    // Failsafe, if device_ids contains groups, replace with devices, otherwise, extract device ids
+    let mut devices = Vec::<i64>::new();
+    let cache = Cache::instance();
+    for device in device_ids {
+        let id = match device.as_i64() { Some(v) => v, None => continue };
+        if cache.has_group(id).await {
+            let members = match cache.get_group_device_ids(id).await {
+                Some(m) => m,
+                None => {
+                    ws_send_error_msg(data_to_socket, 
+                        format!("[BACKEND] Metadata querying yielded no members for group").as_str()).await; 
+                    return Err(())
+                }
+            };
+            devices.extend(members);
+        } 
+        else if cache.has_device(id).await {
+            devices.push(id);
+        }
+        else {} // Explicitly do nothing 
+    }
+
+    // Extract metadata
+    let mut extracted : Vec<HashMap<String, MetricValue>> = Vec::new();
+    let metadata : HashSet<String> = metadata.iter().map(|s| s.as_str().unwrap_or("").to_owned()).collect();
+
+    for device_id in devices {
+        // Filter and extract metadata
+
+        let mut result = HashMap::new();
+        let hostname = match cache.get_device_hostname(device_id).await { Some(v) => v, None => continue };
+        let extracted_metadata = match cache.get_facts(&hostname, &metadata).await { Some(v) => v, None => continue };
+
+        result.insert("management-hostname".to_string(), MetricValue::String(hostname));
+        result.insert("device-id".to_string(), MetricValue::Integer(device_id));
+        result.extend(extracted_metadata);
+        
+        extracted.push(result);
+    }
+
+    let msg = serde_json::json!({
+        "type": "metadata",
+        "msg": {
+            "metadata": metadata,
+            "msg": extracted,
+        }
+    });
+    if let Err(e) = data_to_socket.send(msg.to_string()).await {
+        log::error!("[ERROR][WS] Failed to send message with send error = {e}");
+        Err(())
+    } else {
+        Ok(())
+    }
+}
+
+
+/// Queries metrics that come from the InfluxDB metrics storage. Only will be found if that metric for that device is being collected
 pub async fn ws_query_metrics(data_to_socket: &mut mpsc::Sender<String>, influx_client: &influxdb2::Client, msg: WsMsg) -> Result<(), ()> {
     let filters = match InfluxFilter::from_json(&msg.body) {
         Some(f) => f,
         None => {
-            let e = format!("[INFLUX] Failed to query metrics. Filters could not be obtained from message 'msg', parsed from = '{}'", &msg.body);
+            let e = format!("[INFLUX] Failed to query metrics. Filters could not be obtained from message, parsed from = '{}'", &msg.body);
             ws_send_error_msg(data_to_socket, &e).await;
             return Err(())
         }
@@ -217,6 +326,7 @@ pub async fn ws_query_metrics(data_to_socket: &mut mpsc::Sender<String>, influx_
 
     let msg = serde_json::json!({
         "type": "metrics",
+        "metric": filters.metric,
         "msg": result
     });
 
@@ -301,7 +411,7 @@ pub async fn ws_handle_alerts(
 
 pub async fn ws_check_backend_ws(data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::Pool<Postgres>, influx_client: &influxdb2::Client) -> Result<(), ()>{
     let msg = serde_json::json!({
-        "type": "health-rt", "msg": check_connections(pool, influx_client).await
+        "type": "backend-health-rt", "msg": check_connections(pool, influx_client).await
     });
 
     match data_to_socket.send(msg.to_string()).await {
@@ -350,6 +460,28 @@ pub async fn ws_alerts_rt(data_to_socket: mpsc::Sender<String>, mut receiver: mp
             Ok(_) => (),
             Err(e) => {
                 log::error!("[ERROR][WS][ALERTS][REALTIME] Failed to send message to websocket listener! error='{e}'. Message will be ignored");
+            }
+        }
+    }
+}
+
+pub async fn ws_device_health_rt(data_to_socket: mpsc::Sender<String>, mut receiver: mpsc::Receiver<FactMessage>) {
+    loop {
+        let msg = match receiver.recv().await {
+            None=> return,
+            Some(monosodiumglotamate) => monosodiumglotamate
+        };
+
+        let status: HashMap<DeviceHostname, DeviceStatus> = msg.into_iter().map(|(hostname, facts)| (hostname, facts.status)).collect();
+
+        let msg = serde_json::json!({
+            "type": "device-health-rt", "msg": serde_json::json!(status)
+        });
+
+        match data_to_socket.send(msg.to_string()).await {
+            Ok(_) => (),
+            Err(e) => {
+                log::error!("[ERROR][WS][DEV-HEALTH][REALTIME] Failed to send message to websocket listener! error='{e}'. Message will be ignored");
             }
         }
     }
