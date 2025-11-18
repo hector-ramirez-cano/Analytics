@@ -79,15 +79,15 @@ class Device extends GroupableItem<Device> implements HoverTarget{
       id  : json['id'] as int,
       name: json['name'] as String,
       geoPosition: LatLng(
-        json['geocoordinates'][0] as double,
-        json['geocoordinates'][1] as double,
+        json['latitude'] as double,
+        json['longitude'] as double,
       ),
       mgmtHostname: json['management-hostname'],
       requestedMetadata: Set<String>.from(json['configuration']['requested-metadata']),
       requestedMetrics:  Set<String>.from(json['configuration']['requested-metrics']),
       availableValues:   Set<String>.from(json['configuration']['available-values']),
       dataSources:       Set<String>.from(json['configuration']['data-sources']),
-      reachable: json['reachable'],
+      reachable: json['reachable'] ?? false,
     );
   }
 
@@ -95,7 +95,8 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     return {
       'id': id,
       'name': name,
-      'geocoordinates': [geoPosition.latitude, geoPosition.longitude],
+      'latitude': geoPosition.latitude,
+      'longitude': geoPosition.longitude,
       'management-hostname': mgmtHostname,
       'configuration': {
         'requested-metadata': requestedMetadata.toList(),

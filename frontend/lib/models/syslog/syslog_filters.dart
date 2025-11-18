@@ -129,8 +129,8 @@ class SyslogFilters {
 
   Map<String, dynamic> toDict() {
 
-    final start = (range.start.millisecondsSinceEpoch / 1000.0).toString();
-    final end =   (range.end.millisecondsSinceEpoch   / 1000.0).toString();
+    final start = (range.start.millisecondsSinceEpoch / 1000.0);
+    final end =   (range.end.millisecondsSinceEpoch   / 1000.0);
     return {
       'start': start,
       'end': end,

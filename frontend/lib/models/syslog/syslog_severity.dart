@@ -18,6 +18,16 @@ enum SyslogSeverity {
     return null;
   }
 
+  /// Returns the corresponding SyslogSeverity corresponding with the string, or null if out of range
+  static SyslogSeverity? fromString(String name) {
+    try {
+      return SyslogSeverity.values.byName(name);
+    }
+    catch (_) {
+      return null;
+    }
+  }
+
   @override 
   String toString() {
     return super.toString().substring("SyslogSeverity.".length);

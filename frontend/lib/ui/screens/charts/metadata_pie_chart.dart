@@ -98,7 +98,7 @@ class MetadataPieChart extends StatelessWidget {
   }
 
   Widget _makeGraph(Map<String, dynamic> data) {
-    final datapoints = data["data"] is List? data["data"] : [];
+    final datapoints = data["msg"] is List? data["msg"] : [];
     final Map<String, int> count = {};
     datapoints
       .forEach((metadata) {
@@ -107,6 +107,10 @@ class MetadataPieChart extends StatelessWidget {
       });
 
     final values = count.entries.map((e) => {'value': e.key, 'count': e.value}).toList();
+    
+    if (values.isEmpty) {
+      return Center(child: Text("No hay datos"));
+    }
 
     return Chart (
             data: values,

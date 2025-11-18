@@ -149,7 +149,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
     return SettingsTile(
       title: const Text("Metadatos a recabar"),
-      description: const Text("Útil para valores que no cambian frecuentemente"),
+      description: const Text("Útil para valores que no cambian frecuentemente. Se almacenan en Caché"),
       leading: DeviceGeneralSettings.metadataIcon,
       trailing: makeTrailing(metadata, onEditMetadata, width: 440),
     );
@@ -161,7 +161,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
     return SettingsTile(
       title: const Text("Métricas a recabar"),
-      description: const Text("Útil para valores que fluctúan frecuentemente"),
+      description: const Text("Útil para valores que fluctúan frecuentemente. Se almacenan en InfluxDB"),
       leading: DeviceGeneralSettings.metricsIcon,
       trailing: makeTrailing(metadata, onEditMetrics, width: 440),
     );

@@ -21,14 +21,14 @@ class AlertRule extends AnalyticsItem<AlertRule> {
 
   factory AlertRule.fromJson(Map<String, dynamic> json) {
     return AlertRule(
-      id: json["rule-id"],
+      id: json["id"],
       name: json["name"],
       requiresAck: json["requires-ack"],
-      reduceLogic: AlertReduceLogic.fromString(json["definition"]["reduce-logic"] ?? ""),
-      source: AlertSource.fromString(json["definition"]["source"] ?? ""),
-      targetId: json["definition"]["target"],
-      severity: AlertSeverity.fromString(json["definition"]["severity"]),
-      definition: AlertPredicate.listFromJson(json["definition"]["predicates"])
+      reduceLogic: AlertReduceLogic.fromString(json["reduce-logic"] ?? ""),
+      source: AlertSource.fromString(json["data-source"] ?? ""),
+      targetId: json["target"],
+      severity: AlertSeverity.fromString(json["severity"]),
+      definition: AlertPredicate.listFromJson(json["predicates"])
     );
   }
 

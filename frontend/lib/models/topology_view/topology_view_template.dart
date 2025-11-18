@@ -50,7 +50,7 @@ class TopologyViewTemplate {
     }
 
     final memberMap = Map<int, TopologyViewMember>.fromEntries(members.map((m) 
-      => MapEntry(m["id"], TopologyViewMember(itemId: m["id"], position: Offset(m["x"], m["y"])))));
+      => MapEntry(m["id"], TopologyViewMember(itemId: m["id"], position: Offset(m["x"].toDouble(), m["y"].toDouble())))));
 
     return TopologyViewTemplate(
       viewId: viewId,

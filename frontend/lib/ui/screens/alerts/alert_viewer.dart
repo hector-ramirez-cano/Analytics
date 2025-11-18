@@ -33,13 +33,10 @@ class _AlertViewerState extends ConsumerState<AlertViewer> {
     _stateManager.setShowLoading(true, level: TrinaGridLoadingLevel.rows);
 
     // 2. If the user jumped pages, we need to offset
-    // if, however, we're loading page 5 and previous was 4, we can just request as is
-    if (_prevPage + 1 != request.page && _prevPage != request.page) {
-      final filters = ref.read(alertFilterProvider);
-      final notif = ref.read(alertFilterProvider.notifier);
-      notif.setFilters(filters.copyWith(offset: (request.page - 1) * AlertTablePage.pageSize));
-    }
-
+    final filters = ref.read(alertFilterProvider);
+    final notif = ref.read(alertFilterProvider.notifier);
+    notif.setFilters(filters.copyWith(offset: (request.page - 1) * AlertTablePage.pageSize));
+    
     // 3. try fetching
     try {
       final notifier = ref.watch(alertDbServiceProvider.notifier);

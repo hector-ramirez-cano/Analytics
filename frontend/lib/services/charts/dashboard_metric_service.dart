@@ -16,7 +16,7 @@ class DashboardMetricService extends _$DashboardMetricService {
   Timer? _refreshTimer;
 
   void handleUpdate(dynamic json) {
-    if (json is! Map<String, dynamic> || json["metric"] != definition.metric) { return; }
+    if (json is! Map<String, dynamic> || json["metrics"] != definition.metric) { return; }
 
     // extract dem datapoints and call for state change
     final msg = json["msg"];

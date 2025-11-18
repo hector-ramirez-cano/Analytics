@@ -47,8 +47,8 @@ class BackendHealthService extends _$BackendHealthService {
   }
 
   void _attachRxMessageListener() {
-    ref.read(websocketServiceProvider.notifier).attachListener('health-rt', 'health-rt', (json) {
-      final decoded = extractBody('health-rt', json, (_) => {}); // TODO:_Handle onError
+    ref.read(websocketServiceProvider.notifier).attachListener('backend-health-rt', 'backend-health-rt', (json) {
+      final decoded = extractBody('backend-health-rt', json, (_) => {}); // TODO:_Handle onError
 
       // if the message is not addressed to us
       if (decoded == null) {return;}

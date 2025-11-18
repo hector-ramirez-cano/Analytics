@@ -7,8 +7,6 @@ class SyslogMessage {
   SyslogSeverity severity;
   String source;
   DateTime recievedAt;
-  DateTime reportedTime;
-  String syslogTag;
   String processId; // Saving as string to adhere to aiosyslogd
   String message;
 
@@ -18,8 +16,6 @@ class SyslogMessage {
     required this.severity,
     required this.source,
     required this.recievedAt,
-    required this.reportedTime, // TODO: Removed from backend, remove frmo here too
-    required this.syslogTag, // TODO: Removed from backend, remove frmo here too
     required this.processId,
     required this.message,
   });
@@ -31,10 +27,20 @@ class SyslogMessage {
       severity: SyslogSeverity.fromInt(json[2])!,
       source: json[3],
       recievedAt: DateTime.tryParse(json[5])!,
-      reportedTime: DateTime.tryParse(json[6])!,
-      syslogTag: json[7],
-      processId: json[8],
-      message: json[9]
+      processId: json[6],
+      message: json[7]
+    );
+  }
+
+  factory SyslogMessage.fromJson(Map<String, dynamic> json) {
+    return SyslogMessage(
+      id: json['id'],
+      facility: SyslogFacility.fromString(json['facility'])!,
+      severity: SyslogSeverity.fromString(json['severity'])!,
+      source: json['source'],
+      recievedAt: DateTime.tryParse(json['received-at'])!,
+      processId: json['process-id'],
+      message: json['message'],
     );
   }
 

@@ -122,12 +122,12 @@ class AlertFilters {
 
     Map<String, dynamic> toDict() {
 
-    final start    = (range.start.millisecondsSinceEpoch / 1000.0).toString();
-    final end      = (range.end.millisecondsSinceEpoch   / 1000.0).toString();
+    final start    = (range.start.millisecondsSinceEpoch / 1000.0);
+    final end      = (range.end.millisecondsSinceEpoch   / 1000.0);
     final dict = {};
     if (ackRange != null) {
-      final ackStart = (ackRange!.start.millisecondsSinceEpoch / 1000.0).toString();
-      final ackEnd   = (ackRange!.end.millisecondsSinceEpoch   / 1000.0).toString();
+      final ackStart = (ackRange!.start.millisecondsSinceEpoch / 1000.0);
+      final ackEnd   = (ackRange!.end.millisecondsSinceEpoch   / 1000.0);
     
       dict['ack-start'] = ackStart;
       dict['ack-end'] = ackEnd;

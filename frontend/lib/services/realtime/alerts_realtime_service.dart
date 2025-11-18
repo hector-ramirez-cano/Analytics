@@ -55,9 +55,9 @@ class AlertsRealtimeService extends _$AlertsRealtimeService {
 
   Timer _createPoller() {
     final notifier = ref.watch(websocketServiceProvider.notifier);
-    notifier.post('health-rt', "");
+    notifier.post('backend-health-rt', "");
 
-    return Timer.periodic(const Duration(seconds: 10), (_) => notifier.post('health-rt', ""));
+    return Timer.periodic(const Duration(seconds: 10), (_) => notifier.post('backend-health-rt', ""));
   }
 
   void _attachRxMessageListener() {

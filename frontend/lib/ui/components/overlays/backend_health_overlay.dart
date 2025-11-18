@@ -14,8 +14,8 @@ Widget _makeStatusDashboard(WidgetRef ref) {
       if (unseenAlerts.unseenAlerts.isEmpty) {
         return Center(child: Text("No hay alertas nuevas"));
       }
-
-      return ListView.builder(itemBuilder: (context, index) => /*TODO: This thing*/);
+      return SizedBox.shrink();
+      // return ListView.builder(itemBuilder: (context, index) => /*TODO: This thing*/);
     },
   );
 }

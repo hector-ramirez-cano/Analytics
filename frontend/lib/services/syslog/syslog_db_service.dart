@@ -67,10 +67,12 @@ class SyslogDbService extends _$SyslogDbService {
   Semaphore serviceReady = Semaphore();
   int messageCount = 0;
 
+  SyslogFilters? filters;
+
   @override
   Future<int> build() async {
     SyslogDbService.logger.d('Recreating SyslogTablePage notifier!');
-    final filters = ref.watch(syslogFilterProvider);
+    filters = ref.watch(syslogFilterProvider);
     final _ = ref.watch(websocketServiceProvider);
 
     serviceReady.reset();
@@ -89,7 +91,7 @@ class SyslogDbService extends _$SyslogDbService {
       _batchTimer?.cancel();
     });
 
-    _rxMessageListener(filters);
+    _rxMessageListener(filters!);
 
     serviceReady.signal();
 
@@ -104,9 +106,10 @@ class SyslogDbService extends _$SyslogDbService {
       final content = extractBody('syslog', json, _handleError);
       // if the message isn't addressed to this listener
         if (content == null) { return; }
-        if (content is! List) { return; }
+        if (content is! List || content.isEmpty) { return; }
+        if (content[0] is! Map<String, dynamic>) {return; }
 
-        final row = SyslogMessage.fromJsonArr(content);
+        final row = SyslogMessage.fromJson(content[0]);
         _pending.addLast(row);
         updatePageReadyFlag();
     });
@@ -122,7 +125,8 @@ class SyslogDbService extends _$SyslogDbService {
     }
 
     // 3. we have rows, let's request 'em mfers
-    final request = {'type': 'request-data', 'count': SyslogTablePage.pageSize};
+    final request = {'type': 'request-data', 'count': SyslogTablePage.pageSize, 'msg': {}};
+    Logger().d("Requesting rows, row count = ${SyslogTablePage.pageSize}" );
     ref.read(websocketServiceProvider.notifier).post('syslog', request);
 
     // 4. we force a reevaluation of the status of the pending rows queue 
@@ -132,6 +136,7 @@ class SyslogDbService extends _$SyslogDbService {
 
     // 5. we take the rows, and remove them from the _pending Queue
     final pageMessageCount = min(min(SyslogTablePage.pageSize, messageCount),  _pending.length);
+    Logger().d("Taking $pageMessageCount rows for page. MessageCount = $messageCount, _pending= ${_pending.length}" );
     final messages = _pending.takeAndRemove(pageMessageCount);
 
     // 6. we could have taken enought to leave less than a page-worth of items, so we need to reevaluate
@@ -216,7 +221,7 @@ class SyslogDbService extends _$SyslogDbService {
   void updatePageReadyFlag() {
     bool ready = _pending.length >= SyslogTablePage.pageSize;
     bool empty = messageCount == 0;
-    bool lastPageReady = messageCount % SyslogTablePage.pageSize == _pending.length;
+    bool lastPageReady = (messageCount % SyslogTablePage.pageSize == _pending.length) && (((messageCount - filters!.offset) / SyslogTablePage.pageSize).floor() == 0);
     if ( ready || empty || lastPageReady ) {
       pageReady.signal();
     } else {

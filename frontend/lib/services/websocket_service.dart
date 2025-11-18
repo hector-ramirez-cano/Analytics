@@ -1,7 +1,8 @@
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
-
+import 'package:aegis/extensions/semaphore.dart';
 import 'package:logger/web.dart';
 import 'package:aegis/extensions/development_filter.dart';
 import 'package:aegis/services/app_config.dart';
@@ -32,21 +33,34 @@ Future<Result<int, String>> getRowCount(String type, dynamic filters, Ref ref, F
 
   // ask politely - Would you kindly...
   final request = [
-    {'type': 'set-filters', ...filters.toDict()},
-    {'type': 'request-size'}
+    {'type': 'set-filters', 'msg': filters.toDict()},
+    {'type': 'request-size', 'msg': {}}
   ];
 
+  final sizeReadySemaphore = Semaphore();
+  late final Map sizeMsg;
+  final key = "$type\\_${filters.hashCode}";
+  wsNotifier.attachListener(type, key, (json) {
+    final contents = json["msg"];
+
+    if (contents == null || contents is! Map) { return; }
+    if (contents['type'] != 'request-size') { return; }
+
+    sizeMsg = json;
+    sizeReadySemaphore.signal();
+  });
   wsNotifier.post(type, request);
-    
 
   // get the data
-  final first = await ws.stream.first;
+  await sizeReadySemaphore.future;
+  final response = sizeMsg;
+  wsNotifier.removeListener(key);
 
-  WebsocketService.wsLogger.d('_getRowCount recieved a message = $first');
-  final content = extractBody(type, jsonDecode(first), onError);
+  WebsocketService.wsLogger.d('_getRowCount recieved a message = $response');
+  final content = extractBody(type, response, onError);
 
   if (content['type'] != 'request-size') {
-    return Result.err('Expected row_count as first message');
+    return Result.err('Expected row_count as response message');
   }
 
   return Result.ok(content['count'] as int);
@@ -139,6 +153,11 @@ class WebsocketService extends _$WebsocketService {
     _streamSubscription = _state.stream.listen((message) {
       final content = jsonDecode(message);
 
+      // Logger().d("WebSocket received msg, type = ${content["type"]}");
+      if (content ["type"] == "error") {
+        Logger().w("[WARN ] Websocket received an error message = $content");
+      }
+
       for (var listener in listeners.values) {
         if (listener.filterString != content["type"] && content["type"] != "error") { continue; }
 
@@ -171,6 +190,6 @@ class WebsocketService extends _$WebsocketService {
     // if a timer is already active, we don't do anything else
     if (_retryTimer?.isActive == true) { return; }
 
-    _retryTimer = Timer(const Duration(seconds: 2), () => ref.invalidateSelf(asReload: true));
+    _retryTimer = Timer(const Duration(seconds: 10), () => ref.invalidateSelf(asReload: true));
   }
 }

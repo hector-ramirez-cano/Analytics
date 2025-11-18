@@ -32,7 +32,7 @@ class MetricPollingDefinition extends DashboardPollingDefinition {
       return null;
     }
 
-        final chartType = ChartType.fromString(chartTypeStr.toString());
+    final chartType = ChartType.fromString(chartTypeStr.toString());
 
     if (chartType == null) {
       Logger().e("Parsed ChartMetricPollingDefinition from json with invalid chartType = $chartTypeStr");

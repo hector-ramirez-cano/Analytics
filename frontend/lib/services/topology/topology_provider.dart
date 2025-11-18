@@ -23,9 +23,9 @@ class TopologyService extends _$TopologyService {
   }
 
 
-  void onLink(Map<String, dynamic> response) {
+  void onDeviceHealth(Map<String, dynamic> response) {
     if (_parsed == null) return;
-    if (response["type"] != "link") return;
+    if (response["type"] != "device-health-rt") return;
 
     final Map<int, AnalyticsItem> itemsCopy = Map.from(_parsed!.items);
 
@@ -42,7 +42,7 @@ class TopologyService extends _$TopologyService {
       if (statusMap.values.every((statusEntry) => !statusEntry.containsKey("status"))) {
         status = null;
       } else {
-        status = statusMap.values.any((statusEntry) => statusEntry["status"] == "REACHABLE");
+        status = statusMap.values.any((statusEntry) => statusEntry["status"].toUpperCase() == "REACHABLE");
       }
 
       itemsCopy[device.id] = (_parsed!.items[device.id] as Device).copyWith(reachable: status);
@@ -64,7 +64,7 @@ class TopologyService extends _$TopologyService {
     await wsState.connected.future;
 
     notifier.attachListener("topology", "topology", onTopology);
-    notifier.attachListener("link", "link", onLink);
+    notifier.attachListener("device-health-rt", "device-health-rt", onDeviceHealth);
 
     notifier.post("topology", "{}");
 

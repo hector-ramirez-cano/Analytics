@@ -1,3 +1,4 @@
+import 'package:aegis/ui/screens/charts/metadata_label.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphic/graphic.dart';
@@ -39,6 +40,10 @@ class MetricLineChart extends StatelessWidget {
           "time": DateTime.fromMillisecondsSinceEpoch((datapoint["time"] * 1000).toInt()),
           "value": datapoint["value"]
       }).toList();
+      
+    if (values.isEmpty) {
+      return Center(child: Text("No hay datos"));
+    }
 
     return Chart(
       data: values,
@@ -47,7 +52,7 @@ class MetricLineChart extends StatelessWidget {
       marks: [
         LineMark(
           position: Varset('time') * Varset('value'),
-          shape: ShapeEncode(value: BasicLineShape(smooth: true) ),
+          shape: ShapeEncode(value: BasicLineShape(smooth: false) ),
           color: ColorEncode(value: const Color.fromRGBO(35, 109, 119, 1))
         )
       ]

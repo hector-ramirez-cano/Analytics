@@ -36,7 +36,7 @@ class SyslogRealtimeService extends _$SyslogRealtimeService {
     ref.read(websocketServiceProvider.notifier).attachListener('syslog-rt', 'syslog-rt', (json) {
       final decoded = extractBody('syslog-rt', json, (_) => {}); // TODO: Handle error
 
-      state.queue.push(decoded["msg"]);
+      state.queue.push(decoded["message"]);
 
       // force riverpod to update the widgets
       state = state.bump();

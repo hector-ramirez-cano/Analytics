@@ -33,6 +33,16 @@ enum SyslogFacility {
     return null;
   }
 
+  // TODO: Unit tests
+  /// Returns the corresponding [SyslogFacility] enum from a string or null if out of range
+  static SyslogFacility? fromString(String name) {
+    try {
+      return SyslogFacility.values.byName(name);
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override 
   String toString() {
     return super.toString().substring("SyslogFacility.".length);

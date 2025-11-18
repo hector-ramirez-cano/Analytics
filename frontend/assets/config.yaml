@@ -1,19 +1,19 @@
 api:
-  endpoint: "http://localhost:5050"
-  topology_endpoint: "http://localhost:5050/api/topology"
-  syslog_count_endpoint: "http://localhost:5050/api/syslog/message_count"
-  configure_endpoint: "http://localhost:5050/api/configure"
-  alert_endpoint: "http://localhost:5050/api/rules"
-  ws_router_endpoint: "ws://localhost:5050/ws/router"
+  endpoint: "http://localhost:8000"
+  topology_endpoint: "http://localhost:8000/api/topology"
+  syslog_count_endpoint: "http://localhost:8000/api/syslog/message_count"
+  configure_endpoint: "http://localhost:8000/api/configure"
+  alert_endpoint: "http://localhost:8000/api/rules"
+  ws_router_endpoint: "ws://localhost:8000/ws/router"
   retries: 3
   retry_delay_s: 5
   timeout_s: 15
 
 ws:
-  syslog_ws_endpoint: "ws://localhost:5050/ws/syslog"
-  alerts_ws_endpoint: "ws://localhost:5050/ws/alerts"
-  syslog_rt_ws_endpoint: "ws://localhost:5050/ws/syslog/realtime"
-  alerts_rt_ws_endpoint: "ws://localhost:5050/ws/alerts/realtime"
+  syslog_ws_endpoint: "ws://localhost:8000/ws/syslog"
+  alerts_ws_endpoint: "ws://localhost:8000/ws/alerts"
+  syslog_rt_ws_endpoint: "ws://localhost:8000/ws/syslog/realtime"
+  alerts_rt_ws_endpoint: "ws://localhost:8000/ws/alerts/realtime"
 
 syslog:
   max_buffer_lines: 254
@@ -31,4 +31,4 @@ debug:
   enable_canvas_tab_logging: false
   enable_alert_service_logging: false
   enable_alert_rules_service_logging: false
-  enable_ws_logging: false
+  enable_ws_logging: true

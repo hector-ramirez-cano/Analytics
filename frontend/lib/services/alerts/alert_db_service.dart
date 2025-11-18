@@ -70,10 +70,12 @@ class AlertDbService extends _$AlertDbService {
   Semaphore serviceReady = Semaphore();
   int messageCount = 0;
 
+  AlertFilters? filters;
+
   @override
   Future<int> build() async {
     alertServiceLogger.d('Recreating AlertTablePage notifier!');
-    final filters = ref.watch(alertFilterProvider);
+    filters = ref.watch(alertFilterProvider);
     final _ = ref.watch(websocketServiceProvider);
 
     serviceReady.reset();
@@ -92,7 +94,7 @@ class AlertDbService extends _$AlertDbService {
       _batchTimer?.cancel();
     });
 
-    _rxMessageListener(filters);
+    _rxMessageListener(filters!);
 
     serviceReady.signal();
 
@@ -107,9 +109,10 @@ class AlertDbService extends _$AlertDbService {
 
       // if the message isn't addressed to this listener
       if (content == null) { return; }
-      if (content is! List) { return; }
+      if (content is! List || content.isEmpty) { return; }
+      if (content[0] is! Map<String, dynamic>) { return; }
 
-      final row = AlertEvent.fromJsonArr(content);
+      final row = AlertEvent.fromJson(content[0]);
       _pending.addLast(row);
       updatePageReadyFlag();
     });
@@ -125,7 +128,7 @@ class AlertDbService extends _$AlertDbService {
     }
 
     // 3. we have rows, let's request 'em mfers
-    final request = {'type': 'request-data', 'count': AlertTablePage.pageSize};
+    final request = {'type': 'request-data', 'count': AlertTablePage.pageSize, 'msg': {}};
     ref.read(websocketServiceProvider.notifier).post('alerts', request);
 
     // 4. we force a reevaluation of the status of the pending rows queue 
@@ -234,7 +237,8 @@ class AlertDbService extends _$AlertDbService {
   void updatePageReadyFlag() {
     bool ready = _pending.length >= AlertTablePage.pageSize;
     bool empty = messageCount == 0;
-    bool lastPageReady = messageCount % AlertTablePage.pageSize == _pending.length;
+    bool lastPageReady = (messageCount % AlertTablePage.pageSize == _pending.length) && (((messageCount - filters!.offset) / AlertTablePage.pageSize).floor() == 0);
+    
     if ( ready || empty || lastPageReady ) {
       pageReady.signal();
     } else {

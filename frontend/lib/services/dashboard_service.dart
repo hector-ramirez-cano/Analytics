@@ -4,6 +4,7 @@ import 'package:aegis/models/charts/metadata_polling_definition.dart';
 import 'package:aegis/models/charts/metric_polling_definition.dart';
 import 'package:aegis/models/charts/dashboard_polling_definition.dart';
 import 'package:aegis/services/websocket_service.dart';
+import 'package:logger/logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'dashboard_service.g.dart';
@@ -38,13 +39,21 @@ class DashboardItem {
       throw UnimplementedError();
     }
 
+    if (
+          items["row-start"] == null
+      ||  items["row-span" ] == null
+      ||  items["col-start"] == null
+      ||  items["col-span" ] == null
+    ) {
+      Logger().w("Found dasboard item json definition with missing values. row-start=${items["row-start"]},row-span=${items["row-span"]},col-start=${items["col-start"]},col-span=${items["col-span"]}");
+    }
 
     return DashboardItem(
-      rowStart: items["row"] ?? 0,
-      rowSpan: items["row-span"] ?? 1,
-      columnStart: items["col"] ?? 0,
-      columnSpan: items["col-span"] ?? 1,
-      definition: definition // TODO: Safe handling of null values
+      rowStart   : items["row-start"] ?? 0,
+      rowSpan    : items["row-span"] ?? 1,
+      columnStart: items["col-start"] ?? 0,
+      columnSpan : items["col-span"] ?? 1,
+      definition: definition
     );
   }
 }
@@ -60,6 +69,7 @@ class DashboardLayout{
     List widgetDefinitions = json["widgets"];
     List<DashboardItem> items = widgetDefinitions.map((innerJson) => DashboardItem.fromJson(innerJson)).toList();
 
+
     return DashboardLayout(name: name, items: items);
   }
 }
@@ -67,8 +77,8 @@ class DashboardLayout{
 @riverpod
 class DashboardService extends _$DashboardService {
 
-  List<DashboardLayout> fromJson(Map<String, dynamic> json) {
-    return json.values.map((value) => DashboardLayout.fromJson(value)).toList();
+  List<DashboardLayout> fromJson(List<dynamic> json) {
+    return json.map((value) => DashboardLayout.fromJson(value)).toList();
   }
 
   List<DashboardLayout> layouts = [];
@@ -87,9 +97,10 @@ class DashboardService extends _$DashboardService {
       final decoded = extractBody("dashboards", json, (e) => state = AsyncValue.error(e, StackTrace.current));
 
       if(decoded == null) { return; }
-      if(decoded is! Map) { return; }
+      if(decoded is! List) { return; }
 
-      layouts = fromJson(json["msg"]);
+
+      layouts = fromJson(decoded);
       _layoutsReady.signal();
     });
 

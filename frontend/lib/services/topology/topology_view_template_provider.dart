@@ -44,7 +44,7 @@ class TopologyViewTemplates extends _$TopologyViewTemplates {
 
     notifier.attachListener("topology-view", "topology-view", onTopology);
 
-    notifier.post("topology-view", '"type": "get", "msg": {}');
+    notifier.post("topology-view", {"type": "get", "msg": {}});
 
     await _firstRun.future;
     return _templates;

@@ -28,8 +28,6 @@ class _LogTableState extends State<LogTable> {
 
   late TrinaGridStateManager _stateManager;
 
-  int _prevPage = 0;
-
   @override void initState() {
     super.initState();
   }
@@ -41,13 +39,10 @@ class _LogTableState extends State<LogTable> {
     _stateManager.setShowLoading(true, level: TrinaGridLoadingLevel.rows);
 
     // 2. If the user jumped pages, we need to offset
-    // if, however, we're loading page 5 and previous was 4, we can just request as is
-    if (_prevPage + 1 != request.page && _prevPage != request.page) {
-      final filters = ref.read(syslogFilterProvider);
-      final notif = ref.read(syslogFilterProvider.notifier);
-      notif.setFilters(filters.copyWith(offset: (request.page - 1) * SyslogTablePage.pageSize));
-    }
-
+    final notif = ref.read(syslogFilterProvider.notifier);
+    final filters = ref.read(syslogFilterProvider);
+    notif.setFilters(filters.copyWith(offset: (request.page - 1) * SyslogTablePage.pageSize));
+    
     // 3. try fetching
     try {
       final notifier = ref.watch(syslogDbServiceProvider.notifier);
@@ -59,7 +54,6 @@ class _LogTableState extends State<LogTable> {
 
       final filters = ref.read(syslogFilterProvider);
       final page = await notifier.fetchPage(request.page, filters);
-      _prevPage = request.page;
       return TrinaLazyPaginationResponse(totalPage: page.pageCount, rows: _genRowsFromPage(page), totalRecords: page.messageCount);
     } finally {
 
