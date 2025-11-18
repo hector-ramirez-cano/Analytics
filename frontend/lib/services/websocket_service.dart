@@ -1,6 +1,5 @@
 
 import 'dart:async';
-import 'dart:collection';
 import 'dart:convert';
 import 'package:aegis/extensions/semaphore.dart';
 import 'package:logger/web.dart';

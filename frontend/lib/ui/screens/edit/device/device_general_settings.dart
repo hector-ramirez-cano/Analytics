@@ -1,5 +1,5 @@
 import 'package:aegis/extensions/string_extensions.dart';
-import 'package:aegis/services/metrics/metrics_service.dart';
+import 'package:aegis/services/metrics/metadata_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:free_map/free_map.dart';
@@ -190,8 +190,6 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
     bool enabled = metrics || metadata || datasources;
 
-    int id = notif.selected.id;
-
     if (!enabled) { return; }
 
     Set<String> options;
@@ -227,10 +225,12 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     onClose () => notif.set(editingDeviceMetadata: false, editingDeviceMetrics: false, editingDeviceDataSources: false);
 
     Widget onDisplayTrailing(dynamic option) {
-      return Consumer(builder:(context, ref, child) {
-        final metrics = ref.watch(metricsServiceProvider(metric: option.toString(), deviceId: notif.selected.id));
-        return metrics.when(
-          data: (metrics) => Text(metrics.toString().truncate(50)),
+      return Consumer(
+        key: Key("device_settings_dialog_${option.toString()}_${notif.selected.id}"),
+        builder:(context, ref, child) {
+        final metadata = ref.watch(metadataServiceProvider(metadata: option.toString(), deviceId: notif.selected.id));
+        return metadata.when(
+          data: (metadata) => Text(metadata.toString().truncate(50)),
           error: (_, _) => Text("Sin datos"),
           loading: () => Text("Cargando...")
         );

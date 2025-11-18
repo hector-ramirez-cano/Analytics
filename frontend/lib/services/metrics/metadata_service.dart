@@ -2,14 +2,13 @@
 import 'dart:async';
 
 import 'package:aegis/extensions/semaphore.dart';
-import 'package:aegis/models/facts/facts_polling_definition.dart';
 import 'package:aegis/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'metrics_service.g.dart';
+part 'metadata_service.g.dart';
 
 @riverpod
-class MetricsService extends _$MetricsService {
+class MetadataService extends _$MetadataService {
   final Semaphore _dataReady = Semaphore();
 
   String notifierKey = "";
@@ -37,18 +36,18 @@ class MetricsService extends _$MetricsService {
     notifier.post(
       "metadata",
       {
-        "metadata": metric,
+        "metadata": metadata,
         "device-ids": deviceId,
       });
   }
 
   @override
-  Future<dynamic> build({required String metric, required int deviceId}) async {
+  Future<dynamic> build({required String metadata, required int deviceId}) async {
     ref.watch(websocketServiceProvider);
     final notifier = ref.watch(websocketServiceProvider.notifier);
 
     _dataReady.reset();
-    notifierKey = "metadata_${metric}_$deviceId";
+    notifierKey = "metadata_${metadata}_$deviceId";
 
     notifier.attachListener("metadata", notifierKey, handleUpdate);
     
@@ -60,6 +59,6 @@ class MetricsService extends _$MetricsService {
     await _dataReady.future;
     notifier.removeListener(notifierKey);
 
-    return _data["msg"][0][metric];
+    return _data["msg"][0][metadata];
   }
 }
