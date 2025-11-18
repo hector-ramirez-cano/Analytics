@@ -1,21 +1,31 @@
-import 'package:aegis/services/realtime/alerts_realtime_service.dart';
+import 'package:aegis/services/realtime/backend_health_service.dart';
+import 'package:aegis/ui/components/backend_health_notification_item.dart';
 import 'package:aegis/ui/components/overlays/commons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
 Widget _makeStatusDashboard(WidgetRef ref) {
-  final unreadNotifications = ref.read(alertsRealtimeServiceProvider);
+  final unreadNotifications = ref.read(backendHealthServiceProvider);
 
   return unreadNotifications.when(
     error: (_, _) => Center(child: Text("Se produjo un error...")),
     loading: () => Center(child: CircularProgressIndicator.adaptive()),
-    data: (unseenAlerts) {
-      if (unseenAlerts.alerts.isEmpty) {
-        return Center(child: Text("No hay alertas nuevas"));
-      }
-      return SizedBox.shrink();
-      // return ListView.builder(itemBuilder: (context, index) => /*TODO: This thing*/);
+    data: (status) {
+      return ListView(children: [
+        BackendHealthNotificationItem(
+          key: ValueKey("BackendHealth_Overlay_Postgres_NotificationItem"),
+          up: status.postgresStatus,
+          message: status.postgresMsg,
+          which: "Postgres",
+        ),
+        BackendHealthNotificationItem(
+          key: ValueKey("BackendHealth_Overlay_Influx_NotificationItem"),
+          up: status.influxStatus,
+          message: status.influxMsg,
+          which: "InfluxDB",
+        ),
+      ]);
     },
   );
 }
@@ -24,19 +34,9 @@ Widget _makeHealthWidget(WidgetRef ref) {
   return Material(
     color: Colors.transparent,
     child: Container(
-      width: 400,
-      height: 400,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 16,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: _makeStatusDashboard(ref),
     ),

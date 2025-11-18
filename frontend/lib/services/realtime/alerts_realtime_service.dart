@@ -58,7 +58,6 @@ class AlertsRealtimeService extends _$AlertsRealtimeService {
   final Debouncer _unseenDebouncer = Debouncer();
 
   Semaphore serviceReady = Semaphore();
-  Timer? _pollerTimer;
 
   @override
   Future<ShownAlerts> build() async {
@@ -69,23 +68,10 @@ class AlertsRealtimeService extends _$AlertsRealtimeService {
     await wsState.connected.future;
     
     _attachRxMessageListener();
-    _pollerTimer = _createPoller();
-
-    ref.onDispose(() {
-      _pollerTimer?.cancel();
-    });
 
     serviceReady.signal();
 
     return ShownAlerts.empty();
-  }
-
-  // TODO: Why is this here?
-  Timer _createPoller() {
-    final notifier = ref.watch(websocketServiceProvider.notifier);
-    notifier.post('backend-health-rt', "");
-
-    return Timer.periodic(const Duration(seconds: 10), (_) => notifier.post('backend-health-rt', ""));
   }
 
   void _attachRxMessageListener() {
