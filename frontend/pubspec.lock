@@ -487,6 +487,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.5.4"
+  implicitly_animated_list:
+    dependency: "direct main"
+    description:
+      name: implicitly_animated_list
+      sha256: "0912337ba058609ad8b4db8c1886959a4f82e03ee197ecdacbd8bf906bf1e195"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.0"
   integration_test:
     dependency: "direct dev"
     description: flutter
@@ -564,6 +572,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.0"
+  list_diff:
+    dependency: transitive
+    description:
+      name: list_diff
+      sha256: ac2d99c4379d5175f1e4943850808e1bf4d5604fd46c1ec3060e7fb0c0fdab05
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.1"
   lists:
     dependency: transitive
     description:
@@ -1137,6 +1153,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.12"
+  timezone:
+    dependency: "direct main"
+    description:
+      name: timezone
+      sha256: dd14a3b83cfd7cb19e7888f1cbc20f258b8d71b54c06f79ac585f14093a287d1
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.10.1"
   trina_grid:
     dependency: "direct main"
     description:

@@ -17,7 +17,7 @@ class AlertBadgeIcon extends StatelessWidget {
       error: (_ ,_) { badgeContent = "?"; badgeColor = Colors.blueGrey; },
       loading: () { badgeContent = "⧗"; badgeColor = Colors.blueGrey; },
       data: (unseenAlerts) {
-        alertCount = unseenAlerts.unseenAlerts.length;
+        alertCount = unseenAlerts.unseenCount;
         if (alertCount == 0) { badgeContent = null; }
         else { 
           if (alertCount < 10) {
@@ -51,10 +51,7 @@ class AlertBadgeIcon extends StatelessWidget {
         loading: () => false
       );
 
-      onClick() {
-        showAlertListingOverlay(context);
-        ref.read(alertsRealtimeServiceProvider.notifier).markAsSeen();
-      }
+      onClick() => showAlertListingOverlay(context);
 
       return IconButton(
         onPressed: available ? onClick : null,

@@ -33,6 +33,15 @@ class RingBuffer<T> {
     }
   }
 
+  /// Push all items from [iterable] in iteration order.
+  /// If the iterable contains more elements than capacity, the oldest
+  /// elements will be overwritten (behavior matches repeated push).
+  void pushAll(Iterable<T> iterable) {
+    for (final e in iterable) {
+      push(e);
+    }
+  }
+
   T removeFirst() {
     if (isEmpty) throw Exception('RingBuffer is empty');
     final value = _buffer[_head] as T;
@@ -50,6 +59,21 @@ class RingBuffer<T> {
   Iterable<T> get items sync* {
     for (int i = 0; i < _length; i++) {
       yield _buffer[(_head + i) % capacity]!;
+    }
+  }
+
+    /// Lazily iterate items from newest to oldest (reverse of `items`).
+  Iterable<T> get reversed sync* {
+    for (int i = _length - 1; i >= 0; i--) {
+      yield _buffer[(_head + i) % capacity] as T;
+    }
+  }
+
+  /// Replace each item with the result of f(item).
+  void mapInPlace(T Function(T item) f) {
+    for (int i = 0; i < _length; i++) {
+      final idx = (_head + i) % capacity;
+      _buffer[idx] = f(_buffer[idx] as T);
     }
   }
 

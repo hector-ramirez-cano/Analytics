@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aegis/services/app_config.dart' show AppConfig;
 
+import 'package:timezone/data/latest.dart' as tzdata;
+
 import 'ui/main_layout.dart';
 
 void main() async {
@@ -18,6 +20,7 @@ void main() async {
   // Force fullscreen
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   
+  tzdata.initializeTimeZones();
 
   runApp(ProviderScope(child: const Aegis()));
 }

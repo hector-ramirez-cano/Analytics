@@ -11,7 +11,7 @@ Widget _makeStatusDashboard(WidgetRef ref) {
     error: (_, _) => Center(child: Text("Se produjo un error...")),
     loading: () => Center(child: CircularProgressIndicator.adaptive()),
     data: (unseenAlerts) {
-      if (unseenAlerts.unseenAlerts.isEmpty) {
+      if (unseenAlerts.alerts.isEmpty) {
         return Center(child: Text("No hay alertas nuevas"));
       }
       return SizedBox.shrink();
@@ -57,7 +57,7 @@ void showBackendHealthOverlay(BuildContext context) {
         Positioned(
           right: 16,
           top: 64,
-          child: makeNotificationWidget(_makeHealthWidget(ref)) ,
+          child: makeNotificationWidget(context, _makeHealthWidget(ref)) ,
       ),
       ],)
     )

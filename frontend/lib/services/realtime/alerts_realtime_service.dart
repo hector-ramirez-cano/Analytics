@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aegis/extensions/circular_ring_buffer.dart';
 import 'package:aegis/extensions/debouncer.dart';
 import 'package:aegis/extensions/semaphore.dart';
 import 'package:aegis/models/alerts/alert_event.dart';
@@ -9,32 +10,58 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'alerts_realtime_service.g.dart';
 
-class UnseenAlerts {
-  final List<AlertEvent> unseenAlerts;
+class AlertOverlayDetails {
+  final AlertEvent event;
+  final bool seen;
+  final bool expanded;
 
-  const UnseenAlerts({
-    required this.unseenAlerts,
+  AlertOverlayDetails({required this.event, required this.seen, required this.expanded});
+}
+
+class ShownAlerts {
+  final RingBuffer<AlertOverlayDetails> alerts;
+
+  const ShownAlerts({
+    required this.alerts,
   });
 
-  factory UnseenAlerts.empty() {
-    return UnseenAlerts(unseenAlerts: []);
+  factory ShownAlerts.empty() {
+    return ShownAlerts(alerts: RingBuffer(100));
   }
 
-  UnseenAlerts copyWith({List<AlertEvent>? unseenAlerts}) {
-    return UnseenAlerts(unseenAlerts: unseenAlerts ?? this.unseenAlerts);
+  ShownAlerts copyWith({RingBuffer<AlertOverlayDetails>? alerts}) {
+    return ShownAlerts(alerts: alerts ?? this.alerts);
   }
+
+  ShownAlerts markAsSeen() {
+    alerts.mapInPlace((r) => AlertOverlayDetails(event: r.event, seen: true, expanded: r.expanded));
+    return ShownAlerts(alerts: alerts);
+  }
+
+  ShownAlerts setExpanded(int alertId, bool value) {
+    alerts.mapInPlace((r) {
+      if (r.event.id == alertId) {
+        return AlertOverlayDetails(event: r.event, seen: r.seen, expanded: value);
+      }
+      return r;
+    });
+
+    return ShownAlerts(alerts: alerts);
+  }
+
+  int get unseenCount => alerts.items.where((r) => !r.seen).length;
 }
 
 @riverpod
 class AlertsRealtimeService extends _$AlertsRealtimeService {
-  final List<AlertEvent> _unseenAlerts = [];
+  ShownAlerts _unseenAlerts = ShownAlerts.empty();
   final Debouncer _unseenDebouncer = Debouncer();
 
   Semaphore serviceReady = Semaphore();
   Timer? _pollerTimer;
 
   @override
-  Future<UnseenAlerts> build() async {
+  Future<ShownAlerts> build() async {
     
     final wsState = ref.watch(websocketServiceProvider);
     serviceReady.reset();
@@ -50,9 +77,10 @@ class AlertsRealtimeService extends _$AlertsRealtimeService {
 
     serviceReady.signal();
 
-    return UnseenAlerts.empty();
+    return ShownAlerts.empty();
   }
 
+  // TODO: Why is this here?
   Timer _createPoller() {
     final notifier = ref.watch(websocketServiceProvider.notifier);
     notifier.post('backend-health-rt', "");
@@ -70,15 +98,20 @@ class AlertsRealtimeService extends _$AlertsRealtimeService {
       if (decoded is Map && decoded.entries.isEmpty) { return; }
 
       final alert = AlertEvent.fromJson(decoded);
-      _unseenAlerts.add(alert);
+      _unseenAlerts.alerts.push(AlertOverlayDetails(event: alert, seen: false, expanded: false));
 
       _unseenDebouncer.run(() {
-        state = AsyncValue.data(UnseenAlerts(unseenAlerts: _unseenAlerts));
+        state = AsyncValue.data(ShownAlerts(alerts: _unseenAlerts.alerts));
       });
     });
   }
 
   void markAsSeen() {
-    state = AsyncValue.data(UnseenAlerts.empty());
+    _unseenAlerts = state.value!.markAsSeen();
+    state = AsyncValue.data(_unseenAlerts);
+  }
+
+  void setExpanded(int alertId, bool value) {
+    _unseenAlerts = state.value!.setExpanded(alertId, value);
   }
 }

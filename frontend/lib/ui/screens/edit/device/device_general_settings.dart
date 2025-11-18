@@ -29,7 +29,7 @@ class DeviceGeneralSettings extends ConsumerStatefulWidget {
   static const Icon geoPositionIcon  = Icon(Icons.map);
   static const Icon metadataIcon     = Icon(Icons.list);
   static const Icon metricsIcon      = Icon(Icons.list_alt);
-  static const Icon dataSourcesIcon  = Icon(Icons.dataset_linked);
+  static const Icon dataSourcesIcon  = Icon(Icons.dataset);
 
   @override
   ConsumerState<DeviceGeneralSettings> createState() => _DeviceGeneralSettingsState();

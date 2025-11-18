@@ -1,13 +1,13 @@
 
 import 'package:flutter/material.dart';
 
-Widget makeNotificationWidget(Widget child) {
+Widget makeNotificationWidget(BuildContext context, Widget child) {
   return Material(
     color: Colors.transparent,
     child: Container(
       width: 400,
-      height: 400,
-      padding: const EdgeInsets.all(12),
+      height: MediaQuery.of(context).size.height * 0.6,
+      padding: const EdgeInsets.fromLTRB(0, 6, 6, 6),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
