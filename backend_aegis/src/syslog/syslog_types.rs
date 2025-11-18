@@ -82,9 +82,9 @@ impl From<syslog_loose::SyslogFacility> for SyslogFacility {
             syslog_loose::SyslogFacility::LOG_AUTHPRIV => SyslogFacility::AuthPriv,
             syslog_loose::SyslogFacility::LOG_FTP      => SyslogFacility::Ftp,
             syslog_loose::SyslogFacility::LOG_NTP      => SyslogFacility::Ntp,
-            syslog_loose::SyslogFacility::LOG_AUDIT    => SyslogFacility::Audit,
-            syslog_loose::SyslogFacility::LOG_ALERT    => SyslogFacility::Alert,
-            syslog_loose::SyslogFacility::LOG_CLOCKD   => SyslogFacility::Clockd,
+            syslog_loose::SyslogFacility::LOG_AUDIT    => SyslogFacility::Security,
+            syslog_loose::SyslogFacility::LOG_ALERT    => SyslogFacility::Console,
+            syslog_loose::SyslogFacility::LOG_CLOCKD   => SyslogFacility::Solaris,
             syslog_loose::SyslogFacility::LOG_LOCAL0   => SyslogFacility::Local0,
             syslog_loose::SyslogFacility::LOG_LOCAL1   => SyslogFacility::Local1,
             syslog_loose::SyslogFacility::LOG_LOCAL2   => SyslogFacility::Local2,
@@ -115,9 +115,9 @@ impl TryFrom<i16> for SyslogFacility {
             10 => Ok(SyslogFacility::AuthPriv),
             11 => Ok(SyslogFacility::Ftp),
             12 => Ok(SyslogFacility::Ntp),
-            13 => Ok(SyslogFacility::Audit),
-            14 => Ok(SyslogFacility::Alert),
-            15 => Ok(SyslogFacility::Clockd),
+            13 => Ok(SyslogFacility::Security),
+            14 => Ok(SyslogFacility::Console),
+            15 => Ok(SyslogFacility::Solaris),
             16 => Ok(SyslogFacility::Local0),
             17 => Ok(SyslogFacility::Local1),
             18 => Ok(SyslogFacility::Local2),
@@ -147,9 +147,9 @@ impl fmt::Display for SyslogFacility {
             SyslogFacility::AuthPriv => "authpriv",
             SyslogFacility::Ftp => "ftp",
             SyslogFacility::Ntp => "ntp",
-            SyslogFacility::Audit => "security",
-            SyslogFacility::Alert => "console",
-            SyslogFacility::Clockd => "solaris",
+            SyslogFacility::Security => "security",
+            SyslogFacility::Console => "console",
+            SyslogFacility::Solaris => "solaris",
             SyslogFacility::Local0 => "local0",
             SyslogFacility::Local1 => "local1",
             SyslogFacility::Local2 => "local2",
@@ -170,7 +170,7 @@ impl SyslogFacility {
             Kern  , User  , Mail    , Daemon,
             Auth  , Syslog, Lpr     , News  ,
             Uucp  , Cron  , AuthPriv, Ftp   ,
-            Ntp   , Audit , Alert   , Clockd,
+            Ntp   , Security , Console   , Solaris,
             Local0, Local1, Local2  , Local3,
             Local4, Local5, Local6  , Local7,
         ]
@@ -183,8 +183,8 @@ impl<'a> From<syslog_loose::Message<&'a str>> for SyslogMessage {
         let appname  = if let Some(h) = m.appname { Some(h.to_string()) } else { None };
         let procid   = if let Some(h) = m.procid { Some(h.to_string()) } else { None };
         let msgid    = if let Some(h) = m.msgid { Some(h.to_string()) } else { None };
-        let facility = if let Some(f) = m.facility { Some(f.into()) } else { None };
-        let severity = if let Some(s) = m.severity { Some(s.into()) } else { None };
+        let facility = if let Some(f) = m.facility { f.into() } else { SyslogFacility::Local7 };
+        let severity = if let Some(s) = m.severity { s.into() } else { SyslogSeverity::Err };
 
         let msg = m.msg.to_string();
 

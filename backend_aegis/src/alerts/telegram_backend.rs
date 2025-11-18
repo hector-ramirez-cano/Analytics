@@ -146,6 +146,15 @@ impl TelegramBackend {
         }});
     }
 
+    pub async fn raw_send_message(msg: &str) {
+        let instance = TelegramBackend::instance();
+        let chats = instance.subscribed_chats.read().await;
+        let client = &instance.client;
+        for chat_id in chats.iter() {
+            Handler::send_message(client, (*chat_id).into(), msg).await;
+        }
+    }
+
 }
 
 struct Handler { client: Client }

@@ -12,7 +12,7 @@ use crate::model::data::link::Link;
 use crate::model::data::group::Group;
 use crate::model::data::link_type::LinkType;
 use crate::model::data::device_configuration::DeviceConfiguration;
-use crate::model::data::data_source::DataSource;
+use crate::model::data::DataSource;
 use crate::model::db::update_topology::update_topology_cache;
 
 #[derive(sqlx::FromRow)]

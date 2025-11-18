@@ -1,18 +1,6 @@
-use sqlx::Type;
-use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type, Eq, PartialEq, Hash, PartialOrd, Ord)]
-#[sqlx(type_name = "DataSource", rename_all = "lowercase")]
-pub enum DataSource {
-    #[serde(rename="ssh")]
-    Ssh,
 
-    #[serde(rename="snmp")]
-    Snmp,
-
-    #[serde(rename="icmp")]
-    Icmp,
-}
+use crate::model::data::DataSource;
 
 impl From<Option<DataSource>> for DataSource {
     fn from(value: Option<DataSource>) -> Self {

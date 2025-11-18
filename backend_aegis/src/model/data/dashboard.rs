@@ -4,7 +4,7 @@ use sqlx::FromRow;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Dashboard {
-    #[serde(rename="id")]
+    #[serde(rename="dasboard-id")]
     pub dashboard_id: i64,
 
     #[serde(rename="name")]

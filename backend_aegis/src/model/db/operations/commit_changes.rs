@@ -147,6 +147,9 @@ async fn update_devices(devices: Vec<serde_json::Value>, pool: &sqlx::Pool<Postg
             ).execute(pool).await
         };
         result.map_err(|e| (format!("Failed to update device with SQL Error = '{e}'"), 500))?;
+
+
+        // TODO: WITH URGENCY: IMPLEMENT DATA_SOURCES INSERTION. THIS IS IS MISSING!!!!
     }
     Ok(())
 }

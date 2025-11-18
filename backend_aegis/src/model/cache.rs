@@ -9,7 +9,7 @@ use serde::Serialize;
 use crate::AegisError;
 use crate::config::Config;
 use crate::alerts::EvaluableItem;
-use crate::model::data::data_source::DataSource;
+use crate::model::data::DataSource;
 use crate::model::data::device::Device;
 use crate::model::data::device_state::DeviceStatus;
 use crate::model::data::link::Link;

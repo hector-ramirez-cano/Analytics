@@ -100,12 +100,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_link_pair
 ON Analytics.links (LEAST(side_a, side_b), GREATEST(side_a, side_b));
 
 
+CREATE TYPE AlertSeverity AS ENUM ('emergency','alert','critical','error','warning','notice','info','debug','unknown');
 CREATE TABLE IF NOT EXISTS Analytics.alerts (
     alert_id     BIGSERIAL,
     alert_time   TIMESTAMPTZ NOT NULL,
     ack_time     TIMESTAMPTZ,
     requires_ack BOOLEAN NOT NULL,
-    severity     SMALLINT NOT NULL,
+    severity     AlertSeverity NOT NULL DEFAULT 'unknown',
     message      VARCHAR,
     ack_actor    VARCHAR,
     target_id    BIGINT,
@@ -244,10 +245,14 @@ EXECUTE FUNCTION create_item_on_group_insert();
 
 CREATE SCHEMA IF NOT EXISTS Syslog;
 
+-- DROP TABLE Syslog.system_events; DROP TYPE SyslogSeverity; DROP TYPE SyslogFacility;
+
+CREATE TYPE SyslogSeverity as enum('emerg','alert','crit','err','warning','notice','info','debug');
+CREATE TYPE SyslogFacility as enum('kern','user','mail','daemon','auth','syslog','lpr','news','uucp','cron','authpriv','ftp','ntp','security','console','solaris','local0','local1','local2','local3','local4','local5','local6','local7');
 CREATE TABLE IF NOT EXISTS Syslog.system_events  (
     id BIGSERIAL PRIMARY KEY,
-    facility SMALLINT,
-    severity SMALLINT,
+    facility SyslogFacility NOT NULL,
+    severity SyslogSeverity NOT NULL,
     from_host TEXT,
     received_at TIMESTAMPTZ,
     process_id TEXT,

@@ -112,21 +112,26 @@ pub fn ws_router<'a>(ws: WebSocket, pool: &'a State<sqlx::PgPool>, influx_client
         let rx_task: JoinHandle<()> = tokio::spawn(ws_receive_task(ws_receiver, data_to_socket_tx.clone(), pool.inner().clone(), influx_client.inner().clone()));
 
         // Spawn realtime listener tasks
-        SyslogBackend::instance().add_listener(syslog_rt_tx).await;
-        AlertBackend::instance().add_listener(alerts_rt_tx).await;
-        FactGatheringBackend::instance().add_listener(device_health_rt_tx).await;
+        let syslog_listener_id = SyslogBackend::instance().add_listener(syslog_rt_tx).await;
+        let alerts_listener_id = AlertBackend::instance().add_listener(alerts_rt_tx).await;
+        let facts_listener_id = FactGatheringBackend::instance().add_listener(device_health_rt_tx).await;
         let syslog_rt_task : JoinHandle<()> = tokio::spawn(ws_syslog_rt(data_to_socket_tx.clone(), syslog_rt_rx));
         let alerts_rt_task : JoinHandle<()> = tokio::spawn(ws_alerts_rt(data_to_socket_tx.clone(), alerts_rt_rx));
         let device_health_rt_task : JoinHandle<()> = tokio::spawn(ws_device_health_rt(data_to_socket_tx.clone(), device_health_rt_rx));
 
         // Wait until any task finishes, then let the rest drop
         tokio::select! {
-            _ = tx_task => {},
-            _ = rx_task => {},
-            _ = syslog_rt_task => (),
-            _ = alerts_rt_task => (),
-            _ = device_health_rt_task => ()
+            _ = tx_task               => log::info!("[DEBUG][WS] tx_task finished!"),
+            _ = rx_task               => log::info!("[DEBUG][WS] rx_task finished!"),
+            _ = syslog_rt_task        => log::info!("[DEBUG][WS] syslog_rt_task finished!"),
+            _ = alerts_rt_task        => log::info!("[DEBUG][WS] alerts_rt_task finished!"),
+            _ = device_health_rt_task => log::info!("[DEBUG][WS] device_health_rt_task finished!"),
         }
+
+        // Explicitly remove the listeners, to avoid having ghost listeners
+        SyslogBackend::instance().remove_listener(syslog_listener_id).await;
+        AlertBackend::instance().remove_listener(alerts_listener_id).await;
+        FactGatheringBackend::instance().remove_listener(facts_listener_id).await;
 
         Ok(())
     }))
@@ -137,7 +142,9 @@ async fn ws_send_task(
     mut data_to_socket: mpsc::Receiver<String>,
 ) {
     while let Some(msg) = data_to_socket.recv().await {
-        #[cfg(debug_assertions)] {log::info!("\x1b[33m[DEBUG][WS][TX] Sending msg='{}'\x1b[0m", &msg);}
+        #[cfg(debug_assertions)] {
+            let truncated = msg.chars().take(500).collect::<String>();
+            log::info!("\x1b[33m[DEBUG][WS][TX] Sending msg='{}'\x1b[0m", truncated);}
         let result = ws_sender.send(Message::Text(msg)).await;
         if result.is_err() {
             log::error!("[ERROR][WS][TX] Encountered an error, sender is closing!");
@@ -197,8 +204,11 @@ async fn ws_handle_message(
                 Ok(msg) => ws_route_message(pool, influx_client, data_to_socket, syslog_filters, alert_filters, msg).await,
             }
         }
-
-        _ => ws_send_error_msg(data_to_socket, "[BACKEND] Received message via websocket that is not text type").await
+        Message::Binary(_) => ws_send_error_msg(data_to_socket, format!("[BACKEND] Received message via websocket that is not text type. Actual = 'Binary'").as_str()).await,
+        Message::Ping(_) => ws_send_error_msg(data_to_socket, format!("[BACKEND] Received message via websocket that is not text type. Actual = 'Ping'").as_str()).await,
+        Message::Pong(_) => ws_send_error_msg(data_to_socket, format!("[BACKEND] Received message via websocket that is not text type. Actual = 'Pong'").as_str()).await,
+        Message::Frame(_) => ws_send_error_msg(data_to_socket, format!("[BACKEND] Received message via websocket that is not text type. Actual = 'Frame'").as_str()).await,
+        Message::Close(_) => ws_send_error_msg(data_to_socket, format!("[BACKEND] WebSocket client requested closing. Actual = 'Close'").as_str()).await,
     }
 }
 

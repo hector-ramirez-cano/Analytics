@@ -1,20 +1,20 @@
 
 use sqlx::{Pool, Postgres, QueryBuilder};
 
-use crate::{model::db::operations::RowCount, syslog::{SyslogFilters, SyslogMessage}};
+use crate::{model::db::operations::RowCount, syslog::{SyslogFacility, SyslogFilters, SyslogMessage, SyslogSeverity}};
 
 
 pub async fn update_database(postgres_pool: &Pool<Postgres>, msg: &SyslogMessage) -> Result<(), ()> {
     let time = msg.received_at.unwrap_or_default();
     let hostname = msg.source.clone().unwrap_or_default();
     let procid = msg.procid.clone().unwrap_or(String::new()).to_string();
-    let _result = sqlx::query!(r#"
+    let result = sqlx::query!(r#"
         INSERT INTO Syslog.system_events
             (facility, severity, from_host, received_at, process_id, message, message_id, appname)
         VALUES($1, $2, $3, $4, $5, $6, $7, $8)
         "#,
-        msg.facility.map(|f| f as i16),
-        msg.severity.map(|s| s as i16),
+        msg.facility as SyslogFacility,
+        msg.severity as SyslogSeverity,
         hostname,
         time,
         procid,
@@ -22,6 +22,10 @@ pub async fn update_database(postgres_pool: &Pool<Postgres>, msg: &SyslogMessage
         msg.msgid,
         msg.appname
     ).execute(postgres_pool).await;
+
+    if let Err(e) = result {
+        log::error!("[ERROR][SYSLOG][DB] Failed to insert into database, sql error = '{e}'");
+    }
 
     Ok(())
 }

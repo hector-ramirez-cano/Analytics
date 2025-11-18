@@ -3,7 +3,9 @@ use std::hash::{Hash, Hasher};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::model::data::data_source::DataSource;
+use crate::model::data::DataSource;
+
+
 /// A configuration for a device – the exact same shape as the Python dataclass.
 ///
 /// * `data_sources`          – set of data‑source identifiers  

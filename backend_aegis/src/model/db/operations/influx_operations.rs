@@ -74,6 +74,9 @@ pub async fn get_metric_range(influx_client : &influxdb2::Client, influx_filter:
 }
 
 pub async fn get_metric_data(influx_client : &influxdb2::Client, influx_filter: &InfluxFilter ) -> serde_json::Value {
+
+    dbg!(&influx_filter);
+
     let query = format!(
         r#"
         from(bucket: "analytics")

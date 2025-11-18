@@ -15,37 +15,36 @@ pub mod syslog_filters;
 pub struct SyslogMessage {
     pub id: i64,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub facility: Option<SyslogFacility>,
+    pub facility: SyslogFacility,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub severity: Option<SyslogSeverity>,
+    pub severity: SyslogSeverity,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     #[sqlx(rename="from_host")]
     pub source: Option<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "received-at")]
     pub received_at: Option<DateTime<Utc>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     #[sqlx(rename="appname")]
     pub appname: Option<String>, // Keeping only as reference in the db. Not exposed via websocket
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", rename="process-id")]
     #[sqlx(rename="process_id")]
     pub procid: Option<String>, // TODO: Might be able to be removed from here and from frontend
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub msgid: Option<String>, // Keeping only as reference in the db. Not exposed via websocket
 
-    #[sqlx(rename="message")]
+    #[sqlx (rename = "message")]
+    #[serde(rename = "message")]
     pub msg: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, Hash)]
-#[repr(i16)]
 #[serde(rename_all="lowercase")]
+#[sqlx(type_name = "syslogseverity", rename_all = "lowercase")]
 pub enum SyslogSeverity {
     Emerg = 0,
     Alert = 1,
@@ -58,8 +57,8 @@ pub enum SyslogSeverity {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, Hash)]
-#[repr(i16)]
 #[serde(rename_all="lowercase")]
+#[sqlx(type_name = "syslogfacility", rename_all = "lowercase")]
 pub enum SyslogFacility {
     Kern = 0,
     User = 1,
@@ -74,9 +73,9 @@ pub enum SyslogFacility {
     AuthPriv = 10,
     Ftp = 11,
     Ntp = 12,
-    Audit = 13,
-    Alert = 14,
-    Clockd = 15,
+    Security = 13,
+    Console = 14,
+    Solaris = 15,
     Local0 = 16,
     Local1 = 17,
     Local2 = 18,
@@ -85,6 +84,8 @@ pub enum SyslogFacility {
     Local5 = 21,
     Local6 = 22,
     Local7 = 23,
+
+
 }
 
 

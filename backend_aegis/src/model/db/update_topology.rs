@@ -60,8 +60,8 @@ pub async fn update_device_analytics(influx_client : &influxdb2::Client, message
     let bucket = match bucket {
         Ok(b) => b,
         Err(e) => {
-            let cwd = env::current_dir().expect("Failed to get current working directory");
             log::error!("[FATAL] Influx bucket isn't specified in configuration file, e='{e}'\n Expected 'backend/controller/influx/bucket' to be present");
+            let cwd = env::current_dir().expect("Failed to get current working directory");
             log::info!("[INFO ] Current working directory was={}", cwd.display());
             log::info!("[INFO ] Current config file was={}", Config::instance().get_curr_config_path());
             panic!("[FATAL] Influx bucket isn't specified in configuration file, e='{e}'\n Expected 'backend/controller/influx/bucket' to be present");
@@ -84,7 +84,7 @@ pub async fn update_device_analytics(influx_client : &influxdb2::Client, message
         let mut point = DataPoint::builder("metrics").tag("device_id", device_id.to_string());
         
         #[cfg(debug_assertions)] {
-            log::debug!("[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>{}", device_id.to_string());
+            log::info!("[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>{}", device_id.to_string());
         }
 
         let device_requested_metrics = match Cache::instance().get_device_requested_metrics(device_id).await {
@@ -99,7 +99,7 @@ pub async fn update_device_analytics(influx_client : &influxdb2::Client, message
                 Some(v) => v, None => continue
             };
 
-            log::debug!("        {} -> {}", &metric, value);
+            log::info!("                       {} -> {}", &metric, value);
             point = point.field(metric, value.clone());
 
         }
@@ -108,5 +108,9 @@ pub async fn update_device_analytics(influx_client : &influxdb2::Client, message
         points.push(point);
     }
 
-    influx_client.write(&bucket, stream::iter(points)).await.unwrap_or_default();
+    let result = influx_client.write(&bucket, stream::iter(points)).await;
+
+    if let Err(e) = result {
+        log::error!("[ERROR][FACTS][INFLUX] Failed to update database with gathered metrics with InfluxError = '{e}'");
+    }
 }

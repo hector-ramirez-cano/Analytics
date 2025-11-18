@@ -276,7 +276,9 @@ impl AlertBackend {
                 Err(e) => {
                     log::error!("[ERROR][ALERTS] Failed to write alert to database with e = '{e}'. Requeueing...");
                     if let Err(e) = event_tx.send(event).await {
-                        log::error!("[ERROR][ALERTS] Failed to requeue failed write alert event with e = '{e}'. Event will be skipped!")
+                        let msg = format!("[ERROR][ALERTS] Failed to requeue failed write alert event with e = '{e}'. Event will be skipped!");
+                        log::error!("{}", msg);
+                        TelegramBackend::raw_send_message(msg.as_str()).await;
                     };
                     continue;
                 },

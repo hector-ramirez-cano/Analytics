@@ -106,8 +106,7 @@ pub async fn ws_get_dashboards(data_to_socket: &mut mpsc::Sender<String>, pool: 
 
     let dashboards = serde_json::to_string(&dashboards.values().collect::<Vec<_>>());
     match dashboards {
-        Ok(dashboards) => { 
-            dbg!(&dashboards);
+        Ok(dashboards) => {
             ws_send_msg(data_to_socket, "dashboards", &dashboards).await 
         },
         Err(e) => { ws_send_error_msg(data_to_socket, &e.to_string()).await }
@@ -326,7 +325,7 @@ pub async fn ws_query_metrics(data_to_socket: &mut mpsc::Sender<String>, influx_
 
     let msg = serde_json::json!({
         "type": "metrics",
-        "metric": filters.metric,
+        "metrics": filters.metric,
         "msg": result
     });
 
@@ -481,7 +480,8 @@ pub async fn ws_device_health_rt(data_to_socket: mpsc::Sender<String>, mut recei
         match data_to_socket.send(msg.to_string()).await {
             Ok(_) => (),
             Err(e) => {
-                log::error!("[ERROR][WS][DEV-HEALTH][REALTIME] Failed to send message to websocket listener! error='{e}'. Message will be ignored");
+                log::error!("[ERROR][WS][DEV-HEALTH][REALTIME] Failed to send message to websocket listener! error='{e}'. Channel will be closed!");
+                break;
             }
         }
     }
@@ -534,8 +534,7 @@ async fn ws_route_syslog_request_data(
     // TODO: Batch if possible
     // TODO: Add inner type
     for row in data {
-        let msg = serde_json::json!({ "type": "syslog", "msg": row});
-        log::info!("[INFO ][WS][SYSLOG] Sending Row...");
+        let msg = serde_json::json!({ "type": "syslog", "msg": [row]});
 
         match data_to_socket.send(msg.to_string()).await {
             Ok(_) => (),
@@ -642,8 +641,7 @@ async fn ws_route_alerts_request_data(
     // TODO: Batch if possible
     // TODO: Add inner type
     for row in data {
-        let msg = serde_json::json!({ "type": "syslog", "msg": row});
-        log::info!("[INFO ][WS][SYSLOG] Sending Row...");
+        let msg = serde_json::json!({ "type": "alerts", "msg": [row]});
 
         match data_to_socket.send(msg.to_string()).await {
             Ok(_) => (),

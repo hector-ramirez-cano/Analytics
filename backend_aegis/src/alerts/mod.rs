@@ -30,7 +30,7 @@ pub enum AlertSeverity {
     Notice,
     Info,
     Debug,
-    // Not in DB enum, but useful for fallbacks
+
     #[serde(other)]
     Unknown,
 }
@@ -146,36 +146,37 @@ pub struct AlertRule {
 pub mod alert_filters;
 #[derive(Debug, Deserialize)]
 pub struct AlertFilters {
-    #[serde(deserialize_with = "ts_to_datetime_utc")]
+    #[serde(deserialize_with = "ts_to_datetime_utc", rename = "start")]
     pub start_time: DateTime<Utc>,
 
-    #[serde(deserialize_with = "ts_to_datetime_utc")]
+    #[serde(deserialize_with = "ts_to_datetime_utc", rename = "end")]
     pub end_time: DateTime<Utc>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "alert-id")]
     pub alert_id: Option<i64>,
 
-    #[serde(default, deserialize_with = "opt_ts_to_datetime_utc", skip_serializing_if = "Option::is_none")]
+    #[serde(default, deserialize_with = "opt_ts_to_datetime_utc", skip_serializing_if = "Option::is_none", rename = "ack-start")]
     pub ack_start_time: Option<DateTime<Utc>>,
 
-    #[serde(default, deserialize_with = "opt_ts_to_datetime_utc", skip_serializing_if = "Option::is_none")]
+    #[serde(default, deserialize_with = "opt_ts_to_datetime_utc", skip_serializing_if = "Option::is_none", rename = "ack-end")]
     pub ack_end_time: Option<DateTime<Utc>>,
 
+    #[serde(rename = "severity")]
     pub severities: HashSet<AlertSeverity>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message: Option<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "ack-actor")]
     pub ack_actor: Option<i64>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "target-id")]
     pub target_id: Option<i64>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub offset: Option<i64>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "requires-ack")]
     pub requires_ack: Option<bool>,
 
     #[serde(rename = "page-size", skip_serializing_if = "Option::is_none")]

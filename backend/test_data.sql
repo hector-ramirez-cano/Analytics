@@ -94,11 +94,12 @@ TRUNCATE Analytics.alert_rules;
 
 -- TRUNCATE Analytics.alert_rules; DELETE FROM Analytics.alert_rules;
 INSERT INTO Analytics.alert_rules (rule_id, rule_name, requires_ack, rule_definition)
-    VALUES (1, 'ICMP_RTT > 160ms', TRUE, '{"is-delta-rule": false, "severity":"warning","target":1,"reduce-logic": "all","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":160, "is-delta-rule": false}]}');
+    VALUES (1, 'ICMP_RTT > 160ms', TRUE, '{"is-delta-rule": false, "severity":"warning","target":1,"reduce-logic": "all","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":3, "is-delta-rule": false}]}');
 
 SELECT * FROM Analytics.alert_rules;
 
 SELECT * FROM Analytics.alerts;
+SELECT alert_id, alert_time, ack_time, requires_ack, severity, message, target_id, TRUE as ws_notified, TRUE as db_notified, (ack_actor <> NULL) as acked, rule_id, value FROM Analytics.alerts;
 -- TRUNCATE Analytics.alerts;
 
 SELECT count(1) AS count FROM Analytics.alerts OFFSET 0;
