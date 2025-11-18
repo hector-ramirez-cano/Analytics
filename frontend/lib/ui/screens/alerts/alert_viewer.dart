@@ -23,9 +23,6 @@ class _AlertViewerState extends ConsumerState<AlertViewer> {
 
   late TrinaGridStateManager _stateManager;
 
-  int _prevPage = 0;
-
-
   // TODO: Sorting
   Future<TrinaLazyPaginationResponse> pageFetch(TrinaLazyPaginationRequest request, WidgetRef ref) async {
 
@@ -48,7 +45,6 @@ class _AlertViewerState extends ConsumerState<AlertViewer> {
 
       final filters = ref.read(alertFilterProvider);
       final page = await notifier.fetchPage(request.page, filters);
-      _prevPage = request.page;
       return TrinaLazyPaginationResponse(totalPage: page.pageCount, rows: _genRowsFromPage(page), totalRecords: page.messageCount);
     }
     catch(e, _) {

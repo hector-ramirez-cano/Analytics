@@ -9,6 +9,7 @@ enum ListSelectorType {
 }
 Icon? noIcon(dynamic _) => null;
 Widget? noSubtitle(dynamic _) => null;
+Widget? _emptyDisplayTrailing(dynamic option) { return null; }
 
 class ListSelector<T> extends ConsumerStatefulWidget {
 
@@ -22,6 +23,8 @@ class ListSelector<T> extends ConsumerStatefulWidget {
   final Icon? Function(dynamic) leadingIconBuilder;
   final Widget? Function(dynamic) subtitleBuilder;
   final bool Function(dynamic) isAvailable;
+  final Widget? Function(dynamic) onDisplayTrailing;
+
 
   static TextStyle unavailableValueStyle = TextStyle(color: Colors.blueGrey, fontStyle: FontStyle.italic, decoration: TextDecoration.lineThrough);
 
@@ -37,6 +40,7 @@ class ListSelector<T> extends ConsumerStatefulWidget {
     this.onTristateToggle,
     this.subtitleBuilder = noSubtitle,
     this.leadingIconBuilder = noIcon,
+    this.onDisplayTrailing = _emptyDisplayTrailing,
   });
 
   @override
@@ -112,6 +116,7 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
             title: ListTile(
               key: ValueKey(option),
               leading: widget.leadingIconBuilder(option),
+              trailing: widget.onDisplayTrailing(option),
               title: Text(
                 widget.toText(option),
                 style: widget.isAvailable(option)

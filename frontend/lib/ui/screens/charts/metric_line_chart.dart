@@ -1,4 +1,3 @@
-import 'package:aegis/ui/screens/charts/metadata_label.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphic/graphic.dart';

@@ -1,3 +1,5 @@
+import 'package:aegis/extensions/string_extensions.dart';
+import 'package:aegis/services/metrics/metrics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:free_map/free_map.dart';
@@ -106,7 +108,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
       "${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}",
       style: style,
     );
-    
+
     return SettingsTile(
       title: Text("Geoposition"),
       leading: DeviceGeneralSettings.geoPositionIcon,
@@ -127,7 +129,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
       Color backgroundColor = modified ? addedItemColor : Color.fromRGBO(214, 214, 214, 1);
       backgroundColor = deleted ? deletedItemColor : backgroundColor;
-      
+
       Color textColor = modified ? Colors.white : Colors.black;
 
       list.add(
@@ -144,7 +146,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
   AbstractSettingsTile _makeMetadataInput(Device device, Device merged, Topology topology) {
 
     List<BadgeButton> list = _makeBadgeList(merged.requestedMetadata, topology, device.isModifiedMetadata, device.isDeletedMetadata);
-    
+
     var metadata = Wrap(spacing: 4, runSpacing: 4, children: list,);
 
     return SettingsTile(
@@ -180,13 +182,15 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
   }
 
   void _displaySelectionDialog() {
-    final itemEditSelection = ref.watch(itemEditSelectionProvider); 
-    final notif = ref.watch(itemEditSelectionProvider.notifier); 
+    final ItemEditSelection itemEditSelection = ref.watch(itemEditSelectionProvider);
+    final notif = ref.watch(itemEditSelectionProvider.notifier);
     bool metrics = itemEditSelection.editingDeviceMetrics;
     bool metadata = itemEditSelection.editingDeviceMetadata;
     bool datasources = itemEditSelection.editingDeviceDataSources;
 
     bool enabled = metrics || metadata || datasources;
+
+    int id = notif.selected.id;
 
     if (!enabled) { return; }
 
@@ -195,7 +199,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     else if (metadata)    { options = {...notif.device.availableValues, ...notif.device.requestedMetadata}; }
     else if (datasources) { options = DataSources.values.map((i) => i.name).toSet(); }
     else { return; }
-    
+
 
     bool isSelectedFn(option) {
       if      (metrics)     { return notif.device.requestedMetrics.contains(option);}
@@ -212,7 +216,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     }
 
     onChanged (option, state) {
-      if      (metrics)  { notif.onChangeSelectedMetric(option, state); } 
+      if      (metrics)  { notif.onChangeSelectedMetric(option, state); }
       else if (metadata) { notif.onChangeSelectedMetadata(option, state); }
       else if (datasources) {notif.onChangeSelectedDatasource(option, state); }
       else {
@@ -220,7 +224,18 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
       }
       ref.watch(dialogRebuildProvider.notifier).markDirty();
     }
-    onClose () => notif.set(editingDeviceMetadata: false, editingDeviceMetrics: false, editingDeviceDataSources: false); 
+    onClose () => notif.set(editingDeviceMetadata: false, editingDeviceMetrics: false, editingDeviceDataSources: false);
+
+    Widget onDisplayTrailing(dynamic option) {
+      return Consumer(builder:(context, ref, child) {
+        final metrics = ref.watch(metricsServiceProvider(metric: option.toString(), deviceId: notif.selected.id));
+        return metrics.when(
+          data: (metrics) => Text(metrics.toString().truncate(50)),
+          error: (_, _) => Text("Sin datos"),
+          loading: () => Text("Cargando...")
+        );
+      },);
+    } 
 
     TagSelectionDialog(
       options: options,
@@ -229,12 +244,13 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
       onClose: onClose,
       isSelectedFn: isSelectedFn,
       isAvailable: isAvailableFn,
+      onDisplayTrailing: onDisplayTrailing
     ).show(context);
   }
 
   void _displayGeoInputDialog() {
-    final itemEditSelection = ref.read(itemEditSelectionProvider); 
-    final notifier = ref.read(itemEditSelectionProvider.notifier); 
+    final itemEditSelection = ref.read(itemEditSelectionProvider);
+    final notifier = ref.read(itemEditSelectionProvider.notifier);
     bool enabled = itemEditSelection.editingDeviceGeoPosition;
     LatLng initialPosition = notifier.device.geoPosition;
 
@@ -252,7 +268,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
   @override
   void initState() {
     super.initState();
-    
+
     var device = ref.read(itemEditSelectionProvider.notifier).device;
     _hostnameInputController = TextEditingController(text: device.mgmtHostname);
     _nameInputController = TextEditingController(text: device.name);
@@ -283,7 +299,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
         }
       });
 
-    
+
     Device device = notifier.device;
     Device merged = notifier.deviceMerged;
     bool enableDeviceName = itemSelectionService.editingDeviceName;

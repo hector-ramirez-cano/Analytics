@@ -3,7 +3,11 @@ import 'package:logger/logger.dart';
 import 'package:aegis/ui/components/dialogs/selection_dialog.dart';
 import 'package:aegis/ui/components/list_selector.dart';
 
+
+Widget? _emptyDisplayTrailing(dynamic option) { return null; }
 class TagSelectionDialog extends SelectionDialog<String>{
+
+  final Widget? Function(dynamic option) onDisplayTrailing;
 
   const TagSelectionDialog({
     required super.options,
@@ -13,7 +17,9 @@ class TagSelectionDialog extends SelectionDialog<String>{
     required super.isSelectedFn,
     required super.isAvailable,
     super.onTristateToggle,
-    super.subtitleBuilder
+    super.subtitleBuilder,
+    this.onDisplayTrailing = _emptyDisplayTrailing,
+    
   });
   
   @override
@@ -39,6 +45,7 @@ class TagSelectionDialog extends SelectionDialog<String>{
         toText: toText,
         onTristateToggle: onTristateToggle,
         isAvailable: isAvailable,
+        onDisplayTrailing: onDisplayTrailing,
       ),
     );
     

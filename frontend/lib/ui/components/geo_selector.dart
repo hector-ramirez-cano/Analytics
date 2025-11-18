@@ -123,7 +123,7 @@ class _GeoSelectDialogState extends ConsumerState<GeoSelector> {
           initialCenter: widget.initialPosition,
           onLongPress: onLongPressEvent
         ),
-        markers: [ Marker(point: marker, child: GeoSelector.locationIcon,) ]
+        markers: [ Marker(point: marker, child: GeoSelector.locationIcon,) ],
       ),
     );
 
