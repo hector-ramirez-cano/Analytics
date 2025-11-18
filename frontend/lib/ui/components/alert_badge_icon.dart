@@ -17,6 +17,7 @@ class AlertBadgeIcon extends StatelessWidget {
       error: (_ ,_) { badgeContent = "?"; badgeColor = Colors.blueGrey; },
       loading: () { badgeContent = "⧗"; badgeColor = Colors.blueGrey; },
       data: (unseenAlerts) {
+        alertCount = unseenAlerts.unseenAlerts.length;
         if (alertCount == 0) { badgeContent = null; }
         else { 
           if (alertCount < 10) {
