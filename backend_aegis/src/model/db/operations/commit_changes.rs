@@ -1,7 +1,7 @@
 use serde_json::Map;
 use sqlx::Postgres;
 
-use crate::{alerts::{AlertRule, alert_backend::AlertBackend}, misc::hashset_to_json_array, model::{cache::Cache, data::{device::Device, group::Group, link::Link, link_type::LinkType}}};
+use crate::{alerts::{AlertRule, alert_backend::AlertBackend}, misc::hashset_to_json_array, model::{cache::Cache, data::{DataSource, device::Device, group::Group, link::Link, link_type::LinkType}}};
 
 type E = (String, i16);
 pub async fn commit(mut data: serde_json::Value, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
@@ -148,8 +148,25 @@ async fn update_devices(devices: Vec<serde_json::Value>, pool: &sqlx::Pool<Postg
         };
         result.map_err(|e| (format!("Failed to update device with SQL Error = '{e}'"), 500))?;
 
+        // Remove all the instances of datasources in normalized table
+        // they'll be inserted again. This is done so removing items also has an effect
+        let result = sqlx::query!(
+            "DELETE FROM Analytics.device_data_sources WHERE device_id = $1", device.device_id
+        ).execute(pool).await;
+        result.map_err(|e| (format!("Failed to update device with SQL Error = '{e}'"), 500))?;
 
-        // TODO: WITH URGENCY: IMPLEMENT DATA_SOURCES INSERTION. THIS IS IS MISSING!!!!
+        // Fresh insertion of data sources
+        for datasource in device.configuration.data_sources {
+            let result = sqlx::query!("
+                INSERT INTO Analytics.device_data_sources
+                    (device_id, fact_data_source)
+                VALUES
+                    ($1, $2)
+                ON CONFLICT (device_id, fact_data_source) DO NOTHING",
+                device.device_id, datasource as DataSource
+            ).execute(pool).await;
+            result.map_err(|e| (format!("Failed to update device with SQL Error = '{e}'"), 500))?;
+        }
     }
     Ok(())
 }

@@ -452,7 +452,7 @@ pub async fn ws_alerts_rt(data_to_socket: mpsc::Sender<String>, mut receiver: mp
         };
 
         let msg = serde_json::json!({
-            "type": "alert-rt", "msg": serde_json::json!(msg)
+            "type": "alerts-rt", "msg": serde_json::json!(msg)
         });
 
         match data_to_socket.send(msg.to_string()).await {
