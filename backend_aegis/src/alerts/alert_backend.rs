@@ -8,6 +8,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::Mutex;
 use tokio::sync::mpsc;
 
+use crate::types::{AlertId, AlertRuleId, DeviceId, EpochSeconds};
 use crate::alerts::telegram_backend::TelegramBackend;
 use crate::config::Config;
 use crate::alerts::{AlertDataSource, AlertEvent, AlertRule};
@@ -24,13 +25,30 @@ use crate::syslog::SyslogMessage;
 
 /// Singleton that stores listeners only
 pub struct AlertBackend {
+    /// External listeners. Once an alert raises, It'll broadcast to all of them with the alert event
     listeners: Arc<Mutex<HashMap<usize, Sender<AlertEvent>>>>,
+
+    /// ID used to uniquely identify each listener. Once a new listener attaches, the function will return
+    /// a sequential unique ID, that can be used to later on remove the listener
     next_id: Arc<AtomicUsize>,
+
+    /// Shallow copy of the PostgreSQL pool for connections when alerts raise
     pool: sqlx::PgPool,
+
+    /// Local cache of alert rules that apply to data gotten via the Fact Gathering Backend
     facts_rules: RwLock<Vec<AlertRule>>,
+
+    /// Local cache of alert rules that apply to data gotten via the Syslog Backend
     syslog_rules: RwLock<Vec<AlertRule>>,
-    rule_names : RwLock<HashMap<i64, String>>,
-    last_update: RwLock<u64>, // epoch seconds
+
+    /// Mapping of RuleIDs to Rule Names, for display when an alert is issued via Telegram
+    rule_names : RwLock<HashMap<AlertId, String>>,
+
+    /// Mapping of Sustained rule evaluation records
+    sustained_rules_records : RwLock<HashMap<AlertId, HashMap<DeviceId, EpochSeconds>>>,
+
+    /// Time since the last cache update for rules
+    last_update: RwLock<EpochSeconds>, // epoch seconds
 
 }
 
@@ -47,6 +65,8 @@ impl AlertBackend {
             facts_rules: RwLock::new(Vec::new()),
             syslog_rules: RwLock::new(Vec::new()),
             rule_names: RwLock::new(HashMap::new()),
+
+            sustained_rules_records: RwLock::new(HashMap::new()),
 
             last_update: RwLock::new(0),
 
@@ -100,7 +120,75 @@ impl AlertBackend {
         log::info!("[INFO ][ALERTS] Init Alert Backend");
     }
 
+    //   ______                         __                __                            __         ______   _______   ______ 
+    //  /      \                       /  |              /  |                          /  |       /      \ /       \ /      |
+    // /$$$$$$  | __    __   _______  _$$ |_     ______  $$/  _______    ______    ____$$ |      /$$$$$$  |$$$$$$$  |$$$$$$/ 
+    // $$ \__$$/ /  |  /  | /       |/ $$   |   /      \ /  |/       \  /      \  /    $$ |      $$ |__$$ |$$ |__$$ |  $$ |  
+    // $$      \ $$ |  $$ |/$$$$$$$/ $$$$$$/    $$$$$$  |$$ |$$$$$$$  |/$$$$$$  |/$$$$$$$ |      $$    $$ |$$    $$/   $$ |  
+    //  $$$$$$  |$$ |  $$ |$$      \   $$ | __  /    $$ |$$ |$$ |  $$ |$$    $$ |$$ |  $$ |      $$$$$$$$ |$$$$$$$/    $$ |  
+    // /  \__$$ |$$ \__$$ | $$$$$$  |  $$ |/  |/$$$$$$$ |$$ |$$ |  $$ |$$$$$$$$/ $$ \__$$ |      $$ |  $$ |$$ |       _$$ |_ 
+    // $$    $$/ $$    $$/ /     $$/   $$  $$/ $$    $$ |$$ |$$ |  $$ |$$       |$$    $$ |      $$ |  $$ |$$ |      / $$   |
+    //  $$$$$$/   $$$$$$/  $$$$$$$/     $$$$/   $$$$$$$/ $$/ $$/   $$/  $$$$$$$/  $$$$$$$/       $$/   $$/ $$/       $$$$$$/ 
 
+    /// Checks when the first time a given alert rule raised for a particular device
+    /// Returns Option<EpochSeconds>
+    ///     None    => Hasn't raised
+    ///     Some(t) => Has raised, t is when it first raised in seconds since EPOCH
+    pub async fn sustained_check_first_raised(rule_id: AlertRuleId, device_id: DeviceId) -> Option<EpochSeconds> {
+        let instance = AlertBackend::instance();
+        let records = instance.sustained_rules_records.read().await;
+        let rules =  records.get(&rule_id);
+
+        let rules = match rules {
+            Some(r) => r,
+            None => return None,
+        };
+
+        return rules.get(&device_id).copied()
+    }
+
+    // Sets the raised record for the given rule id and given device, to NOW
+    pub async fn sustained_set_first_raised(rule_id: AlertRuleId, device_id: DeviceId) {
+        let instance = AlertBackend::instance();
+        let mut records = instance.sustained_rules_records.write().await;
+        let now: EpochSeconds = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0).into();
+
+        let entry = records.entry(rule_id)
+            .or_insert(HashMap::new())
+            .entry(device_id)
+            .or_insert(now);
+        *entry = now;
+    }
+
+    /// Evaluates, in relation to internal records of when the rule first returned true, if it should 
+    /// Now raise an alert event, given that sustained duration has passed
+    pub async fn sustained_should_raise(first_raised : EpochSeconds, sustained_duration_s: EpochSeconds) -> bool {
+
+        let now: EpochSeconds = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0).into();
+
+        let elapsed = now.saturating_sub(first_raised);
+
+        elapsed > sustained_duration_s 
+    }
+
+    pub async fn sustained_reset(rule_id: AlertRuleId, device_id: DeviceId) {
+        let instance = AlertBackend::instance();
+        let mut records = instance.sustained_rules_records.write().await;
+        let rules =  match records.get_mut(&rule_id) {
+            Some (r) => r,
+            None => return, // Rule doesn't even exist in the sustained record. Nothing further
+        };
+
+        rules.remove(&device_id); // we don't care if it was, as long as it isn't anymore
+    }
+    
+    
 
     //  __        __              __                                                     ______   _______   ______
     // /  |      /  |            /  |                                                   /      \ /       \ /      |
@@ -439,7 +527,7 @@ impl AlertBackend {
     }
 
     /// Last update (epoch seconds)
-    pub async fn last_update(&self) -> u64 {
+    pub async fn last_update(&self) -> EpochSeconds {
         let guard = self.last_update.read().await;
         *guard
     }
@@ -449,25 +537,24 @@ impl AlertBackend {
     /// refresh while holding the guard and then drop it when done.
     ///
     /// Returns None if an update is not needed (someone else updated recently).
-    pub async fn try_claim_update(&self, forced: bool) -> Option<RwLockWriteGuard<'_, u64>> {
-        let interval_secs = Config::instance().get_value_opt ("backend/model/cache/rule_set_cache_invalidation_s", "/").unwrap_or_default().as_u64().unwrap_or(3600);
+    // TODO: Force caller to update last_update, in case the caller fails out, it doens't register as an "update"
+    pub async fn try_claim_update(&self, forced: bool) -> Option<RwLockWriteGuard<'_, EpochSeconds>> {
+        let interval_secs: EpochSeconds = Config::instance().get_value_opt ("backend/model/cache/rule_set_cache_invalidation_s", "/").unwrap_or_default().as_u64().unwrap_or(3600).into();
 
         // fast read-only check
-        let now = SystemTime::now()
+        let now: EpochSeconds = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
-            .unwrap_or(0);
+            .unwrap_or(0).into();
 
         // if the update isn't due, and the caller didn't request a forced update
-        let last = *self.last_update.read().await;
+        let last: EpochSeconds = *self.last_update.read().await;
         if now.saturating_sub(last) < interval_secs && !forced {
             return None;
         }
 
-
         // Acquire write lock (recover from poison if necessary)
         let mut last_w = self.last_update.write().await;
-
 
         // Re-check under the write lock to avoid races
         if now.saturating_sub(*last_w) < interval_secs {

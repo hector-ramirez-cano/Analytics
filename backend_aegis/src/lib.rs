@@ -7,6 +7,7 @@ pub mod alerts;
 pub mod misc;
 
 pub mod config;
+pub mod types;
 
 
 #[derive(Debug)]

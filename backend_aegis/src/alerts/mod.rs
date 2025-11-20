@@ -1,13 +1,16 @@
 use std::collections::HashSet;
+use std::fmt;
 
 use sqlx::types::chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 
+use crate::alerts::alert_backend::AlertBackend;
 use crate::misc::{ts_to_datetime_utc, opt_ts_to_datetime_utc};
 use crate::model::facts::{fact_gathering_backend::FactMessage, generics::MetricValue};
 use crate::model::data::{device::Device, group::Group};
 use crate::model::cache::Cache;
+use crate::types::EpochSeconds;
 
 pub mod alert_severity;
 pub mod alert_predicate;
@@ -112,16 +115,58 @@ pub enum AlertReduceLogic {
     Unknown,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[serde(rename_all="lowercase")]
+pub enum AlertRuleKind {
+    /// Evaluates using only data in the current dataset.
+    /// Useful for predicates that don't require any external data.
+    /// Such as any time a given value is spotted, like 'SSH' in syslog
+    Simple,
+
+    /// Evaluates using the current data set, and the one previous to it
+    /// Useful for spotting changes (hence, delta) in usually static values.
+    /// Such as UP status, reachability, etc
+    Delta,
+
+    /// Evaluates using only the data in the current dataset,
+    /// but keeps track of when the alert first evaluated to true.
+    /// Once at least [seconds] have passed since first continuous true evaluations
+    /// it'll raise.
+    /// Useful for debouncing certain metrics, such as ICMP_RTT.
+    /// We don't care that a single packet took longer than it should've,
+    /// We only care if that behavior persists AND sustains throughout [seconds].
+    /// If at any evaluation point the value is false, the counter will reset
+    Sustained { seconds: EpochSeconds }
+}
+
+impl Default for AlertRuleKind {
+    fn default() -> Self {
+        AlertRuleKind::Simple
+    }
+}
+
+impl fmt::Display for AlertRuleKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AlertRuleKind::Simple => f.write_str("simple"),
+            AlertRuleKind::Delta => f.write_str("delta"),
+            AlertRuleKind::Sustained{seconds: _} => f.write_str("sustained"),
+        }.unwrap();
+
+        fmt::Result::Ok(())
+    }
+}
+
 pub mod alert_rule;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AlertRule {
-    #[serde(rename = "id")]
+    #[serde(rename = "id", default)] // Might not be present in the JSON definition, but will get overriden by the database actual values
     pub rule_id: i64,
 
-    #[serde(rename = "name")]
+    #[serde(rename = "name", default)] // Might not be present in the JSON definition, but will get overriden by the database actual values
     pub name: String,
 
-    #[serde(rename = "requires-ack")]
+    #[serde(rename = "requires-ack", default)] // Might not be present in the JSON definition, but will get overriden by the database actual values
     pub requires_ack: bool,
 
     #[serde(rename= "severity")]
@@ -139,8 +184,8 @@ pub struct AlertRule {
     #[serde(rename="data-source")]
     pub data_source: AlertDataSource,
 
-    #[serde(rename="is-delta-rule")]
-    pub is_delta_rule: bool
+    #[serde(rename="rule-type")]
+    pub rule_kind: AlertRuleKind
 }
 
 pub mod alert_filters;
@@ -202,26 +247,54 @@ type EvalResult<'a> = (&'a MetricValue, AlertPredicateOperation, &'a MetricValue
 
 impl EvaluableItem {
 
-    async fn eval_device<'a>(device: Device,  rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage) -> Option<(EvaluableItem, Vec<EvalResult<'a>>)> {
-        #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating rule for device={}", device.management_hostname); }
+    async fn eval_device<'a>(device: Device, rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage) -> Option<(EvaluableItem, Vec<EvalResult<'a>>)> {
         let dataset_right = &dataset_right.get(&device.management_hostname)?.metrics;
 
-        if rule.is_delta_rule {
-            #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating rule for device={} is delta", device.management_hostname); }
+        #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating rule for device={} kind is {}", device.management_hostname, rule.rule_kind); }
+        match rule.rule_kind {
+            AlertRuleKind::Simple => {
+                if rule.eval_single(&dataset_right) {
+                    let which = rule.raising_values(&dataset_right, &dataset_right);
+                    Some((EvaluableItem::Device(device), which))
+                } else { None }
+            },
+
+            AlertRuleKind::Delta => {
+                let dataset_left = &dataset_left.get(&device.management_hostname)?.metrics;
+                if rule.eval_delta(dataset_left, dataset_right) {
+                    let which = rule.raising_values(dataset_left, dataset_right);
+                    Some((EvaluableItem::Device(device), which))
+                } else { None }
+            },
             
-            let dataset_left = &dataset_left.get(&device.management_hostname)?.metrics;
-            if rule.eval_delta(dataset_left, dataset_right) {
-                let which = rule.raising_values(dataset_left, dataset_right);
-                Some((EvaluableItem::Device(device), which))
-            } else { None }
-        } 
-        // Not a delta rule
-        else {
-            #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating rule for device={} is not delta", device.management_hostname); }
-            if rule.eval_single(&dataset_right) {
-                let which = rule.raising_values(&dataset_right, &dataset_right);
-                Some((EvaluableItem::Device(device), which))
-            } else { None }
+            AlertRuleKind::Sustained { seconds } => {
+                if !rule.eval_single(&dataset_right) {
+                    // returned false, we let the backend know that it should reset the counter (if any)
+                    AlertBackend::sustained_reset(rule.rule_id, device.device_id).await;
+                    return None
+                } 
+                
+                // Rule returned true
+                // has it returned true before?
+                let t = match AlertBackend::sustained_check_first_raised(rule.rule_id, device.device_id).await {
+                    Some(t) => t ,
+                    None => {
+                        // Hasn't raised before, we insert it
+                        AlertBackend::sustained_set_first_raised(rule.rule_id, device.device_id).await;
+                        return None // return None, we can't raise the alert yet
+                    },
+                };
+                // It has, we check if it's time to raise
+                if AlertBackend::sustained_should_raise(t, seconds).await {
+                    // Dayum, we need to raise
+                    let which = rule.raising_values(dataset_right, dataset_right);
+                    Some((EvaluableItem::Device(device), which))
+                } else {
+                    // Not yet, Ferb
+                    None
+                }
+                
+            },
         }
     }
 

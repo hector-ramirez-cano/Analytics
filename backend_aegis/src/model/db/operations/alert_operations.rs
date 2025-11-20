@@ -133,14 +133,21 @@ pub async fn get_alert_rules(postgres_pool: &Pool<Postgres>) -> Result<Vec<Alert
 
     let mut result = Vec::with_capacity(rules.len());
     for record in rules {
-        let rule = match AlertRule::from_json(record.rule_id, record.rule_name.clone(), record.requires_ack, record.rule_definition) {
-            Some(r) => r,
-            None => {
-                log::warn!("[WARN ][ALERTS][LOADS] Failed to load rule {}-'{}' from database- Definition is invalid. Ignoring...", record.rule_id, record.rule_name);
-                println!("[WARN ][ALERTS][LOADS] Failed to load rule {}-'{}' from database- Definition is invalid. Ignoring...", record.rule_id, record.rule_name);
+        let mut rule: AlertRule = match serde_json::from_value(record.rule_definition) {
+            Ok(r) => r,
+            Err(e) => {
+                log::warn!("[WARN ][ALERTS][LOADS] Failed to load rule {}-'{}' from database- Definition is invalid. Error = '{e}'. Ignoring...", record.rule_id, record.rule_name);
+                println!("[WARN ][ALERTS][LOADS] Failed to load rule {}-'{}' from database- Definition is invalid. Error = '{e}'. Ignoring...", record.rule_id, record.rule_name);
                 continue;
             }
         };
+
+        // Database is king and ruler above all!
+        // don't trust Ye mighty json contents!
+        // Overwrite with actual database rows for:
+        rule.rule_id      = record.rule_id;
+        rule.name         = record.rule_name.clone();
+        rule.requires_ack = record.requires_ack;
 
         result.push(rule);
     }
