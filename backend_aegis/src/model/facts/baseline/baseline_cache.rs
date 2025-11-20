@@ -2,14 +2,15 @@ use std::{sync::Arc, time::{SystemTime, UNIX_EPOCH}};
 
 use tokio::sync::{RwLockWriteGuard, RwLock};
 
-use crate::model::facts::{baseline::{BaselineCache, INSTANCE}, generics::{Metrics, StatusT}};
+use crate::model::facts::baseline::{BaselineCache, INSTANCE};
+use crate::types::{Metrics, Status};
 
 impl BaselineCache {
     /// Internal constructor. Private
     fn new(influx_client: influxdb2::Client) -> Self {
         Self {
             influx_client,
-            metrics: RwLock::new((Metrics::new(), StatusT::new())),
+            metrics: RwLock::new((Metrics::new(), Status::new())),
             last_update: RwLock::new(0) // Begin with last update as EPOCH, to force an initial update
         }
     }

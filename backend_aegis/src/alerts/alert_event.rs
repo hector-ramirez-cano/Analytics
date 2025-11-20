@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 
-use crate::alerts::{AlertEvent, AlertSeverity};
+use crate::{alerts::{AlertEvent, AlertSeverity}, types::{AlertRuleId, AlertTargetId}};
 
 
 impl AlertEvent {
@@ -8,9 +8,9 @@ impl AlertEvent {
         requires_ack: bool,
         severity: AlertSeverity,
         message: String,
-        target_id: i64,
+        target_id: AlertTargetId,
         ack_time: Option<DateTime<Utc>>,
-        rule_id: i64,
+        rule_id: AlertRuleId,
         value: String,
     ) -> Self {
         let now = Utc::now();

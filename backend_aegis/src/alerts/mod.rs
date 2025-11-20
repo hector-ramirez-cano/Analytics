@@ -7,10 +7,11 @@ use sqlx::{FromRow, Type};
 
 use crate::alerts::alert_backend::AlertBackend;
 use crate::misc::{ts_to_datetime_utc, opt_ts_to_datetime_utc};
-use crate::model::facts::{fact_gathering_backend::FactMessage, generics::MetricValue};
+use crate::model::facts::{fact_gathering_backend::FactMessage};
 use crate::model::data::{device::Device, group::Group};
 use crate::model::cache::Cache;
-use crate::types::EpochSeconds;
+use crate::types::{AlertAckActor, AlertEventId, AlertRuleId, AlertTargetId, EpochSeconds};
+use crate::types::MetricValue;
 
 pub mod alert_severity;
 pub mod alert_predicate;
@@ -55,7 +56,7 @@ pub enum AlertPredicateOperation {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct AlertEvent {
     #[serde(rename = "alert-id")]
-    pub alert_id: i64,
+    pub alert_id: AlertEventId,
 
     #[serde(rename = "alert-time", with = "chrono::serde::ts_seconds_option")]
     pub alert_time: Option<DateTime<Utc>>,
@@ -71,14 +72,14 @@ pub struct AlertEvent {
     pub message: String,
 
     #[serde(rename = "target-id")]
-    pub target_id: i64,
+    pub target_id: AlertTargetId,
 
     pub ws_notified: bool,
     pub db_notified: bool,
     pub acked: bool,
 
     #[serde(rename = "rule-id")]
-    pub rule_id: Option<i64>,
+    pub rule_id: Option<AlertRuleId>,
 
     pub value: String,
 }
@@ -161,7 +162,7 @@ pub mod alert_rule;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AlertRule {
     #[serde(rename = "id", default)] // Might not be present in the JSON definition, but will get overriden by the database actual values
-    pub rule_id: i64,
+    pub rule_id: AlertRuleId,
 
     #[serde(rename = "name", default)] // Might not be present in the JSON definition, but will get overriden by the database actual values
     pub name: String,
@@ -173,7 +174,7 @@ pub struct AlertRule {
     pub severity: AlertSeverity,
 
     #[serde(rename = "target")]
-    pub target_item: i64,
+    pub target_item: AlertTargetId,
 
     #[serde(rename = "reduce-logic")]
     pub reduce_logic: AlertReduceLogic,
@@ -198,7 +199,7 @@ pub struct AlertFilters {
     pub end_time: DateTime<Utc>,
 
     #[serde(skip_serializing_if = "Option::is_none", rename = "alert-id")]
-    pub alert_id: Option<i64>,
+    pub alert_id: Option<AlertEventId>,
 
     #[serde(default, deserialize_with = "opt_ts_to_datetime_utc", skip_serializing_if = "Option::is_none", rename = "ack-start")]
     pub ack_start_time: Option<DateTime<Utc>>,
@@ -213,10 +214,10 @@ pub struct AlertFilters {
     pub message: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none", rename = "ack-actor")]
-    pub ack_actor: Option<i64>,
+    pub ack_actor: Option<AlertAckActor>,
 
     #[serde(skip_serializing_if = "Option::is_none", rename = "target-id")]
-    pub target_id: Option<i64>,
+    pub target_id: Option<AlertTargetId>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub offset: Option<i64>,

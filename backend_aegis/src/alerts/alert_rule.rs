@@ -1,5 +1,5 @@
 
-use crate::model::facts::generics::{MetricSet, MetricValue};
+use crate::types::{MetricSet, MetricValue};
 use crate::alerts::{AlertPredicateOperation, AlertReduceLogic, AlertRule, AlertRuleKind};
 
 impl AlertRule {

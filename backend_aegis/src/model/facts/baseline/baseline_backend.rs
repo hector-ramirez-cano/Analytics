@@ -2,7 +2,8 @@
 
 use std::sync::Arc;
 
-use crate::model::{cache::Cache, db, facts::{baseline::BaselineCache, generics::{Metrics, StatusT}}};
+use crate::model::{cache::Cache, db, facts::{baseline::BaselineCache}};
+use crate::types::{Metrics, Status};
 
 async fn update_cache(baseline_cache: &Arc<BaselineCache>, forced: bool) {
     use db::operations::influx_operations::get_baseline_metrics;
@@ -31,7 +32,7 @@ async fn update_cache(baseline_cache: &Arc<BaselineCache>, forced: bool) {
     }
 }
 
-pub async fn gather_facts() -> (Metrics, StatusT) {
+pub async fn gather_facts() -> (Metrics, Status) {
     log::info!("[INFO ][FACTS][BASELINE] Starting baseline gathering");
 
     let cache = BaselineCache::instance();
@@ -39,7 +40,7 @@ pub async fn gather_facts() -> (Metrics, StatusT) {
     update_cache(&cache, false).await;
     let metrics = cache.metrics.read().await;
 
-    (metrics.0.clone(), StatusT::new())
+    (metrics.0.clone(), Status::new())
 }
 
 pub fn init(influx_client: &influxdb2::Client) {

@@ -2,10 +2,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::FromRow;
 
+use crate::types::DashboardId;
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Dashboard {
     #[serde(rename="dasboard-id")]
-    pub dashboard_id: i64,
+    pub dashboard_id: DashboardId,
 
     #[serde(rename="name")]
     pub dashboard_name: String,
@@ -15,7 +17,7 @@ pub struct Dashboard {
 }
 
 impl Dashboard {
-    pub fn new(dashboard_id: i64, dashboard_name: String, members: Vec<DashboardItem>) -> Self {
+    pub fn new(dashboard_id: DashboardId, dashboard_name: String, members: Vec<DashboardItem>) -> Self {
         Self { dashboard_id, dashboard_name, members }
     }
 }
@@ -24,7 +26,7 @@ impl Dashboard {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct DashboardItem {
     #[serde(rename="id")]
-    pub dashboard_id: i64,
+    pub dashboard_id: DashboardId,
     
     #[serde(rename="row-start")]
     pub row_start   : i16,

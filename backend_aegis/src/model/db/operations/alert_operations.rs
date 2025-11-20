@@ -1,11 +1,11 @@
 
 use sqlx::{Pool, Postgres, QueryBuilder};
 
-use crate::{alerts::{AlertEvent, AlertFilters, AlertRule, AlertSeverity}, model::db::operations::RowCount};
+use crate::{alerts::{AlertEvent, AlertFilters, AlertRule, AlertSeverity}, model::db::operations::RowCount, types::AlertEventId};
 
 
 
-pub async fn insert_alert(alert: &AlertEvent, pool : &sqlx::Pool<sqlx::Postgres>) -> Result<i64, sqlx::Error> {
+pub async fn insert_alert(alert: &AlertEvent, pool : &sqlx::Pool<sqlx::Postgres>) -> Result<AlertEventId, sqlx::Error> {
     let alert_time = alert.alert_time.unwrap_or_default();
     let severity: AlertSeverity = alert.severity;
 

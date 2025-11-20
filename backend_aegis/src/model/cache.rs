@@ -16,7 +16,7 @@ use crate::model::data::link::Link;
 use crate::model::data::group::Group;
 use crate::model::db::update_topology::update_topology_cache;
 use crate::model::facts::fact_gathering_backend::FactMessage;
-use crate::model::facts::generics::{ExposedFields, MetricValue};
+use crate::types::{DeviceId, EpochSeconds, EvaluableItemId, GroupId, ItemId, LinkId, ExposedFields, MetricValue};
 
 async fn serialize_map<T: Serialize>(lock: &RwLock<HashMap<i64, T>>) -> Result<String, serde_json::Error> {
     serde_json::to_string(&*lock.read().await)
@@ -24,10 +24,10 @@ async fn serialize_map<T: Serialize>(lock: &RwLock<HashMap<i64, T>>) -> Result<S
 
 pub struct Cache {
     pub facts: RwLock<FactMessage>,
-    devices: RwLock<HashMap<i64, Device>>,
-    links: RwLock<HashMap<i64, Link>>,
-    groups: RwLock<HashMap<i64, Group>>,
-    last_update: RwLock<u64>, // epoch seconds
+    devices: RwLock<HashMap<DeviceId, Device>>,
+    links: RwLock<HashMap<LinkId, Link>>,
+    groups: RwLock<HashMap<GroupId, Group>>,
+    last_update: RwLock<EpochSeconds>, // epoch seconds
 }
 
 impl Cache {
@@ -67,36 +67,36 @@ impl Cache {
         self.update_last_update().await;
     }
 
-    pub async fn get_device(&self, id: i64) -> Option<Device> {
+    pub async fn get_device(&self, id: DeviceId) -> Option<Device> {
         let r = self.devices.read().await;
         r.get(&id).cloned()
     }
 
-    pub async fn get_device_hostname(&self, id: i64) -> Option<String> {
+    pub async fn get_device_hostname(&self, id: DeviceId) -> Option<String> {
         let r = self.devices.read().await;
 
         Some(r.get(&id)?.management_hostname.clone())
     }
 
-    pub async fn get_device_hostnames(&self) -> Option<HashMap<i64, String>> {
+    pub async fn get_device_hostnames(&self) -> Option<HashMap<DeviceId, String>> {
         let r = self.devices.read().await;
 
         let map = r.iter().map(|(id, device)| (id.clone(), device.management_hostname.clone())).collect();
         Some(map)
     }
 
-    pub async fn has_device(&self, id: i64) -> bool {
+    pub async fn has_device(&self, id: DeviceId) -> bool {
         let r = self.devices.read().await;
         r.contains_key(&id)
     }
 
-    pub async fn get_device_requested_metrics(&self, id: i64) -> Option<HashSet<String>>{
+    pub async fn get_device_requested_metrics(&self, id: DeviceId) -> Option<HashSet<String>>{
 
         let r = self.devices.read().await;
         Some(r.get(&id)?.configuration.requested_metrics.clone())
     }
 
-    pub async fn get_device_id(&self, management_hostname: &str) -> Option<i64> {
+    pub async fn get_device_id(&self, management_hostname: &str) -> Option<DeviceId> {
         let r = self.devices.read().await;
         let d = r.iter().find(|(_, d)| d.management_hostname==management_hostname);
         if let Some((id, _)) = d {
@@ -107,7 +107,7 @@ impl Cache {
         }
     }
 
-    pub async fn set_device_status(&self, id: i64, status : &DeviceStatus, exposed_fields: &ExposedFields) {
+    pub async fn set_device_status(&self, id: DeviceId, status : &DeviceStatus, exposed_fields: &ExposedFields) {
         let mut w = self.devices.write().await;
 
         if let Some(device) = w.get_mut(&id) {
@@ -117,7 +117,7 @@ impl Cache {
     }
 
 
-    pub async fn remove_device(&self, id: i64) -> Option<Device> {
+    pub async fn remove_device(&self, id: DeviceId) -> Option<Device> {
         let mut w = self.devices.write().await;
         let removed = w.remove(&id);
         if removed.is_some() {
@@ -137,17 +137,17 @@ impl Cache {
         self.update_last_update().await;
     }
 
-    pub async fn get_link(&self, id: i64) -> Option<Link> {
+    pub async fn get_link(&self, id: LinkId) -> Option<Link> {
         let r = self.links.read().await;
         r.get(&id).cloned()
     }
 
-    pub async fn has_link(&self, id: i64) -> bool {
+    pub async fn has_link(&self, id: LinkId) -> bool {
         let r = self.links.read().await;
         r.contains_key(&id)
     }
 
-    pub async fn remove_link(&self, id: i64) -> Option<Link> {
+    pub async fn remove_link(&self, id: LinkId) -> Option<Link> {
         let mut w = self.links.write().await;
         let removed = w.remove(&id);
         if removed.is_some() {
@@ -167,19 +167,19 @@ impl Cache {
         self.update_last_update().await;
     }
 
-    pub async fn get_group(&self, id: i64) -> Option<Group> {
+    pub async fn get_group(&self, id: GroupId) -> Option<Group> {
         let r = self.groups.read().await;
         r.get(&id).cloned()
     }
 
-    pub async fn get_group_members(&self, id: i64) -> Option<Vec<i64>> {
+    pub async fn get_group_members(&self, id: GroupId) -> Option<Vec<ItemId>> {
         let r = self.groups.read().await;
         Some(r.get(&id)?.members.clone()?)
     }
 
     // TODO: Enforce no loops are held for any given group. Db already enforces this, but the backend should enforce this also, just in case
     /// Recursively iterates into inner groups to get the device ids that are held within this group and this group's subgroups
-    pub async fn get_group_device_ids(&self, id: i64) -> Option<HashSet<i64>> {
+    pub async fn get_group_device_ids(&self, id: GroupId) -> Option<HashSet<DeviceId>> {
         // quick existence check for the start group (match original behavior)
         {
             let g = self.groups.read().await;
@@ -188,9 +188,9 @@ impl Cache {
             }
         }
 
-        let mut visited: HashSet<i64> = HashSet::new();
-        let mut result_devices: HashSet<i64> = HashSet::new();
-        let mut stack: VecDeque<i64> = VecDeque::new();
+        let mut visited: HashSet<GroupId> = HashSet::new();
+        let mut result_devices: HashSet<DeviceId> = HashSet::new();
+        let mut stack: VecDeque<GroupId> = VecDeque::new();
 
         // seed with the starting group id
         visited.insert(id);
@@ -232,12 +232,12 @@ impl Cache {
         Some(result_devices)
     }
 
-    pub async fn has_group(&self, id: i64) -> bool {
+    pub async fn has_group(&self, id: GroupId) -> bool {
         let r = self.groups.read().await;
         r.contains_key(&id)
     }
 
-    pub async fn remove_group(&self, id: i64) -> Option<Group> {
+    pub async fn remove_group(&self, id: GroupId) -> Option<Group> {
         let mut w = self.groups.write().await;
         let removed = w.remove(&id);
         if removed.is_some() {
@@ -250,7 +250,7 @@ impl Cache {
         serialize_map(&self.groups).await
     }
 
-    pub async fn get_evaluable_item(&self, id: i64) -> Option<EvaluableItem> {
+    pub async fn get_evaluable_item(&self, id: EvaluableItemId) -> Option<EvaluableItem> {
         let r = self.devices.read().await;
 
         match r.get(&id) {
@@ -280,7 +280,7 @@ impl Cache {
     }
 
     // Update API
-    pub async fn update_all(&self, devices: HashMap<i64, Device>, links: HashMap<i64, Link>, groups: HashMap<i64, Group>) {
+    pub async fn update_all(&self, devices: HashMap<DeviceId, Device>, links: HashMap<LinkId, Link>, groups: HashMap<GroupId, Group>) {
 
         // Update devices
         let mut w = self.devices.write().await;
@@ -308,18 +308,18 @@ impl Cache {
 
 
     /// Last update (epoch seconds)
-    pub async fn last_update(&self) -> u64 {
+    pub async fn last_update(&self) -> EpochSeconds {
         let guard = self.last_update.read().await;
         *guard
     }
 
     /// Updates the last_update variable to the current time since EPOCH
     async fn update_last_update(&self) {
-        let now = SystemTime::now()
+        let now: EpochSeconds = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
-            .as_secs();
-        let mut w: RwLockWriteGuard<'_, u64> = self.last_update.write().await;
+            .as_secs().into();
+        let mut w: RwLockWriteGuard<'_, EpochSeconds> = self.last_update.write().await;
         *w = now;
     }
 
@@ -328,17 +328,17 @@ impl Cache {
     /// refresh while holding the guard and then drop it when done.
     ///
     /// Returns None if an update is not needed (someone else updated recently).
-    pub async fn try_claim_update(&self, forced: bool) -> Option<RwLockWriteGuard<'_, u64>> {
-        let interval_secs = Config::instance().get_value_opt ("backend/controller/cache/cache_invalidation_s", "/").unwrap_or_default().as_u64().unwrap_or(60);
+    pub async fn try_claim_update(&self, forced: bool) -> Option<RwLockWriteGuard<'_, EpochSeconds>> {
+        let interval_secs: EpochSeconds = Config::instance().get_value_opt ("backend/controller/cache/cache_invalidation_s", "/").unwrap_or_default().as_u64().unwrap_or(60).into();
 
         // fast read-only check
-        let now = SystemTime::now()
+        let now: EpochSeconds = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
-            .unwrap_or(0);
+            .unwrap_or(0).into();
 
         // if the update isn't due, and the caller didn't request a forced update
-        let last = *self.last_update.read().await;
+        let last: EpochSeconds = *self.last_update.read().await;
         if now.saturating_sub(last) < interval_secs && !forced {
             return None;
         }
@@ -359,11 +359,11 @@ impl Cache {
         Some(last_w)
     }
 
-    pub fn current_epoch_secs() -> u64 {
+    pub fn current_epoch_secs() -> EpochSeconds {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
-            .unwrap_or(0)
+            .unwrap_or(0).into()
     }
 
     pub async fn as_json(&self) -> Result<serde_json::Value, AegisError> {

@@ -14,10 +14,11 @@ use crate::model::data::link_type::LinkType;
 use crate::model::data::device_configuration::DeviceConfiguration;
 use crate::model::data::DataSource;
 use crate::model::db::update_topology::update_topology_cache;
+use crate::types::{DeviceId, GroupId, LinkId};
 
 #[derive(sqlx::FromRow)]
 struct DeviceDataSource {
-    device_id: i64,
+    device_id: DeviceId,
     fact_data_source: DataSource,
 }
 
@@ -70,9 +71,9 @@ pub async fn get_topology_view_as_json(pool: &sqlx::Pool<Postgres>) -> Result<se
 
 
 
-pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<i64, Device>, AegisError>{
+pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<DeviceId, Device>, AegisError>{
     // Query datasources
-    let mut datasources : HashMap<i64, HashSet<DataSource>> = HashMap::new();
+    let mut datasources : HashMap<DeviceId, HashSet<DataSource>> = HashMap::new();
     let rows = sqlx::query_as!(
         DeviceDataSource, 
         r#"
@@ -138,7 +139,7 @@ pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<i64, Device>, 
 }
 
 
-pub async fn query_links(pool: &sqlx::PgPool) -> Result<HashMap<i64, Link>, AegisError> {
+pub async fn query_links(pool: &sqlx::PgPool) -> Result<HashMap<LinkId, Link>, AegisError> {
     let rows = sqlx::query_as!(
         Link,
         r#"SELECT link_id, side_a, side_b, side_a_iface, side_b_iface, link_type::TEXT as "link_type: LinkType", link_subtype FROM Analytics.links;"#
@@ -155,7 +156,7 @@ pub async fn query_links(pool: &sqlx::PgPool) -> Result<HashMap<i64, Link>, Aegi
     Ok(links)
 }
 
-pub async fn query_groups(pool: &sqlx::PgPool) -> Result<HashMap<i64, Group>, AegisError>{
+pub async fn query_groups(pool: &sqlx::PgPool) -> Result<HashMap<GroupId, Group>, AegisError>{
     let rows = sqlx::query_as!(
         Group,
         r#"

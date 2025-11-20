@@ -4,7 +4,7 @@ use std::str::FromStr;
 use ordered_float::OrderedFloat;
 
 use crate::alerts::AlertPredicateOperation;
-use crate::model::facts::generics::MetricValue;
+use crate::types::MetricValue;
 
 impl AlertPredicateOperation {
     pub fn eval(&self, left: &MetricValue, right: &MetricValue) -> bool {

@@ -2,7 +2,8 @@ use std::{collections::{HashMap}, env, io, path::{Component, Path, PathBuf}};
 
 use pyo3::{Bound, PyAny, PyErr, Python, types::{PyAnyMethods, PyDict, PyIterator, PyModule}};
 
-use crate::{config::Config, model::{cache::Cache, data::device_state::DeviceStatus, facts::{ansible::ansible_status::AnsibleStatus, generics::{MetricValue, Metrics, StatusT, ToMetrics}}}};
+use crate::{config::Config, model::{cache::Cache, data::device_state::DeviceStatus, facts::{ansible::ansible_status::AnsibleStatus, generics::ToMetrics}}};
+use crate::types::{MetricValue, Metrics, Status};
 
 fn normalize_no_symlink(p: &Path) -> PathBuf {
     let mut out = PathBuf::new();
@@ -43,7 +44,7 @@ pub fn abspath<P: AsRef<Path>>(path: P) -> io::Result<PathBuf> {
 /// 
 /// Internally, it calls ansible_runner via PyO3, as that's the official
 /// Ansible library or programming API
-async fn run_playbook(targets: Vec<String>) -> (Metrics, StatusT) {
+async fn run_playbook(targets: Vec<String>) -> (Metrics, Status) {
     let config   = Config::instance();
     let playbook :String = config.get("backend/model/playbooks/fact_gathering", "/")
         .expect("Config file does not contain playbook for fact gathering");
@@ -58,7 +59,7 @@ async fn run_playbook(targets: Vec<String>) -> (Metrics, StatusT) {
     let inventory = format!("[servers]\n{targets}");
 
     let mut metrics: Metrics = HashMap::new();
-    let mut status: StatusT = HashMap::new();
+    let mut status: Status = HashMap::new();
 
     /*
         All this is equivalent to this python code:
@@ -93,9 +94,9 @@ async fn run_playbook(targets: Vec<String>) -> (Metrics, StatusT) {
 
         return metrics, status
      */
-    let result = rocket::tokio::task::spawn_blocking(move || -> Result<(Metrics, StatusT), PyErr> {
+    let result = rocket::tokio::task::spawn_blocking(move || -> Result<(Metrics, Status), PyErr> {
         // acquire the python environment, and extract data
-        Python::attach(|py| -> Result<(Metrics, StatusT), PyErr> {
+        Python::attach(|py| -> Result<(Metrics, Status), PyErr> {
             let ansible_runner = PyModule::import(py, "ansible_runner").expect("[FATAL]Ansible runner python module is not present");
             let json_mod = PyModule::import(py, "json").expect("[FATAL]Json python module is not present!");
 
@@ -204,7 +205,7 @@ async fn run_playbook(targets: Vec<String>) -> (Metrics, StatusT) {
     }
 }
 
-pub async fn gather_facts() -> (Metrics, StatusT) {
+pub async fn gather_facts() -> (Metrics, Status) {
     log::info!("[INFO ][FACTS][ANSIBLE] Starting playbook execution");
     
     let targets = Cache::instance().ansible_inventory().await;

@@ -5,9 +5,9 @@ use rocket::futures;
 use tokio::task;
 use futures::future::join_all;
 
+use crate::types::{MetricValue, Metrics, Status};
 use crate::model::cache::Cache;
 use crate::model::data::device_state::DeviceStatus;
-use crate::model::facts::generics::{MetricValue, Metrics, StatusT};
 use crate::model::facts::icmp::icmp_status::IcmpStatus;
 
 lazy_static::lazy_static! {
@@ -89,7 +89,7 @@ fn ping_host_once(host: &str) -> io::Result<(i32, String, IcmpStatus, f64, f64)>
 
 async fn ping_devices(
     hosts: Vec<String>,
-) -> (Metrics, StatusT) {
+) -> (Metrics, Status) {
     // spawn_blocking for each host (equivalent to loop.run_in_executor(None, func, host))
     let tasks: Vec<_> = hosts
         .into_iter()
@@ -109,7 +109,7 @@ async fn ping_devices(
 
     // prepare output maps
     let mut metrics_map: Metrics = HashMap::new();
-    let mut status_map: StatusT = HashMap::new();
+    let mut status_map: Status = HashMap::new();
 
     for join_res in join_results {
         match join_res {
@@ -163,7 +163,7 @@ async fn ping_devices(
 
 pub async fn gather_facts(
     // TODO: Change Metric into MetricValue to make it generic
-) -> (Metrics, StatusT) {
+) -> (Metrics, Status) {
     log::info!("[INFO ][FACTS][ICMP] Starting ping sweep...");
     let targets = Cache::instance().icmp_inventory().await;
 

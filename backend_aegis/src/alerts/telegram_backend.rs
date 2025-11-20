@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use tgbot::{api::Client, handler::{LongPoll, UpdateHandler}, types::{ChatPeerId, ParseMode}};
 use tokio::sync::{RwLock, mpsc::Receiver};
 
-use crate::{alerts::{AlertEvent, AlertSeverity, alert_backend::AlertBackend}, config::Config, model::{cache::Cache, data::device::Device, db::operations::telegram_operations}};
+use crate::{alerts::{AlertEvent, AlertSeverity, alert_backend::AlertBackend}, config::Config, model::{cache::Cache, data::device::Device, db::operations::telegram_operations}, types::{AlertEventId, TelegramTypeId}};
 
 // Emoji map as a function returning &'static str
 fn emoji_map(severity: &AlertSeverity) -> &'static str {
@@ -58,7 +58,7 @@ pub struct TelegramBackend {
     client: Client,
     pool: sqlx::PgPool,
 
-    subscribed_chats: RwLock<HashSet<i64>>
+    subscribed_chats: RwLock<HashSet<TelegramTypeId>>
 }
 static INSTANCE: OnceLock<Arc<TelegramBackend>> = OnceLock::new();
 impl TelegramBackend {
@@ -99,7 +99,7 @@ impl TelegramBackend {
             let mut w = instance.subscribed_chats.write().await;
             w.clear();
 
-            w.extend(subscribed.into_iter().map(|id| id as i64));
+            w.extend(subscribed.into_iter().map(|id| id as TelegramTypeId));
         }
 
         log::info!("[INFO ][ALERTS][TELEGRAM] Updated user cache")
@@ -157,7 +157,7 @@ struct Handler { client: Client }
 #[derive(Serialize, Deserialize, Debug)]
 struct TelegramAckActor {
     chat_id: ChatPeerId,
-    alert_id: i64,
+    alert_id: AlertEventId,
     acked: bool,
 }
 
@@ -173,7 +173,7 @@ impl Handler {
         }
     }
 
-    async fn send_message_button(client: &Client, chat_id: ChatPeerId, message: &str, alert_id: i64) {
+    async fn send_message_button(client: &Client, chat_id: ChatPeerId, message: &str, alert_id: AlertEventId) {
         let message = message.replace(".", "\\.");
         use tgbot::types::*;
         let yes_btn = InlineKeyboardButton::for_callback_data_struct("Ack", &TelegramAckActor{ chat_id, alert_id: alert_id, acked: true}).unwrap();

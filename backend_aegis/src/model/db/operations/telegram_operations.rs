@@ -1,13 +1,15 @@
 use sqlx::FromRow;
 use tgbot::types::ChatPeerId;
 
+use crate::types::TelegramTypeId;
+
 
 #[derive(FromRow)]
 struct TelegramUser {
-    telegram_user_id: i64
+    telegram_user_id: TelegramTypeId
 }
 
-pub async fn get_subscribed_users(pool: &sqlx::PgPool) -> Vec<i64> {
+pub async fn get_subscribed_users(pool: &sqlx::PgPool) -> Vec<TelegramTypeId> {
     let items = sqlx::query_as!(TelegramUser, "SELECT telegram_user_id FROM ClientIdentity.telegram_receiver WHERE authenticated AND subscribed;").fetch_all(pool).await;
 
     let items = match items {

@@ -1,18 +1,18 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::model::data::link_type::LinkType;
+use crate::{model::data::link_type::LinkType, types::{DeviceId, LinkId}};
 
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Link {
     #[serde(rename = "id")]
-    pub link_id: i64,
+    pub link_id: LinkId,
 
     #[serde(rename = "side-a")]
-    pub side_a: i64,
+    pub side_a: DeviceId,
 
     #[serde(rename = "side-b")]
-    pub side_b: i64,
+    pub side_b: DeviceId,
 
     #[serde(rename = "side-a-iface")]
     pub side_a_iface: String,

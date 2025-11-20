@@ -17,7 +17,7 @@ use crate::model::data::device::Device;
 use crate::model::data::device_state::DeviceStatus;
 use crate::model::db::operations::alert_operations;
 use crate::model::facts::fact_gathering_backend::{DeviceFacts, FactGatheringBackend, FactMessage};
-use crate::model::facts::generics::{ExposedFields, MetricValue};
+use crate::types::{ExposedFields, MetricValue};
 use crate::syslog::syslog_backend::SyslogBackend;
 use crate::syslog::SyslogMessage;
 
@@ -521,7 +521,7 @@ impl AlertBackend {
         }
     }
 
-    pub async fn get_rule_name(&self, id: i64) -> Option<String> {
+    pub async fn get_rule_name(&self, id: AlertId) -> Option<String> {
         let w = self.rule_names.read().await;
         Some(w.get(&id)?.clone())
     }

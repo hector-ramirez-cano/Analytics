@@ -6,6 +6,7 @@ use sqlx::FromRow;
 use sqlx::Type;
 
 use crate::misc::ts_to_datetime_utc;
+use crate::types::{SyslogMessageId, DeviceHostname};
 
 pub mod syslog_backend;
 pub mod syslog_types;
@@ -13,7 +14,7 @@ pub mod syslog_filters;
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct SyslogMessage {
-    pub id: i64,
+    pub id: SyslogMessageId,
 
     pub facility: SyslogFacility,
 
@@ -21,7 +22,7 @@ pub struct SyslogMessage {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     #[sqlx(rename="from_host")]
-    pub source: Option<String>,
+    pub source: Option<DeviceHostname>,
 
     #[serde(skip_serializing_if = "Option::is_none", rename = "received-at")]
     pub received_at: Option<DateTime<Utc>>,

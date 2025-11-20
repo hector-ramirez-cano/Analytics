@@ -13,7 +13,8 @@ use crate::model::data::device_state::DeviceStatus;
 use crate::model::db;
 use crate::model::facts::ansible::ansible_backend;
 use crate::model::facts::baseline::baseline_backend;
-use crate::model::facts::generics::{DeviceHostname, ExposedFields, MetricSet, Metrics, StatusT, recursive_merge};
+use crate::model::facts::generics::recursive_merge;
+use crate::types::{DeviceHostname, ExposedFields, MetricSet, Metrics, Status};
 use crate::model::facts::icmp::icmp_backend;
 
 
@@ -205,7 +206,7 @@ impl FactGatheringBackend {
             let handles = vec![icmp_handle, ansible_handle, baseline_handle];
 
             // Gather results off the tasks results
-            let results: Vec<Result<(Metrics, StatusT), tokio::task::JoinError>> = join_all(handles).await;
+            let results: Vec<Result<(Metrics, Status), tokio::task::JoinError>> = join_all(handles).await;
             log::info!("[INFO ][FACTS] Gathered facts!");
 
             let results = Self::join_results(results);
@@ -222,10 +223,10 @@ impl FactGatheringBackend {
     }
 
 
-    pub fn join_results(results: Vec<Result<(Metrics, StatusT), tokio::task::JoinError>>) -> FactMessage {
+    pub fn join_results(results: Vec<Result<(Metrics, Status), tokio::task::JoinError>>) -> FactMessage {
 
         let mut combined_metrics = Metrics::new();
-        let mut combined_status = StatusT::new();
+        let mut combined_status = Status::new();
         for source_results in results {
             let (metrics, status) = match source_results {
                 Err(_) => continue,

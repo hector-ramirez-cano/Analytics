@@ -11,8 +11,8 @@ use crate::model::db::health_check::check_connections;
 use crate::model::db::operations::dashboard_operations::get_dashboards_as_json;
 use crate::model::db::operations::influx_operations::{self, InfluxFilter};
 use crate::model::facts::fact_gathering_backend::FactMessage;
-use crate::model::facts::generics::{DeviceHostname, MetricValue, Metrics};
 use crate::syslog::{SyslogFilters, SyslogMessage};
+use crate::types::{DeviceId, ItemId, DeviceHostname, MetricValue, Metrics};
 
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
@@ -161,10 +161,10 @@ pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg: WsMs
     };
 
     // Failsafe, if device_ids contains groups, replace with devices, otherwise, extract device ids
-    let mut devices = Vec::<i64>::new();
+    let mut devices = Vec::<ItemId>::new();
     let cache = Cache::instance();
     for device in device_ids {
-        let id = match device.as_i64() { Some(v) => v, None => continue };
+        let id: DeviceId = match device.as_i64() { Some(v) => v, None => continue };
         if cache.has_group(id).await {
             let members = match cache.get_group_members(id).await {
                 Some(m) => m,
@@ -255,10 +255,10 @@ pub async fn ws_query_metadata(data_to_socket: &mut mpsc::Sender<String>, msg: W
     };
 
     // Failsafe, if device_ids contains groups, replace with devices, otherwise, extract device ids
-    let mut devices = Vec::<i64>::new();
+    let mut devices = Vec::<DeviceId>::new();
     let cache = Cache::instance();
     for device in device_ids {
-        let id = match device.as_i64() { Some(v) => v, None => continue };
+        let id: DeviceId = match device.as_i64() { Some(v) => v, None => continue };
         if cache.has_group(id).await {
             let members = match cache.get_group_device_ids(id).await {
                 Some(m) => m,

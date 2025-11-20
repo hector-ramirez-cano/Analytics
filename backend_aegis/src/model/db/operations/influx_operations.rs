@@ -2,7 +2,7 @@ use influxdb2::{api::query::FluxRecord, models::ast::{Dialect, dialect::Annotati
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::model::facts::generics::{DeviceHostname, MetricName, MetricValue, Metrics};
+use crate::types::{DeviceId, DeviceHostname, MetricName, MetricValue, Metrics};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InfluxFilter {
@@ -110,7 +110,7 @@ pub async fn get_metric_data(influx_client : &influxdb2::Client, influx_filter: 
     serde_json::Value::Object(result)
 }
 
-pub async fn get_baseline_metrics(influx_client: &influxdb2::Client, device_hostnames: &HashMap<i64, String>) -> Metrics {
+pub async fn get_baseline_metrics(influx_client: &influxdb2::Client, device_hostnames: &HashMap<DeviceId, DeviceHostname>) -> Metrics {
 
     if device_hostnames.is_empty() {
         log::info!("[INFO ][FACTS][BASELINE] Baseline could not emit facts, as hostnames are not in cache yet...");

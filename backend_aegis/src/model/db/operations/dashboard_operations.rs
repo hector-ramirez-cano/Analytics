@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{AegisError, model::data::dashboard::{Dashboard, DashboardItem}};
+use crate::{AegisError, model::data::dashboard::{Dashboard, DashboardItem}, types::DashboardId};
 
-pub async fn get_dashboards_as_json(pool: &sqlx::PgPool) -> Result<HashMap<i64, Dashboard>, AegisError>{
+pub async fn get_dashboards_as_json(pool: &sqlx::PgPool) -> Result<HashMap<DashboardId, Dashboard>, AegisError>{
     let dashboard_members = sqlx::query_as!(DashboardItem, "SELECT dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition FROM Analytics.dashboard_items")
     .fetch_all(&*pool)
     .await

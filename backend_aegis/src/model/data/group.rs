@@ -2,17 +2,17 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 
-use crate::model::data::device::Device;
+use crate::{model::data::device::Device, types::{GroupId, ItemId}};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Group {
     #[serde(rename = "id")]
-    pub group_id: i64,
+    pub group_id: GroupId,
 
     pub name: String,
     #[serde(default)]
     
-    pub members: Option<Vec<i64>>,
+    pub members: Option<Vec<ItemId>>,
     #[serde(rename = "is-display-group")]
 
     pub is_display_group: bool,

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::data::device_configuration::DeviceConfiguration;
 use crate::model::data::device_state::DeviceStatus;
+use crate::types::DeviceId;
 
 #[derive(Debug)]
 pub enum DeviceError {
@@ -15,7 +16,7 @@ pub enum DeviceError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Device {
     #[serde (rename = "id")]
-    pub device_id: i64,
+    pub device_id: DeviceId,
 
     #[serde (rename = "name")]
     pub device_name: String,
@@ -38,7 +39,7 @@ pub struct Device {
 
 impl Device {
     pub fn new(
-        device_id: i64,
+        device_id: DeviceId,
         device_name: String,
         latitude: f64,
         longitude: f64,

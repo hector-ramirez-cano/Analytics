@@ -1,5 +1,5 @@
 use crate::{alerts::Accessor};
-use crate::model::facts::generics::{MetricSet, MetricValue};
+use crate::types::{MetricSet, MetricValue};
 
 impl Accessor {
     pub fn new (key: &str) -> Self {
