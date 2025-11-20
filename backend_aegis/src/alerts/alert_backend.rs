@@ -174,7 +174,7 @@ impl AlertBackend {
 
         let elapsed = now.saturating_sub(first_raised);
 
-        elapsed > sustained_duration_s 
+        elapsed >= sustained_duration_s 
     }
 
     pub async fn sustained_reset(rule_id: AlertRuleId, device_id: DeviceId) {
@@ -408,7 +408,6 @@ impl AlertBackend {
                             },
                             crate::alerts::EvaluableItem::Device(device) => {
                                 let which = which.iter().map(|(lhs, op, rhs)| format!("[{} {} {}]", lhs, op, rhs)).collect::<Vec<_>>().join(", ");
-
 
                                 AlertBackend::raise_alert(rule, &device, which, &event_tx).await;
                             },

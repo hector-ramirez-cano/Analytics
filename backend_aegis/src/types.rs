@@ -23,7 +23,7 @@ pub type SyslogMessageId = i64;
 
 pub type DashboardId = i64;
 
-pub type EpochSeconds = u128;
+pub type EpochSeconds = u64;
 
 pub type TelegramTypeId = i64;
 

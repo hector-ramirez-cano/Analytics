@@ -21,6 +21,7 @@ pub mod accessor;
 pub mod alert_reduce_logic;
 pub mod alert_backend;
 pub mod telegram_backend;
+pub mod tests;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, Hash)]
 #[sqlx(type_name = "AlertSeverity", rename_all = "lowercase")]
@@ -239,6 +240,7 @@ pub enum AlertDataSource {
 }
 
 /// Defines the items that can be evaluated against a rule.
+#[derive(Debug, Clone)]
 pub enum EvaluableItem {
     Device (Device),
     Group (Group)
@@ -287,8 +289,10 @@ impl EvaluableItem {
                 };
                 // It has, we check if it's time to raise
                 if AlertBackend::sustained_should_raise(t, seconds).await {
-                    // Dayum, we need to raise
+                    // Dayum, we need to raise. Also reset the alert so it doesn't trigger immediately again
                     let which = rule.raising_values(dataset_right, dataset_right);
+                    AlertBackend::sustained_reset(rule.rule_id, device.device_id).await;
+                    
                     Some((EvaluableItem::Device(device), which))
                 } else {
                     // Not yet, Ferb

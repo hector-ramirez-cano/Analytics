@@ -94,7 +94,7 @@ TRUNCATE Analytics.alert_rules;
 
 -- TRUNCATE Analytics.alerts; DELETE FROM Analytics.alert_rules;
 INSERT INTO Analytics.alert_rules (rule_id, rule_name, requires_ack, rule_definition)
-    VALUES (1, 'ICMP_RTT > 160ms', TRUE, '{"is-delta-rule": false, "severity":"warning","target":1,"reduce-logic": "all","source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":20, "is-delta-rule": false}]}');
+    VALUES (1, 'ICMP_RTT > 160ms', TRUE, '{"is-delta-rule": false, "severity":"warning","target":1,"reduce-logic": "all","data-source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":20, "rule-type": "simple"}]}');
 
 SELECT * FROM Analytics.alert_rules;
 

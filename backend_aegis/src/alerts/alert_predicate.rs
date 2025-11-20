@@ -1,4 +1,4 @@
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::alerts::{Accessor, AlertPredicate, AlertPredicateOperation};
 use crate::types::{MetricSet, MetricValue};
@@ -111,27 +111,31 @@ impl<'de> Deserialize<'de> for AlertPredicate {
         let left_is_accessor = raw.left.is_string() && raw.left.as_str().unwrap().starts_with('&');
         let right_is_accessor = raw.right.is_string() && raw.right.as_str().unwrap().starts_with('&');
 
-        if left_is_accessor && right_is_accessor {
-            log::warn!("Invalid AlertPredicate: both sides marked accessor (left={}, right={})", raw.left, raw.right);
-            return Err(de::Error::custom("Both sides cannot be accessors"));
-        }
+        match (left_is_accessor, right_is_accessor) {
+            (true, true) => {
+                let raw_left = raw.left.as_str().unwrap();
+                let raw_right = raw.right.as_str().unwrap();
+                let left_acc = Accessor::new(raw_left.trim_start_matches('&'));
+                let right_acc = Accessor::new(raw_right.trim_start_matches('&'));
+                Ok(AlertPredicate::Variable(left_acc, raw.op, right_acc))
+            },
+            (true, false) => {
+                let raw_left = raw.left.as_str().unwrap();
+                let left_acc = Accessor::new(raw_left.trim_start_matches('&'));
+                let right_val: MetricValue = raw.right.into();
+                Ok(AlertPredicate::RightConst(left_acc, raw.op, right_val))
+            },
+            (false, true) => {
+                let raw_right = raw.right.as_str().unwrap();
+                let right_acc = Accessor::new(raw_right.trim_start_matches('&'));
+                let left_val: MetricValue = raw.left.into();
+                Ok(AlertPredicate::LeftConst(left_val, raw.op, right_acc))
+            },
+            (false, false) => {
+                log::error!("[ERROR][ALERTS] Rule can't have both sides as constants");
+                Err(serde::de::Error::custom("[ERROR][ALERTS] Rule can't have both sides as constants"))
 
-        if left_is_accessor {
-            let raw_left = raw.left.as_str().unwrap();
-            let left_acc = Accessor::new(raw_left.trim_start_matches('&'));
-            let right_val: MetricValue = raw.right.into();
-            Ok(AlertPredicate::RightConst(left_acc, raw.op, right_val))
-        } else if right_is_accessor {
-            let raw_right = raw.right.as_str().unwrap();
-            let right_acc = Accessor::new(raw_right.trim_start_matches('&'));
-            let left_val: MetricValue = raw.left.into();
-            Ok(AlertPredicate::LeftConst(left_val, raw.op, right_acc))
-        } else {
-            let raw_left = raw.left.as_str().unwrap();
-            let raw_right = raw.right.as_str().unwrap();
-            let left_acc = Accessor::new(raw_left.trim_start_matches('&'));
-            let right_acc = Accessor::new(raw_right.trim_start_matches('&'));
-            Ok(AlertPredicate::Variable(left_acc, raw.op, right_acc))
+            }
         }
     }
 }
