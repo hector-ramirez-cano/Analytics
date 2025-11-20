@@ -22,7 +22,7 @@ class ClosableChipTab extends StatelessWidget {
     return InputChip(
         label: 
           Text(label),
-        onDeleted: () => onClose(),
+        // onDeleted: () => onClose(),
         onPressed: () => onClick(),
         deleteIcon: const Icon(Icons.close, size: 18),
         deleteIconColor: Colors.grey[400],

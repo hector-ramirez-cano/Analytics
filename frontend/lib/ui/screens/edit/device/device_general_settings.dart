@@ -224,14 +224,17 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     }
     onClose () => notif.set(editingDeviceMetadata: false, editingDeviceMetrics: false, editingDeviceDataSources: false);
 
-    Widget onDisplayTrailing(dynamic option) {
+    Widget onDisplayTrailing(dynamic option, Set<String> values) {
       return Consumer(
         key: Key("device_settings_dialog_${option.toString()}_${notif.selected.id}"),
         builder:(context, ref, child) {
-        final metadata = ref.watch(metadataServiceProvider(metadata: option.toString(), deviceId: notif.selected.id));
+        final metadata = ref.watch(metadataServiceProvider(metadata: values, deviceId: notif.selected.id));
         return metadata.when(
-          data: (metadata) => Text(metadata.toString().truncate(50)),
-          error: (_, _) => Text("Sin datos"),
+          data: (metadata) {
+            print(metadata[0][option]);
+            return Text(metadata[0][option]?.toString().truncate(50) ?? "Sin datos");
+          },
+          error: (e, st) => Text("Sin datos"),
           loading: () => Text("Cargando...")
         );
       },);
@@ -244,7 +247,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
       onClose: onClose,
       isSelectedFn: isSelectedFn,
       isAvailable: isAvailableFn,
-      onDisplayTrailing: onDisplayTrailing
+      onDisplayTrailing: (option) => onDisplayTrailing(option, options)
     ).show(context);
   }
 

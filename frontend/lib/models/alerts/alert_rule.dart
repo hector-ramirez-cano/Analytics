@@ -16,7 +16,7 @@ class AlertRule extends AnalyticsItem<AlertRule> {
     required this.source,
     required this.targetId,
     required this.severity,
-    required this.definition, 
+    required this.definition,
   });
 
   factory AlertRule.fromJson(Map<String, dynamic> json) {
@@ -48,7 +48,7 @@ class AlertRule extends AnalyticsItem<AlertRule> {
   @override
   AlertRule mergeWith(AlertRule other) {
     Set<AlertPredicate> definition = Set.from(other.definition)..addAll(this.definition);
-    
+
     return copyWith(definition: definition.toList());
   }
 
@@ -96,7 +96,8 @@ class AlertRule extends AnalyticsItem<AlertRule> {
       "severity": severity.toString(),
       "target": targetId,
       "reduce-logic": reduceLogic.toString(),
-      "source": source.toString(),
+      "data-source": source.toString(),
+      "kind": "simple",
       "predicates": definition.map((predicate) => predicate.toMap()).toList()
     };
   }
@@ -106,7 +107,9 @@ class AlertRule extends AnalyticsItem<AlertRule> {
       "id" : id,
       "name": name,
       "requires-ack": requiresAck,
-      "rule-definition": ruleDefinitionToMap()
+      "rule-definition": ruleDefinitionToMap(),
+      "kind": "simple", // TODO: Locked as simple until this gets added to the frontend
+      "data-source": source.toString()
     };
   }
 }

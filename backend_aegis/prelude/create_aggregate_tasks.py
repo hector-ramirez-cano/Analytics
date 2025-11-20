@@ -38,11 +38,12 @@ def __init_baseline_tasks(org: str):
     tasks_api = influx_db_tasks_api()
     orgs_api = influx_db_client().organizations_api()
     organization =next((o for o in orgs_api.find_organizations() if o.name == org), None)
-    aggregate_windows = ("1h", "1d","15d", "30d", "180d", "365d")
+    aggregate_windows = ("1m", "15m", "1h", "1d","15d", "30d", "180d", "365d")
 
     for window in aggregate_windows:
         task_name = f"task_baseline_{window}"
         task_definition = f"""
+        
             import "types"
 
             numeric =
@@ -52,7 +53,7 @@ def __init_baseline_tasks(org: str):
                     |> filter(fn: (r) => types.isNumeric(v: r._value))
 
             numeric
-                |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)
+                |> aggregateWindow(every: {window}, fn: mean, createEmpty: false)
                 |> map(fn: (r) => ({{
                     r with
                     window: "{window}",
@@ -67,7 +68,7 @@ def __init_baseline_tasks(org: str):
         existing_tasks = tasks_api.find_tasks(name=task_name)
 
         if not existing_tasks:
-            task = tasks_api.create_task_every(name=task_name, flux=task_definition, every="1h", organization=organization)
+            task = tasks_api.create_task_every(name=task_name, flux=task_definition, every="15m", organization=organization)
             tasks_api.run_manually(task.id)
             tasks_api.run_manually(task.id)
             print(f"[INFO ][InfluxDB]Created task: {task_name}")

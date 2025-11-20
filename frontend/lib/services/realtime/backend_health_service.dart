@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:aegis/extensions/semaphore.dart';
 import 'package:aegis/services/websocket_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -33,6 +35,7 @@ class BackendHealthService extends _$BackendHealthService {
 
   final Semaphore _firstRun = Semaphore();
   BackendStatus? _status;
+  Timer? _pollerTimer;
 
   @override
   Future<BackendStatus> build() async {
@@ -41,9 +44,21 @@ class BackendHealthService extends _$BackendHealthService {
 
     await wsState.connected.future;
     _attachRxMessageListener();
+    _pollerTimer = _createPoller();
+
+    ref.onDispose(() {
+      _pollerTimer?.cancel();
+    });
 
     await _firstRun.future;
     return _status!;
+  }
+
+  Timer _createPoller() {
+    final notifier = ref.watch(websocketServiceProvider.notifier);
+    notifier.post('backend-health-rt', "");
+
+    return Timer.periodic(const Duration(seconds: 10), (_) => notifier.post('backend-health-rt', ""));
   }
 
   void _attachRxMessageListener() {

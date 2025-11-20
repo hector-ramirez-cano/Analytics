@@ -15,16 +15,15 @@ class MetadataService extends _$MetadataService {
   dynamic _data;
 
   void handleUpdate(dynamic json) {
-    if (json is! Map<String, dynamic>) { return; } 
-    if (json["msg"] is! Map<String, dynamic> || (json["msg"]["metadata"] == null)) { return; }
-    
+    if (json is! Map<String, dynamic>) { return; }
+    if (json["msg"] is! Map<String, dynamic> || (json["msg"]["metadata"] == null) ) { return; }
 
     // extract dem datapoints and call for state change
     final msg = json["msg"];
 
     // if it's a null, perhaps this value was not meant for us
-    if (msg == null) { 
-      return; 
+    if (msg == null) {
+      return;
     }
 
     _data = msg;
@@ -36,21 +35,21 @@ class MetadataService extends _$MetadataService {
     notifier.post(
       "metadata",
       {
-        "metadata": metadata,
+        "metadata": metadata.toList(),
         "device-ids": deviceId,
       });
   }
 
   @override
-  Future<dynamic> build({required String metadata, required int deviceId}) async {
+  Future<dynamic> build({required Set<String> metadata, required int deviceId}) async {
     ref.watch(websocketServiceProvider);
     final notifier = ref.watch(websocketServiceProvider.notifier);
 
     _dataReady.reset();
-    notifierKey = "metadata_${metadata}_$deviceId";
+    notifierKey = "metadata_$deviceId";
 
     notifier.attachListener("metadata", notifierKey, handleUpdate);
-    
+
     refresh();
     ref.onDispose(() {
       notifier.removeListener(notifierKey);
@@ -58,7 +57,6 @@ class MetadataService extends _$MetadataService {
 
     await _dataReady.future;
     notifier.removeListener(notifierKey);
-
-    return _data["msg"][0][metadata];
+    return _data["msg"];
   }
 }
