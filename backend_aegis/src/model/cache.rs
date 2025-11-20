@@ -390,6 +390,14 @@ impl Cache {
             .collect::<Vec<String>>()
     }
 
+    pub async fn snmp_inventory(&self) -> Vec<String> {
+        self.devices.read().await
+            .values()
+            .filter(|d| d.configuration.data_sources.contains(&DataSource::Snmp))
+            .map(|d| d.management_hostname.as_str().to_string())
+            .collect::<Vec<String>>()
+    }
+
     pub async fn ansible_inventory(&self) -> Vec<String> {
         self.devices.read().await
             .values()

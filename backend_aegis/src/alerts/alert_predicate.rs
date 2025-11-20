@@ -123,6 +123,7 @@ impl<'de> Deserialize<'de> for AlertPredicate {
                 let raw_left = raw.left.as_str().unwrap();
                 let left_acc = Accessor::new(raw_left.trim_start_matches('&'));
                 let right_val: MetricValue = raw.right.into();
+
                 Ok(AlertPredicate::RightConst(left_acc, raw.op, right_val))
             },
             (false, true) => {

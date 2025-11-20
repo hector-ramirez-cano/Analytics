@@ -43,14 +43,27 @@ impl AlertPredicateOperation {
             AlertPredicateOperation::Equal => left == right,
             AlertPredicateOperation::NotEqual => left != right,
 
-            // contains: right must be String or Array
-            AlertPredicateOperation::Contains => match right {
-                MetricValue::String(r_str) => {
-                    let l_str = left.to_string();
-                    r_str.contains(&l_str)
+            // contains: left must be String or Array
+            AlertPredicateOperation::Contains => match left {
+                MetricValue::String(l_str) => {
+                    match right {
+                        MetricValue::String(r_str) => return l_str.to_lowercase().contains(&r_str.to_lowercase()),
+                        MetricValue::Number(r_f) => return l_str.to_lowercase().contains(&r_f.to_string()),
+                        MetricValue::Integer(r_i) => return l_str.to_lowercase().contains(&r_i.to_string()),
+                        MetricValue::Boolean(r_b) => return l_str.to_lowercase().contains(&r_b.to_string()),
+
+                        MetricValue::Array(_) 
+                        | MetricValue::Null() => {
+                            log::error!("[ERROR][RULES] Failed to evaluate contains predicate operation. Right was not 'string', 'number' 'integer' or 'boolean'");
+                            return false;
+                        }
+                    }
                 }
-                MetricValue::Array(r_arr) => r_arr.contains(left),
-                _ => false,
+                MetricValue::Array(l_arr) => l_arr.contains(right),
+                _ => {
+                    log::error!("[ERROR][RULES] Failed to evaluate contains predicate operation. Left was not 'string' or 'array'");
+                    return false;
+                },
             },
 
             AlertPredicateOperation::Unknown => false,

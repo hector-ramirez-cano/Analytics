@@ -14,6 +14,7 @@ use crate::model::db;
 use crate::model::facts::ansible::ansible_backend;
 use crate::model::facts::baseline::baseline_backend;
 use crate::model::facts::generics::recursive_merge;
+use crate::model::facts::snmp::snmp_backend;
 use crate::types::{DeviceHostname, ExposedFields, MetricSet, Metrics, Status};
 use crate::model::facts::icmp::icmp_backend;
 
@@ -54,6 +55,7 @@ impl FactGatheringBackend {
     pub fn init(influx_client : &influxdb2::Client) {
         let _ = Self::instance();
         icmp_backend::init();
+        snmp_backend::init();
         ansible_backend::init();
         baseline_backend::init(influx_client);
 
@@ -199,11 +201,12 @@ impl FactGatheringBackend {
             log::info!("[INFO ][FACTS] Gathering facts...");
             let icmp_handle    = rocket::tokio::task::spawn(async { icmp_backend::gather_facts().await });
             let ansible_handle = rocket::tokio::task::spawn(async { ansible_backend::gather_facts().await });
+            let snmp_handle    = rocket::tokio::task::spawn(async { snmp_backend::gather_facts().await });
             let baseline_handle = rocket::tokio::task::spawn(async { baseline_backend::gather_facts().await });
 
             // other tasks...
             
-            let handles = vec![icmp_handle, ansible_handle, baseline_handle];
+            let handles = vec![icmp_handle, ansible_handle, baseline_handle, snmp_handle];
 
             // Gather results off the tasks results
             let results: Vec<Result<(Metrics, Status), tokio::task::JoinError>> = join_all(handles).await;
