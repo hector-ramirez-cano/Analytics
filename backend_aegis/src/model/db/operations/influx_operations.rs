@@ -2,6 +2,8 @@ use influxdb2::{api::query::FluxRecord, models::ast::{Dialect, dialect::Annotati
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use crate::model::facts::generics::{DeviceHostname, MetricName, MetricValue, Metrics};
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InfluxFilter {
     pub start: String,
@@ -74,9 +76,6 @@ pub async fn get_metric_range(influx_client : &influxdb2::Client, influx_filter:
 }
 
 pub async fn get_metric_data(influx_client : &influxdb2::Client, influx_filter: &InfluxFilter ) -> serde_json::Value {
-
-    dbg!(&influx_filter);
-
     let query = format!(
         r#"
         from(bucket: "analytics")
@@ -109,6 +108,112 @@ pub async fn get_metric_data(influx_client : &influxdb2::Client, influx_filter: 
     result.insert("data".to_owned() , serde_json::json!(data_map));
 
     serde_json::Value::Object(result)
+}
+
+pub async fn get_baseline_metrics(influx_client: &influxdb2::Client, device_hostnames: &HashMap<i64, String>) -> Metrics {
+
+    if device_hostnames.is_empty() {
+        log::info!("[INFO ][FACTS][BASELINE] Baseline could not emit facts, as hostnames are not in cache yet...");
+        return Metrics::new()
+    }
+    
+    let query = format!(r#"
+        from(bucket: "baselines")
+            |> range(start: -2h)
+            |> last()
+    "#);
+
+    let data = execute_query(influx_client, query).await;
+
+    let mut metrics: HashMap<DeviceHostname, HashMap<MetricName, MetricValue>> = Metrics::new();
+
+    for point in data {
+        let point = match point {
+            serde_json::Value::Object(map) => map,
+            _ => {
+                log::warn!("[WARN ][FACTS][BASELINE] Found a non-map value while extracting baselines into facts. Value will be ignored...");
+                continue;
+            }
+        };
+
+        let device_id = match point.get("device_id") {
+            Some (serde_json::Value::String(s)) => {
+                match s.parse() {
+                    Ok(id) => id,
+                    Err(_) => {
+                        log::warn!("[WARN ][FACTS][BASELINE] 'device_id' was found, but could not be converted into i64. Value will be ignored...");
+                        continue;
+                    }
+                }
+            },
+            Some (serde_json::Value::Number(n)) => {
+                match n.as_i64() {
+                    Some(n) => n,
+                    None => {
+                        log::warn!("[WARN ][FACTS][BASELINE] 'device_id' was found to be a number, but could not be converted ino i64. Value will be ignored...");
+                        continue;
+                    }
+                }
+            },
+            _ => {
+                log::warn!("[WARN ][FACTS][BASELINE] 'device_id' was not found to be string/number while extracting baseline. Value will be ignored...");
+                continue;
+            }
+        };
+
+        let hostname = match device_hostnames.get(&device_id) {
+            Some(h) => h,
+            None => {
+                log::warn!("[WARN ][FACTS][BASELINE] 'device_id'({device_id}) was found, but could not resolve into a device_hostname from cache. Value will be ignored...");
+                continue;
+            }
+        };
+
+        let field = match point.get("_field")  {
+            Some(serde_json::Value::String(s)) => s,
+            _ => {
+                log::warn!("[WARN ][FACTS][BASELINE] '_field' wasn't found in the influx cache. Value will be ignored...");
+                log::info!("                         ^ This message should be unreachable if Influx is behaving like it should.");
+                continue;
+            }
+        };
+
+        let window = match point.get("window") {
+            Some(serde_json::Value::String(s)) => s,
+            _ => {
+                log::warn!("[WARN ][FACTS][BASELINE] 'window' wasn't found in the influx cache. Value will be ignored...");
+                log::info!("                         ^ This message should be unreachable if Influx is behaving like it should.");
+                continue;
+            }
+        };
+
+        let value = match point.get("_value") {
+            Some(serde_json::Value::Number(n)) => {
+                match n.as_f64() {
+                    Some(n) => n,
+                    None => {
+                        log::warn!("[WARN][FACTS][BASELINE] '_value' cannot be converted into f64. This means either it's not a number, or number is out of bounds. n='{n}'");
+                        continue;
+                    }
+                }
+            },
+            _ => {
+                log::warn!("[WARN ][FACTS][BASELINE] '_value' wasn't found in the influx cache. Value will be ignored...");
+                log::info!("                         ^ This message should be unreachable if Influx is behaving like it should.");
+                continue;
+            }
+        };
+
+        let metric_name = format!("baseline_{window}_{field}");
+
+        // Insert the entry
+        metrics.entry(hostname.to_owned())
+            .or_insert(HashMap::new())
+            .insert(metric_name, MetricValue::Number(value.into()));
+    }
+
+
+    metrics
 }
 
 fn flux_value_to_json(fv: &influxdb2_structmap::value::Value) -> serde_json::Value {

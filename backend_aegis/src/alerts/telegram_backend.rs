@@ -2,6 +2,7 @@ use std::{collections::HashSet, sync::{Arc, OnceLock}};
 
 
 use chrono_tz::Tz;
+use serde::{Deserialize, Serialize};
 use tgbot::{api::Client, handler::{LongPoll, UpdateHandler}, types::{ChatPeerId, ParseMode}};
 use tokio::sync::{RwLock, mpsc::Receiver};
 
@@ -76,10 +77,6 @@ impl TelegramBackend {
         let token: String = Config::instance().get("backend/controller/telegram/API-token", "/")
             .expect("Telegram API token MUST be present in the config file at path 'backend/controller/telegram/API-token', typically imported from identity via $ref");
 
-        // check the chat auth token is present. Failfast in case it's not. so it doesn't crash _UNTIL_ a user decides to auth
-        let _user_token : String = Config::instance().get("backend/controller/telegram/User-token", "/")
-            .expect("Telegram user chat authentication token MUST be present in the config file at path 'backend/controller/telegram/User-token'");
-
         // Try to set instance Arc with provided value
         let backend = Arc::new(TelegramBackend::new(token, pool));
         let innit_bruv = INSTANCE.set(backend);
@@ -92,14 +89,12 @@ impl TelegramBackend {
         // Spawn dem tasks
         Self::spawn_telegram_poller_task();
         Self::spawn_telegram_alert_handler_task(alert_receiver);
-
         Self::update_user_cache().await;
     }
 
     async fn update_user_cache() {
         let instance = TelegramBackend::instance();
         let subscribed = telegram_operations::get_subscribed_users(&instance.pool).await;
-
         {
             let mut w = instance.subscribed_chats.write().await;
             w.clear();
@@ -141,7 +136,7 @@ impl TelegramBackend {
             let msg = format_alert(&event, &device, &rule);
 
             for chat_id in chats.iter() {
-                Handler::send_message(client, (*chat_id).into(), msg.as_str()).await;
+                Handler::send_message_button(client, (*chat_id).into(), msg.as_str(), event.alert_id).await;
             }
         }});
     }
@@ -159,9 +154,36 @@ impl TelegramBackend {
 
 struct Handler { client: Client }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct TelegramAckActor {
+    chat_id: ChatPeerId,
+    alert_id: i64,
+    acked: bool,
+}
+
 impl Handler {
     async fn send_message(client: &Client, chat_id: ChatPeerId, message: &str) {
-        let method = tgbot::types::SendMessage::new(chat_id, message).with_parse_mode(ParseMode::MarkdownV2);
+        let message = message.replace(".", "\\.");
+        let method = tgbot::types::SendMessage::new(chat_id, &message).with_parse_mode(ParseMode::MarkdownV2);
+        match client.execute(method).await {
+            Ok(_) => (),
+            Err(e) => {
+                log::error!("[ERROR][ALERTS][TELEGRAM] failed to send message = '{}' with error = '{e}'. Message will be dropped", &message);
+            }
+        }
+    }
+
+    async fn send_message_button(client: &Client, chat_id: ChatPeerId, message: &str, alert_id: i64) {
+        let message = message.replace(".", "\\.");
+        use tgbot::types::*;
+        let yes_btn = InlineKeyboardButton::for_callback_data_struct("Ack", &TelegramAckActor{ chat_id, alert_id: alert_id, acked: true}).unwrap();
+        let no_btn = InlineKeyboardButton::for_callback_data_struct("Dismiss", &TelegramAckActor{ chat_id, alert_id: alert_id, acked: false}).unwrap();
+
+        let keyboard = InlineKeyboardMarkup::default().add_row(vec![yes_btn, no_btn]);
+
+        let method = SendMessage::new(chat_id, &message)
+            .with_reply_markup(keyboard)
+            .with_parse_mode(ParseMode::MarkdownV2);
         match client.execute(method).await {
             Ok(_) => (),
             Err(e) => {
@@ -176,12 +198,15 @@ impl Handler {
     }
 
     pub async fn handle_auth(client: &Client, chat_id: ChatPeerId, params: Option<&str>) {
-        let user_token: String = Config::instance().get("backend/controller/telegram/User-token", "/")
-            .expect("Telegram user chat authentication token MUST be present in the config file at path 'backend/controller/telegram/User-token'");
+        
+        if let Ok(_) = telegram_operations::is_auth(chat_id, &TelegramBackend::instance().pool).await {
+            Handler::send_message(client, chat_id, "Su chat ya había sido atenticado. No se requiere otra acción").await;
+            return
+        }
 
         // No token?
         let params = match params {
-            Some(p) => p,
+            Some(p) => p.trim_start().trim_end(),
             None => {
                 Handler::send_message(client, chat_id, "No se ha proporcionado Token de autenticación. Intente nuevamente siguiendo el formato `/auth token`").await;
                 return;
@@ -189,18 +214,18 @@ impl Handler {
         };
 
         // Invalid token?
-        if !params.contains(user_token.as_str()) {
+        if let Err(_) = telegram_operations::ack_token_exists(params.to_string(), &TelegramBackend::instance().pool).await {
             Handler::send_message(client, chat_id, format!("El token introducido no es válido. Token introducido ='{}'", params).as_str()).await;
             return;
         }
 
         // Valid token, add the distinguished gentleman into the database
-        match telegram_operations::auth_chat(chat_id, true, true, &TelegramBackend::instance().pool).await {
+        match telegram_operations::auth_chat(chat_id, true, true, params.to_string(), &TelegramBackend::instance().pool).await {
             Ok(_) => {
                 let msg = concat!(
                     "Autenticación exitosa ️✅\nSe ha suscrito automáticamente\n",
-                    "verifica el estado de la autenticación con /chat_status\n",
-                    "o remueve la suscripción con /unsubscribe sin deautenticar\n",
+                    "verifica el estado de la autenticación con `chat_status` \n",
+                    "o remueve la suscripción con `unsubscribe` sin deautenticar\n",
                 );
                 Handler::send_message(client, chat_id, msg).await;
             },
@@ -227,7 +252,7 @@ impl Handler {
             return;
         }
 
-        match telegram_operations::auth_chat(chat_id, true, true, &TelegramBackend::instance().pool).await {
+        match telegram_operations::subscribe_chat(chat_id, true, &TelegramBackend::instance().pool).await {
             Ok(_) => Handler::send_message(client, chat_id, "Está suscrito 👋\nRecibirá mensajes de alerta").await,
             Err(_) => Handler::send_message(client, chat_id, "Error inesperado al cambiar su estado de suscripción. Intente nuevamente más tarde").await
         }
@@ -237,7 +262,7 @@ impl Handler {
 
     pub async fn handle_unsubscribe(client: &Client, chat_id: ChatPeerId) {
         let instance = &TelegramBackend::instance().pool;
-        let is_auth = match telegram_operations::is_auth(chat_id, instance).await {
+        let _ = match telegram_operations::is_auth(chat_id, instance).await {
             Ok(b) => b,
             Err(_) => {
                 Handler::send_message(client, chat_id, "Error inesperado al recuperar el estado de autenticación. Intente nuevamente más tarde").await;
@@ -245,7 +270,7 @@ impl Handler {
             }
         };
 
-        match telegram_operations::auth_chat(chat_id, is_auth, false, instance).await {
+        match telegram_operations::subscribe_chat(chat_id, false, instance).await {
             Ok(_) => Handler::send_message(client, chat_id, "Ya no estás suscrito 👋").await,
             Err(_) => Handler::send_message(client, chat_id, "Error inesperado al cambiar su estado de suscripción. Intente nuevamente más tarde").await
         }
@@ -275,25 +300,40 @@ impl Handler {
 
 impl UpdateHandler for Handler {
     async fn handle(&self, update: tgbot::types::Update) {
+
         let chat_id = update.get_chat_id();
-        let message = update.get_message();
-        let text = message.and_then(|x| x.get_text());
+        match update.update_type {
+            tgbot::types::UpdateType::Message(message) => {
+                let text = message.get_text();
+                let (chat_id, text) = match (chat_id, text) {
+                    (Some(id), Some(text)) => (id, text),
+                    (_, _) => return
+                };
 
-        if let (Some(chat_id), Some(text)) = (chat_id, text) {
+                let (command, args) = match text.data.split_once(" ") {
+                    Some((cmd, args)) => (cmd, Some(args)),
+                    None => (text.data.as_str(), None)
+                };
 
-            let (command, args) = match text.data.split_once(" ") {
-                Some((cmd, args)) => (cmd, Some(args)),
-                None => (text.data.as_str(), None)
-            };
+                match command {
+                    "/start"       => Handler::handle_start(&self.client, chat_id).await,
+                    "/auth"        => Handler::handle_auth(&self.client, chat_id, args).await,
+                    "/subscribe"   => Handler::handle_subscribe(&self.client, chat_id).await,
+                    "/unsubscribe" => Handler::handle_unsubscribe(&self.client, chat_id).await,
+                    "/chat_status" => Handler::handle_chat_status(&self.client, chat_id).await,
+                    _ => {}
+                }
+            },
+            tgbot::types::UpdateType::CallbackQuery(callback_query) => {
+                let result : TelegramAckActor = match callback_query.parse_data() {
+                    Ok(Some(a)) => a,
+                    Ok(None) => return,
+                    Err(_) => return,
+                };
 
-            match command {
-                "/start"       => Handler::handle_start(&self.client, chat_id).await,
-                "/auth"        => Handler::handle_auth(&self.client, chat_id, args).await,
-                "/subscribe"   => Handler::handle_subscribe(&self.client, chat_id).await,
-                "/unsubscribe" => Handler::handle_unsubscribe(&self.client, chat_id).await,
-                "/chat_status" => Handler::handle_chat_status(&self.client, chat_id).await,
-                _ => {}
-            }
+                dbg!(&result);
+            },
+            _ => {}
         }
     }
 }

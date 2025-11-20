@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS Analytics.devices (
 CREATE TABLE IF NOT EXISTS Analytics.topology_views(
     topology_views_id BIGSERIAL PRIMARY KEY,
     is_physical_view  BOOLEAN NOT NULL,
-    name              VARCHAR NOT NULL
+    name              VARCHAR(254) NOT NULL
 );
 
 -- DROP TABLE Analytics.topology_views_member;
@@ -107,10 +107,10 @@ CREATE TABLE IF NOT EXISTS Analytics.alerts (
     ack_time     TIMESTAMPTZ,
     requires_ack BOOLEAN NOT NULL,
     severity     AlertSeverity NOT NULL DEFAULT 'unknown',
-    message      VARCHAR,
-    ack_actor    VARCHAR,
+    message      VARCHAR(254),
+    ack_actor    VARCHAR(254),
     target_id    BIGINT,
-    value        VARCHAR NOT NULL,
+    value        VARCHAR(254) NOT NULL,
     rule_id      BIGINT,
 
     FOREIGN KEY (target_id) REFERENCES Analytics.devices(device_id) ON DELETE CASCADE,
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS Analytics.alerts (
 -- DROP TABLE Analytics.alert_rules;
 CREATE TABLE IF NOT EXISTS Analytics.alert_rules (
     rule_id         BIGSERIAL PRIMARY KEY,
-    rule_name       VARCHAR(128) NOT NULL,
+    rule_name       VARCHAR(254) NOT NULL,
     requires_ack    BOOLEAN NOT NULL,
     rule_definition JSONB NOT NULL
 );
@@ -148,7 +148,7 @@ SELECT g.group_id, g.group_name as name, g.is_display_group, array_agg(gm.item_i
 
 CREATE TABLE IF NOT EXISTS Analytics.dashboard(
     dashboard_id BIGSERIAL PRIMARY KEY,
-    dashboard_name VARCHAR NOT NULL
+    dashboard_name VARCHAR(254) NOT NULL
 );
 
 -- DROP TABLE Analytics.dashboard_items;
@@ -168,14 +168,6 @@ CREATE TABLE IF NOT EXISTS Analytics.dashboard_items(
     CONSTRAINT chk_col_pos  CHECK (col_start >= 0),
     CONSTRAINT chk_row_span CHECK (row_span  >= 1),
     CONSTRAINT chk_col_span CHECK (col_span  >= 1)
-);
-
-
--- DROP TABLE Analytics.telegram_receiver;
-CREATE TABLE IF NOT EXISTS Analytics.telegram_receiver(
-    telegram_user_id BIGINT PRIMARY KEY, --managed by telegram, trusted to be unique
-    authenticated    BOOLEAN NOT NULL,
-    subscribed       BOOLEAN NOT NULL
 );
 
 -- Trigger functions
@@ -270,3 +262,34 @@ CREATE INDEX idx_SystemEvents_Message_tsv ON Syslog.system_events USING GIN (mes
 -- Indices
 CREATE INDEX idx_SystemEvents_FromHost ON Syslog.system_events (from_host);
 CREATE INDEX idx_SystemEvents_ReceivedAt ON Syslog.system_events (received_at);
+
+--  ______        __                        __      __    __               
+-- /      |      /  |                      /  |    /  |  /  |              
+-- $$$$$$/   ____$$ |  ______   _______   _$$ |_   $$/  _$$ |_    __    __ 
+--   $$ |   /    $$ | /      \ /       \ / $$   |  /  |/ $$   |  /  |  /  |
+--   $$ |  /$$$$$$$ |/$$$$$$  |$$$$$$$  |$$$$$$/   $$ |$$$$$$/   $$ |  $$ |
+--   $$ |  $$ |  $$ |$$    $$ |$$ |  $$ |  $$ | __ $$ |  $$ | __ $$ |  $$ |
+--  _$$ |_ $$ \__$$ |$$$$$$$$/ $$ |  $$ |  $$ |/  |$$ |  $$ |/  |$$ \__$$ |
+-- / $$   |$$    $$ |$$       |$$ |  $$ |  $$  $$/ $$ |  $$  $$/ $$    $$ |
+-- $$$$$$/  $$$$$$$/  $$$$$$$/ $$/   $$/    $$$$/  $$/    $$$$/   $$$$$$$ |
+--                                                               /  \__$$ |
+--                                                               $$    $$/ 
+--                                                                $$$$$$/  
+
+CREATE SCHEMA IF NOT EXISTS ClientIdentity;
+-- DROP TABLE ClientIdentity.ack_tokens;
+CREATE TABLE IF NOT EXISTS ClientIdentity.ack_tokens(
+    ack_token VARCHAR(128) PRIMARY KEY,
+    ack_actor VARCHAR NOT NULL
+);
+
+-- DROP TABLE ClientIdentity.telegram_receiver;
+CREATE TABLE IF NOT EXISTS ClientIdentity.telegram_receiver(
+    telegram_user_id BIGINT PRIMARY KEY, --managed by telegram, trusted to be unique
+    authenticated    BOOLEAN NOT NULL,
+    subscribed       BOOLEAN NOT NULL,
+
+    ack_token        VARCHAR(128),
+
+    FOREIGN KEY(ack_token) REFERENCES ClientIdentity.ack_tokens ON DELETE CASCADE
+);

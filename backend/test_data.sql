@@ -134,3 +134,12 @@ SET TIMEZONE TO 'America/Mexico_City';
 -- TRUNCATE Syslog.system_events;
 SELECT * FROM Syslog.system_events;
 SELECT * FROM Syslog.system_events WHERE received_at BETWEEN '2025-10-27T06:00:00Z' AND '2025-11-11T21:13:45Z';
+
+
+SELECT * FROM ClientIdentity.ack_tokens;
+INSERT INTO ClientIdentity.ack_tokens(ack_token, ack_actor) VALUES ('BE&d?bzhfvaXG12Upou3CtA-7|iHMk$QOnLNmJ6I0TerF94PD5lq#y:c8WsgK*jY', 'Héctor Ramírez Cano');
+SELECT (1) as exists FROM ClientIdentity.ack_tokens WHERE ack_token = 'BE&d?bzhfvaXG12Upou3CtA-7|iHMk$QOnLNmJ6I0TerF94PD5lq#y:c8WsgK*jY';
+
+SELECT EXISTS(
+            SELECT 1 FROM ClientIdentity.telegram_receiver WHERE telegram_user_id = 0 AND authenticated is TRUE
+        ) as authenticated

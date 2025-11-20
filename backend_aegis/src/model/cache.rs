@@ -64,7 +64,7 @@ impl Cache {
     pub async fn insert_device(&self, dev: Device) {
         let mut w = self.devices.write().await;
         w.insert(dev.device_id, dev);
-        self.update_last().await;
+        self.update_last_update().await;
     }
 
     pub async fn get_device(&self, id: i64) -> Option<Device> {
@@ -74,8 +74,15 @@ impl Cache {
 
     pub async fn get_device_hostname(&self, id: i64) -> Option<String> {
         let r = self.devices.read().await;
-        
+
         Some(r.get(&id)?.management_hostname.clone())
+    }
+
+    pub async fn get_device_hostnames(&self) -> Option<HashMap<i64, String>> {
+        let r = self.devices.read().await;
+
+        let map = r.iter().map(|(id, device)| (id.clone(), device.management_hostname.clone())).collect();
+        Some(map)
     }
 
     pub async fn has_device(&self, id: i64) -> bool {
@@ -94,7 +101,7 @@ impl Cache {
         let d = r.iter().find(|(_, d)| d.management_hostname==management_hostname);
         if let Some((id, _)) = d {
             Some(id.clone())
-        } 
+        }
         else {
             None
         }
@@ -114,7 +121,7 @@ impl Cache {
         let mut w = self.devices.write().await;
         let removed = w.remove(&id);
         if removed.is_some() {
-            self.update_last().await;
+            self.update_last_update().await;
         }
         removed
     }
@@ -127,7 +134,7 @@ impl Cache {
     pub async fn insert_link(&self, link: Link) {
         let mut w = self.links.write().await;
         w.insert(link.link_id, link);
-        self.update_last().await;        
+        self.update_last_update().await;
     }
 
     pub async fn get_link(&self, id: i64) -> Option<Link> {
@@ -144,7 +151,7 @@ impl Cache {
         let mut w = self.links.write().await;
         let removed = w.remove(&id);
         if removed.is_some() {
-            self.update_last().await;
+            self.update_last_update().await;
         }
         removed
     }
@@ -157,7 +164,7 @@ impl Cache {
     pub async fn insert_group(&self, group: Group) {
         let mut w = self.groups.write().await;
         w.insert(group.group_id, group);
-        self.update_last().await;
+        self.update_last_update().await;
     }
 
     pub async fn get_group(&self, id: i64) -> Option<Group> {
@@ -234,7 +241,7 @@ impl Cache {
         let mut w = self.groups.write().await;
         let removed = w.remove(&id);
         if removed.is_some() {
-            self.update_last().await;
+            self.update_last_update().await;
         }
         removed
     }
@@ -245,7 +252,7 @@ impl Cache {
 
     pub async fn get_evaluable_item(&self, id: i64) -> Option<EvaluableItem> {
         let r = self.devices.read().await;
-        
+
         match r.get(&id) {
             Some(d) => Some(EvaluableItem::Device(d.clone())),
             None=> {
@@ -274,17 +281,17 @@ impl Cache {
 
     // Update API
     pub async fn update_all(&self, devices: HashMap<i64, Device>, links: HashMap<i64, Link>, groups: HashMap<i64, Group>) {
-        
+
         // Update devices
         let mut w = self.devices.write().await;
         w.clear();
         w.extend(devices);
-        
+
         // Update links
         let mut w = self.links.write().await;
         w.clear();
         w.extend(links);
-        
+
 
         // Update groups
         let mut w = self.groups.write().await;
@@ -306,8 +313,8 @@ impl Cache {
         *guard
     }
 
-
-    async fn update_last(&self) {
+    /// Updates the last_update variable to the current time since EPOCH
+    async fn update_last_update(&self) {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
@@ -336,10 +343,8 @@ impl Cache {
             return None;
         }
 
-
         // Acquire write lock (recover from poison if necessary)
         let mut last_w = self.last_update.write().await;
-
 
         // Re-check under the write lock to avoid races
         if now.saturating_sub(*last_w) < interval_secs {
@@ -359,14 +364,6 @@ impl Cache {
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
             .unwrap_or(0)
-    }
-
-    /// Clear everything (example helper)
-    pub async fn clear(&self) {
-        self.devices.write().await.clear();
-        self.links.write().await.clear();
-        self.groups.write().await.clear();
-        self.update_last().await;
     }
 
     pub async fn as_json(&self) -> Result<serde_json::Value, AegisError> {
@@ -399,7 +396,7 @@ impl Cache {
             .filter(|d| d.configuration.data_sources.contains(&DataSource::Icmp))
             .map(|d| d.management_hostname.as_str().to_string())
             .collect::<Vec<String>>()
-            
+
     }
 
 }

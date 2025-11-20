@@ -4,8 +4,6 @@ use pyo3::{Bound, PyAny, PyErr, Python, types::{PyAnyMethods, PyDict, PyIterator
 
 use crate::{config::Config, model::{cache::Cache, data::device_state::DeviceStatus, facts::{ansible::ansible_status::AnsibleStatus, generics::{MetricValue, Metrics, StatusT, ToMetrics}}}};
 
-
-
 fn normalize_no_symlink(p: &Path) -> PathBuf {
     let mut out = PathBuf::new();
     for comp in p.components() {
@@ -40,7 +38,11 @@ pub fn abspath<P: AsRef<Path>>(path: P) -> io::Result<PathBuf> {
     Ok(abspath_with_cwd(path, cwd))
 }
 
-
+/// Executes the ansible playbook found on the config files under the path
+/// > backend/model/playbooks/fact_gathering
+/// 
+/// Internally, it calls ansible_runner via PyO3, as that's the official
+/// Ansible library or programming API
 async fn run_playbook(targets: Vec<String>) -> (Metrics, StatusT) {
     let config   = Config::instance();
     let playbook :String = config.get("backend/model/playbooks/fact_gathering", "/")

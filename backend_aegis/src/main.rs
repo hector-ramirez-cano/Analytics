@@ -25,7 +25,7 @@ async fn launch() -> _ {
     let influx_client : influxdb2::Client = init_influx_client().await;
     Cache::init(&postgres_pool).await;
     AlertBackend::init(&postgres_pool).await;
-    FactGatheringBackend::init();
+    FactGatheringBackend::init(&influx_client);
     SyslogBackend::init();
 
     // start worker tasks

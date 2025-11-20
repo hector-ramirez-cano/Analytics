@@ -150,7 +150,8 @@ pub type MetricSet = HashMap<MetricName, MetricValue>;
 /// Contains all the recovered metrics for all the devices, in the order of device -> MetricSet
 pub type Metrics = HashMap<DeviceHostname, MetricSet>;
 
-/// Contains the status for all the given data sources, in the order of device -> Status
+/// Contains the status for all the given device status, in the order of device -> Status
+// TODO: Rename this
 pub type StatusT: = HashMap<DeviceHostname, DeviceStatus>;
 
 pub trait ToMetrics {

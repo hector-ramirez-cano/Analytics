@@ -31,6 +31,10 @@ def init_db_pool():
 
 
 def __init_baseline_tasks(org: str):
+    """
+        Creates tasks for aggregate of _Numeric_ metrics, that are set to execute every 1h
+        These metrics are set into another bucket, "baselines"
+    """
     tasks_api = influx_db_tasks_api()
     orgs_api = influx_db_client().organizations_api()
     organization =next((o for o in orgs_api.find_organizations() if o.name == org), None)
@@ -39,18 +43,33 @@ def __init_baseline_tasks(org: str):
     for window in aggregate_windows:
         task_name = f"task_baseline_{window}"
         task_definition = f"""
-            from(bucket: "analytics")
-            |> range(start: -{window})
-            |> filter(fn: (r) => r._measurement == "metrics")
-            |> filter(fn: (r) => r._field == "value")
-            |> aggregateWindow(every: {window}, fn: mean, createEmpty: false)
-            |> to(bucket: "baselines")
+            import "types"
+
+            numeric =
+                from(bucket: "analytics")
+                    |> range(start: -{window})
+                    |> filter(fn: (r) => r._measurement == "metrics")
+                    |> filter(fn: (r) => types.isNumeric(v: r._value))
+
+            numeric
+                |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)
+                |> map(fn: (r) => ({{
+                    r with
+                    window: "{window}",
+                    device_id: r.device_id
+                }}))
+                |> to(
+                    bucket: "baselines",
+                    tagColumns: ["window", "device_id"]
+                )
         """
 
         existing_tasks = tasks_api.find_tasks(name=task_name)
 
         if not existing_tasks:
-            tasks_api.create_task_every(name=task_name, flux=task_definition, every=window, organization=organization)
+            task = tasks_api.create_task_every(name=task_name, flux=task_definition, every="1h", organization=organization)
+            tasks_api.run_manually(task.id)
+            tasks_api.run_manually(task.id)
             print(f"[INFO ][InfluxDB]Created task: {task_name}")
         else:
             print(f"[INFO ][InfluxDB]Task '{task_name}' already exists. Skipping creation.")
