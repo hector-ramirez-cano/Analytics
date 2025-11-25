@@ -36,6 +36,27 @@ services:
     networks:
       - syslognet
 
+  # backend_aegis:
+  #   image: aegis-backend
+  #   container_name: aegis-backend
+  #   ports:
+  #     - "5000:5000"
+  #   environment:
+  #     ANSIBLE_PRIVATE_KEY_FILE: /root/.ssh/id_ed25519
+  #   volumes:
+  #     - ./backend_aegis/identity/id_ed25519:/root/.ssh/id_ed25519:ro
+  #     - ./backend_aegis/identity/influx_db.json:/analytics/identity/influx_db.json:ro
+  #     - ./backend_aegis/identity/postgres_db.json:/analytics/identity/postgres_db.json:ro
+  #     - ./backend_aegis/identity/telegram.json:/analytics/identity/telegram.json:ro
+  #     - ./backend_aegis/config.json:/analytics/config.json:ro
+  #   stdin_open: true
+  #   tty: true
+  #   restart: always
+  #   depends_on:
+  #     - postgres_db
+  #     - influx_db
+  #     - rsyslog
+
 networks:
   syslognet:
     driver: bridge

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aegis/services/canvas/canvas_tabs_notifier.dart';
-import 'package:aegis/ui/components/chip_tab.dart';
 import 'package:aegis/ui/components/closable_chip.dart';
 import 'package:reorderables/reorderables.dart';
 class ChipTabBar extends StatelessWidget {
@@ -26,9 +25,9 @@ class ChipTabBar extends StatelessWidget {
   }
 
   Widget _makeTabBar(CanvasTabsNotifier notifier, List<Widget> children) {
-    openTab() => {};
+    // openTab() => {};
     onReorder(oldIndex, newIndex) => notifier.reoderTabs(oldIndex, newIndex);
-    bool hasTopology = notifier.hasTopology;
+    // bool hasTopology = notifier.hasTopology;
     return SizedBox(
 
         height: 32,

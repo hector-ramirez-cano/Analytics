@@ -1,14 +1,12 @@
+import 'package:aegis/services/metrics/metadata_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aegis/extensions/string_extensions.dart';
 import 'package:aegis/models/alerts/alert_predicate.dart';
 import 'package:aegis/models/alerts/alert_predicate_operation.dart';
 import 'package:aegis/models/analytics_item.dart';
-import 'package:aegis/models/charts/dashboard_polling_definition.dart';
 import 'package:aegis/models/enums/facts_const_types.dart';
-import 'package:aegis/models/facts/facts_polling_definition.dart';
 import 'package:aegis/models/topology.dart';
-import 'package:aegis/services/facts/facts_service.dart';
 import 'package:aegis/ui/components/badge_button.dart';
 import 'package:aegis/ui/components/list_selector.dart';
 
@@ -36,19 +34,12 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
   late final TextEditingController _leftController;
   AlertPredicate _predicate = AlertPredicate.empty();
   late final TextEditingController _rightController;
-  late final FactsPollingDefinition _definition;
 
   @override
   void initState() {
     super.initState();
     _leftController  = TextEditingController();
     _rightController = TextEditingController();
-    _definition = FactsPollingDefinition(
-      groupableId: widget.target.id,
-      fields: widget.topology.getAllAvailableValues(widget.target),
-      chartType: ChartType.label,
-      updateInterval: const Duration(seconds: 15)
-    );
 
     if (widget.initialValue != null) {
       _predicate = widget.initialValue!;
@@ -171,23 +162,21 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
     );
   }
 
-
-
-
   Widget _makeVariableSubtitle(dynamic item) {
     
     return Consumer(builder:(context, ref, child) {
-      final facts = ref.watch(factsServiceProvider(definition: _definition));
 
-      return facts.when(
-        error: (e, _) => Text(e.toString()),
-        loading: () => Text("Cargando..."),
-        data: (Map<String, dynamic> values) {
-          final sample = (values[item] ?? item);
-          final sampleStr = sample.toString().truncate(100);
-          return Text(sampleStr);
-        } ,
-      );
+      final values = widget.topology.getAllAvailableValues(widget.target);
+
+      final metadata = ref.watch(metadataServiceProvider(metadata: values, deviceId: widget.target.id));
+        return metadata.when(
+          data: (metadata) {
+            if (metadata.isEmpty) { return Text("Sin datos"); }
+            return Text(metadata[0][item]?.toString().truncate(50) ?? "Sin datos");
+          },
+          error: (e, st) => Text("Sin datos"),
+          loading: () => Text("Cargando...")
+        );
     },);
     
   }

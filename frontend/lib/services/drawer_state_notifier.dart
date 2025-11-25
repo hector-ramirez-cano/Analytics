@@ -16,7 +16,7 @@ class DrawerState {
 @riverpod
 class DrawerStateNotifier extends _$DrawerStateNotifier {
 
-  @override DrawerState build() =>  DrawerState(isOpen: true, screen: WorkplaceScreen.canvas);
+  @override DrawerState build() =>  DrawerState(isOpen: false, screen: WorkplaceScreen.charts);
 
   void setOpen() {
     state = DrawerState(isOpen: true, screen: state.screen);

@@ -14,7 +14,6 @@ use crate::model::db;
 use crate::model::facts::ansible::ansible_backend;
 use crate::model::facts::baseline::baseline_backend;
 use crate::model::facts::generics::recursive_merge;
-use crate::model::facts::snmp::snmp_backend;
 use crate::types::{DeviceHostname, ExposedFields, MetricSet, Metrics, Status};
 use crate::model::facts::icmp::icmp_backend;
 
@@ -53,9 +52,9 @@ impl FactGatheringBackend {
 
     /// Initialize
     pub fn init(influx_client : &influxdb2::Client) {
+        println!("[INFO] Attempting to init fact gathering backend (requires InfluxClient)");
         let _ = Self::instance();
         icmp_backend::init();
-        snmp_backend::init();
         ansible_backend::init();
         baseline_backend::init(influx_client);
 
@@ -149,7 +148,7 @@ impl FactGatheringBackend {
 
     pub async fn update_database(pool: &sqlx::Pool<Postgres>, influx_client : &influxdb2::Client, msg: &FactMessage) {
         log::info!("[INFO ][FACTS] Updating Influx with metrics.");
-        db::update_topology::update_device_analytics(influx_client, &msg).await;
+        db::operations::influx_operations::update_device_analytics(influx_client, &msg).await;
         db::update_topology::update_device_metadata(pool, msg).await;
     }
 
@@ -201,12 +200,10 @@ impl FactGatheringBackend {
             log::info!("[INFO ][FACTS] Gathering facts...");
             let icmp_handle    = rocket::tokio::task::spawn(async { icmp_backend::gather_facts().await });
             let ansible_handle = rocket::tokio::task::spawn(async { ansible_backend::gather_facts().await });
-            let snmp_handle    = rocket::tokio::task::spawn(async { snmp_backend::gather_facts().await });
             let baseline_handle = rocket::tokio::task::spawn(async { baseline_backend::gather_facts().await });
-
             // other tasks...
             
-            let handles = vec![icmp_handle, ansible_handle, baseline_handle, snmp_handle];
+            let handles = vec![icmp_handle, ansible_handle, baseline_handle];
 
             // Gather results off the tasks results
             let results: Vec<Result<(Metrics, Status), tokio::task::JoinError>> = join_all(handles).await;
@@ -261,8 +258,9 @@ impl FactGatheringBackend {
             let status = match combined_status.remove(&hostname) {
                 Some(s) => s,
                 None => {
-                    log::error!("[ERROR][FACTS] While merging, device {} did not contain status. This coud should be unreachable!", &hostname);
-                    continue;
+                    log::error!("[ERROR][FACTS] While merging, device {} did not contain status. This code should be unreachable!", &hostname);
+                    log::info! ("               ^ HELP: This might mean the device contains only syslog as data source");
+                    DeviceStatus::empty()
                 }
             };
 

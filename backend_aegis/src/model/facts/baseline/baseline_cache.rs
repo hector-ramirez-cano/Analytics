@@ -79,7 +79,7 @@ impl BaselineCache {
         let last_w: RwLockWriteGuard<'_, u128> = self.last_update.write().await;
 
         // Re-check under the write lock to avoid races
-        if now.saturating_sub(*last_w) < interval_secs {
+        if now.saturating_sub(*last_w) < interval_secs && !forced {
             // somebody else updated while we were waiting for the write lock
             return None;
         }

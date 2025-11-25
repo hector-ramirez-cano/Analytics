@@ -104,6 +104,10 @@ class Topology {
     return _deviceGroupsCache[device.id]!;
   }
 
+  Set<Device> get ungroupedDevices {
+    return devices.where((d) { return getDeviceGroups(d).isEmpty; }).toSet();
+  }
+
   Map<String, Device> get deviceHostnames {
     _deviceHostnames ??= Map.fromEntries(devices.map((device) => MapEntry(device.mgmtHostname, device)));
 
@@ -116,12 +120,10 @@ class Topology {
       if (item is Device) {
         _allAvailableValuesCache[item.id] = item.availableValues;
       }
-
-      if (item is Group) {
+      else if (item is Group) {
         final values = item.allDescendants.map((device) => getAllAvailableValues(device));
         _allAvailableValuesCache[item.id] = values.expand((inner) => inner).toSet();
       }
-
       else {
         throw Exception("Unexpected type for gathering all available values");
       }

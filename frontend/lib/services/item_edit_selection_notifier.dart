@@ -293,7 +293,7 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
     try {
       final response = await post(url, headers: headers, body: jsonEncode(changeMessage));
 
-      if (response.statusCode > 299 && response.statusCode < 200) {
+      if (response.statusCode > 299 || response.statusCode < 200) {
         throw Exception("[BACKEND] Status Code = ${response.statusCode} with error='${response.body}'");
       }
 

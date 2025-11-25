@@ -18,7 +18,6 @@ package "Backend" <<Backend>> {
     artifact "DB backend"
     artifact "Cache"
     artifact "ICMP poller"
-    artifact "SNMP poller"
     artifact "Ansible poller"
     artifact "Syslog handler"
     artifact "Facts backend"
@@ -29,12 +28,10 @@ package "Backend" <<Backend>> {
     "Facts backend" -right-> "DB backend"
 
     "ICMP poller" -right-> "Facts backend"
-    "SNMP poller" -right-> "Facts backend"
     "Ansible poller" -right-> "Facts backend" 
     "Syslog handler" -right-> "Syslog backend"
     "Facts backend" -[hidden]d-> "Syslog backend"
-    "ICMP poller" <-[hidden]d-> "SNMP poller"
-    "SNMP poller" <-[hidden]d-> "Ansible poller"
+    "ICMP poller" <-[hidden]d-> "Ansible poller"
     "Ansible poller" <-[hidden]d-> "Syslog handler"
     
     "Cache" <-down-> "DB backend"
@@ -45,7 +42,7 @@ package "Backend" <<Backend>> {
   }
 
   package "Controller (Python Docker)" {
-    artifact "HTTP/Websocket API (Quart)"
+    artifact "HTTP/Websocket API (Rocket)"
     node "DB Drivers" {
       artifact "Psycopg Driver"
       artifact "SQLite Driver"
@@ -70,14 +67,14 @@ package "Backend" <<Backend>> {
 
 
   "Controller (Python Docker)" --[hidden]down-> "External Services"
-  "HTTP/Websocket API (Quart)" --[hidden]down-> "DB Drivers"
+  "HTTP/Websocket API (Rocket)" --[hidden]down-> "DB Drivers"
   "DB Drivers" --[hidden]left-> "External Services"
   "InfluxDB" --[hidden]left-> "SQLite"
 }
 
-"HTTP/Websocket API (Quart)" --> "UI Client"
-"DB backend" <-up-> "HTTP/Websocket API (Quart)"
-"Alerts Engine" <-> "HTTP/Websocket API (Quart)"
+"HTTP/Websocket API (Rocket)" --> "UI Client"
+"DB backend" <-up-> "HTTP/Websocket API (Rocket)"
+"Alerts Engine" <-> "HTTP/Websocket API (Rocket)"
 "Syslog handler" -right-> "rsyslogd"
 "Psycopg Driver" -down-> "Postgres"
 "SQLite Driver" -down-> "SQLite"

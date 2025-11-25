@@ -97,7 +97,7 @@ class AlertRule extends AnalyticsItem<AlertRule> {
       "target": targetId,
       "reduce-logic": reduceLogic.toString(),
       "data-source": source.toString(),
-      "kind": "simple",
+      "rule-type": "simple",
       "predicates": definition.map((predicate) => predicate.toMap()).toList()
     };
   }
@@ -108,8 +108,12 @@ class AlertRule extends AnalyticsItem<AlertRule> {
       "name": name,
       "requires-ack": requiresAck,
       "rule-definition": ruleDefinitionToMap(),
-      "kind": "simple", // TODO: Locked as simple until this gets added to the frontend
-      "data-source": source.toString()
+      "rule-type": "simple", // TODO: Locked as simple until this gets added to the frontend
+      "data-source": source.toString(),
+      "severity": severity.toString(),
+      "target": targetId,
+      "reduce-logic": reduceLogic.toString(),
+      "predicates": definition.map((predicate) => predicate.toMap()).toList()
     };
   }
 }

@@ -71,16 +71,18 @@ fn ping_host_once(host: &str) -> io::Result<(i32, String, IcmpStatus, f64, f64)>
     } else {
         // examine stderr text for known errors (same order/logic as Python)
         let stderr_s = stderr.as_ref();
-        if stderr_s.contains(UNREACHABLE_PATTERN) {
+        let stdout_s = stdout.as_ref();
+        if stderr_s.contains(UNREACHABLE_PATTERN) || stdout_s.contains(UNREACHABLE_PATTERN) {
             IcmpStatus::Unreachable(stderr_s.to_string())
-        } else if stderr_s.contains(TIMEOUT_ERROR_PATTERN) {
+        } else if stderr_s.contains(TIMEOUT_ERROR_PATTERN) || stdout_s.contains(TIMEOUT_ERROR_PATTERN) {
             IcmpStatus::Timeout(stderr_s.to_string())
-        } else if stderr_s.contains(NAME_RESOLUTION_ERROR_PATTERN) {
+        } else if stderr_s.contains(NAME_RESOLUTION_ERROR_PATTERN) || stdout_s.contains(NAME_RESOLUTION_ERROR_PATTERN) {
             IcmpStatus::NameResolutionError(stderr_s.to_string())
-        } else if stderr_s.contains(HOST_NOT_FOUND_PATTERN) {
+        } else if stderr_s.contains(HOST_NOT_FOUND_PATTERN) || stdout_s.contains(HOST_NOT_FOUND_PATTERN) {
             IcmpStatus::HostNotFound(stderr_s.to_string())
         } else {
-            IcmpStatus::Unknown(stderr_s.to_string())
+            dbg!(&stderr_s, &stdout);
+            IcmpStatus::Unknown(format!("stdout={}, stderr={}", stdout_s.to_string(), stderr_s.to_string()))
         }
     };
 

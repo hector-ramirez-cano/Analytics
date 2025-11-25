@@ -59,13 +59,6 @@ class _SideDrawerState extends ConsumerState<SideDrawer> {
           loading: ()          => _buildOnNotSuccessful(null, true)
         );
 
-      case NavigationRailItem.charts:
-        return topology.when(
-          data   : (topology)  => ListingDrawer(topology: topology),
-          error  : (error, st) => _buildOnNotSuccessful(error.toString(), topology.isLoading),
-          loading: ()          => _buildOnNotSuccessful(null, true)
-        );
-
       case NavigationRailItem.edit:
         return topology.when(
           error  : (error, st) => _buildOnNotSuccessful("${error.toString()}, at $st", topology.isLoading),

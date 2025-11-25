@@ -99,6 +99,12 @@ CREATE TABLE IF NOT EXISTS Analytics.links (
 CREATE UNIQUE INDEX IF NOT EXISTS unique_link_pair
 ON Analytics.links (LEAST(side_a, side_b), GREATEST(side_a, side_b));
 
+CREATE TABLE IF NOT EXISTS Analytics.alert_rules (
+    rule_id         BIGSERIAL PRIMARY KEY,
+    rule_name       VARCHAR(254) NOT NULL,
+    requires_ack    BOOLEAN NOT NULL,
+    rule_definition JSONB NOT NULL
+);
 
 CREATE TYPE AlertSeverity AS ENUM ('emergency','alert','critical','error','warning','notice','info','debug','unknown');
 CREATE TABLE IF NOT EXISTS Analytics.alerts (
@@ -117,13 +123,6 @@ CREATE TABLE IF NOT EXISTS Analytics.alerts (
     FOREIGN KEY (rule_id) REFERENCES Analytics.alert_rules(rule_id)
 );
 
--- DROP TABLE Analytics.alert_rules;
-CREATE TABLE IF NOT EXISTS Analytics.alert_rules (
-    rule_id         BIGSERIAL PRIMARY KEY,
-    rule_name       VARCHAR(254) NOT NULL,
-    requires_ack    BOOLEAN NOT NULL,
-    rule_definition JSONB NOT NULL
-);
 
 CREATE TABLE IF NOT EXISTS Analytics.groups (
     group_id         BIGINT PRIMARY KEY DEFAULT nextval('global_item_id_seq'),
@@ -143,8 +142,6 @@ CREATE TABLE IF NOT EXISTS Analytics.group_members (
     CONSTRAINT chk_group_no_recurse CHECK (group_id <> item_id),
     CONSTRAINT unique_group_item_pair UNIQUE (group_id, item_id)
 );
-
-SELECT g.group_id, g.group_name as name, g.is_display_group, array_agg(gm.item_id) FROM Analytics.groups as g JOIN Analytics.group_members gm on gm.group_id = g.group_id GROUP BY g.group_id, g.group_name;
 
 CREATE TABLE IF NOT EXISTS Analytics.dashboard(
     dashboard_id BIGSERIAL PRIMARY KEY,
@@ -277,13 +274,12 @@ CREATE INDEX idx_SystemEvents_ReceivedAt ON Syslog.system_events (received_at);
 --                                                                $$$$$$/  
 
 CREATE SCHEMA IF NOT EXISTS ClientIdentity;
--- DROP TABLE ClientIdentity.ack_tokens;
+
 CREATE TABLE IF NOT EXISTS ClientIdentity.ack_tokens(
     ack_token VARCHAR(128) PRIMARY KEY,
     ack_actor VARCHAR NOT NULL
 );
 
--- DROP TABLE ClientIdentity.telegram_receiver;
 CREATE TABLE IF NOT EXISTS ClientIdentity.telegram_receiver(
     telegram_user_id BIGINT PRIMARY KEY, --managed by telegram, trusted to be unique
     authenticated    BOOLEAN NOT NULL,

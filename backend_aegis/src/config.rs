@@ -30,6 +30,7 @@ impl Config {
     }
 
     pub fn init() {
+        println!("[INFO] Init config");
         let _ = Config::instance();
     }
 

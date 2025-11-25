@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:aegis/models/enums/workplace_screen.dart';
 
 enum NavigationRailItem {
+  charts   (Icons.area_chart    , 'Gráficas'       , bottom: false, hasDrawer: false, screen: WorkplaceScreen.charts  ),
   canvas   (Icons.segment       , 'Topología'      , bottom: false, hasDrawer: true , screen: WorkplaceScreen.canvas  ),
-  charts   (Icons.area_chart    , 'Gráficas'       , bottom: false, hasDrawer: true , screen: WorkplaceScreen.charts  ),
   syslog   (Icons.terminal      , 'Syslog'         , bottom: false, hasDrawer: false, screen: WorkplaceScreen.syslog  ),
   alerts   (Icons.notifications , 'Alertas'        , bottom: false, hasDrawer: false, screen: WorkplaceScreen.alerts  ),
   edit     (Icons.edit          , "Editar datos"   , bottom: true , hasDrawer: true , screen: WorkplaceScreen.edit    ),

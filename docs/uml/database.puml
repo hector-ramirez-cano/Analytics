@@ -2,46 +2,20 @@
 skinparam linetype ortho
 
 ' Enumerations
-enum ItemType {
-    device
-    link
-    group
-}
+package Analytics {
 
-enum LinkType {
-    optical
-    copper
-    wireless
-}
-
-enum DataSource {
-    ssh
-    snmp
-    icmp
-}
-
-enum AlertSeverity {
-    emergency
-    alert
-    critical
-    error
-    warning
-    notice
-    info
-    debug
-}
 
 ' Tables
 dataclass items {
-  * id : SERIAL
+  * id : BIGSERIAL
+  --
   item_type : ItemType
 }
 
 dataclass devices {
-  * device_id : SERIAL
+  * device_id : BIGSERIAL
+  --
   device_name : VARCHAR(254)
-  position_x : FLOAT
-  position_y : FLOAT
   latitude : FLOAT
   longitude : FLOAT
   management_hostname : VARCHAR(254)
@@ -50,53 +24,91 @@ dataclass devices {
   requested_metrics : JSONB
   available_values : JSONB
   snmp_configuration : JSONB
-  FK item_id : INT
+  FK item_id : BIGINT
 }
 
+dataclass topology_views {
+  * topology_views_id : BIGSERIAL,
+  --
+  is_physical_view : BOOLEAN (UNUSED)
+}
+
+dataclass topology_views_member {
+    topology_views_id : BIGINT
+    item_id           : BIGINT
+    position_x : FLOAT = 0.0
+    position_y : FLOAT = 0.0
+    --
+  }
+
 dataclass device_data_sources {
-  * device_id : SERIAL
+  * device_id : BIGINT
+  --
   data_source : DataSource
 }
 
 dataclass links {
-  * link_id : SERIAL
-  side_a : INT
-  side_b : INT
+  * link_id : BIGSERIAL
+  --
+  side_a : BIGINT
+  side_b : BIGINT
   side_a_iface : VARCHAR(254)
   side_b_iface : VARCHAR(254)
   link_type : LinkType
   link_subtype : VARCHAR(254)
-  FK item_id : INT
+  FK item_id : BIGINT
 }
 
 dataclass alerts {
-  * alert_id : SERIAL
+  * alert_id : BIGSERIAL
+  --
   alert_time : TIMESTAMP
-  ack_time : TIMESTAMP
-  requires_ack : BOOLEAN
+  ack_time : TIMESTAMP (UNUSED)
+  requires_ack : BOOLEAN (UNUSED)
   severity : AlertSeverity
   message : VARCHAR
-  ack_actor : VARCHAR
-  FK target_id : INT
+  ack_actor : VARCHAR (UNUSED)
+  value : VARCHAR(254)
+  FK rule_id : BIGINT
+  FK target_id : BIGINT
 }
 
 dataclass alert_rules {
-  * rule_id : SERIAL
+  * rule_id : BIGSERIAL
+  --
   rule_name : VARCHAR(128)
   requires_ack : BOOLEAN
   rule_definition : JSONB
 }
 
 dataclass groups {
-  * group_id : SERIAL
+  * group_id : BIGSERIAL
+  --
   group_name : VARCHAR(254)
   is_display_group : BOOLEAN
-  FK item_id : INT
+  FK item_id : BIGINT
 }
 
 dataclass group_members {
-  FK group_id : INT
-  FK item_id : INT
+  FK group_id : BIGINT
+  FK item_id : BIGINT
+}
+
+dataclass dashboard {
+  * dashboard_id : BIGSERIAL
+  --
+  dashboard_name : VARCHAR(254)
+}
+
+dataclass dashboard_items {
+  FK dashboard_id : BIGINT,
+  --
+  row_start : SMALLBIGINT,
+  row_span : SMALLBIGINT,
+  col_start: SMALLBIGINT,
+  col_span: SMALLBIGINT,
+  style_definition: JSONB (unused),
+  polling_definition: JSONB,
 }
 
 ' Relationships with crow's foot cardinality
@@ -111,5 +123,121 @@ devices ||--o{ links : side_b
 
 groups ||--o{ group_members : group_id
 items ||--o{ group_members : item_id
+dashboard ||--o{ dashboard_items: dashboard_id
+alert_rules ||--o{ alerts : rule_id
+topology_views ||--o{ topology_views_member : topology_views_id
+
+}
+together {
+  package syslog {
+  dataclass "system_events" as system_events {
+
+    * id : BIGBIGSERIAL
+    --
+    facility : SyslogFacility
+    severity : SyslogSeverity
+    from_host : TEXT
+    received_at : TIMESTAMPTZ
+    process_id : TEXT
+    message : TEXT
+    message_id : TEXT
+    appname : TEXT
+    message_tsv : tsvector (generated)
+    }
+  }
+
+
+  package ClientIdentity {
+    dataclass "ClientIdentity.ack_tokens" as ack_tokens {
+      * ack_token : VARCHAR(128)
+      --
+      ack_actor : VARCHAR
+    }
+
+      dataclass "ClientIdentity.telegram_receiver" as telegram_receiver {
+
+      * telegram_user_id : BIGINT
+      --
+      authenticated : BOOLEAN
+      subscribed : BOOLEAN
+      ack_token : VARCHAR(128)
+    }
+
+    ' Relationships with crow's foot
+    ack_tokens ||--o{ telegram_receiver : "ack_token"
+  }
+}
+
+package types {
+  enum ItemType {
+      device
+      link
+      group
+  }
+
+  enum LinkType {
+      optical
+      copper
+      wireless
+  }
+
+  enum DataSource {
+      ssh
+      snmp
+      icmp
+  }
+
+  enum SyslogSeverity {
+    emerg
+    alert
+    crit
+    err
+    warning
+    notice
+    info
+    debug
+  }
+
+  enum AlertSeverity {
+      emergency
+      alert
+      critical
+      error
+      warning
+      notice
+      info
+      debug
+  }
+
+  enum SyslogFacility {
+    kern
+    user
+    mail
+    daemon
+    auth
+    syslog
+    lpr
+    news
+    uucp
+    cron
+    authpriv
+    ftp
+    ntp
+    security
+    console
+    solaris
+    local0
+    local1
+    local2
+    local3
+    local4
+    local5
+    local6
+    local7
+  }
+
+}
+
+syslog -d[hidden]-> ClientIdentity
 
 @enduml

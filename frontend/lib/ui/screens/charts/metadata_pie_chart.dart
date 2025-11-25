@@ -14,7 +14,7 @@ class MetadataPieChart extends StatelessWidget {
   });
 
   // TODO: Get swatches from db
-  final int swatchIndex = 1;
+  final int swatchIndex = 0;
   final List<Map<String, List<Color>>> swatches = [
     {
       "pieColors" : [

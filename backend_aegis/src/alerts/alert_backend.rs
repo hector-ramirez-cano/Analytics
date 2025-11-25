@@ -80,6 +80,7 @@ impl AlertBackend {
 
     /// Initialize
     pub async fn init(pool: &sqlx::PgPool) {
+        println!("[INFO] Attempting to init alert backend (requires Postgres connection)");
 
         // Add listeners to react to events that require rule eval
         let (facts_channel_tx, facts_channel_rx) = mpsc::channel::<FactMessage>(64);
@@ -393,28 +394,28 @@ impl AlertBackend {
     async fn eval_rules(rules: &Vec<AlertRule>, old_facts: &FactMessage, new_facts : &FactMessage, event_tx: &Sender<AlertEvent>) {
         
         for rule in rules.iter() {
-                let item = match Cache::instance().get_evaluable_item(rule.target_item).await { Some(i) => i, None=> continue };
+            let item = match Cache::instance().get_evaluable_item(rule.target_item).await { Some(i) => i, None=> continue };
 
-                let triggered = item.eval(rule, &old_facts, &new_facts).await;
+            let triggered = item.eval(rule, &old_facts, &new_facts).await;
 
-                // if item trigered, raise an alert for each alerting item
-                if let Some(t) = triggered {
-                    log::warn!("[WARN ][ALARTS] Alert id {} raised!", rule.rule_id);
-                    for (item, which) in t {
-                        match item {
-                            crate::alerts::EvaluableItem::Group(_) => {
-                                log::warn!("[WARN ][ALERTS] Alert triggered for group. This behavor is unexpected, as only devices can raise. Skipping...");
-                                continue;
-                            },
-                            crate::alerts::EvaluableItem::Device(device) => {
-                                let which = which.iter().map(|(lhs, op, rhs)| format!("[{} {} {}]", lhs, op, rhs)).collect::<Vec<_>>().join(", ");
+            // if item trigered, raise an alert for each alerting item
+            if let Some(t) = triggered {
+                log::warn!("[WARN ][ALARTS] Alert id {} raised!", rule.rule_id);
+                for (item, which) in t {
+                    match item {
+                        crate::alerts::EvaluableItem::Group(_) => {
+                            log::warn!("[WARN ][ALERTS] Alert triggered for group. This behavor is unexpected, as only devices can raise. Skipping...");
+                            continue;
+                        },
+                        crate::alerts::EvaluableItem::Device(device) => {
+                            let which = which.iter().map(|(lhs, op, rhs)| format!("[{} {} {}]", lhs, op, rhs)).collect::<Vec<_>>().join(", ");
 
-                                AlertBackend::raise_alert(rule, &device, which, &event_tx).await;
-                            },
-                        }
+                            AlertBackend::raise_alert(rule, &device, which, &event_tx).await;
+                        },
                     }
                 }
             }
+        }
 
     }
 
@@ -422,17 +423,21 @@ impl AlertBackend {
     pub async fn update_ruleset(&self, forced: bool) {
         let instance = Self::instance();
 
+        log::info!("[INFO ][ALERTS][LOADS] Atempting to refresh ruleset");
+
         // try to acquire a lock for the last_update lock guard
         let last_update_lock = instance.try_claim_update(forced).await;
         let mut names_lock = instance.rule_names.write().await;
-
-        log::info!("[INFO ][ALERTS][LOADS] Refreshing ruleset");
-
+        
         // as long as this mfer lives, no one can access the rules
         let _last_update_lock = match last_update_lock {
-            Some(l) => l, None => return
+            Some(l) => l, None => {
+                log::info!("[INFO ][ALERTS][LOADS] failed to acquire lock on updates, forced={forced}");
+                return;
+            }
         };
-
+        
+        log::info!("[INFO ][ALERTS][LOADS] Refreshing ruleset, forced={forced}");
         let rules = match alert_operations::get_alert_rules(&self.pool).await {
             Ok(r) => r,
             Err(_) => {
@@ -444,6 +449,7 @@ impl AlertBackend {
 
         let mut facts_rules : Vec<AlertRule> = Vec::new();
         let mut syslog_rules : Vec<AlertRule> = Vec::new();
+
 
         for rule in rules {
             names_lock.insert(rule.rule_id, rule.name.clone());
@@ -475,7 +481,6 @@ impl AlertBackend {
     pub async fn get_rules_as_json() -> serde_json::Value {
         let instance = AlertBackend::instance();
         instance.update_ruleset(true).await;
-        
         
         let facts = instance.facts_rules.read().await;
         let syslog = instance.syslog_rules.read().await;
@@ -549,6 +554,7 @@ impl AlertBackend {
         // if the update isn't due, and the caller didn't request a forced update
         let last: EpochSeconds = *self.last_update.read().await;
         if now.saturating_sub(last) < interval_secs && !forced {
+            log::info!("[DEBUG][ALERTS][LOADS] Failed to claim update lock, update due? = {}, forced = {}", now.saturating_sub(last) >= interval_secs, forced);
             return None;
         }
 
@@ -556,7 +562,7 @@ impl AlertBackend {
         let mut last_w = self.last_update.write().await;
 
         // Re-check under the write lock to avoid races
-        if now.saturating_sub(*last_w) < interval_secs {
+        if now.saturating_sub(*last_w) < interval_secs && !forced {
             // somebody else updated while we were waiting for the write lock
             return None;
         }

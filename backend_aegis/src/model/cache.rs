@@ -49,6 +49,7 @@ impl Cache {
     }
 
     pub async fn init(pool: &sqlx::PgPool) {
+        println!("[INFO] Attempting to init cache (requires Postgres connection)...");
         // Force creation of instance
         let _ = Cache::instance();
 
@@ -347,7 +348,7 @@ impl Cache {
         let mut last_w = self.last_update.write().await;
 
         // Re-check under the write lock to avoid races
-        if now.saturating_sub(*last_w) < interval_secs {
+        if now.saturating_sub(*last_w) < interval_secs && !forced {
             // somebody else updated while we were waiting for the write lock
             return None;
         }

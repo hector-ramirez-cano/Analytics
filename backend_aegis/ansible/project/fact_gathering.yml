@@ -5,8 +5,6 @@
   strategy: free
 
   tasks:
-    - name: Ping
-      ansible.builtin.ping:
 
     - name: Gather IPs
       ansible.builtin.setup:

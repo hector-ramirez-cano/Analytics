@@ -6,6 +6,7 @@ SELECT * FROM Analytics.group_members;
 SELECT device_id, data_source FROM Analytics.device_data_sources;
 
 SELECT * FROM Analytics.devices;
+SELECT * FROM Analytics.device_data_sources;
 
 UPDATE Analytics.devices SET available_values = NULL;
 
@@ -56,7 +57,7 @@ INSERT INTO Analytics.groups (group_id, group_name, is_display_group)
 UPDATE Analytics.groups SET is_display_group=0<>1 WHERE group_id = 202;
 
 SELECT * FROM Analytics.group_members;
-TRUNCATE Analytics.group_members;
+-- TRUNCATE Analytics.group_members;
 INSERT INTO Analytics.group_members(group_id, item_id)
     VALUES
         (201, 1),
@@ -85,12 +86,12 @@ INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_sta
         (1, 1, 1, 0, 1, '{"update-interval-s": 60, "field":"icmp_rtt", "device-ids":1, "type":"metadata", "chart-type": "label"}', '{}');
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition)
     VALUES
-        (1, 1, 1, 1, 1, '{"update-interval-s": 60, "field":"icmp_status", "device-ids":203, "type":"metadata", "chart-type": "pie"}', '{}');
+        (1, 1, 1, 1, 1, '{"update-interval-s": 15, "field":"icmp_status", "device-ids":203, "type":"metadata", "chart-type": "pie"}', '{}');
 
 -- TODO: Handle actual parent-child recursion
 -- INSERT INTO Analytics.group_members(group_id, item_id) VALUES (203, 203);
 
-TRUNCATE Analytics.alert_rules;
+-- TRUNCATE Analytics.alert_rules;
 
 -- TRUNCATE Analytics.alerts; DELETE FROM Analytics.alert_rules;
 INSERT INTO Analytics.alert_rules (rule_id, rule_name, requires_ack, rule_definition)
@@ -110,14 +111,14 @@ SELECT count(1) AS count FROM Analytics.alerts OFFSET 0;
 select * from Analytics.telegram_receiver;
 
 SELECT * FROM Analytics.topology_views;
-TRUNCATE Analytics.topology_views;
+-- RUNCATE Analytics.topology_views;
 INSERT INTO Analytics.topology_views(topology_views_id, is_physical_view, name)
     VALUES  (0, FALSE, 'Hasta la vista'),
             (1, FALSE, 'Baby'),
             (2, TRUE , 'Globbus');
 
 -- DROP TABLE Analytics.topology_views_member;
-TRUNCATE Analytics.topology_views_member;
+-- TRUNCATE Analytics.topology_views_member;
 
 SELECT * FROM Analytics.topology_views_member;
 INSERT INTO Analytics.topology_views_member(topology_views_id, item_id, position_x, position_y)

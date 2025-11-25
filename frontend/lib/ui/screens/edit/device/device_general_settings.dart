@@ -231,7 +231,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
         final metadata = ref.watch(metadataServiceProvider(metadata: values, deviceId: notif.selected.id));
         return metadata.when(
           data: (metadata) {
-            print(metadata[0][option]);
+            if (metadata.isEmpty) { return Text("Sin datos"); }
             return Text(metadata[0][option]?.toString().truncate(50) ?? "Sin datos");
           },
           error: (e, st) => Text("Sin datos"),

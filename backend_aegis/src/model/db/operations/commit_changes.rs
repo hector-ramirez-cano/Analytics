@@ -131,6 +131,7 @@ async fn update_devices(devices: Vec<serde_json::Value>, pool: &sqlx::Pool<Postg
         let available_values = hashset_to_json_array(&device.configuration.available_values);
 
         let result = if device.device_id <= 0 {
+            dbg!("Inserting the mfer");
             sqlx::query!("
                 INSERT INTO Analytics.devices
                     (device_name, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values)
@@ -249,10 +250,13 @@ async fn update_links(links: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>
 async fn update_rules(rules: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
     for rule_in in rules {
         let definition = rule_in.get("rule-definition")
-            .ok_or((format!("Could not update rule. 'rule-definition' is missing for rule"), 400))?.clone();
-
+        .ok_or((format!("Could not update rule. 'rule-definition' is missing for rule"), 400))?.clone();
+    
+    
         let rule : AlertRule = serde_json::from_value(rule_in)
             .map_err(|e| (format!("Could not update rule. Parsing failed with error = '{e}'"), 400))?;
+
+        log::info!("[DEBUG][DB][UPDATES] Updating rule= {}", rule.rule_id);
 
         if rule.rule_id <= 0 {
             sqlx::query!("
@@ -264,6 +268,7 @@ async fn update_rules(rules: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>
             ).execute(pool).await
             .map_err(|e| (format!("Could not insert rule. SQL error = '{e}'"), 500))?;
         } else {
+            log::info!("[DEBUG][DB][UPDATES] Definition= {}", &definition);
             sqlx::query!("
                 UPDATE Analytics.alert_rules
                 SET rule_name=$1, requires_ack=$2, rule_definition=$3

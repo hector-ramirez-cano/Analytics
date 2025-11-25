@@ -26,9 +26,6 @@ loop [Corrutina]
     FactsBackend -> "Servidor" : ICMP (ping)
     "Servidor" --> FactsBackend : Respuesta ICMP
 
-    FactsBackend -> "Servidor" : SNMP (consulta)
-    "Servidor" --> FactsBackend : Respuesta SNMP
-
     FactsBackend -> "Servidor" : Ansible vía SSH
     "Servidor" --> FactsBackend : Resultado SSH
 

@@ -94,6 +94,7 @@ async fn run_playbook(targets: Vec<String>) -> (Metrics, Status) {
 
         return metrics, status
      */
+
     let result = rocket::tokio::task::spawn_blocking(move || -> Result<(Metrics, Status), PyErr> {
         // acquire the python environment, and extract data
         Python::attach(|py| -> Result<(Metrics, Status), PyErr> {

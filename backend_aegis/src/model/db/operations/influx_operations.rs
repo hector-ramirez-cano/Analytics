@@ -1,8 +1,12 @@
+use std::collections::HashMap;
+use std::env;
 use influxdb2::{api::query::FluxRecord, models::ast::{Dialect, dialect::Annotations}};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
-use crate::types::{DeviceId, DeviceHostname, MetricName, MetricValue, Metrics};
+use influxdb2::models::DataPoint;
+use rocket::futures::stream;
+
+use crate::{config::Config, model::{cache::Cache, facts::fact_gathering_backend::FactMessage}, types::{DeviceHostname, DeviceId, MetricName, MetricValue, Metrics}};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InfluxFilter {
@@ -116,7 +120,7 @@ pub async fn get_baseline_metrics(influx_client: &influxdb2::Client, device_host
         log::info!("[INFO ][FACTS][BASELINE] Baseline could not emit facts, as hostnames are not in cache yet...");
         return Metrics::new()
     }
-    
+
     let query = format!(r#"
         from(bucket: "baselines")
             |> range(start: -2h)
@@ -257,7 +261,7 @@ async fn execute_query(influx_client : &influxdb2::Client, influx_script: String
         }),
         ..Default::default()
     };
-    
+
     let response = match influx_client.query_raw(Some(query)).await {
         Ok(r) => r,
         Err(e) => {
@@ -265,6 +269,70 @@ async fn execute_query(influx_client : &influxdb2::Client, influx_script: String
             return vec![serde_json::Value::Null]
         }
     };
-    
+
     flux_records_to_vec(response)
+}
+
+/// Inserts datapoints into influxdb bucket.
+pub async fn update_device_analytics(influx_client : &influxdb2::Client, message : &FactMessage) {
+
+    log::info!("[INFO ][FACTS] Updating Influx with metrics, from inside the update device analytics function");
+
+    let bucket  = Config::instance().get::<String>("backend/controller/influx/bucket", "/");
+
+    let bucket = match bucket {
+        Ok(b) => b,
+        Err(e) => {
+            log::error!("[FATAL] Influx bucket isn't specified in configuration file, e='{e}'\n Expected 'backend/controller/influx/bucket' to be present");
+            let cwd = env::current_dir().expect("Failed to get current working directory");
+            log::info!("[INFO ] Current working directory was={}", cwd.display());
+            log::info!("[INFO ] Current config file was={}", Config::instance().get_curr_config_path());
+            panic!("[FATAL] Influx bucket isn't specified in configuration file, e='{e}'\n Expected 'backend/controller/influx/bucket' to be present");
+        }
+    };
+
+    let mut points = Vec::new();
+
+    #[cfg(debug_assertions)] {
+        log::info!("[DEBUG][FACTS][INFLUX] THIS is a bucket = '{}'", &bucket);
+        log::info!("[DEBUG][FACTS][INFLUX] Dear god...");
+        log::info!("[DEBUG][FACTS][INFLUX] There's more...");
+        log::info!("[DEBUG][FACTS][INFLUX] Nooo...");
+    }
+
+
+    for (device, facts) in message {
+        let device_id = match Cache::instance().get_device_id(device).await { Some(v) => v, None => continue };
+
+        let mut point = DataPoint::builder("metrics").tag("device_id", device_id.to_string());
+
+        #[cfg(debug_assertions)] {
+            log::info!("[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>{}", device_id.to_string());
+        }
+
+        let device_requested_metrics = match Cache::instance().get_device_requested_metrics(device_id).await {
+            Some(m) => m, None => continue
+        };
+
+        for metric in device_requested_metrics {
+            let value = facts.metrics
+                .get(&metric);
+
+            let value = match value {
+                Some(v) => v, None => continue
+            };
+
+            log::info!("                       {} -> {}", &metric, value);
+            point = point.field(metric, value.clone());
+        }
+
+        let point = match point.build() { Ok(v) => v, Err(_) => continue };
+        points.push(point);
+    }
+
+    let result = influx_client.write(&bucket, stream::iter(points)).await;
+
+    if let Err(e) = result {
+        log::error!("[ERROR][FACTS][INFLUX] Failed to update database with gathered metrics with InfluxError = '{e}'");
+    }
 }

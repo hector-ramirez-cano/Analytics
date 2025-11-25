@@ -31,6 +31,8 @@ impl SyslogBackend {
 
     /// Initialize
     pub fn init() {
+        println!("[INFO] Attempting to init Syslog Backend");
+
         let _ = Self::instance();
 
         println!("[INFO ][SYSLOG] Init Syslog Backend");

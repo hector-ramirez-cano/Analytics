@@ -88,6 +88,18 @@ class ItemTree extends StatelessWidget {
       node.add(TreeNode<Device>(key: UniqueKey().toString(), data: item));
     }
 
+
+    return node;
+  }
+
+    
+  TreeNode _makeUngroupedDeviceTreeBranch() {
+    var node = TreeNode<Section>(key: UniqueKey().toString(), data: Section(name: "Sin grupo", icon: Icons.folder));
+
+    for (Device item in topology.ungroupedDevices) {
+      node.add(TreeNode<Device>(key: UniqueKey().toString(), data: item));
+    }
+
     return node;
   }
 
@@ -132,7 +144,10 @@ class ItemTree extends StatelessWidget {
     if (includeDevices) {
       for (Group group in topology.groups) {
         devices.add(_makeDeviceTreeBranch(group));
+
       }
+
+      devices.add(_makeUngroupedDeviceTreeBranch());
 
       root.add(devices);
     }

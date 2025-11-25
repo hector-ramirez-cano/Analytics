@@ -80,6 +80,7 @@ pub async fn api_configure(data: RocketJson, pool: &State<sqlx::PgPool>) -> stat
                 "code": "400",
                 "message": e.0
             });
+            log::error!("[POST] Post on 'api/configure' resulted in an error = '{}'", e.0);
             status::Custom(rocket::http::Status::BadRequest, RocketJson::from(err_body))
         }
     }

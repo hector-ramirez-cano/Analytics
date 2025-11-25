@@ -13,6 +13,7 @@ fn handle_fatal(message: &str) -> Result<(), ()>{
 }
 
 pub async fn init_posgres_pool() -> Result<Pool<Postgres>, sqlx::Error> {
+    println!("[INFO] Attempting to init postgres pool...");
     let config = Config::instance();
 
     let port = config.get_value_opt("backend/controller/postgres/port", "/")
@@ -51,6 +52,7 @@ pub async fn init_posgres_pool() -> Result<Pool<Postgres>, sqlx::Error> {
 }
 
 pub async fn init_influx_client() -> influxdb2::Client {
+    println!("[INFO] Attempting to init influx client...");
     let config = Config::instance();
 
     let port = match config.get::<i16>("backend/controller/influx/port", "/")  {

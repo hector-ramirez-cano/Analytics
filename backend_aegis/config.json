@@ -29,7 +29,7 @@
       },
       "postgres": {
         "port": 5432,
-        "hostname": "localhost",
+        "hostname": "postgres_db",
         "name": "AnalyticsDB",
         "schema": "postgresql://",
         "max_idle_s": 60,
@@ -43,7 +43,7 @@
       },
       "influx": {
         "port": 8086,
-        "hostname": "localhost",
+        "hostname": "influx_db",
         "org": "C5i",
         "schema": "http://",
         "bucket": "analytics",
