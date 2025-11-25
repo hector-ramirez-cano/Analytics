@@ -17,9 +17,6 @@
       "cache": {
         "cache_invalidation_s": 60
       },
-      "api": {
-        "port": 5050
-      },
       "syslog": {
         "RFC5424-port":1514,
         "db_path" : "."

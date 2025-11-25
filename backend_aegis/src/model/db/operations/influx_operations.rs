@@ -322,7 +322,9 @@ pub async fn update_device_analytics(influx_client : &influxdb2::Client, message
                 Some(v) => v, None => continue
             };
 
-            log::info!("                       {} -> {}", &metric, value);
+            #[cfg(debug_assertions)] {
+                log::info!("                       {} -> {}", &metric, value);
+            }
             point = point.field(metric, value.clone());
         }
 

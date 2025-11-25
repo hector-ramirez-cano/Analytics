@@ -13,6 +13,8 @@ services:
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
       - ./backend/initdb:/docker-entrypoint-initdb.d
+    networks:
+      - backend_net
 
   influx_db:
     image: influxdb:2.7
@@ -24,42 +26,49 @@ services:
       - ./influxdb2:/var/lib/influxdb2
     environment:
       - TZ=America/Mexico_City
+    networks:
+      - backend_net
 
   rsyslog:
     image: rsyslog/rsyslog:latest
     container_name: rsyslog
+    restart: always
     ports:
       - "514:514/udp"
       - "514:514/tcp"
     volumes:
       - ./rsyslog.conf:/etc/rsyslog.conf:ro
     networks:
-      - syslognet
+      - backend_net
 
-  # backend_aegis:
-  #   image: aegis-backend
-  #   container_name: aegis-backend
-  #   ports:
-  #     - "5000:5000"
-  #   environment:
-  #     ANSIBLE_PRIVATE_KEY_FILE: /root/.ssh/id_ed25519
-  #   volumes:
-  #     - ./backend_aegis/identity/id_ed25519:/root/.ssh/id_ed25519:ro
-  #     - ./backend_aegis/identity/influx_db.json:/analytics/identity/influx_db.json:ro
-  #     - ./backend_aegis/identity/postgres_db.json:/analytics/identity/postgres_db.json:ro
-  #     - ./backend_aegis/identity/telegram.json:/analytics/identity/telegram.json:ro
-  #     - ./backend_aegis/config.json:/analytics/config.json:ro
-  #   stdin_open: true
-  #   tty: true
-  #   restart: always
-  #   depends_on:
-  #     - postgres_db
-  #     - influx_db
-  #     - rsyslog
+  backend_aegis:
+    image: aegis-backend
+    container_name: aegis-backend
+    ports:
+      - "5050:5050"
+    environment:
+      ANSIBLE_PRIVATE_KEY_FILE: /root/.ssh/id_ed25519
+    volumes:
+      - ./backend_aegis/identity/id_ed25519:/root/.ssh/id_ed25519:ro
+      - ./backend_aegis/identity/influx_db.json:/analytics/identity/influx_db.json:ro
+      - ./backend_aegis/identity/postgres_db.json:/analytics/identity/postgres_db.json:ro
+      - ./backend_aegis/identity/telegram.json:/analytics/identity/telegram.json:ro
+      - ./backend_aegis/config.json:/analytics/config.json:ro
+    stdin_open: true
+    tty: true
+    restart: always
+    depends_on:
+      - postgres_db
+      - influx_db
+      - rsyslog
+    networks:
+      - backend_net
 
 networks:
-  syslognet:
+  backend_net:
     driver: bridge
+    driver_opts:
+      com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"
 
 volumes:
   postgres_data:

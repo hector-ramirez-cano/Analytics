@@ -199,7 +199,7 @@ impl Handler {
 
     pub async fn handle_auth(client: &Client, chat_id: ChatPeerId, params: Option<&str>) {
         
-        if let Ok(_) = telegram_operations::is_auth(chat_id, &TelegramBackend::instance().pool).await {
+        if let Ok(true) = telegram_operations::is_auth(chat_id, &TelegramBackend::instance().pool).await {
             Handler::send_message(client, chat_id, "Su chat ya había sido atenticado. No se requiere otra acción").await;
             return
         }

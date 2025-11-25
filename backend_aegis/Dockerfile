@@ -3,11 +3,9 @@ WORKDIR /analytics
 
 # --- Install build deps (Rust, C, Python dev, etc.) ---
 RUN apt-get update && apt-get install -y \
-    curl build-essential python3-dev libpq-dev \
+    curl build-essential python3-dev libpq-dev libssl-dev pkg-config \
     && curl https://sh.rustup.rs -sSf | bash -s -- -y \
     && . "$HOME/.cargo/env"
-# TODO: Join with top
-RUN apt-get update && apt-get install -y libssl-dev pkg-config
 
 ENV PATH="/root/.cargo/bin:${PATH}"
 
@@ -33,7 +31,7 @@ WORKDIR /analytics
 
 # Dependencies for Postgres driver
 RUN apt-get update && apt-get install -y \
-    gcc libpq-dev ansible python3-dev \
+    gcc libpq-dev ansible python3-dev iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 # Python dependencies
@@ -43,6 +41,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Copy backend
 COPY ./prelude ./prelude
 COPY ansible/project/ ./ansible/project
+COPY ./Rocket.toml ./Rocket.toml
 
 # Expose port, should be the same as in backend/config.json
 EXPOSE 5050

@@ -21,7 +21,7 @@ async fn launch() -> _ {
 
     // init - failfast if something can't init
     Config::init();
-    let postgres_pool : Pool<Postgres> = init_posgres_pool().await.unwrap();
+    let postgres_pool : Pool<Postgres> = init_posgres_pool().await.expect("Postgres database could not init");
     let influx_client : influxdb2::Client = init_influx_client().await;
     Cache::init(&postgres_pool).await;
     AlertBackend::init(&postgres_pool).await;
@@ -47,4 +47,5 @@ async fn launch() -> _ {
                 server::ws_router,
             ]
         )
+        
 }

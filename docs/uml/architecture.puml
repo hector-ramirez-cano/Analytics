@@ -1,5 +1,5 @@
 @startuml Architecture
-skinparam linetype ortho
+skinparam linetype polyline
 skinparam shadowing false
 skinparam rectangle {
   BackgroundColor<<Frontend>> #ADD8E6
@@ -8,75 +8,82 @@ skinparam rectangle {
   BorderStyle dashed
 }
 
+node "Device"
+node "Telegram"
+
 package "Frontend" <<Frontend>> {
   artifact "UI Client"
 }
 
 package "Backend" <<Backend>> {
-  package "Model (Python Docker)" {
+  package "Model" {
     artifact "Alerts Engine"
     artifact "DB backend"
     artifact "Cache"
     artifact "ICMP poller"
     artifact "Ansible poller"
-    artifact "Syslog handler"
     artifact "Facts backend"
     artifact "Syslog backend"
-    
-    
-    "Syslog backend" -right-> "DB backend"
-    "Facts backend" -right-> "DB backend"
-
-    "ICMP poller" -right-> "Facts backend"
-    "Ansible poller" -right-> "Facts backend" 
-    "Syslog handler" -right-> "Syslog backend"
-    "Facts backend" -[hidden]d-> "Syslog backend"
-    "ICMP poller" <-[hidden]d-> "Ansible poller"
-    "Ansible poller" <-[hidden]d-> "Syslog handler"
-    
-    "Cache" <-down-> "DB backend"
-    
-    "Cache" <-up-> "Alerts Engine"
-    
+    artifact "Poller"
     
   }
 
-  package "Controller (Python Docker)" {
+  package "Controller" {
     artifact "HTTP/Websocket API (Rocket)"
     node "DB Drivers" {
       artifact "Psycopg Driver"
-      artifact "SQLite Driver"
       artifact "InfluxDB Driver"
     }
-    
-    "DB Drivers" <..right..> "DB backend"
   }
 
   
   package "External Services" {
+    node "rsyslogd (Docker)" {
+      artifact "rsyslogd"
+    }
     node "Postgres DB (Docker)" {
       database "Postgres"
     }
     node "InfluxDB (Docker)" {
       database "InfluxDB"
     }
-    database "SQLite"
-    
-    artifact "rsyslogd"
   }
-
-
-  "Controller (Python Docker)" --[hidden]down-> "External Services"
-  "HTTP/Websocket API (Rocket)" --[hidden]down-> "DB Drivers"
-  "DB Drivers" --[hidden]left-> "External Services"
-  "InfluxDB" --[hidden]left-> "SQLite"
 }
 
+
+"Syslog backend" --> "Poller"
+"Facts backend" --> "Poller"
+
+"ICMP poller" --> "Facts backend"
+"Ansible poller" --> "Facts backend" 
+
+"Cache" <--> "DB backend"
+"Cache" <--> "Alerts Engine"
+
 "HTTP/Websocket API (Rocket)" --> "UI Client"
-"DB backend" <-up-> "HTTP/Websocket API (Rocket)"
+"Cache" <--> "HTTP/Websocket API (Rocket)"
 "Alerts Engine" <-> "HTTP/Websocket API (Rocket)"
-"Syslog handler" -right-> "rsyslogd"
-"Psycopg Driver" -down-> "Postgres"
-"SQLite Driver" -down-> "SQLite"
-"InfluxDB Driver" -down-> "InfluxDB"
+"Alerts Engine" -up-> "Telegram"
+"Syslog backend" <-- "rsyslogd"
+"Psycopg Driver" --> "Postgres"
+"InfluxDB Driver" --> "InfluxDB"
+"Facts backend" --> "Cache"
+"Syslog backend" --> "Cache"
+"DB backend" -right-> "DB Drivers" 
+
+'Device --up--> "rsyslogd"
+Device <-up-> "Poller"
+
+' Layout
+"Model" .[hidden]left.> "External Services"
+"Model" .[hidden]left.> "Controller"
+  "Syslog backend" .[hidden]down.> "Facts backend"
+  "Syslog backend" -[hidden]-> "DB backend"
+  "Syslog backend" .[hidden]up.> "Cache"
+  "Cache" .[hidden]up.> "Alerts Engine"
+"Controller" .[hidden]down.> "External Services"
+  "HTTP/Websocket API (Rocket)" .[hidden]down.> "DB Drivers"
+  "rsyslogd (Docker)" .[hidden]right.> "Postgres DB (Docker)"
+
+
 @enduml
