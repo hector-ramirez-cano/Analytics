@@ -1,6 +1,6 @@
 from typing import Optional
 
-from influxdb_client import WriteApi, InfluxDBClient
+from influxdb_client import WriteApi, InfluxDBClient, InfluxDBClient, BucketRetentionRules
 from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb_client.client.query_api import QueryApi
 from influxdb_client.client.tasks_api import TasksApi
@@ -19,7 +19,7 @@ def init_db_pool():
     host = Config.Config.get("backend/controller/influx/hostname")
     org = Config.Config.get("backend/controller/influx/org")
     schema = Config.Config.get("backend/controller/influx/schema", "http://")
-    token = Config.Config.get("backend/controller/influx/token")
+    token = Config.Config.get("backend/controller/influx/operator_token")
     conn_uri = schema + host + ":" + str(port)
     _influx_db_client = InfluxDBClient(url=conn_uri, token=token, org=org)
     _influx_db_write_api = _influx_db_client.write_api(write_options=SYNCHRONOUS)
@@ -27,6 +27,7 @@ def init_db_pool():
     _influx_db_task_api  = _influx_db_client.tasks_api()
     print("[INFO ]Acquired DB client for InfluxDB at='" + schema + host + ":" + str(port) + "'")
 
+    __init_buckets(org)
     __init_baseline_tasks(org)
 
 
@@ -43,7 +44,7 @@ def __init_baseline_tasks(org: str):
     for window in aggregate_windows:
         task_name = f"task_baseline_{window}"
         task_definition = f"""
-        
+
             import "types"
 
             numeric =
@@ -71,10 +72,30 @@ def __init_baseline_tasks(org: str):
             task = tasks_api.create_task_every(name=task_name, flux=task_definition, every="15m", organization=organization)
             tasks_api.run_manually(task.id)
             tasks_api.run_manually(task.id)
-            print(f"[INFO ][InfluxDB]Created task: {task_name}")
+            print(f"[PRELUDE][INFO ][InfluxDB]Created task: {task_name}")
         else:
-            print(f"[INFO ][InfluxDB]Task '{task_name}' already exists. Skipping creation.")
+            print(f"[PRELUDE][INFO ][InfluxDB]Task '{task_name}' already exists. Skipping creation.")
 
+
+def __init_buckets(org: str):
+    client = influx_db_client()
+    buckets_api = client.buckets_api()
+
+    for required in ["analytics", "baselines"]:
+        existing = buckets_api.find_bucket_by_name(required)
+
+        if existing:
+            print(f"[PRELUDE][INFO ][InfluxDB]Bucket '{required}' already exists. Skipping creation.")
+
+        else:
+            buckets_api.create_bucket(
+                bucket_name=required,
+                org=org,
+                retention_rules=[
+                    BucketRetentionRules(type="expire", every_seconds=0), # infinite retention
+                ]
+            )
+            print(f"[PRELUDE][INFO ][InfluxDB]Created bucket: {required}")
 
 def influx_db_client():
     return _influx_db_client
