@@ -1,11 +1,2 @@
-quart
-quart_schema
-psycopg[binary]
-psycopg_pool
 ansible-runner
 influxdb-client
-pysnmp
-aiosyslogd
-janus
-uvloop
-python-telegram-bot

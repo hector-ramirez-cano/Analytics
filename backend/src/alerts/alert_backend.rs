@@ -323,9 +323,10 @@ impl AlertBackend {
     pub fn spawn_eval_syslog_task(mut receiver: Receiver<SyslogMessage>, event_tx: Sender<AlertEvent>) {
         let _ = rocket::tokio::task::spawn(async move {
         let instance = Self::instance();
+        log::info!("[INFO ][ALERTS] Spawned syslog eval thread!");
         loop {
             let message = if let Some(msg) = receiver.recv().await { msg } else { continue; };
-
+            
             let syslog_rules = instance.syslog_rules.read().await;
 
             // To emulate Metrics behavior, dynamically create a "MetricSet" with the given device, into a Metrics
@@ -554,7 +555,10 @@ impl AlertBackend {
         // if the update isn't due, and the caller didn't request a forced update
         let last: EpochSeconds = *self.last_update.read().await;
         if now.saturating_sub(last) < interval_secs && !forced {
-            log::info!("[DEBUG][ALERTS][LOADS] Failed to claim update lock, update due? = {}, forced = {}", now.saturating_sub(last) >= interval_secs, forced);
+            #[cfg(debug_assertions)] {
+                log::info!("[DEBUG][ALERTS][LOADS] Failed to claim update lock, update due? = {}, forced = {}"
+                , now.saturating_sub(last) >= interval_secs, forced);
+            }
             return None;
         }
 

@@ -51,11 +51,11 @@ services:
     environment:
       ANSIBLE_PRIVATE_KEY_FILE: /root/.ssh/id_ed25519
     volumes:
-      - ./backend_aegis/identity/id_ed25519:/root/.ssh/id_ed25519:ro
-      - ./backend_aegis/identity/influx_db.json:/analytics/identity/influx_db.json:ro
-      - ./backend_aegis/identity/postgres_db.json:/analytics/identity/postgres_db.json:ro
-      - ./backend_aegis/identity/telegram.json:/analytics/identity/telegram.json:ro
-      - ./backend_aegis/config.json:/analytics/config.json:ro
+      - ./backend/identity/id_ed25519:/root/.ssh/id_ed25519:ro
+      - ./backend/identity/influx_db.json:/analytics/identity/influx_db.json:ro
+      - ./backend/identity/postgres_db.json:/analytics/identity/postgres_db.json:ro
+      - ./backend/identity/telegram.json:/analytics/identity/telegram.json:ro
+      - ./backend/config.json:/analytics/config.json:ro
     stdin_open: true
     tty: true
     restart: always

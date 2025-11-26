@@ -65,7 +65,12 @@ pub async fn get_rules() -> status::Custom<RocketJson> {
 
 #[post("/api/configure", data = "<data>")]
 pub async fn api_configure(data: RocketJson, pool: &State<sqlx::PgPool>) -> status::Custom<RocketJson> {
+    
+    #[cfg(debug_assertions)] {
+        log::info!("[INFO ][API][RX] {}", data.0);
+    }
     let response = post_operations::api_configure(data.0, pool.inner()).await;
+
 
     match response {
         Ok(_) => {
@@ -122,11 +127,11 @@ pub fn ws_router<'a>(ws: WebSocket, pool: &'a State<sqlx::PgPool>, influx_client
 
         // Wait until any task finishes, then let the rest drop
         tokio::select! {
-            _ = tx_task               => log::info!("[DEBUG][WS] tx_task finished!"),
-            _ = rx_task               => log::info!("[DEBUG][WS] rx_task finished!"),
-            _ = syslog_rt_task        => log::info!("[DEBUG][WS] syslog_rt_task finished!"),
-            _ = alerts_rt_task        => log::info!("[DEBUG][WS] alerts_rt_task finished!"),
-            _ = device_health_rt_task => log::info!("[DEBUG][WS] device_health_rt_task finished!"),
+            _ = tx_task               => log::warn!("[WARN ][WS] tx_task finished!"),
+            _ = rx_task               => log::warn!("[WARN ][WS] rx_task finished!"),
+            _ = syslog_rt_task        => log::warn!("[WARN ][WS] syslog_rt_task finished!"),
+            _ = alerts_rt_task        => log::warn!("[WARN ][WS] alerts_rt_task finished!"),
+            _ = device_health_rt_task => log::warn!("[WARN ][WS] device_health_rt_task finished!"),
         }
 
         // Explicitly remove the listeners, to avoid having ghost listeners
@@ -145,7 +150,7 @@ async fn ws_send_task(
     while let Some(msg) = data_to_socket.recv().await {
         #[cfg(debug_assertions)] {
             let truncated = msg.chars().take(500).collect::<String>();
-            log::info!("\x1b[33m[DEBUG][WS][TX] Sending msg='{}'\x1b[0m", truncated);}
+            log::info!("\x1b[33m[DEBUG][WS][TX] Sending msg='{}...'\x1b[0m", truncated);}
         let result = ws_sender.send(Message::Text(msg)).await;
         if result.is_err() {
             log::error!("[ERROR][WS][TX] Encountered an error, sender is closing!");

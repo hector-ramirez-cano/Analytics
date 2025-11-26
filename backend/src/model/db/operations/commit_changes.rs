@@ -257,7 +257,7 @@ async fn update_rules(rules: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>
         let rule : AlertRule = serde_json::from_value(rule_in)
             .map_err(|e| (format!("Could not update rule. Parsing failed with error = '{e}'"), 400))?;
 
-        log::info!("[DEBUG][DB][UPDATES] Updating rule= {}", rule.rule_id);
+        log::info!("[INFO ][DB][UPDATES] Updating rule= {}", rule.rule_id);
 
         if rule.rule_id <= 0 {
             sqlx::query!("
@@ -269,7 +269,7 @@ async fn update_rules(rules: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>
             ).execute(pool).await
             .map_err(|e| (format!("Could not insert rule. SQL error = '{e}'"), 500))?;
         } else {
-            log::info!("[DEBUG][DB][UPDATES] Definition= {}", &definition);
+            log::info!("[INFO ][DB][UPDATES] Definition= {}", &definition);
             sqlx::query!("
                 UPDATE Analytics.alert_rules
                 SET rule_name=$1, requires_ack=$2, rule_definition=$3

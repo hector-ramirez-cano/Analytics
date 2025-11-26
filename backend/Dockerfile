@@ -1,27 +1,54 @@
-# TODO: Swap to -slim for prod
-FROM python:3.11 
+FROM python:3.11-slim AS builder
+WORKDIR /analytics
+
+# --- Install build deps (Rust, C, Python dev, etc.) ---
+RUN apt-get update && apt-get install -y \
+    curl build-essential python3-dev libpq-dev libssl-dev pkg-config \
+    && curl https://sh.rustup.rs -sSf | bash -s -- -y \
+    && . "$HOME/.cargo/env"
+
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# --- Build a dummy file ---
+# to build the dependencies, and store it as a cache layer
+COPY ./Cargo.toml ./Cargo.toml
+RUN mkdir ./src && echo "fn main() {}" > ./src/main.rs
+RUN PYO3_PYTHON=/usr/bin/python3 cargo build --release --target-dir .
+
+# --- Copy actual code --- 
+# to not invalidate build cache, and only build what's needed
+COPY ./src ./src
+COPY ./.sqlx ./.sqlx
+RUN python3 --version
+RUN PYO3_PYTHON=/usr/bin/python3 cargo install --path . --target-dir . --root /analytics
+
+# RUN strip /analytics/bin/backend_aegis 
+
+######## CONTAINER #######
+FROM python:3.13-slim AS aegis
 
 WORKDIR /analytics
 
 # Dependencies for Postgres driver
 RUN apt-get update && apt-get install -y \
-    gcc libpq-dev ansible \
+    gcc libpq-dev ansible python3-dev iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 # Python dependencies
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy backend
-COPY backend ./backend
-COPY ansible/inventory ./ansible/inventory
-COPY ansible/playbooks ./ansible/playbooks
-COPY ansible/hosts.ini ./ansible/hosts.ini
+COPY ansible/project/ ./ansible/project
+COPY ./prelude ./prelude
+COPY ./Rocket.toml ./Rocket.toml
 
 # Expose port, should be the same as in backend/config.json
-EXPOSE 5050
+EXPOSE 8000
 
-ENV PYTHONUNBUFFERED=1 PYTHONPATH=/analytics ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_REMOTE_USER="zaph" DEBUG=0
+COPY --from=builder /analytics/bin/backend_aegis .
+ENV PATH="/analytics:${PATH}"
+ENV NDEBUG=TRUE
 
-# Run application
-CMD ["python", "backend/main.py"]
+ENTRYPOINT ["prelude/entrypoint.sh"]
+CMD ["bash", "-c", "python3 prelude/create_aggregate_tasks.py && backend_aegis"]

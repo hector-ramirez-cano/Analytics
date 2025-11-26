@@ -1,10 +1,1 @@
-ansible/artifacts
-ansible/env/ssh_key/*
-**/__pycache__/*
-*.pyc
-__pycache__/
-
-# Identity files
-ansible/.vault_pass.txt
-ansible/.vault.yml
-identity
+identity/
