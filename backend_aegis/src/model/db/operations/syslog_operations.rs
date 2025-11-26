@@ -1,6 +1,7 @@
 
 use sqlx::{Pool, Postgres, QueryBuilder};
 
+#[allow(unused)] // Needs to be allowed. Needed for compilation, but the compiler complains of a type casting needed if it's removed
 use crate::{model::db::operations::RowCount, syslog::{SyslogFacility, SyslogFilters, SyslogMessage, SyslogSeverity}};
 
 

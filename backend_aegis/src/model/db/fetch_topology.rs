@@ -10,11 +10,13 @@ use crate::model::data::device::Device;
 use crate::model::data::device_state::DeviceStatus;
 use crate::model::data::link::Link;
 use crate::model::data::group::Group;
-use crate::model::data::link_type::LinkType;
 use crate::model::data::device_configuration::DeviceConfiguration;
 use crate::model::data::DataSource;
 use crate::model::db::update_topology::update_topology_cache;
 use crate::types::{DeviceId, GroupId, LinkId};
+
+#[allow(unused)] // Needs to be allowed. Needed for compilation, but the compiler complains of a type casting needed if it's removed
+use crate::model::data::link_type::LinkType;
 
 #[derive(sqlx::FromRow)]
 struct DeviceDataSource {

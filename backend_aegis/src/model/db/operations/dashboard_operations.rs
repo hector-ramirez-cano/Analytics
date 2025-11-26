@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{AegisError, model::data::dashboard::{Dashboard, DashboardItem}, types::DashboardId};
+use crate::{AegisError, model::data::dashboard::Dashboard, types::DashboardId};
+
+#[allow(unused)] // Needs to be allowed. Needed for compilation, but the compiler complains of a type casting needed if it's removed
+use crate::model::data::dashboard::DashboardItem;
 
 pub async fn get_dashboards_as_json(pool: &sqlx::PgPool) -> Result<HashMap<DashboardId, Dashboard>, AegisError>{
     let dashboard_members = sqlx::query_as!(DashboardItem, "SELECT dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition FROM Analytics.dashboard_items")

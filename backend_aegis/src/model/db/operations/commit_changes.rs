@@ -1,6 +1,7 @@
 use serde_json::Map;
 use sqlx::Postgres;
 
+#[allow(unused)] // Needs to be allowed. Needed for compilation, but the compiler complains of a type casting needed if it's removed
 use crate::{alerts::{AlertRule, alert_backend::AlertBackend}, misc::hashset_to_json_array, model::{cache::Cache, data::{DataSource, device::Device, group::Group, link::Link, link_type::LinkType}}};
 
 type E = (String, i16);
