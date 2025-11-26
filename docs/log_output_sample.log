@@ -1,0 +1,280 @@
+cwd: /home/zaph/Documents/Residencias/Analytics/backend_aegis
+[INFO] Init config
+[INFO] Attempting to init postgres pool...
+[INFO] Attempting to init influx client...
+[INFO] Attempting to init cache (requires Postgres connection)...
+[INFO ][CACHE] Updating topology cache!
+[INFO] Attempting to init alert backend (requires Postgres connection)
+[INFO ][ALERTS][LOADS] Loaded 1 fact rules, and 1 syslog rules
+[INFO ][ALERTS] Spawned alert eval facts task
+[INFO] Attempting to init fact gathering backend (requires InfluxClient)
+[INFO ][FACTS][ICMP] Init ICMP backend
+[INFO ][FACTS] Init Fact Gathering Backend
+[INFO] Attempting to init Syslog Backend
+[INFO ][SYSLOG] Init Syslog Backend
+[ERROR][SYSLOG] During init: Syslog port not found, defaulting to 1514...
+[ERROR][SYSLOG] During init: Syslog bind address not found, defaulting to 0.0.0.0...
+[INFO ][FACTS] Waiting for web bindings to finish to begin fact gathering loop...
+[INFO ][SYSLOG] Spawning syslog listener task bound to=0.0.0.0:1514
+[INFO ][SYSLOG] Spawning syslog receiver
+Configured for debug.
+   >> address: 0.0.0.0
+   >> port: 8000
+   >> workers: 8
+   >> max blocking threads: 512
+   >> ident: Rocket
+   >> IP header: X-Real-IP
+   >> limits: bytes = 8KiB, data-form = 2MiB, file = 1MiB, form = 64kB, json = 10MiB, msgpack = 1MiB, string = 8KiB
+   >> temp dir: /tmp
+   >> http/2: true
+   >> keep-alive: 5s
+   >> tls: disabled
+   >> shutdown: ctrlc = true, force = true, signals = [SIGTERM], grace = 2s, mercy = 3s
+   >> log level: normal
+   >> cli colors: true
+Routes:
+   >> (heartbeat) GET /heartbeat
+   >> (get_rules) GET /api/rules
+   >> (ws_router) GET /ws/router
+   >> (get_topology) GET /api/topology
+   >> (api_configure) POST /api/configure
+Fairings:
+   >> Shield (liftoff, response, singleton)
+Shield:
+   >> X-Content-Type-Options: nosniff
+   >> Permissions-Policy: interest-cohort=()
+   >> X-Frame-Options: SAMEORIGIN
+Rocket has launched from http://0.0.0.0:8000
+GET /api/rules:
+   >> Matched: (get_rules) GET /api/rules
+[INFO ][ALERTS][LOADS] Atempting to refresh ruleset
+[INFO ][ALERTS][LOADS] Refreshing ruleset, forced=true
+[INFO ][ALERTS][LOADS] Loaded 1 fact rules, and 1 syslog rules
+[INFO ][ALERTS][LOADS] Loaded 1 fact rules, and 1 syslog rules
+   >> Outcome: Success(200 OK)
+   >> Response succeeded.
+[INFO ][FACTS] Beginning FactGathering Loop!
+[INFO ][FACTS] Gathering facts...
+[INFO ][FACTS][BASELINE] Starting baseline gathering
+[INFO ][FACTS][ICMP] Starting ping sweep...
+[INFO ][FACTS][BASELINE][CACHE] Updating Baseline cache!
+[INFO ][FACTS][ANSIBLE] Starting playbook execution
+[INFO ][FACTS][BASELINE][CACHE] Finished updating baseline!
+[INFO ][FACTS][ICMP] Ping sweep done.
+GET /ws/router:
+   >> Matched: (ws_router) GET /ws/router
+[INFO ][WS] Websocket initiated connection, LbC8LgNkmhAVLwAC4RfcVZW7XmM=
+   >> Outcome: Success(200 OK)
+   >> Upgrading connection to websocket.
+   >> Response succeeded.
+   >> Upgrade successful.
+[INFO ][SYSLOG] Registered listener
+[INFO ][ALERTS] Registered listener
+[INFO ][FACTS] Registered listener
+[DEBUG][WS][RX] Received msg='{"type":"backend-health-rt","msg":""}'
+[DEBUG][WS][RX] Received msg='{"type":"topology","msg":"{}"}'
+[DEBUG][WS][RX] Received msg='{"type":"dashboards","msg":"{}"}'
+[DEBUG][WS][TX] Sending msg='{"msg":{"status":{"influx":{"msg":"ready for queries and writes","up":true},"postgres":{"msg":"","up":true}}},"type":"backend-health-rt"}'
+[DEBUG][WS][TX] Sending msg='{"type":"topology", "msg": {"devices":[{"configuration":{"available-values":["baseline_1d_icmp_rtt","baseline_365d_icmp_rtt","icmp_loss_percent","baseline_180d_icmp_rtt","baseline_1h_icmp_rtt","baseline_30d_icmp_rtt","baseline_15m_icmp_rtt","baseline_1m_icmp_rtt","icmp_rtt","icmp_status","baseline_15d_icmp_rtt"],"data-sources":["icmp"],"requested-metadata":["ansible_kernel","ansible_memory_mb","ansible_fqdn","ansible_interfaces"],"requested-metrics":["icmp_rtt"]},"id":3,"latitude":21.159425,"longitude":-101.645852,"management-hostname":"10.144.1.225","name":"Obsidian-lan","state":{"ansible":{"msg":"","status":"unknown"},"icmp":{"msg":"","status":"unknown"}}},{"configuration":{"available-values":["baseline_1h_icmp_rtt","baseline_15d_icmp_rtt","icmp_rtt","baseline_180d_icmp_rtt","baseline_1d_icmp_rtt","icmp_status","baseline_30d_icmp_rtt","icmp_loss_percent","baseline_365d_icmp_rtt","baseline_15m_icmp_rtt","baseline_1m_icmp_rtt"],"data-sources":["snmp","icmp","ssh"],"requested-metadata":["ansible_memory_mb","ansible_fqdn","ansible_interfaces","ansible_kernel"],"requested-metrics":["icmp_rtt"]},"id":2,"latitude":21.159425,"longitude":-101.645852,"management-hostname":"10.144.1.1","name":"Tlatelolco-lan","state":{"ansible":{"msg":"","status":"unknown"},"icmp":{"msg":"","status":"unknown"}}},{"configuration":{"available-values":["baseline_1d_icmp_rtt","baseline_1h_icmp_rtt","baseline_180d_icmp_rtt","baseline_1m_icmp_rtt","icmp_rtt","baseline_30d_icmp_rtt","icmp_status","baseline_15d_icmp_rtt","icmp_loss_percent","baseline_15m_icmp_rtt","baseline_365d_icmp_rtt"],"data-sources":["icmp","ssh"],"requested-metadata":["ansible_fqdn","ansible_interfaces","ansible_memory_mb","ansible_kernel"],"requested-metrics":["icmp_rtt"]},"id":1,"latitude":21.159425,"longitude":-101.645852,"management-hostname":"10.144.1.222","name":"Xochimilco-lan","state":{"ansible":{"msg":"","status":"unknown"},"icmp":{"msg":"","status":"unknown"}}}],"groups":[{"id":202,"is-display-group":true,"members":[3],"name":"Hosts"},{"id":203,"is-display-group":true,"members":[201,202],"name":"Raíz"},{"id":201,"is-display-group":false,"members":[1,2],"name":"Routers"}],"links":[{"id":101,"link-subtype":null,"link-type":"copper","side-a":1,"side-a-iface":"eth0","side-b":3,"side-b-iface":"eth0"},{"id":102,"link-subtype":null,"link-type":"wireless","side-a":2,"side-a-iface":"eth0","side-b":3,"side-b-iface":"eth0"},{"id":100,"link-subtype":null,"link-type":"copper","side-a":1,"side-a-iface":"eth0","side-b":2,"side-b-iface":"eth0"}]}}'
+[DEBUG][WS][TX] Sending msg='{"type":"dashboards", "msg": [{"dasboard-id":1,"name":"Default Dashboard","widgets":[{"id":1,"row-start":0,"row-span":1,"col-start":0,"col-span":3,"style-definition":{},"polling-definition":{"aggregate-interval-s":60,"chart-type":"line","device-ids":1,"field":"icmp_rtt","start":"-1h","type":"metric","update-interval-s":60}},{"id":1,"row-start":1,"row-span":1,"col-start":0,"col-span":1,"style-definition":{},"polling-definition":{"chart-type":"label","device-ids":1,"field":"icmp_rtt","type":"metadata","update-interval-s":60}},{"id":1,"row-start":1,"row-span":1,"col-start":1,"col-span":1,"style-definition":{},"polling-definition":{"chart-type":"pie","device-ids":203,"field":"icmp_status","type":"metadata","update-interval-s":15}}]}]}'
+[DEBUG][WS][RX] Received msg='{"type":"metrics","msg":{"start":"-1h","metric":"icmp_rtt","device-id":1,"aggregate-interval":"60s"}}'
+[DEBUG][WS][RX] Received msg='{"type":"metadata","msg":{"metadata":"icmp_rtt","device-ids":1}}'
+[DEBUG][WS][RX] Received msg='{"type":"metadata","msg":{"metadata":"icmp_status","device-ids":203}}'
+[DEBUG][WS][TX] Sending msg='{"metrics":"icmp_rtt","msg":{"data":[{"time":1764104880,"value":0.0},{"time":1764104940,"value":0.0},{"time":1764105900,"value":0.0},{"time":1764105960,"value":0.0},{"time":1764106200,"value":0.0},{"time":1764106260,"value":0.0},{"time":1764106320,"value":0.0},{"time":1764106380,"value":0.0},{"time":1764106440,"value":0.0},{"time":1764106500,"value":0.0},{"time":1764106560,"value":0.0},{"time":1764106620,"value":0.0},{"time":1764106680,"value":70.813},{"time":1764107040,"value":0.0},{"time":1764107220,"value":0.0},{"time":1764107280,"value":0.0},{"time":1764107340,"value":0.0},{"time":1764107460,"value":178.1015},{"time":1764107520,"value":237.8122},{"time":1764107580,"value":311.5215},{"time":1764107640,"value":261.909},{"time":1764107700,"value":204.254},{"time":1764107760,"value":113.47999999999999},{"time":1764107940,"value":558.292},{"time":1764108000,"value":192.68842857142857},{"time":1764108060,"value":178.2832857142857},{"time":1764108120,"value":185.78685714285717},{"time":1764108180,"value":126.63362499999998},{"time":1764108240,"value":144.56957142857144},{"time":1764108300,"value":188.51885714285717},{"time":1764108360,"value":120.35457142857145},{"time":1764108420,"value":131.978},{"time":1764108476,"value":145.34033333333332}],"range":{"min-x":623.043,"min-y":0.0}},"type":"metrics"}'
+[DEBUG][WS][TX] Sending msg='{"msg":{"metadata":["icmp_rtt"],"msg":[]},"type":"metadata"}'
+[DEBUG][WS][TX] Sending msg='{"msg":{"metadata":["icmp_status"],"msg":[]},"type":"metadata"}'
+[DEBUG][WS][RX] Received msg='{"type":"topology-view","msg":{"type":"get","msg":{}}}'
+[DEBUG][WS][TX] Sending msg='{"type":"topology-view", "msg": {"msg":[{"id":0,"is-physical-view":false,"members":[{"id":1,"x":0.5,"y":0.5},{"id":2,"x":0.7,"y":-0.2},{"id":3,"x":-0.3,"y":0.3}],"name":"Hasta la vista"},{"id":2,"is-physical-view":true,"members":[{"id":201,"x":0,"y":0}],"name":"Globbus"},{"id":1,"is-physical-view":false,"members":[{"id":1,"x":-0.5,"y":0.5},{"id":2,"x":0.7,"y":0.5},{"id":3,"x":-0.3,"y":0.3}],"name":"Baby"}],"type":"get"}}'
+[DEBUG][WS][RX] Received msg='{"type":"syslog","msg":[{"type":"set-filters","msg":{"start":1764050400.0,"end":1764050400.0,"facility":["kern","user","mail","daemon","auth","syslog","lpr","news","uucp","cron","authpriv","ftp","ntp","security","console","solaris","local0","local1","local2","local3","local4","local5","local6","local7"],"severity":["emerg","alert","crit","err","warning","notice","info","debug"],"message":"","origin":"","offset":0,"pid":""}},{"type":"request-size","msg":{}}]}'
+[DEBUG][DB][SYSLOG] query=SELECT COUNT(1) as total FROM Syslog.system_events WHERE received_at BETWEEN $1 AND $2
+[DEBUG][WS][TX] Sending msg='{"msg":{"count":0,"type":"request-size"},"type":"syslog"}'
+[DEBUG][WS][RX] Received msg='{"type":"syslog","msg":[{"type":"set-filters","msg":{"start":1764050400.0,"end":1764050400.0,"facility":["kern","user","mail","daemon","auth","syslog","lpr","news","uucp","cron","authpriv","ftp","ntp","security","console","solaris","local0","local1","local2","local3","local4","local5","local6","local7"],"severity":["emerg","alert","crit","err","warning","notice","info","debug"],"message":"","origin":"","offset":0,"pid":""}},{"type":"request-size","msg":{}}]}'
+[DEBUG][DB][SYSLOG] query=SELECT COUNT(1) as total FROM Syslog.system_events WHERE received_at BETWEEN $1 AND $2
+[DEBUG][WS][TX] Sending msg='{"msg":{"count":0,"type":"request-size"},"type":"syslog"}'
+[DEBUG][WS][RX] Received msg='{"type":"syslog","msg":[{"type":"set-filters","msg":{"start":1764050400.0,"end":1764050400.0,"facility":["kern","user","mail","daemon","auth","syslog","lpr","news","uucp","cron","authpriv","ftp","ntp","security","console","solaris","local0","local1","local2","local3","local4","local5","local6","local7"],"severity":["emerg","alert","crit","err","warning","notice","info","debug"],"message":"","origin":"","offset":0,"pid":""}},{"type":"request-size","msg":{}}]}'
+[DEBUG][DB][SYSLOG] query=SELECT COUNT(1) as total FROM Syslog.system_events WHERE received_at BETWEEN $1 AND $2
+[DEBUG][WS][TX] Sending msg='{"msg":{"count":0,"type":"request-size"},"type":"syslog"}'
+[DEBUG][WS][RX] Received msg='{"type":"backend-health-rt","msg":""}'
+[DEBUG][WS][TX] Sending msg='{"msg":{"status":{"influx":{"msg":"ready for queries and writes","up":true},"postgres":{"msg":"","up":true}}},"type":"backend-health-rt"}'
+[INFO ][FACTS][ANSIBLE] Playbook execution done.
+[INFO ][FACTS] Gathered facts!
+[DEBUG][FACTS] Broadcasting messages. Listener count = 2
+[INFO ][FACTS] Updating Influx with metrics.
+[INFO ][FACTS] Updating Influx with metrics, from inside the update device analytics function
+[DEBUG][FACTS][INFLUX] THIS is a bucket = 'analytics'
+[DEBUG][FACTS][INFLUX] Dear god...
+[DEBUG][FACTS][INFLUX] There's more...
+[DEBUG][FACTS][INFLUX] Nooo...
+[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>2
+                       icmp_rtt -> 0
+[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>3
+                       icmp_rtt -> 0.046
+[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>1
+                       icmp_rtt -> 160.353
+[DEBUG][ALERTS] Alerts backend received facts...
+[INFO ][ALERTS][LOADS] Atempting to refresh ruleset
+[DEBUG][ALERTS][LOADS] Failed to claim update lock, update due? = false, forced = false
+[INFO ][ALERTS][LOADS] failed to acquire lock on updates, forced=false
+[DEBUG][ALERTS][EVAL] Evaluating rule for device=10.144.1.222 kind is simple
+[DEBUG][ALERTS][EVAL] Evaluating predicate with actual = Some(Number(160.353)) MoreThan Some(Number(100.0))
+[DEBUG][ALERTS][EVAL] Evaluating predicate with actual = Some(Number(160.353)) MoreThan Some(Number(100.0))
+Warning: [WARN ][ALARTS] Alert id 1 raised!
+[DEBUG][ALERTS] Alerts backend finished rule eval...
+[DEBUG][WS][TX] Sending msg='{"msg":{"10.144.1.1":{"ansible":{"msg":"","status":"dark"},"icmp":{"msg":"","status":"unreachable"}},"10.144.1.222":{"ansible":{"msg":"","status":"reachable"},"icmp":{"msg":"","status":"reachable"}},"10.144.1.225":{"ansible":{"msg":"","status":"reachable"},"icmp":{"msg":"","status":"reachable"}}},"type":"device-health-rt"}'
+[DEBUG][ALERTS] Received alert event!
+[INFO ][ALERTS][TELEGRAM] Received an alert event
+[DEBUG][WS][TX] Sending msg='{"msg":{"ack-time":null,"acked":false,"alert-id":71,"alert-time":1764108489,"db_notified":true,"message":"","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"","ws_notified":false},"type":"alerts-rt"}'
+[INFO ][FACTS] Updating local facts cache.
+[INFO ][FACTS] Sleeping until timeout (5s) zzZ...
+[INFO ][FACTS] Gathering facts...
+[INFO ][FACTS][BASELINE] Starting baseline gathering
+[INFO ][FACTS][ICMP] Starting ping sweep...
+[INFO ][FACTS][ANSIBLE] Starting playbook execution
+[DEBUG][WS][RX] Received msg='{"type":"syslog","msg":[{"type":"set-filters","msg":{"start":1761516494.625,"end":1764108494.625,"facility":["kern","user","mail","daemon","auth","syslog","lpr","news","uucp","cron","authpriv","ftp","ntp","security","console","solaris","local0","local1","local2","local3","local4","local5","local6","local7"],"severity":["emerg","alert","crit","err","warning","notice","info","debug"],"message":"","origin":"","offset":0,"pid":""}},{"type":"request-size","msg":{}}]}'
+[DEBUG][DB][SYSLOG] query=SELECT COUNT(1) as total FROM Syslog.system_events WHERE received_at BETWEEN $1 AND $2
+[DEBUG][WS][TX] Sending msg='{"msg":{"count":0,"type":"request-size"},"type":"syslog"}'
+[DEBUG][WS][RX] Received msg='{"type":"syslog","msg":[{"type":"set-filters","msg":{"start":1761516494.625,"end":1764108494.625,"facility":["kern","user","mail","daemon","auth","syslog","lpr","news","uucp","cron","authpriv","ftp","ntp","security","console","solaris","local0","local1","local2","local3","local4","local5","local6","local7"],"severity":["emerg","alert","crit","err","warning","notice","info","debug"],"message":"","origin":"","offset":0,"pid":""}},{"type":"request-size","msg":{}}]}'
+[DEBUG][DB][SYSLOG] query=SELECT COUNT(1) as total FROM Syslog.system_events WHERE received_at BETWEEN $1 AND $2
+[DEBUG][WS][TX] Sending msg='{"msg":{"count":0,"type":"request-size"},"type":"syslog"}'
+[DEBUG][WS][RX] Received msg='{"type":"backend-health-rt","msg":""}'
+[DEBUG][WS][TX] Sending msg='{"msg":{"status":{"influx":{"msg":"ready for queries and writes","up":true},"postgres":{"msg":"","up":true}}},"type":"backend-health-rt"}'
+[INFO ][FACTS][ICMP] Ping sweep done.
+[DEBUG][WS][RX] Received msg='{"type":"alerts","msg":[{"type":"set-filters","msg":{"start":1764050400.0,"end":1764050400.0,"severity":["emergency","alert","critical","error","warning","notice","info","debug","unknown"]}},{"type":"request-size","msg":{}}]}'
+[DEBUG][DB][ALERTS] query=SELECT COUNT(1) as total FROM Analytics.alerts  WHERE alert_time BETWEEN $1 AND $2 
+[DEBUG][WS][TX] Sending msg='{"msg":{"count":0,"type":"request-size"},"type":"alerts"}'
+[DEBUG][WS][RX] Received msg='{"type":"alerts","msg":[{"type":"set-filters","msg":{"start":1764050400.0,"end":1764050400.0,"severity":["emergency","alert","critical","error","warning","notice","info","debug","unknown"]}},{"type":"request-size","msg":{}}]}'
+[DEBUG][DB][ALERTS] query=SELECT COUNT(1) as total FROM Analytics.alerts  WHERE alert_time BETWEEN $1 AND $2 
+[DEBUG][WS][TX] Sending msg='{"msg":{"count":0,"type":"request-size"},"type":"alerts"}'
+[DEBUG][WS][RX] Received msg='{"type":"alerts","msg":[{"type":"set-filters","msg":{"start":1761516500.735,"end":1764108500.735,"severity":["emergency","alert","critical","error","warning","notice","info","debug","unknown"]}},{"type":"request-size","msg":{}}]}'
+[DEBUG][DB][ALERTS] query=SELECT COUNT(1) as total FROM Analytics.alerts  WHERE alert_time BETWEEN $1 AND $2 
+[DEBUG][WS][TX] Sending msg='{"msg":{"count":72,"type":"request-size"},"type":"alerts"}'
+[DEBUG][WS][RX] Received msg='{"type":"alerts","msg":[{"type":"set-filters","msg":{"start":1761516500.735,"end":1764108500.735,"severity":["emergency","alert","critical","error","warning","notice","info","debug","unknown"]}},{"type":"request-size","msg":{}}]}'
+[DEBUG][DB][ALERTS] query=SELECT COUNT(1) as total FROM Analytics.alerts  WHERE alert_time BETWEEN $1 AND $2 
+[DEBUG][WS][TX] Sending msg='{"msg":{"count":72,"type":"request-size"},"type":"alerts"}'
+[DEBUG][WS][RX] Received msg='{"type":"alerts","msg":{"type":"request-data","count":30,"msg":{}}}'
+[DEBUG][DB][ALERTS] query=SELECT alert_id, alert_time, ack_time, requires_ack, severity, message, target_id, TRUE as ws_notified, TRUE as db_notified, (ack_actor IS NOT NULL) as acked, rule_id, value FROM Analytics.alerts  WHERE alert_time BETWEEN $1 AND $2  LIMIT  $3  OFFSET  $4
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":1,"alert-time":1764101256,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[182.711 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":2,"alert-time":1764101287,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[183.307 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":3,"alert-time":1764107456,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[284.311 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":4,"alert-time":1764107464,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[307.114 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":5,"alert-time":1764107481,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[534.929 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":6,"alert-time":1764107490,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[237.951 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":7,"alert-time":1764107546,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[623.043 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":8,"alert-time":1764107602,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[549.017 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":9,"alert-time":1764107610,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[157.606 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":10,"alert-time":1764107627,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[447.193 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":11,"alert-time":1764107643,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[234.269 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":12,"alert-time":1764107665,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[326.676 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":13,"alert-time":1764107681,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[131.308 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":14,"alert-time":1764107690,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[133.449 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":15,"alert-time":1764107698,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[305.678 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":16,"alert-time":1764107715,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[128.2 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":17,"alert-time":1764107934,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[558.292 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":18,"alert-time":1764107943,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[120.008 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":19,"alert-time":1764107951,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[196.528 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":20,"alert-time":1764107959,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[178.448 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":21,"alert-time":1764107968,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[366.493 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":22,"alert-time":1764107976,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[180.879 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":23,"alert-time":1764107993,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[206.739 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":24,"alert-time":1764108004,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[393.811 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":25,"alert-time":1764108012,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[157.032 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":26,"alert-time":1764108020,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[128.532 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":27,"alert-time":1764108029,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[188.295 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":28,"alert-time":1764108037,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[115.389 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":29,"alert-time":1764108045,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[151.046 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"ack-time":null,"acked":false,"alert-id":30,"alert-time":1764108054,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[113.878 MORE_THAN 100]","ws_notified":true}],"type":"alerts"}'
+[DEBUG][WS][RX] Received msg='{"type":"backend-health-rt","msg":""}'
+[DEBUG][WS][TX] Sending msg='{"msg":{"status":{"influx":{"msg":"ready for queries and writes","up":true},"postgres":{"msg":"","up":true}}},"type":"backend-health-rt"}'
+[DEBUG][WS][RX] Received msg='{"type":"metadata","msg":{"metadata":["baseline_1d_icmp_rtt","baseline_365d_icmp_rtt","icmp_loss_percent","baseline_180d_icmp_rtt","baseline_1h_icmp_rtt","baseline_30d_icmp_rtt","baseline_15m_icmp_rtt","baseline_1m_icmp_rtt","icmp_rtt","icmp_status","baseline_15d_icmp_rtt"],"device-ids":3}}'
+[DEBUG][WS][TX] Sending msg='{"msg":{"metadata":["baseline_1d_icmp_rtt","baseline_365d_icmp_rtt","baseline_1m_icmp_rtt","icmp_status","icmp_loss_percent","icmp_rtt","baseline_15d_icmp_rtt","baseline_180d_icmp_rtt","baseline_1h_icmp_rtt","baseline_15m_icmp_rtt","baseline_30d_icmp_rtt"],"msg":[{"baseline_15d_icmp_rtt":0.002946745562130179,"baseline_15m_icmp_rtt":0.021365853658536597,"baseline_180d_icmp_rtt":0.002946745562130179,"baseline_1d_icmp_rtt":0.003434482758620691,"baseline_1h_icmp_rtt":0.006674074074074078,"baseline_1m_icmp_rtt":0.03485714285714286,"baseline_30d_icmp_rtt":0.002946745562130179,"baseline_365d_icmp_rtt":0.002946745562130179,"device-id":3,"icmp_loss_percent":0.0,"icmp_rtt":0.046,"icmp_status":"Reachable","management-hostname":"10.144.1.225"}]},"type":"metadata"}'
+[INFO ][FACTS][ANSIBLE] Playbook execution done.
+[INFO ][FACTS] Gathered facts!
+[DEBUG][FACTS] Broadcasting messages. Listener count = 2
+[INFO ][FACTS] Updating Influx with metrics.
+[INFO ][FACTS] Updating Influx with metrics, from inside the update device analytics function
+[DEBUG][FACTS][INFLUX] THIS is a bucket = 'analytics'
+[DEBUG][FACTS][INFLUX] Dear god...
+[DEBUG][FACTS][INFLUX] There's more...
+[DEBUG][FACTS][INFLUX] Nooo...
+[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>3
+                       icmp_rtt -> 0.052
+[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>2
+                       icmp_rtt -> 0
+[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>1
+                       icmp_rtt -> 170.548
+[DEBUG][ALERTS] Alerts backend received facts...
+[INFO ][ALERTS][LOADS] Atempting to refresh ruleset
+[DEBUG][ALERTS][LOADS] Failed to claim update lock, update due? = false, forced = false
+[INFO ][ALERTS][LOADS] failed to acquire lock on updates, forced=false
+[DEBUG][ALERTS][EVAL] Evaluating rule for device=10.144.1.222 kind is simple
+[DEBUG][ALERTS][EVAL] Evaluating predicate with actual = Some(Number(170.548)) MoreThan Some(Number(100.0))
+[DEBUG][ALERTS][EVAL] Evaluating predicate with actual = Some(Number(170.548)) MoreThan Some(Number(100.0))
+Warning: [WARN ][ALARTS] Alert id 1 raised!
+[DEBUG][WS][TX] Sending msg='{"msg":{"10.144.1.1":{"ansible":{"msg":"Failed to connect to the host via ssh: ssh: connect to host 10.144.1.1 port 22: No route to host","status":"dark"},"icmp":{"msg":"","status":"unreachable"}},"10.144.1.222":{"ansible":{"msg":"","status":"reachable"},"icmp":{"msg":"","status":"reachable"}},"10.144.1.225":{"ansible":{"msg":"","status":"reachable"},"icmp":{"msg":"","status":"reachable"}}},"type":"device-health-rt"}'
+[DEBUG][ALERTS] Alerts backend finished rule eval...
+[DEBUG][ALERTS] Received alert event!
+[INFO ][ALERTS][TELEGRAM] Received an alert event
+[DEBUG][WS][TX] Sending msg='{"msg":{"ack-time":null,"acked":false,"alert-id":73,"alert-time":1764108512,"db_notified":true,"message":"'ICMP_RTT > 100ms' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[170.548 MORE_THAN 100]","ws_notified":false},"type":"alerts-rt"}'
+[INFO ][FACTS] Updating local facts cache.
+[INFO ][FACTS] Sleeping until timeout (5s) zzZ...
+[DEBUG][WS][RX] Received msg='{"type":"backend-health-rt","msg":""}'
+[DEBUG][WS][TX] Sending msg='{"msg":{"status":{"influx":{"msg":"ready for queries and writes","up":true},"postgres":{"msg":"","up":true}}},"type":"backend-health-rt"}'
+[INFO ][FACTS] Gathering facts...
+[INFO ][FACTS][BASELINE] Starting baseline gathering
+[INFO ][FACTS][ICMP] Starting ping sweep...
+[INFO ][FACTS][ANSIBLE] Starting playbook execution
+[INFO ][FACTS][ICMP] Ping sweep done.
+POST /api/configure application/json:
+   >> Matched: (api_configure) POST /api/configure
+[DEBUG][DB][UPDATES] Updating rule= 1
+[DEBUG][DB][UPDATES] Definition= {"data-source":"facts","predicates":[{"left":"&icmp_rtt","op":"more_than","right":100.0}],"reduce-logic":"all","rule-type":"simple","severity":"warning","target":1}
+[INFO ][CACHE] Updating topology cache!
+[INFO ][ALERTS][LOADS] Atempting to refresh ruleset
+[INFO ][ALERTS][LOADS] Refreshing ruleset, forced=true
+[INFO ][ALERTS][LOADS] Loaded 1 fact rules, and 1 syslog rules
+[INFO ][ALERTS][LOADS] Loaded 1 fact rules, and 1 syslog rules
+   >> Outcome: Success(202 Accepted)
+   >> Response succeeded.
+[DEBUG][WS][RX] Received msg='{"type":"topology","msg":"{}"}'
+[DEBUG][WS][TX] Sending msg='{"type":"topology", "msg": {"devices":[{"configuration":{"available-values":["icmp_loss_percent","baseline_1d_icmp_rtt","baseline_30d_icmp_rtt","baseline_15m_icmp_rtt","baseline_1m_icmp_rtt","icmp_rtt","baseline_1h_icmp_rtt","baseline_180d_icmp_rtt","icmp_status","baseline_15d_icmp_rtt","baseline_365d_icmp_rtt"],"data-sources":["icmp"],"requested-metadata":["ansible_fqdn","ansible_memory_mb","ansible_interfaces","ansible_kernel"],"requested-metrics":["icmp_rtt","baseline_1d_icmp_rtt"]},"id":3,"latitude":21.159425,"longitude":-101.645852,"management-hostname":"10.144.1.225","name":"Obsidian-lan","state":{"ansible":{"msg":"","status":"reachable"},"icmp":{"msg":"","status":"reachable"}}},{"configuration":{"available-values":["baseline_1h_icmp_rtt","icmp_status","baseline_1d_icmp_rtt","baseline_15m_icmp_rtt","baseline_1m_icmp_rtt","icmp_loss_percent","baseline_180d_icmp_rtt","baseline_15d_icmp_rtt","baseline_365d_icmp_rtt","icmp_rtt","baseline_30d_icmp_rtt"],"data-sources":["ssh","icmp"],"requested-metadata":["ansible_interfaces","ansible_fqdn","ansible_memory_mb","ansible_kernel"],"requested-metrics":["icmp_rtt"]},"id":1,"latitude":21.159425,"longitude":-101.645852,"management-hostname":"10.144.1.222","name":"Xochimilco-lan","state":{"ansible":{"msg":"","status":"reachable"},"icmp":{"msg":"","status":"reachable"}}},{"configuration":{"available-values":["baseline_1m_icmp_rtt","icmp_loss_percent","icmp_rtt","baseline_15d_icmp_rtt","baseline_180d_icmp_rtt","baseline_15m_icmp_rtt","baseline_30d_icmp_rtt","baseline_365d_icmp_rtt","baseline_1d_icmp_rtt","baseline_1h_icmp_rtt","icmp_status"],"data-sources":["icmp","ssh","snmp"],"requested-metadata":["ansible_interfaces","ansible_kernel","ansible_memory_mb","ansible_fqdn"],"requested-metrics":["icmp_rtt"]},"id":2,"latitude":21.159425,"longitude":-101.645852,"management-hostname":"10.144.1.1","name":"Tlatelolco-lan","state":{"ansible":{"msg":"Failed to connect to the host via ssh: ssh: connect to host 10.144.1.1 port 22: No route to host","status":"dark"},"icmp":{"msg":"","status":"unreachable"}}}],"groups":[{"id":202,"is-display-group":true,"members":[3],"name":"Hosts"},{"id":201,"is-display-group":false,"members":[1,2],"name":"Routers"},{"id":203,"is-display-group":true,"members":[201,202],"name":"Raíz"}],"links":[{"id":100,"link-subtype":null,"link-type":"copper","side-a":1,"side-a-iface":"eth0","side-b":2,"side-b-iface":"eth0"},{"id":102,"link-subtype":null,"link-type":"wireless","side-a":2,"side-a-iface":"eth0","side-b":3,"side-b-iface":"eth0"},{"id":101,"link-subtype":null,"link-type":"copper","side-a":1,"side-a-iface":"eth0","side-b":3,"side-b-iface":"eth0"}]}}'
+GET /api/rules:
+   >> Matched: (get_rules) GET /api/rules
+[INFO ][ALERTS][LOADS] Atempting to refresh ruleset
+[INFO ][ALERTS][LOADS] Refreshing ruleset, forced=true
+[INFO ][ALERTS][LOADS] Loaded 1 fact rules, and 1 syslog rules
+[INFO ][ALERTS][LOADS] Loaded 1 fact rules, and 1 syslog rules
+   >> Outcome: Success(200 OK)
+   >> Response succeeded.
+[DEBUG][WS][RX] Received msg='{"type":"backend-health-rt","msg":""}'
+[DEBUG][WS][TX] Sending msg='{"msg":{"status":{"influx":{"msg":"ready for queries and writes","up":true},"postgres":{"msg":"","up":true}}},"type":"backend-health-rt"}'
+[INFO ][FACTS][ANSIBLE] Playbook execution done.
+[INFO ][FACTS] Gathered facts!
+[DEBUG][FACTS] Broadcasting messages. Listener count = 2
+[INFO ][FACTS] Updating Influx with metrics.
+[INFO ][FACTS] Updating Influx with metrics, from inside the update device analytics function
+[DEBUG][FACTS][INFLUX] THIS is a bucket = 'analytics'
+[DEBUG][FACTS][INFLUX] Dear god...
+[DEBUG][FACTS][INFLUX] There's more...
+[DEBUG][FACTS][INFLUX] Nooo...
+[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>2
+                       icmp_rtt -> 0
+[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>3
+                       icmp_rtt -> 0.025
+                       baseline_1d_icmp_rtt -> 0.003434482758620691
+[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>1
+                       icmp_rtt -> 333.204
+[DEBUG][ALERTS] Alerts backend received facts...
+[INFO ][ALERTS][LOADS] Atempting to refresh ruleset
+[DEBUG][ALERTS][LOADS] Failed to claim update lock, update due? = false, forced = false
+[INFO ][ALERTS][LOADS] failed to acquire lock on updates, forced=false
+[DEBUG][ALERTS][EVAL] Evaluating rule for device=10.144.1.222 kind is simple
+[DEBUG][ALERTS][EVAL] Evaluating predicate with actual = Some(Number(333.204)) MoreThan Some(Number(100.0))
+[DEBUG][ALERTS][EVAL] Evaluating predicate with actual = Some(Number(333.204)) MoreThan Some(Number(100.0))
+Warning: [WARN ][ALARTS] Alert id 1 raised!
+[DEBUG][ALERTS] Alerts backend finished rule eval...
+[DEBUG][WS][TX] Sending msg='{"msg":{"10.144.1.1":{"ansible":{"msg":"Failed to connect to the host via ssh: ssh: connect to host 10.144.1.1 port 22: No route to host","status":"dark"},"icmp":{"msg":"","status":"unreachable"}},"10.144.1.222":{"ansible":{"msg":"","status":"reachable"},"icmp":{"msg":"","status":"reachable"}},"10.144.1.225":{"ansible":{"msg":"","status":"reachable"},"icmp":{"msg":"","status":"reachable"}}},"type":"device-health-rt"}'
+[DEBUG][ALERTS] Received alert event!
+[DEBUG][WS][TX] Sending msg='{"msg":{"ack-time":null,"acked":false,"alert-id":76,"alert-time":1764108534,"db_notified":true,"message":"'ICMP_RTT > 100mss' Triggered for device='Xochimilco-lan'","requires-ack":true,"rule-id":1,"severity":"warning","target-id":1,"value":"[333.204 MORE_THAN 100]","ws_notified":false},"type":"alerts-rt"}'
+[INFO ][ALERTS][TELEGRAM] Received an alert event
+[INFO ][FACTS] Updating local facts cache.
+[INFO ][FACTS] Sleeping until timeout (5s) zzZ...
