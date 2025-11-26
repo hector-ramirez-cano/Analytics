@@ -28,7 +28,7 @@ fn format_alert(event: &AlertEvent, device: &Device, rule_name: &str) -> String 
     let tz : Tz = chrono_tz::Etc::GMTPlus6;
 
     let emoji = emoji_map(&event.severity);
-    let ack = if event.requires_ack { "Sí" } else { "No" };
+    // let ack = if event.requires_ack { "Sí" } else { "No" };
     let time_str = match event.alert_time {
         Some(t) => t.with_timezone(&tz).format("%Y-%m-%d %H:%M:%S UTC%Z").to_string(),
         None=> "Desconocido".to_string()
@@ -36,7 +36,6 @@ fn format_alert(event: &AlertEvent, device: &Device, rule_name: &str) -> String 
 
     format!(
         "```{emoji}¡Alerta!\n\
-        📌 Requiere Ack: {ack}\n\
         🗓️ {time_str}\n\
         🖥️ {device_name}@{hostname}\
         \n\
@@ -136,7 +135,7 @@ impl TelegramBackend {
             let msg = format_alert(&event, &device, &rule);
 
             for chat_id in chats.iter() {
-                Handler::send_message_button(client, (*chat_id).into(), msg.as_str(), event.alert_id).await;
+                Handler::send_message(client, (*chat_id).into(), msg.as_str()).await;
             }
         }});
     }
@@ -173,6 +172,7 @@ impl Handler {
         }
     }
 
+    /* TODO: Readd if ack is reimlemented
     async fn send_message_button(client: &Client, chat_id: ChatPeerId, message: &str, alert_id: AlertEventId) {
         let message = message.replace(".", "\\.");
         use tgbot::types::*;
@@ -190,7 +190,7 @@ impl Handler {
                 log::error!("[ERROR][ALERTS][TELEGRAM] failed to send message = '{}' with error = '{e}'. Message will be dropped", &message);
             }
         }
-    }
+    }*/
 
     pub async fn handle_start(client: &Client, chat_id: ChatPeerId) {
         let message : &'static str = "Comienza introduciendo el token de usuario con /auth [Token]";
