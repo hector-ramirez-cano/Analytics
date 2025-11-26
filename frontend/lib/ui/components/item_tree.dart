@@ -147,7 +147,9 @@ class ItemTree extends StatelessWidget {
 
       }
 
-      devices.add(_makeUngroupedDeviceTreeBranch());
+      if (topology.ungroupedDevices.isNotEmpty) {
+        devices.add(_makeUngroupedDeviceTreeBranch());
+      }
 
       root.add(devices);
     }
