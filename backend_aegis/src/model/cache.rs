@@ -400,10 +400,14 @@ impl Cache {
     }
 
     pub async fn ansible_inventory(&self) -> Vec<String> {
+        let config = Config::instance();
+        let user: String = config.get("backend/model/ssh_user", "/")
+            .expect("[FATAL] Config file should specify an ssh user for remote acess under backend/model/ssh_user, and be of type String");
+
         self.devices.read().await
             .values()
-            .filter(|d| d.configuration.data_sources.contains(&DataSource::Icmp))
-            .map(|d| d.management_hostname.as_str().to_string())
+            .filter(|d| d.configuration.data_sources.contains(&DataSource::Ssh))
+            .map(|d| format!("{} ansible_user={}", d.management_hostname.as_str(), user))
             .collect::<Vec<String>>()
 
     }
