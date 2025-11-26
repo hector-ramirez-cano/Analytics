@@ -30,8 +30,8 @@ impl Config {
     }
 
     pub fn init() {
-        println!("[INFO] Init config");
         let _ = Config::instance();
+        println!("[INFO] Init config");
     }
 
     pub fn get_curr_config_path(&self) -> String {
@@ -47,10 +47,19 @@ impl Config {
         let mut v: Value = serde_json::from_reader(reader)
             .with_context(|| format!("failed to parse JSON from '{}'", path.as_ref().display()))?;
 
+        #[cfg(debug_assertions)] {
+            println!("[INFO][CONFIG] Loaded debug config!");
+            v = v.get_mut("debug").with_context(|| format!("[FATAL] Expected 'debug' block for debug builds"))?.take();
+        }
+        #[cfg(not(debug_assertions))] {
+            println!("[INFO][CONFIG] Loaded release config!");
+            v = v.get_mut("release").with_context(|| format!("[FATAL] Expected 'release' block for release builds"))?.take();
+        }
+
         if resolve_imports {
             Config::resolve_imports(&mut v, 5).context("resolving imports failed")?;
         }
-
+        
         Ok(v)
     }
 
@@ -64,12 +73,12 @@ impl Config {
                     if let Some(ref_val) = map.remove("$ref") {
                         if *remaining == 0 {
                             // Log critical and return error
-                            log::error!(
-                                "[CRITICAL] Config file exceeds import depth. depth_limit={}",
+                            eprintln!(
+                                "[FATAL] Config file exceeds import depth. depth_limit={}",
                                 0usize
                             );
                             return Err(anyhow!(
-                                "[CRITICAL] Config file exceeds import depth."
+                                "[FATAL] Config file exceeds import depth."
                             ));
                         }
 
@@ -131,7 +140,7 @@ impl Config {
         match self.get_value_opt(path, sep) {
             Some(v) => v,
             None => {
-                log::error!(
+                eprintln!(
                     "Using undefined config value '{}', returning default value {:?}",
                     path,
                     default

@@ -48,5 +48,6 @@ EXPOSE 5050
 
 COPY --from=builder /analytics/bin/backend_aegis .
 ENV PATH="/analytics:${PATH}"
+ENV NDEBUG=TRUE
 
 CMD ["bash", "-c", "python3 prelude/create_aggregate_tasks.py && backend_aegis"]

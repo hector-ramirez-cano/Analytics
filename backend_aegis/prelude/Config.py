@@ -1,4 +1,5 @@
 import json
+import os
 from logging import Logger
 
 
@@ -32,8 +33,8 @@ def __resolve_imports__(config_dict: dict, depth_limit: int = 5):
         return config_dict
 
     else:
-        Logger(name="Config").critical(msg=("[CRITICAL]Config file exceeds import depth. depth_limit="+str(depth_limit)))
-        raise Exception("[CRITICAL]Config file exceeds import depth. depth_limit="+str(depth_limit))
+        Logger(name="Config").critical(msg=(f"[CRITICAL]Config file exceeds import depth. depth_limit={depth_limit}"))
+        raise Exception(f"[CRITICAL]Config file exceeds import depth. depth_limit={depth_limit}")
 
 
 class Config(object):
@@ -56,6 +57,13 @@ class Config(object):
             tmp = json.load(config_file)
 
             config_file.close()
+
+        if os.getenv("NDEBUG"):
+            print("[PRELUDE][INFO ] Loaded release config")
+            tmp = tmp["release"]
+        else:
+            print("[PRELUDE][INFO ] Loaded debug config")
+            tmp = tmp["debug"]
 
         if resolve_imports:
             __resolve_imports__(tmp)
