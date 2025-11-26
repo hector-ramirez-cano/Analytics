@@ -15,3 +15,4 @@ backend_aegis/Cargo.lock
 backend/ansible/inventory/hosts
 backend_aegis/target
 backend_aegis/influxdb2/
+hosts

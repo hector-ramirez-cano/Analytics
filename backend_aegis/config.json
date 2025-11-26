@@ -7,6 +7,7 @@
     "backend": {
       "model": {
         "private_data_dir": "ansible",
+        "ssh_user": "zaph",
         "playbooks": {
           "fact_gathering": "fact_gathering.yml"
         },
@@ -61,6 +62,7 @@
     "backend": {
       "model": {
         "private_data_dir": "ansible",
+        "ssh_user": "zaph",
         "playbooks": {
           "fact_gathering": "fact_gathering.yml"
         },
