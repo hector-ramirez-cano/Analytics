@@ -193,7 +193,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     if (!enabled) { return; }
 
     Set<String> options;
-    if      (metrics)     { options = {...notif.device.availableValues, ...notif.device.requestedMetrics}; }
+    if      (metrics)     { options = {...notif.device.availableValues, ...notif.device.requestedMetrics}; options.removeWhere((s) => s.startsWith("baseline"));}
     else if (metadata)    { options = {...notif.device.availableValues, ...notif.device.requestedMetadata}; }
     else if (datasources) { options = DataSources.values.map((i) => i.name).toSet(); }
     else { return; }

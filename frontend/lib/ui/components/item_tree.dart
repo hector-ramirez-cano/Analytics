@@ -73,7 +73,7 @@ class ItemTree extends StatelessWidget {
 
   
   TreeNode _makeDeviceTreeBranch(Group group) {
-    var node = TreeNode<Section>(key: UniqueKey().toString(), data: Section(name: group.name, icon: Icons.folder));
+    var node = TreeNode<Section>(key: "ItemTree_TreeNode_Groups_Group${group.id}", data: Section(name: group.name, icon: Icons.folder));
 
     for (Group subgroup in group.groups) {
       // if it doesn't contain devices, no point on showing it here
@@ -85,7 +85,7 @@ class ItemTree extends StatelessWidget {
     }
 
     for (Device item in group.devices) {
-      node.add(TreeNode<Device>(key: UniqueKey().toString(), data: item));
+      node.add(TreeNode<Device>(key: "ItemTree_TreeNode_Group${group.id}_Device${item.id}", data: item));
     }
 
 
@@ -94,10 +94,10 @@ class ItemTree extends StatelessWidget {
 
     
   TreeNode _makeUngroupedDeviceTreeBranch() {
-    var node = TreeNode<Section>(key: UniqueKey().toString(), data: Section(name: "Sin grupo", icon: Icons.folder));
+    var node = TreeNode<Section>(key: "ItemTree_TreeNode_Ungrouped_Devices", data: Section(name: "Sin grupo", icon: Icons.folder));
 
     for (Device item in topology.ungroupedDevices) {
-      node.add(TreeNode<Device>(key: UniqueKey().toString(), data: item));
+      node.add(TreeNode<Device>(key: "ItemTree_TreeNode_Device_${item.id}", data: item));
     }
 
     return node;
@@ -112,9 +112,9 @@ class ItemTree extends StatelessWidget {
             list[b].childrenCount().compareTo(list[a].childrenCount()));
     }
 
-    makeGroupTreeBranch(group) {
+    makeGroupTreeBranch(Group group) {
       // Create current node, and recursively add it's children to the created node
-      var node = TreeNode<Group>(key: UniqueKey().toString(), data: group);
+      var node = TreeNode<Group>(key: "ItemTree_TreeNode_Groups_${group.id}", data: group);
       for (final int index in groupOrder(group.groups.toList())) {
         node.add(makeGroupTreeBranch(group.groups.toList()[index]));
       }
@@ -130,16 +130,16 @@ class ItemTree extends StatelessWidget {
 
   void _makeRulesBranch(AlertRuleSet ruleSet, TreeNode rules) {
     for (AlertRule rule in ruleSet.rules.values) {
-      rules.add(TreeNode<AlertRule>(key: UniqueKey().toString(), data: rule));
+      rules.add(TreeNode<AlertRule>(key: "ItemTree_TreeNode_Rules_${rule.id}", data: rule));
     }
   }
 
   TreeNode _makeTree() {
     var root = TreeNode.root();
 
-    var devices = TreeNode<Section>(key: UniqueKey().toString(), data: Section(name: "Dispositivos", icon: Icons.dns));
-    var groups  = TreeNode<Section>(key: UniqueKey().toString(), data: Section(name: "Grupos", icon: Icons.folder));
-    var rules   = TreeNode<Section>(key: UniqueKey().toString(), data: Section(name: "Reglas", icon: Icons.rule_folder));
+    var devices = TreeNode<Section>(key: "ItemTree_TreeNode_Devices", data: Section(name: "Dispositivos", icon: Icons.dns));
+    var groups  = TreeNode<Section>(key: "ItemTree_TreeNode_Groups" , data: Section(name: "Grupos", icon: Icons.folder));
+    var rules   = TreeNode<Section>(key: "ItemTree_TreeNode_Rules"  , data: Section(name: "Reglas", icon: Icons.rule_folder));
     
     if (includeDevices) {
       for (Group group in topology.groups) {
