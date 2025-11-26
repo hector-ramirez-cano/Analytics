@@ -1,0 +1,83 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["type", "msg"],
+    "properties": {
+        "type": {
+            "type": "string",
+            "const": "alerts-rt"
+        },
+        "msg": {
+            "type": "object",
+            "required": [
+                "ack-time",
+                "acked",
+                "alert-id",
+                "alert-time",
+                "db_notified",
+                "message",
+                "requires-ack",
+                "rule-id",
+                "severity",
+                "target-id",
+                "value",
+                "ws_notified"
+            ],
+            "properties": {
+                "ack-time": {
+                    "type": ["number", "null"]
+                },
+                "acked": {
+                    "type": "boolean"
+                },
+                "alert-id": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "alert-time": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "db_notified": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "requires-ack": {
+                    "type": "boolean"
+                },
+                "rule-id": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "severity": {
+                    "type": "string",
+                    "enum": [
+                        "emergency",
+                        "alert",
+                        "critical",
+                        "error",
+                        "warning",
+                        "notice",
+                        "info",
+                        "debug",
+                        "unknown"
+                    ]
+                },
+                "target-id": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "value": {
+                    "type": "string"
+                },
+                "ws_notified": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": false
+}

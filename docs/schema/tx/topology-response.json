@@ -1,0 +1,167 @@
+{
+    "type": "object",
+    "required": ["type", "msg"],
+    "properties": {
+        "type": {
+            "type": "string",
+            "const": "topology"
+        },
+        "msg": {
+            "type": "object",
+            "required": ["devices", "groups", "links"],
+            "properties": {
+                "devices": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "configuration",
+                            "id",
+                            "latitude",
+                            "longitude",
+                            "management-hostname",
+                            "name",
+                            "state"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                            },
+                            "latitude": {
+                                "type": "number",
+                                "minimum": -90,
+                                "maximum": 90
+                            },
+                            "longitude": {
+                                "type": "number",
+                                "minimum": -180,
+                                "maximum": 180
+                            },
+                            "management-hostname": {
+                                "type": "string",
+                                "minLength": 1
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "configuration": {
+                                "type": "object",
+                                "required": [
+                                    "available-values",
+                                    "data-sources",
+                                    "requested-metadata",
+                                    "requested-metrics"
+                                ],
+                                "properties": {
+                                    "available-values": {
+                                        "type": "array",
+                                        "items": { "type": "string", "minLength": 1 },
+                                        "uniqueItems": true
+                                    },
+                                    "data-sources": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "enum": ["icmp", "ssh", "snmp"]
+                                        }
+                                    },
+                                    "requested-metadata": {
+                                        "type": "array",
+                                        "items": { "type": "string", "minLength": 1 },
+                                        "uniqueItems": true
+                                    },
+                                    "requested-metrics": {
+                                        "type": "array",
+                                        "items": { "type": "string", "minLength": 1 },
+                                        "uniqueItems": true
+                                    }
+                                }
+                            },
+                            "state": {
+                                "type": "object",
+                                "patternProperties": {
+                                    "^(ansible|icmp|snmp)$": {
+                                        "type": "object",
+                                        "required": ["msg", "status"],
+                                        "properties": {
+                                            "msg": { "type": "string" },
+                                            "status": { "type": "string", "minLength": 1 }
+                                        }
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "groups": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["id", "is-display-group", "members", "name"],
+                        "properties": {
+                            "id": {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                            },
+                            "is-display-group": { "type": "boolean" },
+                            "members": {
+                                "type": "array",
+                                "items": {
+                                    "type": "number",
+                                    "exclusiveMinimum": 0
+                                }
+                            },
+                            "name": { "type": "string" }
+                        }
+                    }
+                },
+                "links": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "id",
+                            "link-subtype",
+                            "link-type",
+                            "side-a",
+                            "side-a-iface",
+                            "side-b",
+                            "side-b-iface"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                            },
+                            "link-subtype": {
+                                "type": ["string", "null"]
+                            },
+                            "link-type": {
+                                "type": "string",
+                                "enum": ["copper", "optical", "wireless"]
+                            },
+                            "side-a": {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                            },
+                            "side-b": {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                            },
+                            "side-a-iface": {
+                                "type": "string",
+                                "minLength": 1
+                            },
+                            "side-b-iface": {
+                                "type": "string",
+                                "minLength": 1
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

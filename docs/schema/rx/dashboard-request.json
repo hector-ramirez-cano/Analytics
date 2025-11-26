@@ -1,0 +1,14 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Backend Health RT Message",
+    "type": "object",
+    "properties": {
+        "type": {
+        "type": "string",
+        "const": "dashboards"
+        },
+        "msg": {}
+    },
+    "required": ["type", "msg"],
+    "additionalProperties": false
+}

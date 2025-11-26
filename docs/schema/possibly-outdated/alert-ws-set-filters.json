@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SetFiltersMessage",
+  "type": "object",
+  "properties": {
+    "type": "string",
+    "enum": ["set-filters"],
+    "start": {
+      "type": "number",
+      "minimum": 0
+    },
+    "end": {
+      "type": "number",
+      "minimum": 0
+    },
+    "ack-start": {
+      "type": "number",
+      "minimum": 0
+    },
+    "ack-end": {
+      "type": "number",
+      "minimum": 0,
+      "minLength": 1
+    },
+    "alert-id": {
+      "type":  "integer",
+      "minimum": 0
+    },
+    "severity": {
+      "type": "array",
+      "minLength": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "emergency", "alert", "critical", "error", "warning", "notice", "info", "debug"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requires-ack": {
+      "type": "boolean"
+    },
+    "ack-actor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target-id": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "offset": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "type",
+    "start",
+    "end"
+  ],
+  "additionalProperties": false
+}

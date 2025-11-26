@@ -1,0 +1,117 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "DashboardsMessage",
+    "type": "object",
+    "required": ["type", "msg"],
+    "properties": {
+        "type": {
+            "type": "string",
+            "const": "dashboards"
+        },
+        "msg": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": ["dasboard-id", "name", "widgets"],
+                "properties": {
+                    "dasboard-id": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "widgets": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "row-start",
+                                "row-span",
+                                "col-start",
+                                "col-span",
+                                "style-definition",
+                                "polling-definition"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "Widget ID. Must reference the dashboard-id and follow the same >0 constraint."
+                                },
+                                "row-start": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                },
+                                "row-span": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0
+                                },
+                                "col-start": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                },
+                                "col-span": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0
+                                },
+                                "style-definition": {
+                                    "type": "object",
+                                    "maxProperties": 0,
+                                    "description": "Always an empty object."
+                                },
+                                "polling-definition": {
+                                    "type": "object",
+                                    "required": [
+                                        "chart-type",
+                                        "device-ids",
+                                        "field",
+                                        "type",
+                                        "update-interval-s"
+                                    ],
+                                    "properties": {
+                                        "chart-type": {
+                                            "type": "string",
+                                            "enum": ["label", "line", "pie"]
+                                        },
+                                        "device-ids": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                        },
+                                        "field": {
+                                            "type": "string",
+                                            "minLength": 1
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["metadata", "metric"]
+                                        },
+                                        "update-interval-s": {
+                                            "type": "integer",
+                                            "exclusiveMinimum": 0
+                                        },
+                                        "aggregate-interval-s": {
+                                            "type": "integer",
+                                            "exclusiveMinimum": 0
+                                        },
+                                        "start": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "additionalProperties": false
+            }
+        }
+    },
+    "additionalProperties": false
+}

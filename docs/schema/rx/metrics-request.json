@@ -1,0 +1,43 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": [
+        "type",
+        "msg"
+    ],
+    "properties": {
+        "type": {
+            "type": "string",
+            "const": "metrics"
+        },
+        "msg": {
+            "type": "object",
+            "required": [
+                "start",
+                "metric",
+                "device-id",
+                "aggregate-interval"
+            ],
+            "properties": {
+                "start": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "metric": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "device-id": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "aggregate-interval": {
+                    "type": "string",
+                    "minLength": 1
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": false
+}

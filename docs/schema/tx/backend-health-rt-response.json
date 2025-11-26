@@ -1,0 +1,48 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["type", "msg"],
+    "properties": {
+        "type": {
+            "type": "string",
+            "const": "backend-health-rt"
+        },
+        "msg": {
+            "type": "object",
+            "required": ["status"],
+            "properties": {
+                "status": {
+                    "type": "object",
+                    "required": ["influx", "postgres"],
+                    "properties": {
+                        "influx": {
+                            "type": "object",
+                            "required": ["msg", "up"],
+                            "properties": {
+                                "msg": {
+                                    "type": "string"
+                                },
+                                "up": {
+                                    "type": "boolean"
+                                }
+                            }
+                        },
+                        "postgres": {
+                            "type": "object",
+                            "required": ["msg", "up"],
+                            "properties": {
+                                "msg": {
+                                    "type": "string"
+                                },
+                                "up": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "additionalProperties": false
+}

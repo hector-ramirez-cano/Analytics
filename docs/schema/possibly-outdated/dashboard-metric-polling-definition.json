@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "polling-definition": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aggregate-interval-s": {
+          "type": "number",
+          "minimum": 1
+        },
+        "update-interval-s": {
+          "type": "number",
+          "minimum": 1
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1
+        },
+        "device-id": {
+          "type": "number",
+          "minimum": 0
+        },
+        "type": {
+          "type": "string",
+          "const": "metric"
+        }
+      },
+      "required": ["field", "device-id", "type"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["polling-definition"],
+  "additionalProperties": false
+}
