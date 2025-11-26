@@ -1,0 +1,69 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO Syslog.system_events\n            (facility, severity, from_host, received_at, process_id, message, message_id, appname)\n        VALUES($1, $2, $3, $4, $5, $6, $7, $8)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "syslogfacility",
+            "kind": {
+              "Enum": [
+                "kern",
+                "user",
+                "mail",
+                "daemon",
+                "auth",
+                "syslog",
+                "lpr",
+                "news",
+                "uucp",
+                "cron",
+                "authpriv",
+                "ftp",
+                "ntp",
+                "security",
+                "console",
+                "solaris",
+                "local0",
+                "local1",
+                "local2",
+                "local3",
+                "local4",
+                "local5",
+                "local6",
+                "local7"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "syslogseverity",
+            "kind": {
+              "Enum": [
+                "emerg",
+                "alert",
+                "crit",
+                "err",
+                "warning",
+                "notice",
+                "info",
+                "debug"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Timestamptz",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a0dd5a3d414f14d255bf21f157ae00eaf0e8a8a9b5659211adc6f5f62a6a75e4"
+}

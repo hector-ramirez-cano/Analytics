@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO Analytics.device_data_sources\n                    (device_id, fact_data_source)\n                VALUES\n                    ($1, $2)\n                ON CONFLICT (device_id, fact_data_source) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        {
+          "Custom": {
+            "name": "datasource",
+            "kind": {
+              "Enum": [
+                "ssh",
+                "snmp",
+                "icmp"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d0c05c2486b419b78ccc293a6e4a2070929f6d64267c2a16658ac4597f55ad7a"
+}

@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE Analytics.links\n                SET side_a = $1, side_b = $2, side_a_iface = $3,\n                    side_b_iface = $4, link_type = $5, link_subtype = $6\n                WHERE link_id = $7",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Varchar",
+        "Varchar",
+        {
+          "Custom": {
+            "name": "linktype",
+            "kind": {
+              "Enum": [
+                "optical",
+                "copper",
+                "wireless",
+                "unknown"
+              ]
+            }
+          }
+        },
+        "Varchar",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1abcffa0c8aa049ba5b996e555f0d344baf93fbe80da5242903ff12d5faad8e0"
+}

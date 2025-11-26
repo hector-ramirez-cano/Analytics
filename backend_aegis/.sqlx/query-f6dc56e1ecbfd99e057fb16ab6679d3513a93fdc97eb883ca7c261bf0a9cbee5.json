@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT EXISTS(\n            SELECT 1 FROM ClientIdentity.telegram_receiver WHERE telegram_user_id = $1 AND subscribed is TRUE LIMIT 1\n        ) as authenticated\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "authenticated",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "f6dc56e1ecbfd99e057fb16ab6679d3513a93fdc97eb883ca7c261bf0a9cbee5"
+}

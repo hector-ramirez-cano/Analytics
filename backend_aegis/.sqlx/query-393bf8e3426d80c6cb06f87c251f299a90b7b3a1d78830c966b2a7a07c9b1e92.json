@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT (1) as found FROM ClientIdentity.ack_tokens WHERE ack_token = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "found",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "393bf8e3426d80c6cb06f87c251f299a90b7b3a1d78830c966b2a7a07c9b1e92"
+}

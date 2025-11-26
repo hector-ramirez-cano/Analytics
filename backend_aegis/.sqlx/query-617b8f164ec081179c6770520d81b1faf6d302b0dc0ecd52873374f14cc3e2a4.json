@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE Analytics.alert_rules\n                SET rule_name=$1, requires_ack=$2, rule_definition=$3\n                WHERE rule_id =$4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Bool",
+        "Jsonb",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "617b8f164ec081179c6770520d81b1faf6d302b0dc0ecd52873374f14cc3e2a4"
+}

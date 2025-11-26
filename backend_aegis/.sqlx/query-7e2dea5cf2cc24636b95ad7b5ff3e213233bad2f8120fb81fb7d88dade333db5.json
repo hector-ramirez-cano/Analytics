@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM Analytics.alert_rules WHERE rule_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7e2dea5cf2cc24636b95ad7b5ff3e213233bad2f8120fb81fb7d88dade333db5"
+}
