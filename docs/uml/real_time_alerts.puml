@@ -7,7 +7,7 @@ end box
 
 ' Define controller and model lifelines
 ' Backend
-box "Controller" #ADD8E6
+box "Controller" #caade6ff
 control "WebSocket" as WebSocket
 end box
 
@@ -16,6 +16,11 @@ boundary "Fact\nGathering" as FactGatheringBackend
 entity "Syslog\nBackend" as SyslogBackend
 entity "Alert\nBackend" as AlertBackend
 Database "Database" as Database
+end box
+
+
+box "Telegram"  #9aceffff
+entity Telegram as Telegram
 end box
 
 == Subscription ==
@@ -31,15 +36,9 @@ loop Corutine
     AlertBackend -> Database : insert_alert(AlertEvent)
     Database --> AlertBackend : alert_id
     AlertBackend -> WebSocket : notify(alert)
+    AlertBackend -> Telegram : notify(alert)
 end
+WebSocket -> UI : notify
+UI -> User : notify
 
-== Syslog event loop ==
-loop Corutine
-    FactGatheringBackend -> AlertBackend : eval_facts(queue)
-    AlertBackend -> AlertBackend : __eval_rules()
-    AlertBackend -> AlertBackend : raise_alert()
-    AlertBackend -> Database : insert_alert(AlertEvent)
-    Database --> AlertBackend : alert_id
-    AlertBackend -> WebSocket : notify(alert)
-end
 @enduml

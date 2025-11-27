@@ -13,9 +13,9 @@
             "minItems": 1,
             "items": {
                 "type": "object",
-                "required": ["dasboard-id", "name", "widgets"],
+                "required": ["dashboard-id", "name", "widgets"],
                 "properties": {
-                    "dasboard-id": {
+                    "dashboard-id": {
                         "type": "integer",
                         "minimum": 1
                     },

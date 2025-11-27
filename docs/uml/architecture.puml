@@ -50,8 +50,7 @@ package "Backend" <<Backend>> {
   }
 }
 
-
-"Syslog backend" --> "Poller"
+"Facts backend" -up-> "DB backend"
 "Facts backend" --> "Poller"
 
 "ICMP poller" --> "Facts backend"
