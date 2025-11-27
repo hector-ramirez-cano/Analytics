@@ -59,6 +59,9 @@ class DashboardMetadataService extends _$DashboardMetadataService {
     _dataReady.reset();
     _firstRun.reset();
 
+    // Delay to allow parallel proceses to catch up
+    await Future.delayed(Duration(milliseconds: 200));
+
     notifierKey = "metadata_${definition.metadata}_${definition.itemIds}_${definition.chartType}";
 
     notifier.attachListener("metadata", notifierKey, handleUpdate);

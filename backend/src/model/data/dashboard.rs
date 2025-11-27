@@ -6,7 +6,7 @@ use crate::types::DashboardId;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Dashboard {
-    #[serde(rename="dasboard-id")]
+    #[serde(rename="dashboard-id")]
     pub dashboard_id: DashboardId,
 
     #[serde(rename="name")]

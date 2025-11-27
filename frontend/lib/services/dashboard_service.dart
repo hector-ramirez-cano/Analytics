@@ -1,4 +1,6 @@
 
+import 'dart:collection';
+
 import 'package:aegis/extensions/semaphore.dart';
 import 'package:aegis/models/charts/metadata_polling_definition.dart';
 import 'package:aegis/models/charts/metric_polling_definition.dart';
@@ -61,31 +63,47 @@ class DashboardItem {
 class DashboardLayout{
   List<DashboardItem> items;
   String name;
+  int id;
 
-  DashboardLayout({required this.name, required this.items});
+  DashboardLayout({required this.id, required this.name, required this.items});
 
   factory DashboardLayout.fromJson(Map<String, dynamic> json) {
+    int id = json["dashboard-id"];
     String name = json["name"];
     List widgetDefinitions = json["widgets"];
     List<DashboardItem> items = widgetDefinitions.map((innerJson) => DashboardItem.fromJson(innerJson)).toList();
 
 
-    return DashboardLayout(name: name, items: items);
+    return DashboardLayout(id: id, name: name, items: items);
   }
+}
+
+@riverpod
+class DashboardSelection extends _$DashboardSelection {
+
+  @override
+  int build() {
+    return 1;
+  }
+
+  void setSelection(int i) => state = i;
+
 }
 
 @riverpod
 class DashboardService extends _$DashboardService {
 
-  List<DashboardLayout> fromJson(List<dynamic> json) {
-    return json.map((value) => DashboardLayout.fromJson(value)).toList();
+  HashMap<int, DashboardLayout> fromJson(List<dynamic> json) {
+    return HashMap.fromEntries(
+      json.map((value) => DashboardLayout.fromJson(value)).map((layout) => MapEntry(layout.id, layout))
+    );
   }
 
-  List<DashboardLayout> layouts = [];
+  HashMap<int, DashboardLayout> layouts = HashMap.of({});
   final Semaphore _layoutsReady = Semaphore();
 
   @override
-  Future<List<DashboardLayout>> build() async {
+  Future<HashMap<int, DashboardLayout>> build() async {
     final wsState = ref.watch(websocketServiceProvider);
     final notifier = ref.watch(websocketServiceProvider.notifier);
     layouts.clear();

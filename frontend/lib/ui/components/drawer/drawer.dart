@@ -1,3 +1,4 @@
+import 'package:aegis/ui/components/drawer/dashboard_drawer.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/web.dart';
@@ -69,6 +70,9 @@ class _SideDrawerState extends ConsumerState<SideDrawer> {
             data: (rules) => ItemEditDrawer(topology: topology, ruleSet: rules,),
           )
         );
+
+        case NavigationRailItem.charts:
+          return DashboardDrawer();
 
       default:
         if (selectedPanel?.hasDrawer == true) {

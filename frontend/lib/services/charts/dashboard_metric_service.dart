@@ -57,6 +57,9 @@ class DashboardMetricService extends _$DashboardMetricService {
     _dataReady.reset();
     _firstRun.reset();
 
+    // Delay to allow parallel proceses to catch up
+    await Future.delayed(Duration(milliseconds: 200));
+
     notifier.attachListener("metrics", "metrics_${definition.metric}", handleUpdate);
     
     refresh();

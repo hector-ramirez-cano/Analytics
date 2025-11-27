@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aegis/models/charts/dashboard_polling_definition.dart';
@@ -54,24 +56,41 @@ class _ChartDashboardState extends ConsumerState<ChartDashboard> {
     );
   }
 
-  Dashboard _fromLayoutsWithTopology(Topology topology, List<DashboardLayout> layouts) {
-    if (layouts.isEmpty) { return Dashboard(name: "", children: []); }
+  Widget _makeEmptyDashboardSelection() {
+    return SizedBox.expand(
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min, // keeps the column as small as possible
+          children: [
+            Spacer(),
+            Icon(Icons.category_outlined, size: 128, color: Colors.blueGrey,),
+            SizedBox(height: 12), // spacing between icon and text
+            Text("Selecciona un dashboard"),
+            Spacer(),
+          ],
+        ),
+      ),
+    );
+  }
 
-    // TODO: Support for multiple layouts
-    final layout = layouts.first;
+  Widget _fromLayoutsWithTopology(Topology topology, HashMap<int, DashboardLayout> layouts, int selected) {
+    if (layouts.isEmpty || !layouts.containsKey(selected)) { return _makeEmptyDashboardSelection(); }
+
+    final layout = layouts[selected]!;
 
     final children = layout.items.map((item) => _widgetFromDashboardItem(item, topology)).toList();
 
     return Dashboard(name: layout.name, children: children);
   }
 
-  Widget _fromLayouts(List<DashboardLayout> layouts) {
+  Widget _fromLayouts(HashMap<int, DashboardLayout> layouts) {
     final topologyAsync = ref.watch(topologyServiceProvider);
+    final selected = ref.watch(dashboardSelectionProvider);
 
     return topologyAsync.when(
       error: (e, _) => RetryIndicator(onRetry: () async => onRetry, isLoading: false, error: e),
       loading: () => RetryIndicator(onRetry: () async => onRetry , isLoading: true),
-      data: (topology) => _fromLayoutsWithTopology(topology, layouts),
+      data: (topology) => _fromLayoutsWithTopology(topology, layouts, selected),
     );
   }
 
