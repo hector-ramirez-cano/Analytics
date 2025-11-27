@@ -1,4 +1,5 @@
 import 'package:aegis/services/dashboard_service.dart';
+import 'package:aegis/ui/components/universal_detector.dart';
 import 'package:animated_tree_view/tree_view/tree_node.dart';
 import 'package:animated_tree_view/tree_view/tree_view.dart';
 import 'package:animated_tree_view/tree_view/widgets/expansion_indicator.dart';
@@ -42,7 +43,7 @@ class DashboardDrawer extends StatelessWidget {
       final string = node is TreeNode<DashboardLayout> ?  node.data?.name ?? "Sin nombre" : "Raíz";
       return Padding(
         padding: const EdgeInsets.fromLTRB(32, 8, 8, 8),
-        child: Text(string),
+        child: UniversalDetector(child: Text(string), setCursor: ()=>SystemMouseCursors.click,)
       );
     }
 

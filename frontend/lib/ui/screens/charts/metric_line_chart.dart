@@ -15,7 +15,6 @@ class MetricLineChart extends StatelessWidget {
 
   Map<String, Variable> _makeVariableDefinition() {
     return {
-      // TODO: Retrieve range from backend
       "time": Variable(
         accessor: (row) => row["time"] as DateTime,
         scale: TimeScale(
@@ -51,7 +50,7 @@ class MetricLineChart extends StatelessWidget {
       marks: [
         LineMark(
           position: Varset('time') * Varset('value'),
-          shape: ShapeEncode(value: BasicLineShape(smooth: false) ),
+          shape: ShapeEncode(value: BasicLineShape(smooth: true) ),
           color: ColorEncode(value: const Color.fromRGBO(35, 109, 119, 1))
         )
       ]

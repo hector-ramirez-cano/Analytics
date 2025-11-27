@@ -1,16 +1,34 @@
-# network_analytics
+# Aegis
 
-A new Flutter project.
+# Frontend Overview
 
-## Getting Started
+## Tecnologías
 
-This project is a starting point for a Flutter application.
+- **Flutter** como framework principal.
+- **Riverpod** como manejador de estado.
+- Uso de widgets con `key` (por ejemplo, `TreeView` personalizado).
 
-A few resources to get you started if this is your first Flutter project:
+---
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Arquitectura
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+El frontend está organizado en una estructura típica basada en Flutter:
+
+- `screens/` – Pantallas principales.
+- `widgets/` – Widgets reutilizables.
+- `providers/` – Providers de Riverpod.
+- `models/` – Modelos de datos.
+- `services/` – Servicios auxiliares (si aplica).
+
+El flujo lógico sigue:
+
+`UI → Providers → Lógica / Datos`
+
+---
+
+
+## Notas adicionales
+
+- Integración eventual con sistemas de monitoreo o métricas externas.
+
+---

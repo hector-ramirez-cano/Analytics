@@ -106,49 +106,57 @@ class MetadataPieChart extends StatelessWidget {
         count[metadataStr] = (count[metadataStr] ?? 0) + 1;
       });
 
-    final values = count.entries.map((e) => {'value': e.key, 'count': e.value}).toList();
+    final values = count.entries
+      .map((e) => {'value': e.key, 'count': e.value})
+      .toList()
+    ..sort((a, b) {
+      final String ax = a['value']! as String;
+      final String bx = b['value']! as String;
+      return ax.compareTo(bx); // sorts by string naturally
+    });
     
     if (values.isEmpty) {
       return Center(child: Text("No hay datos"));
     }
 
     return Chart (
-            data: values,
-            variables: _makeVariableDefinition(),
-            transforms: [
-              Proportion(
-                variable: 'count',
-                as: 'percent',
-              )
-            ],
-            marks: [
-              IntervalMark(
-                transition: Transition(duration: const Duration(milliseconds: 1000), curve: Curves.linearToEaseOut),
-                entrance: {MarkEntrance.x, MarkEntrance.y},
-                position: Varset('percent') / Varset('value'),
-                color: ColorEncode(
-                  encoder: (tuple) {
-                    final category = tuple['value'];
-                    final pieColors = swatches[swatchIndex]["pieColors"];
-                    final index = category.hashCode % pieColors!.length;
-                    return pieColors[index];
-                  },
-                ),
-                label: LabelEncode(
-                  encoder: (tuple) {
-                    final category = tuple['value'];
-                    final textColors = swatches[swatchIndex]["textColors"];
-                    final index = category.hashCode % textColors!.length;
-                    final style = LabelStyle(textStyle: TextStyle(color: textColors[index], fontSize: 10));
-                    return Label(tuple['value'].toString(), style);
-                  }
-                ),
-                modifiers: [StackModifier()],
-              ),
-            ],
-            coord: PolarCoord(transposed: true, dimCount: 1),
-            
-          );
+      key: ValueKey("Chars_Metadata_${definition.field}_${definition.itemIds}_${definition.chartType}"),
+      data: values,
+      variables: _makeVariableDefinition(),
+      transforms: [
+        Proportion(
+          variable: 'count',
+          as: 'percent',
+        )
+      ],
+      marks: [
+        IntervalMark(
+          transition: Transition(duration: const Duration(milliseconds: 1000), curve: Curves.linearToEaseOut),
+          entrance: {MarkEntrance.x, MarkEntrance.y},
+          position: Varset('percent') / Varset('value'),
+          color: ColorEncode(
+            encoder: (tuple) {
+              final category = tuple['value'];
+              final pieColors = swatches[swatchIndex]["pieColors"];
+              final index = category.hashCode % pieColors!.length;
+              return pieColors[index];
+            },
+          ),
+          label: LabelEncode(
+            encoder: (tuple) {
+              final category = tuple['value'];
+              final textColors = swatches[swatchIndex]["textColors"];
+              final index = category.hashCode % textColors!.length;
+              final style = LabelStyle(textStyle: TextStyle(color: textColors[index], fontSize: 10));
+              return Label(tuple['value'].toString(), style);
+            }
+          ),
+          modifiers: [StackModifier()],
+        ),
+      ],
+      coord: PolarCoord(transposed: true, dimCount: 1),
+      
+    );
   }
 
   void onRetry(WidgetRef ref) {
