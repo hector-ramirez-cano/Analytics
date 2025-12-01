@@ -120,7 +120,7 @@ class MetadataPieChart extends StatelessWidget {
     }
 
     return Chart (
-      key: ValueKey("Chars_Metadata_${definition.field}_${definition.itemIds}_${definition.chartType}"),
+      key: ValueKey("Chars_Metadata_${definition.fields}_${definition.itemIds}_${definition.chartType}"),
       data: values,
       variables: _makeVariableDefinition(),
       transforms: [

@@ -35,12 +35,12 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     WidgetRef ref,
   ) {
     var onCanvasStateChanged = ((scale, center) => canvasInteractionService.onCanvasStateChanged(scale, center, ref));
-    var onChangeSelection    = ((forced)  => canvasInteractionService.onSelectTarget(forced, ref));
+    var onChangeSelection    = ((forced)   {canvasInteractionService.onSelectTarget(forced, ref); canvasInteractionService.onDisplayHealthOverlay(context); }); 
     var onSizeChanged        = ((size)    => canvasActualSize = size);
     var onScaleStart         = ((_)       => canvasInteractionService.onScaleStart());
     var onScaleUpdate        = ((details) => canvasInteractionService.onScaleUpdate(details, context, canvasActualSize, ref));
     var onTapUp              = ((details) => canvasInteractionService.onTapUp(details, onChangeSelection, itemSelection, canvasActualSize, canvasTabs));
-    var onHover              = ((event)   => canvasInteractionService.onHover(event, onChangeSelection, itemSelection, canvasActualSize, canvasTabs, event.localPosition));
+    var onHover              = ((event)   => canvasInteractionService.onHover(context, event, onChangeSelection, itemSelection, canvasActualSize, canvasTabs, event.localPosition));
     var onPointerSignal      = ((signal)  => canvasInteractionService.onPointerSignal(signal, canvasActualSize, ref));
     var onPointerDown        = ((event)   => canvasInteractionService.onPointerDown(event));
     var onPointerUp          = ((event)   => canvasInteractionService.onPointerUp(event));

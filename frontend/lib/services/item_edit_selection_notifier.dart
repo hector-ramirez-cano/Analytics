@@ -297,6 +297,7 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
         throw Exception("[BACKEND] Status Code = ${response.statusCode} with error='${response.body}'");
       }
 
+      await Future.delayed(Duration(seconds: 1));
       // discard whatever was stored here, it's already commited
       discard();
 

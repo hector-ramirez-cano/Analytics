@@ -45,7 +45,7 @@ class TopologyService extends _$TopologyService {
         status = statusMap.values.any((statusEntry) => statusEntry["status"].toUpperCase() == "REACHABLE");
       }
 
-      itemsCopy[device.id] = (_parsed!.items[device.id] as Device).copyWith(reachable: status);
+      itemsCopy[device.id] = (_parsed!.items[device.id] as Device).copyWith(reachable: status, statusMap: statusMap);
     }
 
     _parsed = _parsed!.copyWith(items: itemsCopy);

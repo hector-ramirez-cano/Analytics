@@ -12,6 +12,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
   final LatLng geoPosition;  // Lat , Long
   final String mgmtHostname;
   final bool? reachable;      // null => unknown
+  final Map<String, dynamic>? statusMap; // null => reachable => unknown
 
   final Set<String> requestedMetadata;
   final Set<String> requestedMetrics;
@@ -24,6 +25,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     required this.geoPosition,
     required this.mgmtHostname,
     required this.reachable,
+    required this.statusMap,
     required Set<String> requestedMetadata,
     required Set<String> requestedMetrics,
     required Set<String> availableValues,
@@ -45,6 +47,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     Set? availableValues,
     Set? dataSources,
     bool? reachable,
+    Map<String, dynamic>? statusMap,
   }) {
     return Device(
       id               : id ?? this.id,
@@ -55,6 +58,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
       requestedMetrics : Set.from(requestedMetrics ?? this.requestedMetrics),
       availableValues  : Set.from(availableValues ?? this.availableValues),
       dataSources      : Set.from(dataSources ?? this.dataSources),
+      statusMap        : statusMap ?? this.statusMap,
       reachable        : reachable,
     );
   }
@@ -87,7 +91,8 @@ class Device extends GroupableItem<Device> implements HoverTarget{
       requestedMetrics:  Set<String>.from(json['configuration']['requested-metrics']),
       availableValues:   Set<String>.from(json['configuration']['available-values']),
       dataSources:       Set<String>.from(json['configuration']['data-sources']),
-      reachable: json['reachable'] ?? false,
+      reachable: false, // updated by topology_provider on device-health-rt
+      statusMap: json['state']
     );
   }
 
@@ -118,6 +123,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
       availableValues: {},
       dataSources: {},
       reachable: null,
+      statusMap: {}
     );
   }
 

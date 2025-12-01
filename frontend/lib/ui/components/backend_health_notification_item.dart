@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final Map<bool, String> emojiMapping = {
-  true : "✅",
-  false: "❌",
-};
-
-
-
 class BackendHealthNotificationItem extends ConsumerStatefulWidget {
   final bool up;
   final String message;
@@ -67,7 +60,7 @@ class _AlertNotificationItemState extends ConsumerState<BackendHealthNotificatio
 
   Widget _makeContents() {
       return ExpansionTile(
-      key: ValueKey("Alert_Overlay_ExpansionTile_${widget.which}"),
+      key: ValueKey("BackendHealth_Overlay_ExpansionTile_${widget.which}"),
       dense: true,
       maintainState: true,
       leading: Text(
@@ -88,13 +81,14 @@ class _AlertNotificationItemState extends ConsumerState<BackendHealthNotificatio
       ),
       childrenPadding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
       children: [
-        Align(
-          alignment: AlignmentGeometry.centerLeft,
-          child: Text(
-            widget.message,
-            style: const TextStyle(fontSize: 12, color: Colors.black87),
+        if (widget.message.trim().isNotEmpty)
+          Align(
+            alignment: AlignmentGeometry.centerLeft,
+            child: Text(
+              widget.message,
+              style: const TextStyle(fontSize: 12, color: Colors.black87),
+            ),
           ),
-        ),
       ],
     );
   }

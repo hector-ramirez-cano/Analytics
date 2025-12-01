@@ -1,3 +1,5 @@
+import 'package:aegis/models/device.dart';
+import 'package:aegis/ui/components/overlays/device_health_overlay.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,6 +31,8 @@ class CanvasInteractionService {
 
   HoverTarget? hovered;
   HoverTarget? prevHovered;
+  Offset? _selectedPosition;
+  OverlayEntry? _overlayEntry;
   Timer? _hoverTimer;
   double _lastScale = 1.0;
   bool mouseMovingCanvas = false;
@@ -109,6 +113,16 @@ class CanvasInteractionService {
     ref.read(itemSelectionProvider.notifier).setSelected(hovered?.getId(), forced);
   }
 
+  void onDisplayHealthOverlay(BuildContext context) {
+    if (hovered is! Device) { return; }
+    if (_selectedPosition == null) { return; }
+
+    // Clean old entry before creating another one
+    if (_overlayEntry != null) { _overlayEntry!.remove(); }
+
+    _overlayEntry = showDeviceHealthOverlay(context, hovered as Device, _selectedPosition!);
+  }
+
   void onCanvasStateChanged(double? scale, Offset? center, WidgetRef ref) {
     ref.read(canvasTabsProvider.notifier).setCanvasPosition(scale, center);
   }
@@ -128,7 +142,7 @@ class CanvasInteractionService {
     _hoverTimer = null;
   }
 
-  void onHover(PointerEvent event, ItemChangedCallback onChangeSelection, ItemSelection? itemSelection, Size canvasSize, CanvasTabs tabs, Offset? cursorPx) {
+  void onHover(BuildContext context, PointerEvent event, ItemChangedCallback onChangeSelection, ItemSelection? itemSelection, Size canvasSize, CanvasTabs tabs, Offset? cursorPx) {
     final state = tabs.selectedState;
     if (state == null) return;
 
@@ -146,13 +160,20 @@ class CanvasInteractionService {
         onEnter(event, onChangeSelection);
 
         logger.d("Currently Hovering over=$curr");
+        _selectedPosition = cursorPx;
       
         prevHovered = hovered;
         hovered = curr;
       }
 
       if (curr == null) {
+        _selectedPosition = null;
         onChangeSelection(false);
+
+        if (_overlayEntry != null) {
+          _overlayEntry!.remove();
+          _overlayEntry = null;
+        }
       }
     }
   }

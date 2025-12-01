@@ -10,13 +10,13 @@ part 'dashboard_metric_service.g.dart';
 
 @riverpod
 class DashboardMetricService extends _$DashboardMetricService {
-  late Map<String, dynamic> _data;
+  final Map<String, Map<String, dynamic>> _data = {};
   final Semaphore _dataReady = Semaphore();
   final Semaphore _firstRun = Semaphore();
   Timer? _refreshTimer;
 
   void handleUpdate(dynamic json) {
-    if (json is! Map<String, dynamic> || json["metrics"] != definition.metric) { return; }
+    if (json is! Map<String, dynamic> || !definition.fields.contains(json["metrics"])) { return; }
 
     // extract dem datapoints and call for state change
     final msg = json["msg"];
@@ -26,11 +26,14 @@ class DashboardMetricService extends _$DashboardMetricService {
       return; 
     }
 
-    _data = msg;
-    _dataReady.signal();
-    if (_firstRun.isComplete) {
-      // first run is over, we need to manually set the state
-      state = AsyncValue.data(_data);
+    _data[json["metrics"]] = msg;
+
+    if (_data.length == definition.fields.length) {
+      _dataReady.signal();
+      if (_firstRun.isComplete) {
+        // first run is over, we need to manually set the state
+        state = AsyncValue.data(_data);
+      }
     }
 
     // set the timer
@@ -39,18 +42,21 @@ class DashboardMetricService extends _$DashboardMetricService {
 
   void refresh() {
     final notifier = ref.read(websocketServiceProvider.notifier);
-    notifier.post(
+    _data.clear();
+    for (final metric in definition.fields) {
+      notifier.post(
       "metrics",
       {
         "start": definition.start,
-        "metric": definition.metric,
+        "metric": metric,
         "device-id": definition.groupableId,
         "aggregate-interval": "${definition.aggregateInterval.inSeconds}s",
       });
+    }
   }
 
   @override
-  Future<Map<String, dynamic>> build({required MetricPollingDefinition definition}) async {
+  Future<Map<String, Map<String, dynamic>>> build({required MetricPollingDefinition definition}) async {
     ref.watch(websocketServiceProvider);
     final notifier = ref.watch(websocketServiceProvider.notifier);
 
@@ -60,11 +66,11 @@ class DashboardMetricService extends _$DashboardMetricService {
     // Delay to allow parallel proceses to catch up
     await Future.delayed(Duration(milliseconds: 200));
 
-    notifier.attachListener("metrics", "metrics_${definition.metric}", handleUpdate);
+    notifier.attachListener("metrics", "metrics_${definition.fields}_${definition.groupableId}", handleUpdate);
     
     refresh();
     ref.onDispose(() {
-      notifier.removeListener("metrics_${definition.metric}");
+      notifier.removeListener("metrics_${definition.fields}_${definition.groupableId}");
       _refreshTimer?.cancel();
     });
 

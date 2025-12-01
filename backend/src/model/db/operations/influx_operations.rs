@@ -45,57 +45,129 @@ impl InfluxFilter {
 
 
 pub async fn get_metric_range(influx_client : &influxdb2::Client, influx_filter: &InfluxFilter) -> serde_json::Value {
-    let influx_script = format!(
-        r#"
-        minData = from(bucket: "analytics")
-            |> range(start: {})
-            |> filter(fn: (r) => r["_measurement"] == "metrics")
-            |> filter(fn: (r) => r["_field"] == "{}")
-            |> filter(fn: (r) => r["device_id"] == "{}")
-            |> min()
+    let query = if influx_filter.metric.starts_with("baseline_") {
+        
+        let stripped = influx_filter.metric.strip_prefix("baseline_").unwrap_or_default(); 
+        let mut parts = stripped.splitn(2, '_');
 
-        maxData = from(bucket: "analytics")
-            |> range(start: {})
-            |> filter(fn: (r) => r["_measurement"] == "metrics")
-            |> filter(fn: (r) => r["_field"] == "{}")
-            |> filter(fn: (r) => r["device_id"] == "{}")
-            |> max()
+        let window = parts.next().unwrap_or_default(); // "15m"
+        let metric = parts.next().unwrap_or_default(); // "icmp_rtt"
+        format!(
+            r#"
+            minData = from(bucket: "baselines")
+                |> range(start: {})
+                |> filter(fn: (r) => r["_measurement"] == "metrics")
+                |> filter(fn: (r) => r["_field"] == "{}")
+                |> filter(fn: (r) => r["device_id"] == "{}")
+                |> filter(fn: (r) => r["window"] == "{}")
+                |> aggregateWindow(every: {}, fn: mean, createEmpty: false)
+                |> min()
 
-        union(tables: [minData, maxData])
-        "#,
-        influx_filter.start,
-        influx_filter.metric,
-        influx_filter.device_id,
-        influx_filter.start,
-        influx_filter.metric,
-        influx_filter.device_id
-    );
+            maxData = from(bucket: "baselines")
+                |> range(start: {})
+                |> filter(fn: (r) => r["_measurement"] == "metrics")
+                |> filter(fn: (r) => r["_field"] == "{}")
+                |> filter(fn: (r) => r["device_id"] == "{}")
+                |> filter(fn: (r) => r["window"] == "{}")
+                |> aggregateWindow(every: {}, fn: mean, createEmpty: false)
+                |> max()
 
-    let result = execute_query(influx_client, influx_script).await;
+            union(tables: [minData, maxData])
+            "#,
+            influx_filter.start,
+            metric,
+            influx_filter.device_id,
+            window,
+            influx_filter.aggregate_interval,
+            influx_filter.start,
+            metric,
+            influx_filter.device_id,
+            window,
+            influx_filter.aggregate_interval,
+        )
+    } else {
+        format!(
+            r#"
+            minData = from(bucket: "analytics")
+                |> range(start: {})
+                |> filter(fn: (r) => r["_measurement"] == "metrics")
+                |> filter(fn: (r) => r["_field"] == "{}")
+                |> filter(fn: (r) => r["device_id"] == "{}")
+                |> aggregateWindow(every: {}, fn: mean, createEmpty: false)
+                |> min()
+
+            maxData = from(bucket: "analytics")
+                |> range(start: {})
+                |> filter(fn: (r) => r["_measurement"] == "metrics")
+                |> filter(fn: (r) => r["_field"] == "{}")
+                |> filter(fn: (r) => r["device_id"] == "{}")
+                |> aggregateWindow(every: {}, fn: mean, createEmpty: false)
+                |> max()
+
+            union(tables: [minData, maxData])
+            "#,
+            influx_filter.start,
+            influx_filter.metric,
+            influx_filter.device_id,
+            influx_filter.aggregate_interval,
+            influx_filter.start,
+            influx_filter.metric,
+            influx_filter.device_id,
+            influx_filter.aggregate_interval
+        )
+    };
+
+    let result = execute_query(influx_client, query).await;
 
     serde_json::json!({
-        "min-x": result.get(0).and_then(|f| f.get("_value")).unwrap_or(&serde_json::json!(0)),
-        "min-y": result.get(1).and_then(|f| f.get("_value")).unwrap_or(&serde_json::json!(0)),
+        "min-y": result.get(0).and_then(|f| f.get("_value")).unwrap_or(&serde_json::json!(0)),
+        "max-y": result.get(1).and_then(|f| f.get("_value")).unwrap_or(&serde_json::json!(0)),
     })
 }
 
 pub async fn get_metric_data(influx_client : &influxdb2::Client, influx_filter: &InfluxFilter ) -> serde_json::Value {
-    let query = format!(
-        r#"
-        from(bucket: "analytics")
-            |> range(start: {})
-            |> filter(fn: (r) => r["_measurement"] == "metrics")
-            |> filter(fn: (r) => r["_field"] == "{}")
-            |> filter(fn: (r) => r["device_id"] == "{}")
-            |> aggregateWindow(every: {}, fn: mean, createEmpty: false)
-            |> yield(name: "mean")
-        "#,
-        influx_filter.start,
-        influx_filter.metric,
-        influx_filter.device_id,
-        influx_filter.aggregate_interval
-    );
+    let query = if influx_filter.metric.starts_with("baseline_") {
+        
+        let stripped = influx_filter.metric.strip_prefix("baseline_").unwrap_or_default(); 
+        let mut parts = stripped.splitn(2, '_');
 
+        let window = parts.next().unwrap_or_default(); // "15m"
+        let metric = parts.next().unwrap_or_default(); // "icmp_rtt"
+
+        format!(
+            r#"
+            from(bucket: "baselines")
+                |> range(start: {})
+                |> filter(fn: (r) => r["_measurement"] == "metrics")
+                |> filter(fn: (r) => r["_field"] == "{}")
+                |> filter(fn: (r) => r["device_id"] == "{}")
+                |> filter(fn: (r) => r["window"] == "{}")
+                |> aggregateWindow(every: {}, fn: mean, createEmpty: false)
+                |> yield(name: "mean")
+            "#,
+            influx_filter.start,
+            metric,
+            influx_filter.device_id,
+            window,
+            influx_filter.aggregate_interval
+        )
+    } else {
+        format!(
+            r#"
+            from(bucket: "analytics")
+                |> range(start: {})
+                |> filter(fn: (r) => r["_measurement"] == "metrics")
+                |> filter(fn: (r) => r["_field"] == "{}")
+                |> filter(fn: (r) => r["device_id"] == "{}")
+                |> aggregateWindow(every: {}, fn: mean, createEmpty: false)
+                |> yield(name: "mean")
+            "#,
+            influx_filter.start,
+            influx_filter.metric,
+            influx_filter.device_id,
+            influx_filter.aggregate_interval
+        )
+    };
     let data_range = get_metric_range(influx_client, influx_filter).await;
     let data = execute_query(influx_client, query).await;
 

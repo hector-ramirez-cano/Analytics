@@ -8,7 +8,7 @@ class MetricPollingDefinition extends DashboardPollingDefinition {
 
   MetricPollingDefinition({
     required super.groupableId,
-    required super.field,
+    required super.fields,
     required super.chartType,
     required this.start,
     required this.aggregateInterval,
@@ -22,13 +22,13 @@ class MetricPollingDefinition extends DashboardPollingDefinition {
     var updateInterval = json["update-interval-s"] ?? 120;
     
     // must have, if they're not present, definition is invalid
-    var field = json["field"];
+    var fields = json["fields"];
     var deviceIds = json["device-ids"];
     var type = json["type"];
     var chartTypeStr = json["chart-type"];
 
-    if (field == null || deviceIds == null || type == null || chartTypeStr == null) {
-      Logger().f("Parsed ChartMetricPollingDefinition fromJson with missing required values. 'field'=$field, deviceId=$deviceIds, type='$type', chartType='$chartTypeStr'");
+    if (fields == null || deviceIds == null || type == null || chartTypeStr == null) {
+      Logger().f("Parsed ChartMetricPollingDefinition fromJson with missing required values. 'fields'=$fields, deviceId=$deviceIds, type='$type', chartType='$chartTypeStr'");
       return null;
     }
 
@@ -44,15 +44,15 @@ class MetricPollingDefinition extends DashboardPollingDefinition {
       return null;
     }
 
+    List<String> list = fields.whereType<String>().toList();
+
     return MetricPollingDefinition(
       start: start,
-      field: field,
+      fields: list,
       groupableId: deviceIds,
       aggregateInterval: Duration(seconds: aggregateInterval),
       updateInterval: Duration(seconds: updateInterval),
       chartType: chartType
     );
   }
-
-  String get metric => field;
 }

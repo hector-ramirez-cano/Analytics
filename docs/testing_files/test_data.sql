@@ -81,23 +81,23 @@ SELECT dashboard_id, row_start, row_span, col_start, col_span, polling_definitio
 -- TRUNCATE Analytics.dashboard_items;
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition)
     VALUES
-        (1, 0, 1, 0, 3, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "field":"icmp_rtt", "device-ids":1, "type": "metric", "chart-type":"line"}', '{}');
+        (1, 0, 1, 0, 3, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "fields":["ansible_loadavg_15m", "baseline_1h_ansible_loadavg_15m"], "device-ids":1, "type": "metric", "chart-type":"line"}', '{}');
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition)
     VALUES
-        (1, 1, 1, 0, 1, '{"update-interval-s": 60, "field":"icmp_rtt", "device-ids":1, "type":"metadata", "chart-type": "label"}', '{}');
+        (1, 1, 1, 0, 1, '{"update-interval-s": 60, "fields":["icmp_rtt"], "device-ids":1, "type":"metadata", "chart-type": "label"}', '{}');
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition)
     VALUES
-        (1, 1, 1, 1, 1, '{"update-interval-s": 15, "field":"icmp_status", "device-ids":203, "type":"metadata", "chart-type": "pie"}', '{}');
+        (1, 1, 1, 1, 1, '{"update-interval-s": 15, "fields":["icmp_status"], "device-ids":203, "type":"metadata", "chart-type": "pie"}', '{}');
 
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition)
     VALUES
-        (2, 1, 1, 0, 3, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "field":"icmp_rtt", "device-ids":1, "type": "metric", "chart-type":"line"}', '{}');
+        (2, 1, 1, 0, 3, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "fields":["icmp_rtt"], "device-ids":1, "type": "metric", "chart-type":"line"}', '{}');
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition)
     VALUES
-        (2, 0, 1, 0, 1, '{"update-interval-s": 60, "field":"icmp_rtt", "device-ids":1, "type":"metadata", "chart-type": "label"}', '{}');
+        (2, 0, 1, 0, 1, '{"update-interval-s": 60, "fields":["icmp_rtt"], "device-ids":1, "type":"metadata", "chart-type": "label"}', '{}');
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition)
     VALUES
-        (2, 0, 1, 1, 1, '{"update-interval-s": 15, "field":"icmp_status", "device-ids":203, "type":"metadata", "chart-type": "pie"}', '{}');
+        (2, 0, 1, 1, 1, '{"update-interval-s": 15, "fields":["icmp_status"], "device-ids":203, "type":"metadata", "chart-type": "pie"}', '{}');
 
 -- TODO: Handle actual parent-child recursion
 -- INSERT INTO Analytics.group_members(group_id, item_id) VALUES (203, 203);

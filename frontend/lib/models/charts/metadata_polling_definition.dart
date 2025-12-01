@@ -12,7 +12,7 @@ class MetadataPollingDefinition extends DashboardPollingDefinition {
 
   MetadataPollingDefinition({
     required super.groupableId,
-    required super.field,
+    required super.fields,
     required super.chartType,
     required this.updateInterval,
   });
@@ -22,13 +22,13 @@ class MetadataPollingDefinition extends DashboardPollingDefinition {
     var updateInterval = json["update-interval-s"] ?? 120;
     
     // must have, if they're not present, definition is invalid
-    var field = json["field"];
+    var fields = json["fields"];
     var deviceId = json["device-ids"];
     var type = json["type"];
     var chartTypeStr = json["chart-type"];
 
-    if (field == null || deviceId == null || type == null || chartTypeStr == null) {
-      Logger().e("Parsed MetadataPollingDefinition fromJson with missing required values. 'field'=$field, deviceId=$deviceId, type='$type', chartType='$chartTypeStr'");
+    if (fields == null || deviceId == null || type == null || chartTypeStr == null) {
+      Logger().e("Parsed MetadataPollingDefinition fromJson with missing required values. 'fields'=$fields, deviceId=$deviceId, type='$type', chartType='$chartTypeStr'");
       return null;
     }
 
@@ -44,14 +44,15 @@ class MetadataPollingDefinition extends DashboardPollingDefinition {
       return null;
     }
 
+    List<String> list = fields.whereType<String>().toList();
 
     return MetadataPollingDefinition(
-      field: field,
+      fields: list,
       groupableId: deviceId,
       updateInterval: Duration(seconds: updateInterval),
       chartType: chartType,
     );
   }
 
-  String get metadata => field;
+  String get metadata => fields.firstOrNull ?? "";
 }

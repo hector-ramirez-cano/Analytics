@@ -14,12 +14,12 @@ enum ChartType {
 }
 
 abstract class DashboardPollingDefinition {
-  final String field;
+  final List<String> fields;
   final int groupableId;
   final ChartType chartType;
 
   DashboardPollingDefinition({
-    required this.field,
+    required this.fields,
     required this.groupableId,
     required this.chartType,
   });

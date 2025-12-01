@@ -4,7 +4,6 @@ import 'package:aegis/models/charts/dashboard_polling_definition.dart';
 
 class FactsPollingDefinition extends DashboardPollingDefinition {
   final Duration updateInterval;
-  final Set<String> fields;
 
   /// List of item ids for which metadata will be queried.
   /// If groupableId in the constructor is a deviceId, it will become exactly one device on the itemIds
@@ -13,8 +12,7 @@ class FactsPollingDefinition extends DashboardPollingDefinition {
 
   FactsPollingDefinition({
     required super.groupableId,
-    super.field = "",
-    required this.fields,
+    required super.fields,
     required super.chartType,
     required this.updateInterval,
   });
@@ -48,12 +46,11 @@ class FactsPollingDefinition extends DashboardPollingDefinition {
 
 
     return FactsPollingDefinition(
-      fields: Set.from(fields),
+      fields: List.from(fields),
       groupableId: deviceId,
       updateInterval: Duration(seconds: updateInterval),
       chartType: chartType,
     );
   }
 
-  Set<String> get facts => fields;
 }

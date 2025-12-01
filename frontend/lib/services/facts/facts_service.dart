@@ -47,7 +47,7 @@ class FactsService extends _$FactsService {
     notifier.post(
       "facts",
       {
-        "facts": List.from(definition.facts),
+        "facts": List.from(definition.fields),
         "device-ids": definition.groupableId,
       });
   }
@@ -60,7 +60,7 @@ class FactsService extends _$FactsService {
     _dataReady.reset();
     _firstRun.reset();
 
-    notifierKey = "facts_${definition.facts.hashCode}_${definition.itemIds}_${definition.chartType}";
+    notifierKey = "facts_${definition.fields.hashCode}_${definition.itemIds}_${definition.chartType}";
 
     notifier.attachListener("facts", notifierKey, handleUpdate);
     
