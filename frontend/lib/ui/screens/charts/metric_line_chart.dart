@@ -189,9 +189,6 @@ class MetricLineChart extends StatelessWidget {
         minX = min(minX, value);
         maxX = max(maxX, value);
       }
-
-      // minX = min(minX, entry.value["range"]["min-y"] ?? double.infinity);
-      // maxX = max(maxX, entry.value["range"]["max-y"] ?? double.negativeInfinity);
     }
 
     if (values.isEmpty) {

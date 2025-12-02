@@ -1,6 +1,6 @@
 
 use crate::types::{MetricSet, MetricValue};
-use crate::alerts::{AlertPredicateOperation, AlertReduceLogic, AlertRule, AlertRuleKind};
+use crate::alerts::{AlertPredicateOperation, AlertReduceLogic, AlertRule, AlertRuleKind, OperandModifier};
 
 impl AlertRule {
     /// Evaluates an alert rule that compares the most recent, with the previous metric set, to trigger on value changes
@@ -28,7 +28,8 @@ impl AlertRule {
         }
     }
 
-    pub fn raising_values<'a >(&'a self, dataset_left: &'a MetricSet, dataset_right: &'a MetricSet) -> Vec<(&'a MetricValue, AlertPredicateOperation, &'a MetricValue)> {
+    pub fn raising_values<'a >(&'a self, dataset_left: &'a MetricSet, dataset_right: &'a MetricSet) 
+        -> Vec<(OperandModifier, MetricValue, AlertPredicateOperation, MetricValue, OperandModifier)> {
         // we know a predicate has raised. We need to know which one(s), and with which values
 
         let mut result = Vec::new();
@@ -38,9 +39,12 @@ impl AlertRule {
                     if predicate.eval(dataset_right, dataset_right) {
                         let left_value = match predicate.eval_left(dataset_right) { Some(v) => v, None=> continue };
                         let right_value = match predicate.eval_right(dataset_right) { Some(v) => v, None=> continue };
+                        let lmod = predicate.get_lmod();
+                        let rmod = predicate.get_rmod();
                         let op =  predicate.get_op();
-                        result.push((left_value, op, right_value));
+                        result.push((lmod, left_value, op, right_value, rmod));
                     }
+
                 }
             },
             AlertRuleKind::Delta => {
@@ -48,8 +52,10 @@ impl AlertRule {
                     if predicate.eval(dataset_left, dataset_right) {
                         let left_value = match predicate.eval_left(dataset_left) { Some(v) => v, None=> continue };
                         let right_value = match predicate.eval_right(dataset_right) { Some(v) => v, None=> continue };
+                        let lmod = predicate.get_lmod();
+                        let rmod = predicate.get_rmod();
                         let op =  predicate.get_op();
-                        result.push((left_value, op, right_value));
+                        result.push((lmod, left_value, op, right_value, rmod));
                     }
                 }
             },
@@ -58,8 +64,10 @@ impl AlertRule {
                     if predicate.eval(dataset_right, dataset_right) {
                         let left_value = match predicate.eval_left(dataset_right) { Some(v) => v, None=> continue };
                         let right_value = match predicate.eval_right(dataset_right) { Some(v) => v, None=> continue };
+                        let lmod = predicate.get_lmod();
+                        let rmod = predicate.get_rmod();
                         let op =  predicate.get_op();
-                        result.push((left_value, op, right_value));
+                        result.push((lmod, left_value, op, right_value, rmod));
                     }
                 }
             },

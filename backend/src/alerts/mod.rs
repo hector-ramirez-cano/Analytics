@@ -21,6 +21,7 @@ pub mod accessor;
 pub mod alert_reduce_logic;
 pub mod alert_backend;
 pub mod telegram_backend;
+pub mod operand_modifier;
 pub mod tests;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, Hash)]
@@ -100,11 +101,59 @@ pub struct Accessor {
 }
 
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename="lowercase")]
+pub enum OperandModifier {
+    /// Arithemtic operation `Addition`. Always results in MetricValue::Number
+    Add(f64),
+
+    /// Arithemtic operation `Multiplication`. Always results in MetricValue::Number
+    Mul(f64),
+    
+    /// Arithemtic operation `Modulo`. Always results in MetricValue::Integer. Contents are denominator
+    Mod(i64),
+
+    /// Arithemtic operation `Remainder`. Always results in MetricValue::Number. Contents are denominator
+    Rem(f64),
+
+    /// Arithemtic operation `Power`. Always results in MetricValue::Number. Contents are expontent
+    Pow(f64),
+
+    /// String operation `Append`. Always results in MetricValue::String. Contents are suffix
+    Append(String),
+
+    /// String operation `Preppend`. Always results in MetricValue::String. Contents are prefix
+    Prepend(String),
+
+    /// String operation `Trim`. Always results in MetricValue::String.
+    Trim,
+
+    /// String operation `Replace`. Always results in MetricValue::String. Contents are pattern and replacement, respectively
+    Replace{pattern: String, with: String},
+
+    /// String operation `ReplaceAll`. Always results in MetricValue::String. Contents are pattern and replacement, respectively
+    ReplaceN{pattern: String, with: String, count: usize},
+
+    /// String operation `toLower`. Always results in MetricValue::String. Turns the contents into lowercase
+    Lower,
+
+    /// String operation `toUpper`. Always results in MetricValue::String. Turns the contents into uppercase
+    Upper,
+
+    /// Multi operation. Applies `first`, and subsequently `then`
+    Multi{ first: Box<Self>, then: Box<Self> },
+
+    /// Default operation. Does nothing
+    #[serde(other)]
+    None
+}
+
+
 #[derive(Debug, Clone)]
 pub enum AlertPredicate {
-    LeftConst (MetricValue, AlertPredicateOperation, Accessor   ),
-    RightConst(Accessor   , AlertPredicateOperation, MetricValue),
-    Variable  (Accessor   , AlertPredicateOperation, Accessor   ),
+    LeftConst (OperandModifier, MetricValue, AlertPredicateOperation, Accessor   , OperandModifier),
+    RightConst(OperandModifier, Accessor   , AlertPredicateOperation, MetricValue, OperandModifier),
+    Variable  (OperandModifier, Accessor   , AlertPredicateOperation, Accessor   , OperandModifier),
 }
 
 
@@ -246,11 +295,12 @@ pub enum EvaluableItem {
     Group (Group)
 }
 
-type EvalResult<'a> = (&'a MetricValue, AlertPredicateOperation, &'a MetricValue);
+type EvalResult= (OperandModifier, MetricValue, AlertPredicateOperation,MetricValue, OperandModifier);
 
 impl EvaluableItem {
 
-    async fn eval_device<'a>(device: Device, rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage) -> Option<(EvaluableItem, Vec<EvalResult<'a>>)> {
+    async fn eval_device<'a>(device: Device, rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage) 
+        -> Option<(EvaluableItem, Vec<EvalResult>)> {
         let dataset_right = &dataset_right.get(&device.management_hostname)?.metrics;
 
         #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating rule for device={} kind is {}", device.management_hostname, rule.rule_kind); }
@@ -304,7 +354,8 @@ impl EvaluableItem {
     }
 
     /// Evaluates the rule with the given datasets. Returns the items for which the rule is raised
-    pub async fn eval<'a>(self, rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage) -> Option<Vec<(EvaluableItem, Vec<EvalResult<'a>>)>> {
+    pub async fn eval<'a>(self, rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage) 
+        -> Option<Vec<(EvaluableItem, Vec<EvalResult>)>> {
         let cache = Cache::instance();
         match self {
             EvaluableItem::Group(group) => {
