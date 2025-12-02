@@ -279,7 +279,7 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
     );
   }
 
-  void apply() async {
+  Future<bool> apply() async {
     final changeMessage = {
       "topology-changes"  : state.itemEditDelta.topologyChanges.toMap(),
       "topology-deletions": state.itemEditDelta.topologyDeletions.toMap(),
@@ -305,9 +305,11 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
       // force update topology and ruleset
       ref.invalidate(topologyServiceProvider);
       ref.invalidate(alertRulesServiceProvider);
+      return true;
 
     } catch (exception, _) {
       Logger().e("Failed to post changes to backend with error = '${exception.toString()}'");
+      return false;
     }
   }
 

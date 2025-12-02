@@ -1,3 +1,4 @@
+import 'package:aegis/services/realtime/backend_health_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aegis/models/topology.dart';
@@ -39,15 +40,47 @@ Widget makeTrailing(Widget child, VoidCallback onEdit, {bool showEditIcon = true
 }
 
 Widget makeFooter(WidgetRef ref, Topology topology) {
-  ButtonStyle saveStyle = ElevatedButton.styleFrom(backgroundColor: Colors.blue,);
   const TextStyle saveLabelStyle = TextStyle(color: Colors.white);
 
   final notifier = ref.watch(itemEditSelectionProvider.notifier);
+  final enabled = ref.watch(backendHealthServiceProvider).when(
+    data: (d) => d.backendConfigurable,
+    error: (_, _) => false,
+    loading: () => false
+  );
+  ButtonStyle saveStyle = ElevatedButton.styleFrom(
+    backgroundColor: Colors.blue,
+    disabledMouseCursor: enabled ? null /*default behavior*/  : SystemMouseCursors.forbidden,
+  );
 
   onCancel() => {
     notifier.discard()
   };
-  onSave() => ref.read(itemEditSelectionProvider.notifier).apply();
+  onSave() async {
+    final result = await ref.read(itemEditSelectionProvider.notifier).apply();
+
+    if (ref.context.mounted) {
+      if (result) {
+        ScaffoldMessenger.of(ref.context).showSnackBar(
+          SnackBar(
+            content: Text("Se guardaron los cambios!"),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(ref.context).showSnackBar(
+          SnackBar(
+            content: Text("Error al guardar los cambios! Revise los logs"),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+            backgroundColor: const Color.fromARGB(255, 133, 43, 43),
+          ),
+        );
+      }
+    }
+  }
 
   var cancelButton = ElevatedButton(
     onPressed: () => onCancel(),
@@ -55,10 +88,13 @@ Widget makeFooter(WidgetRef ref, Topology topology) {
   );
 
   var saveButton = ElevatedButton(
-    onPressed: notifier.hasChanges ? onSave : null ,
+    onPressed: (notifier.hasChanges && enabled) ? onSave : null,
     style: saveStyle,
 
-    child: const Text("Guardar cambios", style: saveLabelStyle,),
+    child: Text(
+      enabled ? "Guardar cambios" : "Modo sólo lectura",
+      style: saveLabelStyle,
+    ),
   );
 
   return SizedBox(
@@ -67,7 +103,8 @@ Widget makeFooter(WidgetRef ref, Topology topology) {
         Positioned(
           right: 16, bottom: 16,
           child: Row(children: [
-              cancelButton,
+              if (enabled) 
+                cancelButton,
               const SizedBox(width: 16),
               saveButton,
             ],
@@ -81,7 +118,6 @@ Widget makeFooter(WidgetRef ref, Topology topology) {
 void displayDeleteConfirmDialog(BuildContext context, WidgetRef ref,) {
     void onConfirmedDelete()   => ref.read(itemEditSelectionProvider.notifier).onDeleteSelected();
     void onCancelDelete()      => ref.read(itemEditSelectionProvider.notifier).set(requestedConfirmDeletion: false);
-  
 
     final itemSelection = ref.read(itemEditSelectionProvider);
 

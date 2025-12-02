@@ -1,5 +1,4 @@
 
-import 'package:aegis/models/alerts/alert_predicate_operation.dart';
 import 'package:aegis/models/alerts/alert_rule_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

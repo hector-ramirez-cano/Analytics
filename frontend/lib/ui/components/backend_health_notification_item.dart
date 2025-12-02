@@ -5,12 +5,17 @@ class BackendHealthNotificationItem extends ConsumerStatefulWidget {
   final bool up;
   final String message;
   final String which;
+  final String downIcon;
+  final String upIcon;
 
   const BackendHealthNotificationItem({
     required super.key,
     required this.up,
     required this.message,
     required this.which,
+
+    this.downIcon = "❌",
+    this.upIcon = "✅",
   });
 
   @override
@@ -63,8 +68,8 @@ class _AlertNotificationItemState extends ConsumerState<BackendHealthNotificatio
       key: ValueKey("BackendHealth_Overlay_ExpansionTile_${widget.which}"),
       dense: true,
       maintainState: true,
-      leading: Text(
-        widget.up ? "✅" : "❌",
+      leading: Text.rich(
+        TextSpan(text: widget.up ? widget.upIcon : widget.downIcon),
         style: TextStyle(
           fontSize: 20,
           color: widget.up ? Colors.green : Colors.red,

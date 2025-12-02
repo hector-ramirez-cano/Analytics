@@ -25,6 +25,20 @@ Widget _makeStatusDashboard(WidgetRef ref) {
           message: status.influxMsg,
           which: "InfluxDB",
         ),
+        BackendHealthNotificationItem(
+          key: ValueKey("BackendHealth_Overlay_Telegram_NotificationItem"),
+          up: status.telegramEnabled,
+          message: "En configuración",
+          which: "Telegram",
+        ),
+        BackendHealthNotificationItem(
+          key: ValueKey("BackendHealth_Overlay_Backend_NotificationItem"),
+          up: status.backendConfigurable,
+          message: "Estado de bloqueo definido en configuración",
+          which: "Backend",
+          downIcon: "🔐",
+          upIcon: "🔓",
+        ),
       ]);
     },
   );

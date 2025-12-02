@@ -10,14 +10,20 @@ part 'backend_health_service.g.dart';
 class BackendStatus{
   final bool postgresStatus;
   final String postgresMsg;
+
   final bool influxStatus;
   final String influxMsg;
+
+  final bool backendConfigurable;
+  final bool telegramEnabled;
 
   BackendStatus({
     required this.postgresStatus,
     required this.postgresMsg,
     required this.influxStatus,
     required this.influxMsg,
+    required this.telegramEnabled,
+    required this.backendConfigurable,
   });
 
   static BackendStatus fromJson(Map<String, dynamic> json) {
@@ -26,6 +32,8 @@ class BackendStatus{
       postgresMsg: json["postgres"]?["msg"] ?? "",
       influxStatus: json["influx"]["up"] ?? false,
       influxMsg: json["influx"]["msg"] ?? "",
+      telegramEnabled: json["telegram"]["enabled"] ?? false,
+      backendConfigurable: !(json["backend"]["read-only"] ?? true),
     );
   }
 }

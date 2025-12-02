@@ -16,6 +16,9 @@
         }
       },
       "controller": {
+        "configure": {
+          "enabled": false
+        },
         "cache": {
           "cache_invalidation_s": 60
         },
@@ -71,6 +74,9 @@
         }
       },
       "controller": {
+        "configure": {
+          "enabled": true
+        },
         "cache": {
           "cache_invalidation_s": 60
         },
@@ -104,6 +110,7 @@
           "$ref": "identity/influx_db.json"
         },
         "telegram": {
+          "enabled": true,
           "$ref": "identity/telegram.json"
         }
       }

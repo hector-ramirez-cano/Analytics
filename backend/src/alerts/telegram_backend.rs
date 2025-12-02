@@ -71,10 +71,23 @@ impl TelegramBackend {
         INSTANCE.get().expect("Telegram backend not initialized").clone()
     }
 
+    // Get singleton instance
+    pub fn try_instance() -> Option<Arc<TelegramBackend>> {
+        INSTANCE.get().cloned()
+    }
+
     // Initializes the telegram backend. Must be init after config is loaded
     pub async fn init(pool: sqlx::PgPool, alert_receiver: Receiver<AlertEvent>) {
+        let enabled : bool = Config::instance().get("backend/controller/telegram/enabled", "/")
+            .expect("Telegram enable status MUST be present in the config file at path 'backend/controller/telegram/enabled', an must be of type boolean");
+        
+        if !enabled {
+            return;
+        }
+
         let token: String = Config::instance().get("backend/controller/telegram/API-token", "/")
             .expect("Telegram API token MUST be present in the config file at path 'backend/controller/telegram/API-token', typically imported from identity via $ref");
+
 
         // Try to set instance Arc with provided value
         let backend = Arc::new(TelegramBackend::new(token, pool));

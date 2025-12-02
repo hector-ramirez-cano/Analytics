@@ -9,6 +9,7 @@ use tokio::task::JoinHandle;
 
 use crate::alerts::{AlertEvent, AlertFilters};
 use crate::alerts::alert_backend::AlertBackend;
+use crate::config::Config;
 use crate::controller::get_operations::{self, api_get_topology};
 use crate::controller::post_operations;
 use crate::controller::ws_operations::{WsMsg, ws_alerts_rt, ws_check_backend_ws, ws_device_health_rt, ws_get_dashboards, ws_get_topology, ws_get_topology_view, ws_handle_alerts, ws_handle_syslog, ws_query_facts, ws_query_metadata, ws_query_metrics, ws_send_error_msg, ws_syslog_rt};
@@ -69,8 +70,38 @@ pub async fn api_configure(data: RocketJson, pool: &State<sqlx::PgPool>) -> stat
     #[cfg(debug_assertions)] {
         log::info!("[INFO ][API][RX] {}", data.0);
     }
-    let response = post_operations::api_configure(data.0, pool.inner()).await;
 
+    if Config::instance().get("backend/controller/configure/enabled", "/").unwrap_or(false) == false {
+        log::warn!("[WARN ][API] Tried to configure, while read-only!");
+
+        let err_body = serde_json::json!({
+            "code": "403",
+            "message": "Cannot make changes while backend is in read only mode!"
+        });
+        return status::Custom(rocket::http::Status::BadRequest, RocketJson::from(err_body));
+    }
+
+    match &data.0 {
+        serde_json::Value::Object(map) => {
+            if map.is_empty() {
+                let err_body = serde_json::json!({
+                    "code": "400",
+                    "message": "Malformed Request: Content is empty"
+                });
+                return status::Custom(rocket::http::Status::BadRequest, RocketJson::from(err_body));
+            }
+        },
+
+        _ => {
+            let err_body = serde_json::json!({
+                "code": "400",
+                "message": "Malformed Request: Content should be a JSON Object"
+            });
+            return status::Custom(rocket::http::Status::BadRequest, RocketJson::from(err_body));
+        }
+    }
+
+    let response = post_operations::api_configure(data.0, pool.inner()).await;
 
     match response {
         Ok(_) => {
