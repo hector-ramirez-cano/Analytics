@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:aegis/models/alerts/alert_rule_type.dart';
 import 'package:free_map/free_map.dart';
 import 'package:http/http.dart';
 import 'package:logger/web.dart';
@@ -414,6 +415,22 @@ class ItemEditSelectionNotifier extends _$ItemEditSelectionNotifier{
 
     final rules = alertRule.copyWith(requiresAck: requiresAck);
 
+    changeItem(rules);
+  }
+
+  void setRuleType(AlertRuleType type) {
+    if (selected is! AlertRule) { Logger().w("Changed requires Ack in alertRule, where alertRule isn't selected"); return; }
+
+    final rules = alertRule.copyWith(ruleType: type);
+
+    changeItem(rules);
+  }
+
+  void setSustainedTimer(int timer) {
+    if (selected is! AlertRule) { Logger().w("Changed requires Ack in alertRule, where alertRule isn't selected"); return; }
+    if (timer < 1) { Logger().w("Tried to update timer of alert rule sustained timer with less than 1 second. Skipping"); return; }
+
+    final rules = alertRule.copyWith(sustainedTimerSeconds: timer);
     changeItem(rules);
   }
 

@@ -41,6 +41,8 @@ class DashboardMetricService extends _$DashboardMetricService {
   }
 
   void refresh() {
+    if (!ref.mounted) return;
+
     final notifier = ref.read(websocketServiceProvider.notifier);
     _data.clear();
     for (final metric in definition.fields) {

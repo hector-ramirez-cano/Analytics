@@ -553,7 +553,7 @@ mod alert_backend_tests {
             "severity": AlertSeverity::Debug,
             "target": 10,
             "reduce-logic": AlertReduceLogic::All,
-            "rule-type": "simple",
+            "rule-type": AlertRuleKind::Simple,
             "data-source": "facts",
             "predicates": [{
                 "left-modifier": OperandModifier::Add(10.0),
@@ -805,8 +805,6 @@ mod alert_backend_tests {
                 })
             })
         };
-        println!("{}", modifier);
-        println!("{}", serde_json::json!({"right-modifier": modifier}));
         let rule_string_multi = serde_json::json!({
             "id": 1,
             "name": "TEST RULE - Prepend",
@@ -825,7 +823,7 @@ mod alert_backend_tests {
                 }
             ]
         });
-        
+        println!("{}", serde_json::json!(rule_string_multi));
 
         let rule1: AlertRule = serde_json::from_value(rule_right_75                         ).expect("Definition should be valid"); // TRUE
         let rule2: AlertRule = serde_json::from_value(rule_right_0                          ).expect("Definition should be valid"); // TRUE

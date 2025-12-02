@@ -1,6 +1,7 @@
 use serde_json::Map;
 use sqlx::Postgres;
 
+use crate::alerts::{AlertReduceLogic, AlertSeverity};
 #[allow(unused)] // Needs to be allowed. Needed for compilation, but the compiler complains of a type casting needed if it's removed
 use crate::{alerts::{AlertRule, alert_backend::AlertBackend}, misc::hashset_to_json_array, model::{cache::Cache, data::{DataSource, device::Device, group::Group, link::Link, link_type::LinkType}}};
 
@@ -256,6 +257,13 @@ async fn update_rules(rules: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>
     
         let rule : AlertRule = serde_json::from_value(rule_in)
             .map_err(|e| (format!("Could not update rule. Parsing failed with error = '{e}'"), 400))?;
+
+        if rule.reduce_logic == AlertReduceLogic::Unknown {
+            return Err((format!("Could not update rule. Reduce Logic can't be unknown"), 400));
+        }
+        if rule.severity == AlertSeverity::Unknown {
+            return Err((format!("Could not update rule. Alert Severity can't be unknown"), 400));
+        }
 
         log::info!("[INFO ][DB][UPDATES] Updating rule= {}", rule.rule_id);
 

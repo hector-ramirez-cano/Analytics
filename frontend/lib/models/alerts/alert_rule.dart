@@ -2,10 +2,12 @@ import 'dart:math';
 
 import 'package:aegis/models/alerts/alert_predicate.dart';
 import 'package:aegis/models/alerts/alert_reduce_logic.dart';
+import 'package:aegis/models/alerts/alert_rule_type.dart';
 import 'package:aegis/models/alerts/alert_severity.dart';
 import 'package:aegis/models/alerts/alert_source.dart';
 import 'package:aegis/models/analytics_item.dart';
 import 'package:aegis/services/alerts/alert_rules_service.dart';
+import 'package:logger/web.dart';
 
 class AlertRule extends AnalyticsItem<AlertRule> {
   const AlertRule({
@@ -17,9 +19,18 @@ class AlertRule extends AnalyticsItem<AlertRule> {
     required this.targetId,
     required this.severity,
     required this.definition,
+    required this.ruleType,
+    required this.sustainedTimerSeconds,
   });
 
   factory AlertRule.fromJson(Map<String, dynamic> json) {
+    var type = AlertRuleType.fromJson(json);
+
+    if (type.$1 == AlertRuleType.unknown) {
+      Logger().e("[ERROR]Failed to parse AlertRule Type. JSON='$json'. Default to Simple");
+      type = (AlertRuleType.simple, 0);
+    }
+
     return AlertRule(
       id: json["id"],
       name: json["name"],
@@ -28,7 +39,9 @@ class AlertRule extends AnalyticsItem<AlertRule> {
       source: AlertSource.fromString(json["data-source"] ?? ""),
       targetId: json["target"],
       severity: AlertSeverity.fromString(json["severity"]),
-      definition: AlertPredicate.listFromJson(json["predicates"])
+      definition: AlertPredicate.listFromJson(json["predicates"]),
+      ruleType: type.$1,
+      sustainedTimerSeconds: type.$2,
     );
   }
 
@@ -39,6 +52,8 @@ class AlertRule extends AnalyticsItem<AlertRule> {
   final AlertSeverity severity;
   final AlertSource source;
   final int targetId;
+  final AlertRuleType ruleType;
+  final int sustainedTimerSeconds;
 
   @override
   bool isNewItem() {
@@ -61,6 +76,8 @@ class AlertRule extends AnalyticsItem<AlertRule> {
     AlertSource? source,
     int? targetId,
     AlertSeverity? severity,
+    AlertRuleType? ruleType,
+    int? sustainedTimerSeconds,
   }) {
     return AlertRule(
       id: id ?? this.id,
@@ -71,6 +88,8 @@ class AlertRule extends AnalyticsItem<AlertRule> {
       source: source ?? this.source,
       targetId: targetId ?? this.targetId,
       severity: severity ?? this.severity,
+      ruleType: ruleType ?? this.ruleType,
+      sustainedTimerSeconds: sustainedTimerSeconds ?? this.sustainedTimerSeconds,
     );
   }
 
@@ -83,7 +102,9 @@ class AlertRule extends AnalyticsItem<AlertRule> {
       source: AlertSource.unknown,
       targetId: -1,
       severity: AlertSeverity.unknown,
-      definition: []
+      ruleType: AlertRuleType.simple,
+      sustainedTimerSeconds: 1,
+      definition: [],
     );
   }
 
@@ -97,7 +118,7 @@ class AlertRule extends AnalyticsItem<AlertRule> {
       "target": targetId,
       "reduce-logic": reduceLogic.toString(),
       "data-source": source.toString(),
-      "rule-type": "simple",
+      "rule-type": ruleType.toJson(sustainedTimerSeconds),
       "predicates": definition.map((predicate) => predicate.toMap()).toList()
     };
   }
@@ -108,7 +129,7 @@ class AlertRule extends AnalyticsItem<AlertRule> {
       "name": name,
       "requires-ack": requiresAck,
       "rule-definition": ruleDefinitionToMap(),
-      "rule-type": "simple", // TODO: Locked as simple until this gets added to the frontend
+      "rule-type": ruleType.toJson(sustainedTimerSeconds),
       "data-source": source.toString(),
       "severity": severity.toString(),
       "target": targetId,

@@ -1,5 +1,8 @@
 
+import 'package:aegis/models/alerts/alert_predicate_operation.dart';
+import 'package:aegis/models/alerts/alert_rule_type.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aegis/models/alerts/alert_predicate.dart';
 import 'package:aegis/models/alerts/alert_reduce_logic.dart';
@@ -41,9 +44,15 @@ class AlertEditView extends ConsumerStatefulWidget {
     AlertSeverity.unknown  : Icon(Icons.help_outline , color: Colors.grey ),
   };
 
+  static const Map<AlertRuleType, Icon> ruleTypeIcons = {
+    AlertRuleType.simple    : Icon(Icons.looks_one), 
+    AlertRuleType.delta     : Icon(Icons.swap_vert),
+    AlertRuleType.sustained : Icon(Icons.timer    ),
+  };
+
   static const Map<AlertReduceLogic, Icon> reduceLogicIcons = {
     AlertReduceLogic.all     : Icon(Icons.checklist),
-    AlertReduceLogic.any     : Icon(Icons.checklist),
+    AlertReduceLogic.any     : Icon(Icons.playlist_add_check),
     AlertReduceLogic.unknown : Icon(Icons.help_outline)
   };
 
@@ -52,7 +61,6 @@ class AlertEditView extends ConsumerStatefulWidget {
     AlertSource.facts  : Icon(Icons.sensors),
     AlertSource.unknown: Icon(Icons.help_outline),
   };
-
   const AlertEditView({
     super.key,
     required this.topology,
@@ -66,6 +74,7 @@ class AlertEditView extends ConsumerStatefulWidget {
 
 class _AlertEditViewState extends ConsumerState<AlertEditView> {
   late TextEditingController _nameInputController;
+  late TextEditingController _sustainedSecondsInputController;
 
   @override
   void initState() {
@@ -73,6 +82,7 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
     final selected = ref.read(itemEditSelectionProvider.notifier).alertRule;
 
     _nameInputController = TextEditingController(text: selected.name);
+    _sustainedSecondsInputController = TextEditingController(text: selected.sustainedTimerSeconds.toString());
   }
 
   // Callbacks that change the state
@@ -80,6 +90,8 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
   void onCancelDelete()      => ref.read(itemEditSelectionProvider.notifier).set(requestedConfirmDeletion: false);
   void onConfirmedDelete()   => ref.read(itemEditSelectionProvider.notifier).onDeleteSelected();
   void onConfirmRestore()    => ref.read(itemEditSelectionProvider.notifier).onRestoreSelected();
+  void onEditSustainedTimer(int t)=> ref.read(itemEditSelectionProvider.notifier).setSustainedTimer(t);
+  void onSetRuleType (AlertRuleType t)=> ref.read(itemEditSelectionProvider.notifier).setRuleType(t);
   void onToggleRequiresAckInput(bool state) => ref.read(itemEditSelectionProvider.notifier).onToggleRequiresAckInput(state);
   void onAddPredicate(AlertPredicate predicate) => ref.read(itemEditSelectionProvider.notifier).onAddPredicate(predicate);
   void onUpdatePredicate(AlertPredicate oldP, AlertPredicate p) => ref.read(itemEditSelectionProvider.notifier).onUpdatePredicate(oldP, p);
@@ -139,7 +151,6 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
     ).show(context);
   }
 
-
   Widget _makeDeleteSection() {
     return DeleteSection(onDelete: onRequestedDelete, onRestore: onConfirmRestore);
   }
@@ -149,15 +160,34 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
       value: initial != AlertSource.unknown ? initial.name : null,
         hint: const Text("Fuente de datos"),
         items: AlertSource.values
-            .where((value) => value != AlertSource.unknown)
-            .map((type) => DropdownMenuItem(value: type.name, child: Text(type.name)))
-            .toList(),
+          .where((value) => value != AlertSource.unknown)
+          .map((type) => DropdownMenuItem(value: type.name, child: Text(type.name)))
+          .toList(),
         onChanged: (val) {
           if (val == "unknown") { return; }
           final source = AlertSource.fromString(val ?? "");
           final notifier = ref.read(itemEditSelectionProvider.notifier);
           final AlertRule item = notifier.alertRule;
           notifier.changeItem(item.copyWith(source: source));
+        },
+        isExpanded: true,
+      );
+    }
+
+    DropdownButton _makeRuleTypeDropdown(AlertRuleType initial) {
+    return DropdownButton<String>(
+      value: initial != AlertRuleType.unknown ? initial.name : null,
+        hint: const Text("Tipo de regla"),
+        items: AlertRuleType.values
+          .where((value) => value != AlertRuleType.unknown)
+          .map((type) => DropdownMenuItem(value: type.name, child: Text(type.name)))
+          .toList(),
+        onChanged: (val) {
+          if (val == "unknown") { return; }
+          final ruleType = AlertRuleType.fromString(val ?? "");
+          final notifier = ref.read(itemEditSelectionProvider.notifier);
+          final AlertRule item = notifier.alertRule;
+          notifier.changeItem(item.copyWith(ruleType: ruleType));
         },
         isExpanded: true,
       );
@@ -206,6 +236,57 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
       title: const Text("Fuente de datos"),
       leading: AlertEditView.sourceIcons[rule.source],
       trailing: makeTrailing(child, (){}, showEditIcon: false),
+    );
+  }
+
+  SettingsTile _makeRuleTypeInput(AlertRule rule) {
+    var child = _makeRuleTypeDropdown(rule.ruleType);
+
+    var sustainedTimerSeconds = int.tryParse(_sustainedSecondsInputController.text);
+    var sustainedTimerSecondsValid = sustainedTimerSeconds == null || sustainedTimerSeconds < 1;
+
+    var secondsInput = SizedBox(
+      width: 150,
+      height: 60,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 8.0),
+        child: TextField(
+            controller: _sustainedSecondsInputController,
+            keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false),
+            maxLength: 6,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r"[0-9]"))
+            ],
+            decoration: InputDecoration(
+              counterText: "",
+              floatingLabelBehavior: FloatingLabelBehavior.auto,
+              labelText: "Segundos",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+              ),
+              errorText: sustainedTimerSecondsValid ? "debe ser > 1" : null,
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.zero),
+                borderSide: BorderSide(color: Colors.red)
+              ),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            onChanged: (text) => setState(() {onEditSustainedTimer(int.tryParse(text) ?? 1); })
+        
+          ),
+      ),
+    );
+
+    return SettingsTile(
+      title: const Text("Tipo de regla"),
+      leading: AlertEditView.ruleTypeIcons[rule.ruleType],
+      trailing: Row(
+        children: [
+          if (rule.ruleType == AlertRuleType.sustained)
+            secondsInput,
+          makeTrailing(child, (){}, showEditIcon: false),
+        ],
+      ),
     );
   }
 
@@ -351,6 +432,7 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
           _makeRequiresAckInput(),
           _makeReduceLogicInput(rule),
           _makeSourceInput(rule),
+          _makeRuleTypeInput(rule),
           _makeSeverityInput(rule),
           _makeMembersInput(),
         ],
