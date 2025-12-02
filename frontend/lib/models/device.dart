@@ -79,6 +79,8 @@ class Device extends GroupableItem<Device> implements HoverTarget{
   }
 
   factory Device.fromJson(Map<String, dynamic> json) {
+    final statusMap = json['state'] ?? {};
+
     return Device(
       id  : json['id'] as int,
       name: json['name'] as String,
@@ -91,7 +93,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
       requestedMetrics:  Set<String>.from(json['configuration']['requested-metrics']),
       availableValues:   Set<String>.from(json['configuration']['available-values']),
       dataSources:       Set<String>.from(json['configuration']['data-sources']),
-      reachable: false, // updated by topology_provider on device-health-rt
+      reachable: statusMap.values.any((statusEntry) => statusEntry["status"].toUpperCase() == "REACHABLE"), // updated by topology_provider on device-health-rt
       statusMap: json['state']
     );
   }

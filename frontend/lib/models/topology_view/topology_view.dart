@@ -6,7 +6,6 @@ import 'package:aegis/models/topology_view/topology_view_template.dart';
 class TopologyView {
   final TopologyViewTemplate template;
   final Topology topology;
-  // TODO: Add things like zoom, and other state things
 
   Set<Device>? _devices;
   Set<Link>? _links;

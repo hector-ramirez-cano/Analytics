@@ -52,7 +52,7 @@ OverlayEntry showDeviceHealthOverlay(BuildContext context, Device device, Offset
       // If we don't know the size yet -> place arbitrarily
       final size = measuredSize;
 
-      double top = position.dy;
+      double top = position.dy - 32;
       double left = position.dx + 32;
 
       if (size != null) {

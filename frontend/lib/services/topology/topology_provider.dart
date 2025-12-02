@@ -12,7 +12,6 @@ class TopologyService extends _$TopologyService {
   Topology? _parsed;
 
   final Semaphore _firstRun = Semaphore();
-
   
   void onTopology(Map<String, dynamic> response) {
     // TODO: Status on initial response
