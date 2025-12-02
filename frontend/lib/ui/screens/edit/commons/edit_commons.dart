@@ -49,7 +49,7 @@ Widget makeFooter(WidgetRef ref, Topology topology) {
     loading: () => false
   );
   ButtonStyle saveStyle = ElevatedButton.styleFrom(
-    backgroundColor: Colors.blue,
+    backgroundColor: const Color.fromARGB(255, 19, 103, 114),
     disabledMouseCursor: enabled ? null /*default behavior*/  : SystemMouseCursors.forbidden,
   );
 

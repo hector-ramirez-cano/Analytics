@@ -7,6 +7,9 @@ import 'package:timezone/data/latest.dart' as tzdata;
 
 import 'ui/main_layout.dart';
 
+
+final messengerKey = GlobalKey<ScaffoldMessengerState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfig.load();
@@ -22,6 +25,7 @@ void main() async {
   
   tzdata.initializeTimeZones();
 
+
   runApp(ProviderScope(child: const Aegis()));
 }
 
@@ -33,7 +37,7 @@ class Aegis extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: MainLayout(),
-
+      scaffoldMessengerKey: messengerKey,
       theme: ThemeData(
         colorScheme:
           ColorScheme.fromSeed(

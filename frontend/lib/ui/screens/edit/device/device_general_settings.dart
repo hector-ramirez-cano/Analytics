@@ -29,6 +29,7 @@ class DeviceGeneralSettings extends ConsumerStatefulWidget {
   static const Icon geoPositionIcon  = Icon(Icons.map);
   static const Icon metadataIcon     = Icon(Icons.list);
   static const Icon metricsIcon      = Icon(Icons.list_alt);
+  static const Icon metricsViewerIcon= Icon(Icons.search);
   static const Icon dataSourcesIcon  = Icon(Icons.dataset);
 
   @override
@@ -120,7 +121,8 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     Set<String> values,
     Topology topology,
     bool Function(String, Topology) isModifiedFn,
-    bool Function(String, Topology) isDeletedFn
+    bool Function(String, Topology) isDeletedFn,
+    {required int maxCount}
   ) {
     List<BadgeButton> list = [];
     for (var item in values) {
@@ -138,6 +140,11 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
           text: item,
           textStyle: TextStyle(color: textColor),
         ));
+
+      if (maxCount > 0 && maxCount <= list.length) {
+        list.add(BadgeButton(text: "...", backgroundColor: Colors.grey));
+        break;
+      }
     }
 
     return list;
@@ -145,7 +152,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
 
   AbstractSettingsTile _makeMetadataInput(Device device, Device merged, Topology topology) {
 
-    List<BadgeButton> list = _makeBadgeList(merged.requestedMetadata, topology, device.isModifiedMetadata, device.isDeletedMetadata);
+    List<BadgeButton> list = _makeBadgeList(merged.requestedMetadata, topology, device.isModifiedMetadata, device.isDeletedMetadata, maxCount: 10);
 
     var metadata = Wrap(spacing: 4, runSpacing: 4, children: list,);
 
@@ -158,7 +165,8 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
   }
 
   AbstractSettingsTile _makeMetricInput(Device device, Device merged, Topology topology) {
-    List<BadgeButton> list = _makeBadgeList(merged.requestedMetrics, topology, device.isModifiedMetric, device.isDeletedMetric);
+    List<BadgeButton> list = _makeBadgeList(merged.requestedMetrics, topology, device.isModifiedMetric, device.isDeletedMetric, maxCount: 10);
+    
     var metadata = Wrap(spacing: 4, runSpacing: 4, children: list,);
 
     return SettingsTile(
@@ -169,8 +177,50 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
     );
   }
 
+  AbstractSettingsTile _makeMetricViewer(Device device, Device merged, Topology topology) {
+    final notif = ref.watch(itemEditSelectionProvider.notifier);
+    String onGetTrailing(dynamic option, Set<String> values) {
+      if (!ref.context.mounted) { return ""; }
+
+      final metadata = ref.watch(metadataServiceProvider(metadata: values, deviceId: notif.selected.id));
+      
+      return metadata.maybeWhen(data: (d) => d[0][option]?.toString() ?? "Sin datos", orElse: () => "");
+    }
+    Widget onDisplayTrailing(dynamic option, Set<String> values) {
+      return Consumer(
+        key: Key("device_settings_dialog_${option.toString()}_${notif.selected.id}"),
+        builder:(context, ref, child) {
+        final metadata = ref.watch(metadataServiceProvider(metadata: values, deviceId: notif.selected.id));
+        return metadata.when(
+          data: (metadata) {
+            if (metadata.isEmpty) { return Text("Sin datos"); }
+            return Text(metadata[0][option]?.toString().truncate(50) ?? "Sin datos");
+          },
+          error: (e, st) => Text("Sin datos"),
+          loading: () => Text("Cargando...")
+        );
+      },);
+    } 
+
+    return SettingsTile(
+      title: const Text("Ver métricas disponibles"),
+      leading: DeviceGeneralSettings.metricsViewerIcon,
+      onPressed: (c) => TagSelectionDialog(
+        options: device.availableValues,
+        selectorType: ListSelectorType.none,
+        onChanged: (_, _) => {},
+        onClose: () => {},
+        isSelectedFn: (_) => false,
+        isAvailable: (_) => true,
+        onDisplayTrailing: (option) => onDisplayTrailing(option, device.availableValues),
+        onGetTrailing: (option) => onGetTrailing(option, device.availableValues),
+      ).show(c),
+    );
+  }
+
+
   AbstractSettingsTile _makeDataSourceInput(Device device, Device merged, Topology topology) {
-    List<BadgeButton> list = _makeBadgeList(merged.dataSources, topology, device.isModifiedDataSources, device.isDeletedDataSource);
+    List<BadgeButton> list = _makeBadgeList(merged.dataSources, topology, device.isModifiedDataSources, device.isDeletedDataSource, maxCount: 10);
     var dataSources = Wrap(spacing: 4, runSpacing: 4, children: list,);
 
     return SettingsTile(
@@ -317,6 +367,7 @@ class _DeviceGeneralSettingsState extends ConsumerState<DeviceGeneralSettings> {
           _makeDataSourceInput(device, merged, widget.topology),
           _makeMetadataInput(device, merged, widget.topology),
           _makeMetricInput(device, merged, widget.topology),
+          _makeMetricViewer(device, merged, widget.topology),
         ],
       );
   }

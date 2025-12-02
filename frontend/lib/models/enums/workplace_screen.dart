@@ -5,7 +5,7 @@ enum WorkplaceScreen {
   alerts,
 
   syslog,
-  settings
+  // settings
 
 }
 

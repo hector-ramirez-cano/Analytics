@@ -5,9 +5,12 @@ import 'package:aegis/ui/components/list_selector.dart';
 
 
 Widget? _emptyDisplayTrailing(dynamic option) { return null; }
+String? _emptyGetTrailing(dynamic option) { return ""; }
+
 class TagSelectionDialog extends SelectionDialog<String>{
 
   final Widget? Function(dynamic option) onDisplayTrailing;
+  final String? Function(dynamic) onGetTrailing;
 
   const TagSelectionDialog({
     required super.options,
@@ -18,6 +21,8 @@ class TagSelectionDialog extends SelectionDialog<String>{
     required super.isAvailable,
     super.onTristateToggle,
     super.subtitleBuilder,
+    
+    this.onGetTrailing = _emptyGetTrailing,
     this.onDisplayTrailing = _emptyDisplayTrailing,
     
   });
@@ -36,6 +41,7 @@ class TagSelectionDialog extends SelectionDialog<String>{
     }
 
     final dialog = Dialog(
+      insetPadding: EdgeInsets.fromLTRB(32, 32, 32, 100),
       child: ListSelector<String>(
         options: options,
         selectorType: selectorType,
@@ -46,6 +52,7 @@ class TagSelectionDialog extends SelectionDialog<String>{
         onTristateToggle: onTristateToggle,
         isAvailable: isAvailable,
         onDisplayTrailing: onDisplayTrailing,
+        onGetTrailing: onGetTrailing,
       ),
     );
     

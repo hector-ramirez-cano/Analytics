@@ -7,7 +7,6 @@ import 'package:aegis/ui/screens/alerts/alert_viewer.dart';
 import 'package:aegis/ui/screens/canvas/topology_tab_view.dart';
 import 'package:aegis/ui/screens/charts/chart_dashboard.dart';
 import 'package:aegis/ui/screens/edit/editor_view.dart';
-import 'package:aegis/ui/screens/settings/settings.dart';
 import 'package:aegis/ui/screens/syslog/syslog_viewer.dart';
 
 class ContentArea extends StatelessWidget {
@@ -28,8 +27,8 @@ class ContentArea extends StatelessWidget {
           case WorkplaceScreen.charts:
             return ChartDashboard();
 
-          case WorkplaceScreen.settings:
-            return SettingsScreen();
+          // case WorkplaceScreen.settings:
+          //   return SettingsScreen();
 
           case WorkplaceScreen.edit:
             return ItemEditView();

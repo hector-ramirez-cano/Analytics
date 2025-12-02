@@ -1,4 +1,6 @@
+import 'package:aegis/main.dart' show messengerKey;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aegis/services/dialog_change_notifier.dart';
 import 'package:string_similarity/string_similarity.dart';
@@ -6,10 +8,13 @@ import 'package:string_similarity/string_similarity.dart';
 enum ListSelectorType {
   checkbox,
   radio,
+
+  none,
 }
 Icon? noIcon(dynamic _) => null;
 Widget? noSubtitle(dynamic _) => null;
 Widget? _emptyDisplayTrailing(dynamic option) { return null; }
+String? _emptyGetTrailing(dynamic option) { return ""; }
 
 class ListSelector<T> extends ConsumerStatefulWidget {
 
@@ -24,6 +29,7 @@ class ListSelector<T> extends ConsumerStatefulWidget {
   final Widget? Function(dynamic) subtitleBuilder;
   final bool Function(dynamic) isAvailable;
   final Widget? Function(dynamic) onDisplayTrailing;
+  final String? Function(dynamic) onGetTrailing;
 
 
   static TextStyle unavailableValueStyle = TextStyle(color: Colors.blueGrey, fontStyle: FontStyle.italic, decoration: TextDecoration.lineThrough);
@@ -41,6 +47,7 @@ class ListSelector<T> extends ConsumerStatefulWidget {
     this.subtitleBuilder = noSubtitle,
     this.leadingIconBuilder = noIcon,
     this.onDisplayTrailing = _emptyDisplayTrailing,
+    this.onGetTrailing = _emptyGetTrailing
   });
 
   @override
@@ -128,7 +135,44 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
         },
       ),
     );
+  }
 
+    Widget _makeList(BuildContext context, List<T> list) {
+    return Expanded(
+      child: ListView.builder(
+        controller: _scrollController,
+        itemCount: list.length,
+        itemBuilder: (context, index) {
+          final option = list[index];
+          return ListTile(
+            onTap: () {
+                Clipboard.setData(ClipboardData(text: "$option ${widget.onGetTrailing(option)}"));
+                messengerKey.currentState?.showSnackBar(
+                  SnackBar(
+                    key: ValueKey("Snackbar_edit_clipboard"),
+                    content: Text("Copiado al portapapeles"),
+                    dismissDirection: DismissDirection.down,
+                    clipBehavior: Clip.antiAlias,
+                    duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.fixed,
+                    backgroundColor: const Color.fromARGB(255, 19, 103, 114),
+                  ),
+                );
+                  
+              },
+              key: ValueKey(option),
+              leading: widget.leadingIconBuilder(option),
+              trailing: widget.onDisplayTrailing(option),
+              title: Text(
+                widget.toText(option),
+                style: widget.isAvailable(option)
+                    ? null
+                    : ListSelector.unavailableValueStyle,
+              ),
+            );
+        },
+      ),
+    );
   }
 
   Widget _makeRadioList(List<T> list) {
@@ -160,7 +204,7 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
     );
   }
 
-  Widget _makeScrollList() {
+  Widget _makeScrollList(BuildContext context) {
     List<T> list = widget.options.toList() as List<T>;
     if (filterText.isNotEmpty) {
       List<T> options = widget.options.toList() as List<T>;
@@ -173,6 +217,9 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
 
       case ListSelectorType.radio:
         return _makeRadioList(list);
+
+      case ListSelectorType.none:
+        return _makeList(context, list);
     }
   }
 
@@ -223,7 +270,7 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
           _makeToggleSelector(),
           SizedBox(height: 32,),
           // Scrollable list
-          _makeScrollList()
+          _makeScrollList(context)
         ],
       ),
     );

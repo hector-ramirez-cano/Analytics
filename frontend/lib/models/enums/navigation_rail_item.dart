@@ -6,8 +6,8 @@ enum NavigationRailItem {
   canvas   (Icons.segment       , 'Topología'      , bottom: false, hasDrawer: true , screen: WorkplaceScreen.canvas  ),
   syslog   (Icons.terminal      , 'Syslog'         , bottom: false, hasDrawer: false, screen: WorkplaceScreen.syslog  ),
   alerts   (Icons.notifications , 'Alertas'        , bottom: false, hasDrawer: false, screen: WorkplaceScreen.alerts  ),
-  edit     (Icons.edit          , "Editar datos"   , bottom: true , hasDrawer: true , screen: WorkplaceScreen.edit    ),
-  settings (Icons.settings      , 'Configuraciones', bottom: true , hasDrawer: false, screen: WorkplaceScreen.settings);
+  edit     (Icons.edit          , "Editar datos"   , bottom: true , hasDrawer: true , screen: WorkplaceScreen.edit    );
+  // settings (Icons.settings      , 'Configuraciones', bottom: true , hasDrawer: false, screen: WorkplaceScreen.settings);
 
   final IconData icon;
   final String   label;
