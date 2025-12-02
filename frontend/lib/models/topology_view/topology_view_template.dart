@@ -59,4 +59,8 @@ class TopologyViewTemplate {
       members: memberMap
     );
   }
+
+  bool contains(int id) => members.containsKey(id);
+
+  bool containsLink(int id1, int id2) => members.containsKey(id1) && members.containsKey(id2);
 }

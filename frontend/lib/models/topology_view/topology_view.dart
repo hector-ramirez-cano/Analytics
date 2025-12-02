@@ -28,7 +28,10 @@ class TopologyView {
 
   // TODO: Memoize
   Set<Link> get links {
-    _links = topology.links.where((Link link) => devices.contains(link.sideA) || devices.contains(link.sideB)).toSet();
+    _links = topology.links.where(
+      (Link link) => 
+        template.containsLink(link.sideA.id, link.sideB.id) 
+        && (devices.contains(link.sideA) || devices.contains(link.sideB))).toSet();
 
     return  _links!;
   }
