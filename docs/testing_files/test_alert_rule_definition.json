@@ -1,0 +1,59 @@
+{
+  "source": "facts",
+  "id": 1,
+  "name": "TEST RULE - Prepend",
+  "predicates": [
+    {
+      "left": "&icmp_status",
+      "op": "not_equal",
+      "right": "  =REACH=  ",
+      "right-modifier": {
+        "Multi": {
+          "first": {
+            "ReplaceN": {
+              "count": 1,
+              "pattern": "=",
+              "with": ""
+            }
+          },
+          "then": {
+            "Multi": {
+              "first": {
+                "ReplaceN": {
+                  "count": 1,
+                  "pattern": "=",
+                  "with": ""
+                }
+              },
+              "then": {
+                "Multi": {
+                  "first": "Lower",
+                  "then": {
+                    "Multi": {
+                      "first": {
+                        "Prepend": "Un"
+                      },
+                      "then": {
+                        "Multi": {
+                          "first": "Trim",
+                          "then": {
+                            "Append": "able"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "reduce-logic": "any",
+  "requires-ack": true,
+  "rule-type": "simple",
+  "severity": "debug",
+  "target": 10
+}
