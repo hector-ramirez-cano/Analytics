@@ -8,8 +8,8 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::Mutex;
 use tokio::sync::mpsc;
 
+use crate::alerts::telegram_backend::telegram_backend::TelegramBackend;
 use crate::types::{AlertId, AlertRuleId, DeviceId, EpochSeconds};
-use crate::alerts::telegram_backend::TelegramBackend;
 use crate::config::Config;
 use crate::alerts::{AlertDataSource, AlertEvent, AlertRule};
 use crate::model::cache::Cache;

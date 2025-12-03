@@ -1,9 +1,28 @@
 
-use sqlx::{Pool, Postgres, QueryBuilder};
+use chrono::Utc;
+use sqlx::{Pool, Postgres, QueryBuilder, Transaction};
 
 use crate::{alerts::{AlertEvent, AlertFilters, AlertRule, AlertSeverity}, model::db::operations::RowCount, types::AlertEventId};
 
+pub async fn ack_alert<'e>(alert_id : AlertEventId, ack_actor: &str, transaction: &mut Transaction<'e, Postgres>) -> Result<(), ()>{
+    let mut ack_actor = ack_actor.to_string();
+    ack_actor.truncate(253);
 
+    let ack_time = Utc::now();
+
+    let result = sqlx::query!("
+        UPDATE Analytics.Alerts SET ack_actor = $1, ack_time = $2 WHERE alert_id = $3 AND ack_time IS NULL",
+        ack_actor, ack_time, alert_id 
+    ).execute(&mut **transaction).await;
+
+    match result {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            log::error!("[ERROR][ALERTS][DB] Failed to ack alert event with SQL Error = '{e}'");
+            Err(())
+        }
+    }
+}
 
 pub async fn insert_alert(alert: &AlertEvent, pool : &sqlx::Pool<sqlx::Postgres>) -> Result<AlertEventId, sqlx::Error> {
     let alert_time = alert.alert_time.unwrap_or_default();

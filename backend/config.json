@@ -52,6 +52,7 @@
           "$ref": "identity/influx_db.json"
         },
         "telegram": {
+          "enabled": true,
           "$ref": "identity/telegram.json"
         }
       }

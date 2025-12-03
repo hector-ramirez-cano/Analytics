@@ -272,16 +272,17 @@ CREATE INDEX idx_SystemEvents_ReceivedAt ON Syslog.system_events (received_at);
 --                                                               /  \__$$ |
 --                                                               $$    $$/ 
 --                                                                $$$$$$/  
-
 CREATE SCHEMA IF NOT EXISTS ClientIdentity;
-
 CREATE TABLE IF NOT EXISTS ClientIdentity.ack_tokens(
     ack_token VARCHAR(128) PRIMARY KEY,
-    ack_actor VARCHAR NOT NULL
+    ack_actor_name VARCHAR NOT NULL,
+    can_ack BOOLEAN NOT NULL,
+
+    telegram_user_id BIGINT -- managed by telegram, trusted to be unique
 );
 
 CREATE TABLE IF NOT EXISTS ClientIdentity.telegram_receiver(
-    telegram_user_id BIGINT PRIMARY KEY, --managed by telegram, trusted to be unique
+    telegram_chat_id BIGINT PRIMARY KEY, --managed by telegram, trusted to be unique
     authenticated    BOOLEAN NOT NULL,
     subscribed       BOOLEAN NOT NULL,
 

@@ -106,7 +106,7 @@ INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_sta
 
 -- TRUNCATE Analytics.alerts; DELETE FROM Analytics.alert_rules;
 INSERT INTO Analytics.alert_rules (rule_id, rule_name, requires_ack, rule_definition)
-    VALUES  (1, 'ICMP_RTT > 100ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","data-source":"facts","rule-type": "simple", "predicates":[{"left":"&icmp_rtt","op":"more_than","right":100}]}'),
+    VALUES  (1, 'ICMP_RTT > 100ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","data-source":"facts","rule-type": "simple", "predicates":[{"left":"&icmp_rtt","op":"more_than","right":60}]}'),
             (2, 'Syslog SSH', TRUE, '{"severity":"emergency","target":2,"reduce-logic": "any","data-source":"syslog","rule-type": "simple", "predicates":[{"left":"&syslog_message","op":"contains","right":"ssh"}, {"left":"&syslog_message","op":"contains","right":"login"}]}');
 
 SELECT * FROM Analytics.alert_rules;
@@ -149,9 +149,18 @@ SELECT * FROM Syslog.system_events;
 SELECT * FROM Syslog.system_events WHERE received_at BETWEEN '2025-10-27T06:00:00Z' AND '2025-11-11T21:13:45Z';
 
 
+SELECT * FROM ClientIdentity.telegram_receiver;
+
 SELECT * FROM ClientIdentity.ack_tokens;
-INSERT INTO ClientIdentity.ack_tokens(ack_token, ack_actor) VALUES ('BE&d?bzhfvaXG12Upou3CtA-7|iHMk$QOnLNmJ6I0TerF94PD5lq#y:c8WsgK*jY', 'Héctor Ramírez Cano');
+SELECT (telegram_user_id IS NULL) as empty FROM ClientIdentity.ack_tokens;
+INSERT INTO ClientIdentity.ack_tokens(ack_token, ack_actor_name, can_ack) VALUES ('BE&d?bzhfvaXG12Upou3CtA-7|iHMk$QOnLNmJ6I0TerF94PD5lq#y:c8WsgK*jY', 'Héctor Ramírez Cano', TRUE);
+INSERT INTO ClientIdentity.ack_tokens(ack_token, ack_actor_name, can_ack) VALUES ('I9tslevG&YfdVAB@Fogy#', 'Alt', FALSE);
 SELECT (1) as exists FROM ClientIdentity.ack_tokens WHERE ack_token = 'BE&d?bzhfvaXG12Upou3CtA-7|iHMk$QOnLNmJ6I0TerF94PD5lq#y:c8WsgK*jY';
+
+SELECT (telegram_user_id IS NULL OR telegram_user_id = 824918361) as valid FROM ClientIdentity.ack_tokens WHERE ack_token = 'I9tslevG&YfdVAB@Fogy#';
+
+TRUNCATE ClientIdentity.telegram_receiver;
+UPDATE ClientIdentity.ack_tokens SET telegram_user_id = NULL;
 
 SELECT EXISTS(
             SELECT 1 FROM ClientIdentity.telegram_receiver WHERE telegram_user_id = 0 AND authenticated is TRUE
