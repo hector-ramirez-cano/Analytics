@@ -63,12 +63,12 @@ static INSTANCE: OnceLock<Arc<TelegramBackend>> = OnceLock::new();
 impl TelegramBackend {
     // Internal constructor
     fn new(token: String, pool: sqlx::PgPool) -> Self {
-        TelegramBackend { pool, client: Client::new(token).expect("Telegram Bot should be created correctly"), subscribed_chats: RwLock::new(HashSet::new())}
+        TelegramBackend { pool, client: Client::new(token).expect("[FATAL]Telegram Bot should be created correctly"), subscribed_chats: RwLock::new(HashSet::new())}
     }
 
     // Get singleton instance
     pub fn instance() -> Arc<TelegramBackend> {
-        INSTANCE.get().expect("Telegram backend not initialized").clone()
+        INSTANCE.get().expect("[FATAL]Telegram backend not initialized").clone()
     }
 
     // Get singleton instance
@@ -79,14 +79,14 @@ impl TelegramBackend {
     // Initializes the telegram backend. Must be init after config is loaded
     pub async fn init(pool: sqlx::PgPool, alert_receiver: Receiver<AlertEvent>) {
         let enabled : bool = Config::instance().get("backend/controller/telegram/enabled", "/")
-            .expect("Telegram enable status MUST be present in the config file at path 'backend/controller/telegram/enabled', an must be of type boolean");
+            .expect("[FATAL]Telegram enable status MUST be present in the config file at path 'backend/controller/telegram/enabled', an must be of type boolean");
         
         if !enabled {
             return;
         }
 
         let token: String = Config::instance().get("backend/controller/telegram/API-token", "/")
-            .expect("Telegram API token MUST be present in the config file at path 'backend/controller/telegram/API-token', typically imported from identity via $ref");
+            .expect("[FATAL]Telegram API token MUST be present in the config file at path 'backend/controller/telegram/API-token', typically imported from identity via $ref");
 
 
         // Try to set instance Arc with provided value

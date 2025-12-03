@@ -11,10 +11,12 @@ use crate::model::data::device_state::DeviceStatus;
 use crate::model::facts::icmp::icmp_status::IcmpStatus;
 
 lazy_static::lazy_static! {
+    // Unwrap: if this regex is for some reason invalid, it _must_ panic
     static ref RTT_RE: Regex = Regex::new(
         r"rtt min/avg/max/mdev = ([\d.]+)/([\d.]+)/([\d.]+)/([\d.]+) ms"
     ).unwrap();
 
+    // Unwrap: if this regex is for some reason invalid, it _must_ panic
     static ref LOSS_RE: Regex = Regex::new(r"(\d+(?:\.\d+)?)% packet loss").unwrap();
 }
 

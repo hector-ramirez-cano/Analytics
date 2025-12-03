@@ -135,13 +135,13 @@ impl<'de> Deserialize<'de> for AlertPredicate {
 
         let raw = Raw::deserialize(deserializer)?;
 
-        let left_is_accessor = raw.left.is_string() && raw.left.as_str().unwrap().starts_with('&');
-        let right_is_accessor = raw.right.is_string() && raw.right.as_str().unwrap().starts_with('&');
+        let left_is_accessor = raw.left.is_string() && raw.left.as_str().unwrap_or_default().starts_with('&');
+        let right_is_accessor = raw.right.is_string() && raw.right.as_str().unwrap_or_default().starts_with('&');
 
         match (left_is_accessor, right_is_accessor) {
             (true, true) => {
-                let raw_left = raw.left.as_str().unwrap();
-                let raw_right = raw.right.as_str().unwrap();
+                let raw_left = raw.left.as_str().unwrap_or_default();
+                let raw_right = raw.right.as_str().unwrap_or_default();
                 let left_acc = Accessor::new(raw_left.trim_start_matches('&'));
                 let right_acc = Accessor::new(raw_right.trim_start_matches('&'));
                 Ok(AlertPredicate::Variable(
@@ -153,7 +153,7 @@ impl<'de> Deserialize<'de> for AlertPredicate {
                 ))
             },
             (true, false) => {
-                let raw_left = raw.left.as_str().unwrap();
+                let raw_left = raw.left.as_str().unwrap_or_default();
                 let left_acc = Accessor::new(raw_left.trim_start_matches('&'));
                 let right_val: MetricValue = raw.right.into();
 
@@ -166,7 +166,7 @@ impl<'de> Deserialize<'de> for AlertPredicate {
                 ))
             },
             (false, true) => {
-                let raw_right = raw.right.as_str().unwrap();
+                let raw_right = raw.right.as_str().unwrap_or_default();
                 let right_acc = Accessor::new(raw_right.trim_start_matches('&'));
                 let left_val: MetricValue = raw.left.into();
                 Ok(AlertPredicate::LeftConst(

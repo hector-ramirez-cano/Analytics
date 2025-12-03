@@ -48,7 +48,7 @@ impl AlertEvent {
         if stringify {
             map.insert("severity".into(), serde_json::json!(self.severity.to_string()));
         } else {
-            map.insert("severity".into(), serde_json::to_value(&self.severity).unwrap());
+            map.insert("severity".into(), serde_json::to_value(&self.severity).unwrap_or(serde_json::Value::String("".to_string())));
         }
 
         map.insert("message".into(), serde_json::json!(self.message));

@@ -356,7 +356,7 @@ pub async fn update_device_analytics(influx_client : &influxdb2::Client, message
         Ok(b) => b,
         Err(e) => {
             log::error!("[FATAL] Influx bucket isn't specified in configuration file, e='{e}'\n Expected 'backend/controller/influx/bucket' to be present");
-            let cwd = env::current_dir().expect("Failed to get current working directory");
+            let cwd = env::current_dir().expect("[FATAL]Failed to get current working directory");
             log::info!("[INFO ] Current working directory was={}", cwd.display());
             log::info!("[INFO ] Current config file was={}", Config::instance().get_curr_config_path());
             panic!("[FATAL] Influx bucket isn't specified in configuration file, e='{e}'\n Expected 'backend/controller/influx/bucket' to be present");

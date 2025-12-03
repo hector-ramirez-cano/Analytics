@@ -17,6 +17,7 @@ pub struct Config {
 
 impl Config {
     /// Returns the global singleton instance, loading "config.json" on first call.
+    // Expect: if the config file is not present, it _must_ panic
     pub fn instance() -> Arc<Config> {
         static INSTANCE: OnceLock<Arc<Config>> = OnceLock::new();
         INSTANCE

@@ -27,15 +27,13 @@ pub async fn check_connections(pool: &sqlx::Pool<Postgres>, influx_client: &infl
         }
     };
 
-    let backend_status =
-    {
+    let backend_status = {
         serde_json::json!({
             "read-only": !Config::instance().get("backend/controller/configure/enabled", "/").unwrap_or(true)
         })
     };
 
     let telegram_status = {
-
         serde_json::json!({
             "enabled": Config::instance().get("backend/controller/telegram/enabled", "/").unwrap_or(true)
         })

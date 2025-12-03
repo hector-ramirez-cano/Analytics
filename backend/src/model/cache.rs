@@ -54,6 +54,7 @@ impl Cache {
         let _ = Cache::instance();
 
         // Consult database for initial state
+        // Unwrap: if the database can't be notified, it _must_ panic and prevent execution
         update_topology_cache(pool, true).await.unwrap();
     }
 

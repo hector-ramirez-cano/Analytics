@@ -17,7 +17,7 @@ impl BaselineCache {
 
     /// Returns the singleton Arc<BaselineCache>
     pub fn instance() -> Arc<BaselineCache> {
-        INSTANCE.get().expect("Baseline backend not initialized").clone()
+        INSTANCE.get().expect("[FATAL]Baseline backend not initialized").clone()
     }
 
     pub fn init(influx_client: &influxdb2::Client) {

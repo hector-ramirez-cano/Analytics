@@ -24,6 +24,9 @@ pub mod telegram_backend;
 pub mod operand_modifier;
 pub mod tests;
 
+/// Pretty self explanatory. Severity of the alert rule
+/// In case a value given is not valid, will default to Unknown
+/// Equivalent to `alertseverity` enum in PostgreSQL
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, Hash)]
 #[sqlx(type_name = "AlertSeverity", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
@@ -41,52 +44,88 @@ pub enum AlertSeverity {
     Unknown,
 }
 
+/// Alert Operation as a boolean operation to be applied between operands
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "snake_case")]
 pub enum AlertPredicateOperation {
+    /// Resolves to `>`. Arithmetic operation. Can only be applied to numbers
     MoreThan,
+
+    /// Resolves to `>=`. Arithmetic operation. Can only be applied to numbers
     MoreThanEqual,
+
+    /// Resolves to `<`. Arithmetic operation. Can only be applied to numbers
     LessThan,
+
+    /// Resolves to `<=`. Arithmetic operation. Can only be applied to numbers
     LessThanEqual,
+
+    /// Resolves to `==`. Can be applied to any items
     Equal,
+
+    /// Resolves to `!=`. Can be applied to any items
     NotEqual,
+
+    /// Resolves to a `contains` call. Can be applied to strings and arrays, where the left side is string and array, and right can be anything
+    /// Such that, for instance:
+    /// &syslog_message `Contains` "ssh"
     Contains,
+
+    /// Default value. If encountered, will always resolve to false
     #[serde(other)]
     Unknown,
 }
 
+/// Event raised by an alert rule, indicating an instance at which the alert rule evaluated to true
+/// Will be broadcast to all listeners; local, database, websocket and Telegram
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct AlertEvent {
+    /// Unique database ID for this alert event
     #[serde(rename = "alert-id")]
     pub alert_id: AlertEventId,
 
+    /// Time at which the alert happened
     #[serde(rename = "alert-time", with = "chrono::serde::ts_seconds_option")]
     pub alert_time: Option<DateTime<Utc>>,
 
+    /// Time at which the alert was acked
     #[serde(rename = "ack-time", with = "chrono::serde::ts_seconds_option")]
     pub ack_time: Option<DateTime<Utc>>,
 
+    /// Whether the alert requires an ack by an authorized user
     #[serde(rename = "requires-ack")]
     pub requires_ack: bool,
 
+    /// Severity of the alert event
     pub severity: AlertSeverity,
 
+    /// Generated message indicating extra details
     pub message: String,
 
+    /// Target id of a device that triggered the alert
     #[serde(rename = "target-id")]
     pub target_id: AlertTargetId,
 
+    /// Whether the websocket listeners have been notified. If it fails, the event will be silently discarded
     pub ws_notified: bool,
+
+    /// Whether the database listeners have been notified. If it fails, the event will be requeued until they can be notified
     pub db_notified: bool,
+
+    /// Whether the message has been acked. Dynamically generated from database
     pub acked: bool,
 
+    /// AlertRule that triggered the alert. Optional, as a rule that raised it could've been deleted from the database
+    /// At creation, this is guaranteed to not be None
     #[serde(rename = "rule-id")]
     pub rule_id: Option<AlertRuleId>,
-
+    
+    /// String representation of the value that raised.
     pub value: String,
 }
 
 /// Which side (if any) is constant
+/// Note: only one side can be constant, as both sides being constant would result in always true, or always false; useless.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConstSide {
     None,
@@ -94,13 +133,18 @@ pub enum ConstSide {
     Right,
 }
 
-
+/// Defines a string to be used to access into a dictionary during rule evaluation
 #[derive(Debug, Clone)]
 pub struct Accessor {
+    /// String key that will be used to access into the dictionary.
+    /// It's always prepended with `&`, and it's used to discriminate
+    /// Accessors from constant strings.
     key: String,
 }
 
-
+/// Defines which optional operation to apply to an operand.
+/// If the types are not valid, the operation will be ignored
+/// 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename="lowercase")]
 pub enum OperandModifier {
@@ -148,7 +192,11 @@ pub enum OperandModifier {
     None
 }
 
-
+/// Defines an Alert predicate for which either one side is constant, or both are variable.
+/// To be used for AlertRules to evaluate multiple conditions as `predicates`
+/// Operand modifiers can be used to alter the evaluated value dynamically.
+/// The order is: LeftModifier, LeftOperand, Operation, RightOperand, RightModifier
+/// Like the following: (Add(0.5), "&icmp_rtt", MoreThan, 70, Mul(1.5))
 #[derive(Debug, Clone)]
 pub enum AlertPredicate {
     LeftConst (OperandModifier, MetricValue, AlertPredicateOperation, Accessor   , OperandModifier),
@@ -156,7 +204,9 @@ pub enum AlertPredicate {
     Variable  (OperandModifier, Accessor   , AlertPredicateOperation, Accessor   , OperandModifier),
 }
 
-
+/// Logic to be used to reduce more than one predicate, in order to consider this rule to be raised.
+/// Either all raise, or any raise.
+/// Equivalent to boolean operations for `*` and `+`, respectively
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum AlertReduceLogic {
@@ -166,6 +216,7 @@ pub enum AlertReduceLogic {
     Unknown,
 }
 
+/// Kind of rule to be evaluated. Changes which data will be used, and the behavior to raise the alert.
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(rename_all="lowercase")]
 pub enum AlertRuleKind {
@@ -202,85 +253,111 @@ impl fmt::Display for AlertRuleKind {
             AlertRuleKind::Simple => f.write_str("simple"),
             AlertRuleKind::Delta => f.write_str("delta"),
             AlertRuleKind::Sustained{seconds: _} => f.write_str("sustained"),
-        }.unwrap();
+        }.unwrap_or(());
 
         fmt::Result::Ok(())
     }
 }
 
 pub mod alert_rule;
+/// Defines a single AlertRule, which will be evaluated once new data arrives.
+/// In the case of raising the alert, listeners will be notified that this instance was raised
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AlertRule {
+    /// Unique Database id, numeric
     #[serde(rename = "id", default)] // Might not be present in the JSON definition, but will get overriden by the database actual values
     pub rule_id: AlertRuleId,
 
+    /// Display name, to be used when notifying listeners which rule raised.
+    /// Uniqueness is not enforced
     #[serde(rename = "name", default)] // Might not be present in the JSON definition, but will get overriden by the database actual values
     pub name: String,
 
+    /// Whether the alert rule requires an authenticated user to ack the alert once it arrives
     #[serde(rename = "requires-ack", default)] // Might not be present in the JSON definition, but will get overriden by the database actual values
     pub requires_ack: bool,
 
+    /// Severity of the alert event raised if this alert rule evaluates to true
     #[serde(rename= "severity")]
     pub severity: AlertSeverity,
 
+    /// Target device or devices for which the rule will be evaluated.
+    /// Note: if the target or a member of target does not contain a variable accessed through an accessor, the rule will silently skip that device
     #[serde(rename = "target")]
     pub target_item: AlertTargetId,
 
+    /// Predicate reduce logic to be used for evaluating the rule
+    /// Equivalent to boolean algebra operations `*` and `+`
     #[serde(rename = "reduce-logic")]
     pub reduce_logic: AlertReduceLogic,
 
+    /// List of predicates to be evaluated against the dataset. AlertReduceLogic will be applied to it
     #[serde(rename = "predicates")]
     pub predicates: Vec<AlertPredicate>,
 
+    /// Data source from which the dataset will be constructed. Rules can only be applied to one datasource at a time
     #[serde(rename="data-source")]
     pub data_source: AlertDataSource,
 
+    /// Kind of rule to be evaluated. Changes which data will be used, and the behavior to raise the alert.
     #[serde(rename="rule-type")]
     pub rule_kind: AlertRuleKind
 }
 
 pub mod alert_filters;
+/// Filters for AlertEvents being recalled from the database
 #[derive(Debug, Deserialize)]
 pub struct AlertFilters {
+    /// Range start from which to start the search. Mandatory.
     #[serde(deserialize_with = "ts_to_datetime_utc", rename = "start")]
     pub start_time: DateTime<Utc>,
 
+    /// Range start at which to end the search. Mandatory.
     #[serde(deserialize_with = "ts_to_datetime_utc", rename = "end")]
     pub end_time: DateTime<Utc>,
 
+    /// AlertEvent id to be search
     #[serde(skip_serializing_if = "Option::is_none", rename = "alert-id")]
     pub alert_id: Option<AlertEventId>,
 
+    /// Range start from which to start the ack search. Optional
     #[serde(default, deserialize_with = "opt_ts_to_datetime_utc", skip_serializing_if = "Option::is_none", rename = "ack-start")]
     pub ack_start_time: Option<DateTime<Utc>>,
 
+    /// Range end at which to end the ack search. Optional
     #[serde(default, deserialize_with = "opt_ts_to_datetime_utc", skip_serializing_if = "Option::is_none", rename = "ack-end")]
     pub ack_end_time: Option<DateTime<Utc>>,
 
+    /// Severity of the event. Works as a bitmask. If it's present in the hashset, it will be retrieved from the database
     #[serde(rename = "severity")]
     pub severities: HashSet<AlertSeverity>,
 
+    /// Contents of the message to be fuzzy searched
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message: Option<String>,
 
+    /// Ack actor that ack'd the message
     #[serde(skip_serializing_if = "Option::is_none", rename = "ack-actor")]
     pub ack_actor: Option<AlertAckActor>,
 
+    /// Device or group target ID to which the rule applies to
     #[serde(skip_serializing_if = "Option::is_none", rename = "target-id")]
     pub target_id: Option<AlertTargetId>,
 
+    /// Offset of rows. Not directly accessible by the user, but used internally for pagination
     #[serde(skip_serializing_if = "Option::is_none")]
     pub offset: Option<i64>,
 
+    /// Whether the alert event has the `requires_ack` flag set
     #[serde(skip_serializing_if = "Option::is_none", rename = "requires-ack")]
     pub requires_ack: Option<bool>,
 
+    /// Page Size to be retrieved per message
     #[serde(rename = "page-size", skip_serializing_if = "Option::is_none")]
     pub page_size: Option<i64>,
 }
 
-
-
+/// Where the data comes from for an AlertRule. Only one source can be used for rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all="lowercase")]
 pub enum AlertDataSource {
@@ -295,10 +372,9 @@ pub enum EvaluableItem {
     Group (Group)
 }
 
-type EvalResult= (OperandModifier, MetricValue, AlertPredicateOperation,MetricValue, OperandModifier);
+type EvalResult= (OperandModifier, MetricValue, AlertPredicateOperation, MetricValue, OperandModifier);
 
 impl EvaluableItem {
-
     async fn eval_device<'a>(device: Device, rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage) 
         -> Option<(EvaluableItem, Vec<EvalResult>)> {
         let dataset_right = &dataset_right.get(&device.management_hostname)?.metrics;

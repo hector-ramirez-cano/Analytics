@@ -16,10 +16,12 @@ async fn launch() -> _ {
     log::set_max_level(log::LevelFilter::Debug);
 
     // CWD, to know where files will be looked for
-    let cwd = env::current_dir().expect("Failed to get current working directory");
+    // if the current directory can't be determined for some weird reason, it _must_ panic
+    let cwd = env::current_dir().expect("[FATAL]Failed to get current working directory");
     println!("cwd: {}", cwd.display());
 
     // init - failfast if something can't init
+    // expect: failfast on postgres client. It _must_ be present
     Config::init();
     let postgres_pool : Pool<Postgres> = init_posgres_pool().await.expect("Postgres database could not init");
     let influx_client : influxdb2::Client = init_influx_client().await;

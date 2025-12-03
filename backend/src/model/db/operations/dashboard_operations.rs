@@ -16,7 +16,7 @@ pub async fn get_dashboards_as_json(pool: &sqlx::PgPool) -> Result<HashMap<Dashb
         if !items.contains_key(&member.dashboard_id) {
             items.insert(member.dashboard_id, vec![member]);
         } else {
-            let members = items.get_mut(&member.dashboard_id).expect("Unreachable code");
+            let members = items.get_mut(&member.dashboard_id).expect("[FATAL]Unreachable code");
             members.push(member);
         };
     }

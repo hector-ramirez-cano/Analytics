@@ -21,19 +21,19 @@ pub async fn init_posgres_pool() -> Result<Pool<Postgres>, sqlx::Error> {
     
     let binding = config.get_value_opt("backend/controller/postgres/hostname", "/")
         .unwrap_or_default();
-    let host = binding.as_str().expect("Database hostname not found in configuration");
+    let host = binding.as_str().expect("[FATAL]Database hostname not found in configuration");
     
     let binding = config.get_value_opt("backend/controller/postgres/name", "/")
         .unwrap_or_default();
-    let dbcooper = binding.as_str().expect("Database name not found in configuration");
+    let dbcooper = binding.as_str().expect("[FATAL]Database name not found in configuration");
     
     let binding = config.get_value_opt("backend/controller/postgres/user", "/")
         .unwrap_or_default();
-    let user = binding.as_str().expect("Database user name not found in configuration");
+    let user = binding.as_str().expect("[FATAL]Database user name not found in configuration");
     
     let binding = config.get_value_opt("backend/controller/postgres/password", "/")
         .unwrap_or_default();
-    let pass = binding.as_str().expect("user pass not found in configuration");
+    let pass = binding.as_str().expect("[FATAL]user pass not found in configuration");
     
     let binding = config.get_value_opt("backend/controller/postgres/schema", "/")
         .unwrap_or_default();
@@ -70,6 +70,7 @@ pub async fn init_influx_client() -> influxdb2::Client {
         }
     };
 
+    // Unwrap: if any of these values is missing from the configuration file, it _must_ panic
     let host = match config.get::<String>("backend/controller/influx/hostname", "/") {
         Ok(v) => v, Err(_) => { handle_fatal("[FATAL] Failed to create Influx Client. Hostname is not found in config file").unwrap(); unreachable!() } ,
     };

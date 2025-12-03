@@ -47,11 +47,11 @@ pub fn abspath<P: AsRef<Path>>(path: P) -> io::Result<PathBuf> {
 async fn run_playbook(targets: Vec<String>) -> (Metrics, Status) {
     let config   = Config::instance();
     let playbook :String = config.get("backend/model/playbooks/fact_gathering", "/")
-        .expect("Config file does not contain playbook for fact gathering");
+        .expect("[FATAL]Config file does not contain playbook for fact gathering");
     let private :String = config.get("backend/model/private_data_dir", "/")
-        .expect("Config file does not contain a private directory");
+        .expect("[FATAL]Config file does not contain a private directory");
 
-    let cwd = env::current_dir().expect("Failed to get current working directory");
+    let cwd = env::current_dir().expect("[FATAL]Failed to get current working directory");
     let private = abspath_with_cwd(private, &cwd);
 
     let targets = targets.join("\n");
@@ -113,7 +113,7 @@ async fn run_playbook(targets: Vec<String>) -> (Metrics, Status) {
             let runner_obj = match runner_obj {
                 Ok(r) => r,
                 Err(e) => {
-                    let cwd = env::current_dir().expect("Failed to get current working directory");
+                    let cwd = env::current_dir().expect("[FATAL]Failed to get current working directory");
                     log::error!("[FATAL] Ansible runner can't run, e='{e}'");
                     log::info!("[INFO ] Current working directory was={}", cwd.display());
                     log::info!("[INFO ] Current config file was={}", Config::instance().get_curr_config_path());

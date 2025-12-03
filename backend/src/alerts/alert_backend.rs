@@ -75,7 +75,7 @@ impl AlertBackend {
 
     /// Get the singleton instance
     pub fn instance() -> Arc<AlertBackend> {
-        INSTANCE.get().expect("AlertBackend not initialized").clone()
+        INSTANCE.get().expect("[FATAL]AlertBackend not initialized").clone()
     }
 
     /// Initialize
