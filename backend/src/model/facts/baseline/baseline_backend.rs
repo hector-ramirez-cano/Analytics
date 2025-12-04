@@ -22,7 +22,8 @@ async fn update_cache(baseline_cache: &Arc<BaselineCache>, forced: bool) {
         let metric_set = get_baseline_metrics(&baseline_cache.influx_client, &device_hostname_map).await;
 
         if metric_set.is_empty() {
-            log::warn!("[WARN ][FACTS][BASELINE] Cache update failed. Baseline metrics was empty. Last value will be used, and this one will be ignored...");
+            log::warn!("Warning: [WARN ][FACTS][BASELINE] Cache update failed.  Baseline metrics was empty. Last value will be used, and this one will be ignored...");
+            log::info!("If Aegis was run after some time off, this is expected. ^^^^^^^^^^^^^^^^^^^^^^^^^^ ");
             return;
         }
         

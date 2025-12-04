@@ -21,7 +21,6 @@ pub async fn update_topology_cache(conn: &mut PoolConnection<Postgres> , forced 
 
 /// Inserts data that might change infrequently into the Postgres database, and updates local cache of devices
 pub async fn update_device_metadata(pool: &sqlx::Pool<Postgres>, msg: &FactMessage) {
-
     // Set status and available values via exposed fields
     for (hostname, facts) in msg {
         let id = match Cache::instance().get_device_id(&hostname).await {

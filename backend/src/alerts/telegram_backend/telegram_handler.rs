@@ -1,6 +1,7 @@
 use std::result::Result::Ok;
 
 use chrono::Utc;
+use regex::Regex;
 use sqlx::{Postgres, Transaction};
 use tgbot::types::{AnswerCallbackQuery, CallbackQuery, EditMessageReplyMarkup, EditMessageText, InlineKeyboardMarkup, MaybeInaccessibleMessage, Message};
 use tgbot::{api::Client, handler::UpdateHandler, types::{ChatPeerId, ParseMode, UserPeerId}};
@@ -282,16 +283,24 @@ impl Handler {
     }
 }
 
+lazy_static::lazy_static! {
+    // Unwrap: if this regex is for some reason invalid, it _must_ panic
+    static ref BOT_TAG_RE: Regex = Regex::new(
+        r"@.+?(\s|$)"
+    ).unwrap();
+}
+
 async fn _handle_update_message(client: &Client, chat_id: Option<ChatPeerId>, user_id: Option<UserPeerId>, message: Message) {
     let text = message.get_text();
     let (chat_id, user_id, text) = match (chat_id, user_id, text) {
         (Some(id), Some(user_id), Some(text)) => (id, user_id, text),
         (_, _, _) => return
     };
+    let text = BOT_TAG_RE.replace_all(&text.data, "$1");
 
-    let (command, args) = match text.data.split_once(" ") {
+    let (command, args) = match text.trim().split_once(" ") {
         Some((cmd, args)) => (cmd, Some(args)),
-        None => (text.data.as_str(), None)
+        None => (&(*text), None)
     };
 
     let is_private = match message.chat {
@@ -391,7 +400,7 @@ async fn _handle_callback_query(client: &Client, callback_query: CallbackQuery) 
                 return;
             }
         };
-        let text = format!("```{}```\n{}", text, escape_with_backslash(&notice, &['.', '-']));
+        let text = format!("```Acked\n{}```\n{}", text, escape_with_backslash(&notice, &['.', '-']));
         let method = EditMessageText
             ::for_chat_message(result.chat_id, m.id, text)
             .with_parse_mode(ParseMode::MarkdownV2);
