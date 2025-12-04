@@ -146,7 +146,7 @@ pub struct Accessor {
 /// If the types are not valid, the operation will be ignored
 /// 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename="lowercase")]
+#[serde(rename_all="lowercase")]
 pub enum OperandModifier {
     /// Arithemtic operation `Addition`. Always results in MetricValue::Number
     Add(f64),

@@ -88,28 +88,28 @@
   "OperationModifierDefinitions": {
     "Modifier": {
       "oneOf": [
-        { "$ref": "#/OperationModifierDefinitions/Multi" },
+        { "$ref": "#/OperationModifierDefinitions/multi" },
         
-        { "$ref": "#/OperationModifierDefinitions/Add" },
-        { "$ref": "#/OperationModifierDefinitions/Mul" },
-        { "$ref": "#/OperationModifierDefinitions/Mod" },
-        { "$ref": "#/OperationModifierDefinitions/Rem" },
-        { "$ref": "#/OperationModifierDefinitions/Pow" },
+        { "$ref": "#/OperationModifierDefinitions/add" },
+        { "$ref": "#/OperationModifierDefinitions/mul" },
+        { "$ref": "#/OperationModifierDefinitions/mod" },
+        { "$ref": "#/OperationModifierDefinitions/rem" },
+        { "$ref": "#/OperationModifierDefinitions/pow" },
 
-        { "$ref": "#/OperationModifierDefinitions/Append"   },
-        { "$ref": "#/OperationModifierDefinitions/Prepend"  },
-        { "$ref": "#/OperationModifierDefinitions/Trim"     },
-        { "$ref": "#/OperationModifierDefinitions/Replace"  },
-        { "$ref": "#/OperationModifierDefinitions/ReplaceN" },
-        { "$ref": "#/OperationModifierDefinitions/Lower"    },
-        { "$ref": "#/OperationModifierDefinitions/Upper"    }
+        { "$ref": "#/OperationModifierDefinitions/append"   },
+        { "$ref": "#/OperationModifierDefinitions/prepend"  },
+        { "$ref": "#/OperationModifierDefinitions/trim"     },
+        { "$ref": "#/OperationModifierDefinitions/replace"  },
+        { "$ref": "#/OperationModifierDefinitions/replacen" },
+        { "$ref": "#/OperationModifierDefinitions/lower"    },
+        { "$ref": "#/OperationModifierDefinitions/upper"    }
       ]
     },
 
-    "Multi": {
+    "multi": {
       "type": "object",
       "properties": {
-        "Multi": {
+        "multi": {
           "type": "object",
           "required": ["first", "then"],
           "properties": {
@@ -119,59 +119,59 @@
           "additionalProperties": false
         }
       },
-      "required": ["Multi"],
+      "required": ["multi"],
       "additionalProperties": false
     },
 
-    "Add": {
+    "add": {
       "type": "object",
       "properties": {
-        "Add": { "type": "number" }
+        "add": { "type": "number" }
       },
-      "required": ["Add"],
+      "required": ["add"],
       "additionalProperties": false
     },
 
-    "Mul": {
+    "mul": {
       "type": "object",
       "properties": {
-        "Mul": { "type": "number" }
+        "mul": { "type": "number" }
       },
-      "required": ["Mul"],
+      "required": ["mul"],
       "additionalProperties": false
     },
 
-    "Mod": {
+    "mod": {
       "type": "object",
       "properties": {
-        "Mod": { "type": "integer" }
+        "mod": { "type": "integer" }
       },
-      "required": ["Mod"],
+      "required": ["mod"],
       "additionalProperties": false
     },
 
-    "Rem": {
+    "rem": {
       "type": "object",
       "properties": {
-        "Rem": { "type": "number" }
+        "rem": { "type": "number" }
       },
-      "required": ["Rem"],
+      "required": ["rem"],
       "additionalProperties": false
     },
 
-    "Pow": {
+    "pow": {
       "type": "object",
       "properties": {
-        "Pow": { "type": "number" }
+        "pow": { "type": "number" }
       },
-      "required": ["Pow"],
+      "required": ["pow"],
       "additionalProperties": false
     },
 
-    "Replace": {
+    "replace": {
       "type": "object",
       "properties": {
-        "Replace": {
+        "replace": {
           "type": "object",
           "required": ["pattern", "with"],
           "properties": {
@@ -181,14 +181,14 @@
           "additionalProperties": false
         }
       },
-      "required": ["Replace"],
+      "required": ["replace"],
       "additionalProperties": false
     },
 
-    "ReplaceN": {
+    "replacen": {
       "type": "object",
       "properties": {
-        "ReplaceN": {
+        "replacen": {
           "type": "object",
           "required": ["count", "pattern", "with"],
           "properties": {
@@ -199,40 +199,40 @@
           "additionalProperties": false
         }
       },
-      "required": ["ReplaceN"],
+      "required": ["replacen"],
       "additionalProperties": false
     },
 
-    "Lower": {
+    "lower": {
       "type": "string",
-      "enum": ["Lower"]
+      "enum": ["lower"]
     },
 
-    "Upper": {
+    "upper": {
       "type": "string",
-      "enum": ["Upper"]
+      "enum": ["upper"]
     },
 
-    "Trim": {
+    "trim": {
       "type": "string",
-      "enum": ["Trim"]
+      "enum": ["trim"]
     },
 
-    "Append": {
+    "append": {
       "type": "object",
       "properties": {
-        "Append": { "type": "string" }
+        "append": { "type": "string" }
       },
-      "required": ["Append"],
+      "required": ["append"],
       "additionalProperties": false
     },
 
-    "Prepend": {
+    "prepend": {
       "type": "object",
       "properties": {
-        "Prepend": { "type": "string" }
+        "prepend": { "type": "string" }
       },
-      "required": ["Prepend"],
+      "required": ["prepend"],
       "additionalProperties": false
     }
   }
