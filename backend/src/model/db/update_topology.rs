@@ -1,15 +1,15 @@
 
-use sqlx::Postgres;
+use sqlx::{Postgres, pool::PoolConnection};
 
 use crate::{AegisError, model::{cache::Cache, db::fetch_topology::{query_devices, query_groups, query_links}, facts::fact_gathering_backend::FactMessage}};
 
-pub async fn update_topology_cache(pool: &sqlx::Pool<Postgres>, forced : bool) -> Result<(), AegisError>{
+pub async fn update_topology_cache(conn: &mut PoolConnection<Postgres> , forced : bool) -> Result<(), AegisError>{
     if let Some(mut last_update_guard) = Cache::instance().try_claim_update(forced).await {
         println!("[INFO ][CACHE] Updating topology cache!");
 
-        let devices = query_devices(pool).await?;
-        let links   = query_links(pool).await?;
-        let groups  = query_groups(pool).await?;
+        let devices = query_devices(conn).await?;
+        let links   = query_links(conn).await?;
+        let groups  = query_groups(conn).await?;
 
         Cache::instance().update_all(devices, links, groups).await;
 

@@ -116,13 +116,9 @@ impl Handler {
         // 6.- Commit transaction
         match transaction.commit().await {
             Ok(_) => {
-
-
                 log::info!("[INFO][TELEGRAM][AUTH] Commit on database with updated values");
             },
             Err(e) => {
-
-    
                 Handler::send_message(client, chat_id, "Error inesperado al realizar la autenticación. Intente nuevamente más tarde").await;
                 log::error!("[ERROR][TELEGRAM] Failed to commit auth transaction. SQL Error = '{e}'");
                 return; // early bail. rollback on the transaction

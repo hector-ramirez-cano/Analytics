@@ -1,5 +1,5 @@
 use serde_json::Map;
-use sqlx::Postgres;
+use sqlx::{Postgres, Transaction};
 
 use crate::alerts::{AlertReduceLogic, AlertSeverity};
 #[allow(unused)] // Needs to be allowed. Needed for compilation, but the compiler complains of a type casting needed if it's removed
@@ -11,16 +11,14 @@ pub async fn commit(mut data: serde_json::Value, pool: &sqlx::Pool<Postgres>) ->
     // once this transaction goes out of scope, if a commit hasn't been performed
     // sqlx will automatically rollback. RAII
     // ain't that neat?
-    // TODO: FIX TRANSACTION!!!!
-    // TODO: Acquire instead of using the pool for each
     {
-        let transaction: sqlx::Transaction<'_, Postgres> = pool.begin().await
+        let mut transaction: sqlx::Transaction<'_, Postgres> = pool.begin().await
             .map_err(|err| (format!("Could not begin commit transaction. Err = '{err}'").to_string(), 500))?;
 
         let mut data = data.as_object_mut().ok_or(("'data' is not Json Object".to_string(), 400))?;
         
-        insert_and_update(&mut data, pool).await?;
-        delete_items(&mut data, pool).await?;
+        insert_and_update(&mut data, &mut transaction).await?;
+        delete_items(&mut data, &mut transaction).await?;
 
         transaction.commit().await.map_err(|err|  (format!("Could not commit transaction, error = '{err}'"), 500))?;
     }
@@ -35,7 +33,7 @@ pub async fn commit(mut data: serde_json::Value, pool: &sqlx::Pool<Postgres>) ->
 }
 
 /// Manually inserts or updates devices in the '-changes' fields
-async fn insert_and_update(data: &mut serde_json::Map<String, serde_json::Value>, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
+async fn insert_and_update<'t>(data: &mut serde_json::Map<String, serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     let empty = serde_json::Value::Object(Map::new());
     let topology_changes   = data.remove("topology-changes"  ).unwrap_or(empty.clone());
     let ruleset_changes    = data.remove("ruleset-changes"   ).unwrap_or(empty.clone());
@@ -50,7 +48,7 @@ async fn insert_and_update(data: &mut serde_json::Map<String, serde_json::Value>
         let devices = if let serde_json::Value::Array(arr) = devices { arr }
             else { return Err(("topology-changes/devices is found, but is not array".to_string(), 400)) };
 
-        update_devices(devices, pool).await?;
+        update_devices(devices, transaction).await?;
     }
 
     // Update groups
@@ -58,7 +56,7 @@ async fn insert_and_update(data: &mut serde_json::Map<String, serde_json::Value>
         let groups = if let serde_json::Value::Array(arr) = groups { arr }
             else { return Err(("topology-changes/groups is found, but is not array".to_string(), 400)) };
 
-        update_groups(groups, pool).await?;
+        update_groups(groups, transaction).await?;
     }
 
     // Update links
@@ -66,7 +64,7 @@ async fn insert_and_update(data: &mut serde_json::Map<String, serde_json::Value>
         let links = if let serde_json::Value::Array(arr) = links { arr }
             else { return Err(("topology-changes/links is found, but is not array".to_string(), 400)) };
 
-        update_links(links, pool).await?;
+        update_links(links, transaction).await?;
     }
 
     // Rules
@@ -74,13 +72,13 @@ async fn insert_and_update(data: &mut serde_json::Map<String, serde_json::Value>
         let rules = if let serde_json::Value::Array(arr) = rules { arr }
             else { return Err(("ruleset-changes/rules is found, but is not array".to_string(), 400)) };
 
-        update_rules(rules, pool).await?;
+        update_rules(rules, transaction).await?;
     }
 
     Ok(())
 }
 
-async fn delete_items(data: &mut serde_json::Map<String, serde_json::Value>, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
+async fn delete_items<'t>(data: &mut serde_json::Map<String, serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     let empty = serde_json::Value::Object(Map::new());
     let topology_deletions = data.remove("topology-deletions").unwrap_or(empty.clone());
     let ruleset_deletions  = data.remove("ruleset-deletions" ).unwrap_or(empty.clone());
@@ -94,35 +92,35 @@ async fn delete_items(data: &mut serde_json::Map<String, serde_json::Value>, poo
         let groups = if let serde_json::Value::Array(arr) = groups { arr }
             else { return Err(("topology-deletions/groups is found, but is not array".to_string(), 400)) };
 
-        delete_groups(groups, pool).await?;
+        delete_groups(groups, transaction).await?;
     }
 
     if let Some(links) = topology_deletions.remove("links") {
         let links = if let serde_json::Value::Array(arr) = links { arr }
             else { return Err(("topology-deletions/links is found, but is not array".to_string(), 400)) };
 
-        delete_links(links, pool).await?;
+        delete_links(links, transaction).await?;
     }
 
     if let Some(devices) = topology_deletions.remove("devices") {
         let devices = if let serde_json::Value::Array(arr) = devices { arr }
             else { return Err(("topology-deletions/devices is found, but is not array".to_string(), 400)) };
 
-        delete_devices(devices, pool).await?;
+        delete_devices(devices, transaction).await?;
     }
 
     if let Some(rules) = ruleset_deletions.remove("rules") {
         let rules = if let serde_json::Value::Array(arr) = rules { arr }
             else { return Err(("truleset-deletions/rules is found, but is not array".to_string(), 400)) };
 
-        delete_rules(rules, pool).await?;
+        delete_rules(rules, transaction).await?;
     }
 
     Ok(())
 }
 
 /// Updates the devices table with new information
-async fn update_devices(devices: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
+async fn update_devices<'t>(devices: Vec<serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     for device in devices {
         let device : Device = serde_json::from_value(device).map_err(|e| (format!("Could not update device. Parsing failed with error = '{e}'"), 400))?;
         let device_name = device.device_name;
@@ -141,14 +139,14 @@ async fn update_devices(devices: Vec<serde_json::Value>, pool: &sqlx::Pool<Postg
                 VALUES
                     ($1, $2, $3, $4, $5, $6, $7)",
                 device_name, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values,
-            ).execute(pool).await
+            ).execute(&mut **transaction).await
         } else {
             sqlx::query!(
                 "UPDATE Analytics.devices
                 SET device_name=$1, latitude=$2, longitude=$3, management_hostname=$4, requested_metadata=$5, requested_metrics=$6, available_values=$7
                 WHERE device_id =$8",
                 device_name, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values, device.device_id,
-            ).execute(pool).await
+            ).execute(&mut **transaction).await
         };
         result.map_err(|e| (format!("Failed to update device with SQL Error = '{e}'"), 500))?;
 
@@ -156,7 +154,7 @@ async fn update_devices(devices: Vec<serde_json::Value>, pool: &sqlx::Pool<Postg
         // they'll be inserted again. This is done so removing items also has an effect
         let result = sqlx::query!(
             "DELETE FROM Analytics.device_data_sources WHERE device_id = $1", device.device_id
-        ).execute(pool).await;
+        ).execute(&mut **transaction).await;
         result.map_err(|e| (format!("Failed to update device with SQL Error = '{e}'"), 500))?;
 
         // Fresh insertion of data sources
@@ -168,7 +166,7 @@ async fn update_devices(devices: Vec<serde_json::Value>, pool: &sqlx::Pool<Postg
                     ($1, $2)
                 ON CONFLICT (device_id, fact_data_source) DO NOTHING",
                 device.device_id, datasource as DataSource
-            ).execute(pool).await;
+            ).execute(&mut **transaction).await;
             result.map_err(|e| (format!("Failed to update device with SQL Error = '{e}'"), 500))?;
         }
     }
@@ -176,7 +174,7 @@ async fn update_devices(devices: Vec<serde_json::Value>, pool: &sqlx::Pool<Postg
 }
 
 /// Updates the groups table and group_members table with new information
-async fn update_groups(groups: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
+async fn update_groups<'t>(groups: Vec<serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     for group in groups {
         let group : Group = serde_json::from_value(group).map_err(|e| (format!("Could not update group. Parsing failed with error = '{e}'"), 400))?;
         if group.group_id <= 0 {
@@ -186,7 +184,7 @@ async fn update_groups(groups: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgre
                 VALUES
                     ($1, $2)",
                 group.name, group.is_display_group
-            ).execute(pool).await
+            ).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not insert group. SQL Error = '{e}'"), 500))?;
         } else {
             sqlx::query!("
@@ -194,12 +192,12 @@ async fn update_groups(groups: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgre
                 SET group_name = $1, is_display_group = $2
                 WHERE group_id = $3",
                 group.name, group.is_display_group, group.group_id
-            ).execute(pool).await
+            ).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not update group. SQL Error = '{e}'"), 500))?;
 
             sqlx::query!(
                 "DELETE FROM Analytics.group_members WHERE group_id = $1", group.group_id
-            ).execute(pool).await
+            ).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not delete group members during update. SQL Error = '{e}'"), 500))?;
         }
 
@@ -211,7 +209,7 @@ async fn update_groups(groups: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgre
                     ($1, $2)
                 ON CONFLICT (group_id, item_id) DO NOTHING",
                 group.group_id, member
-            ).execute(pool).await
+            ).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not update group members durin gupdate. SQL Error = '{e}'"), 500))?;
         }
     }
@@ -220,7 +218,7 @@ async fn update_groups(groups: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgre
 }
 
 /// Updates the links table with new information
-async fn update_links(links: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
+async fn update_links<'t>(links: Vec<serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     for link in links {
         let link : Link = serde_json::from_value(link).map_err(|e| (format!("Could not update link. Parsing failed with error = '{e}'"), 500))?;
         
@@ -231,7 +229,7 @@ async fn update_links(links: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>
                 VALUES
                     ($1, $2, $3, $4, $5, $6)",
                 link.side_a, link.side_b, link.side_a_iface, link.side_b_iface, link.link_type as LinkType, link.link_subtype
-            ).execute(pool).await
+            ).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not insert link. SQL Error = '{e}'"), 500))?;
         } else {
             sqlx::query!("
@@ -242,7 +240,7 @@ async fn update_links(links: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>
                 link.side_a, link.side_b, link.side_a_iface,
                 link.side_b_iface, link.link_type as LinkType, link.link_subtype,
                 link.link_id
-            ).execute(pool).await
+            ).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not update link. SQL Error = '{e}'"), 500))?;
         }
     }
@@ -250,7 +248,7 @@ async fn update_links(links: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>
 }
 
 /// Updates the alert_rules table with new information
-async fn update_rules(rules: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
+async fn update_rules<'t>(rules: Vec<serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     for rule_in in rules {
         let definition = rule_in.get("rule-definition")
         .ok_or((format!("Could not update rule. 'rule-definition' is missing for rule"), 400))?.clone();
@@ -275,7 +273,7 @@ async fn update_rules(rules: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>
                 VALUES
                     ($1, $2, $3)",
                 rule.name, rule.requires_ack, definition
-            ).execute(pool).await
+            ).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not insert rule. SQL error = '{e}'"), 500))?;
         } else {
             log::info!("[INFO ][DB][UPDATES] Definition= {}", &definition);
@@ -284,7 +282,7 @@ async fn update_rules(rules: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>
                 SET rule_name=$1, requires_ack=$2, rule_definition=$3
                 WHERE rule_id =$4",
                 rule.name, rule.requires_ack, definition, rule.rule_id
-            ).execute(pool).await
+            ).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not update rule. SQL Error = '{e}'"), 500))?;
         }
     }
@@ -293,42 +291,42 @@ async fn update_rules(rules: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>
 }
 
 /// Deletes any entries in the groups table, that match the passed values
-async fn delete_groups(groups: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
+async fn delete_groups<'t>(groups: Vec<serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     for group in groups {
         let id = group.get("id")
             .ok_or( ("Could not delete group. 'id' is not present".to_string(), 400))?;
         let id = id.as_i64()
             .ok_or(("Could not delete group. 'id' is not of type i64".to_string(), 400))?;
 
-        sqlx::query!("DELETE FROM Analytics.groups WHERE group_id = $1", id).execute(pool).await
+        sqlx::query!("DELETE FROM Analytics.groups WHERE group_id = $1", id).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not delete group. SQL Error = '{e}'"), 500))?;
     }
     Ok(())
 }
 
 /// Deletes any entries in the links table, that match the passed values
-async fn delete_links(links: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
+async fn delete_links<'t>(links: Vec<serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     for link in links {
         let id = link.get("id")
             .ok_or( ("Could not delete link. 'id' is not present".to_string(), 400))?;
         let id = id.as_i64()
             .ok_or(("Could not delete link. 'id' is not of type i64".to_string(), 400))?;
 
-        sqlx::query!("DELETE FROM Analytics.links WHERE link_id = $1", id).execute(pool).await
+        sqlx::query!("DELETE FROM Analytics.links WHERE link_id = $1", id).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not delete link. SQL Error = '{e}'"), 500))?;
     }
     Ok(())
 }
 
 /// Deletes any entries in the device table, that match the passed values
-async fn delete_devices(devices: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
+async fn delete_devices<'t>(devices: Vec<serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     for device in devices {
         let id = device.get("id")
             .ok_or( ("Could not delete device. 'id' is not present".to_string(), 400))?;
         let id = id.as_i64()
             .ok_or(("Could not delete device. 'id' is not of type i64".to_string(), 400))?;
 
-        sqlx::query!("DELETE FROM Analytics.devices WHERE device_id = $1", id).execute(pool).await
+        sqlx::query!("DELETE FROM Analytics.devices WHERE device_id = $1", id).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not delete device. SQL Error = '{e}'"), 500))?;
     }
     Ok(())
@@ -336,14 +334,14 @@ async fn delete_devices(devices: Vec<serde_json::Value>, pool: &sqlx::Pool<Postg
 
 /// Deletes any entries in the alert_rules table, that match the passed values
 /// Do note that deleting any rules will not affect the persistance of rule events, but they'll point to a non-existant rule
-async fn delete_rules(rules: Vec<serde_json::Value>, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
+async fn delete_rules<'t>(rules: Vec<serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     for rule in rules {
         let id = rule.get("id")
             .ok_or( ("Could not delete rule. 'id' is not present".to_string(), 400))?;
         let id = id.as_i64()
             .ok_or(("Could not delete rule. 'id' is not of type i64".to_string(), 400))?;
 
-        sqlx::query!("DELETE FROM Analytics.alert_rules WHERE rule_id = $1", id).execute(pool).await
+        sqlx::query!("DELETE FROM Analytics.alert_rules WHERE rule_id = $1", id).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not delete rule. SQL Error = '{e}'"), 500))?;
     }
     Ok(())

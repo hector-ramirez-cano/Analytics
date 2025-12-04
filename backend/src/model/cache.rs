@@ -55,11 +55,14 @@ impl Cache {
 
         // Consult database for initial state
         // Unwrap: if the database can't be notified, it _must_ panic and prevent execution
-        update_topology_cache(pool, true).await.unwrap();
+        let mut connection = pool.acquire().await.unwrap();
+        
+        update_topology_cache(&mut connection, true).await.unwrap();
     }
 
     pub async fn update_topology(&self, pool: &sqlx::Pool<sqlx::Postgres>, forced: bool) -> Result<(), AegisError>{
-        update_topology_cache(pool, forced).await
+        let mut connection = pool.acquire().await.map_err(|e| AegisError::Sql(e))?;
+        update_topology_cache(&mut connection, forced).await
     }
 
     /// Devices API

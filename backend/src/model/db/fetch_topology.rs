@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use rocket::futures::TryFutureExt;
 use sqlx::Postgres;
+use sqlx::pool::PoolConnection;
 
 use crate::AegisError;
 use crate::misc::parse_json_array;
@@ -32,8 +33,10 @@ impl From<Option<DeviceDataSource>> for DeviceDataSource {
 }
 
 pub async fn get_topology_as_json(pool: &sqlx::PgPool) -> Result<serde_json::Value, AegisError> {
+    let mut conn = pool.acquire().await.map_err(|e| AegisError::Sql(e))?;
+
     // Update before returning, if needed
-    update_topology_cache(pool, false).await?;
+    update_topology_cache(&mut conn, false).await?;
 
     // returning from Cache, Cache handles it
     Cache::instance().as_json().await
@@ -73,7 +76,7 @@ pub async fn get_topology_view_as_json(pool: &sqlx::Pool<Postgres>) -> Result<se
 
 
 
-pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<DeviceId, Device>, AegisError>{
+pub async fn query_devices(conn: &mut PoolConnection<Postgres>) -> Result<HashMap<DeviceId, Device>, AegisError>{
     // Query datasources
     let mut datasources : HashMap<DeviceId, HashSet<DataSource>> = HashMap::new();
     let rows = sqlx::query_as!(
@@ -84,7 +87,7 @@ pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<DeviceId, Devi
             FROM Analytics.device_data_sources
             "#
     )
-        .fetch_all(&*pool)
+        .fetch_all(&mut **conn)
         .await
         .map_err(|e| AegisError::Sql(e))?;
 
@@ -101,7 +104,7 @@ pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<DeviceId, Devi
         "SELECT Analytics.devices.device_id, device_name, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values 
         FROM Analytics.devices;"
     )
-    .fetch_all(&*pool)
+    .fetch_all(&mut **conn)
     .await
     .map_err(|e| {
         println!("[ERROR][DB]Failed to SELECT devices from database with error = '{}'", &e.to_string());
@@ -141,12 +144,12 @@ pub async fn query_devices(pool: &sqlx::PgPool) -> Result<HashMap<DeviceId, Devi
 }
 
 
-pub async fn query_links(pool: &sqlx::PgPool) -> Result<HashMap<LinkId, Link>, AegisError> {
+pub async fn query_links(conn: &mut PoolConnection<Postgres>) -> Result<HashMap<LinkId, Link>, AegisError> {
     let rows = sqlx::query_as!(
         Link,
         r#"SELECT link_id, side_a, side_b, side_a_iface, side_b_iface, link_type::TEXT as "link_type: LinkType", link_subtype FROM Analytics.links;"#
     )
-    .fetch_all(&*pool)
+    .fetch_all(&mut **conn)
     .await
     .map_err(|e| AegisError::Sql(e))?;
 
@@ -158,7 +161,7 @@ pub async fn query_links(pool: &sqlx::PgPool) -> Result<HashMap<LinkId, Link>, A
     Ok(links)
 }
 
-pub async fn query_groups(pool: &sqlx::PgPool) -> Result<HashMap<GroupId, Group>, AegisError>{
+pub async fn query_groups(conn: &mut PoolConnection<Postgres>) -> Result<HashMap<GroupId, Group>, AegisError>{
     let rows = sqlx::query_as!(
         Group,
         r#"
@@ -168,7 +171,7 @@ pub async fn query_groups(pool: &sqlx::PgPool) -> Result<HashMap<GroupId, Group>
             GROUP BY g.group_id, g.group_name;
         "#
     )
-    .fetch_all(&*pool)
+    .fetch_all(&mut **conn)
     .map_err(|e| AegisError::Sql(e))
     .await?;
 
