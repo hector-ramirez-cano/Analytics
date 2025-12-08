@@ -106,7 +106,7 @@ INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_sta
 
 -- TRUNCATE Analytics.alerts; DELETE FROM Analytics.alert_rules;
 INSERT INTO Analytics.alert_rules (rule_id, rule_name, requires_ack, rule_definition)
-    VALUES  (1, 'ICMP_RTT > 100ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","data-source":"facts","rule-type": "simple", "predicates":[{"left":"&icmp_rtt","op":"more_than","right":60}]}'),
+    VALUES  (1, 'ICMP_RTT > 100ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","data-source":"facts","rule-type": "simple", "predicates":[{"left-modifier": {"multi": {"operations": [{"add": -20.0}, {"mul": 0.95}]}}, "left":"&icmp_rtt","op":"more_than","right":60}]}'),
             (2, 'Syslog SSH', TRUE, '{"severity":"emergency","target":2,"reduce-logic": "any","data-source":"syslog","rule-type": "simple", "predicates":[{"left":"&syslog_message","op":"contains","right":"ssh"}, {"left":"&syslog_message","op":"contains","right":"login"}]}');
 
 SELECT * FROM Analytics.alert_rules;

@@ -4,7 +4,7 @@ mod alert_backend_tests {
 
     use sqlx::{Pool, Postgres};
 
-    use crate::{alerts::{AlertReduceLogic, AlertRule, AlertRuleKind, AlertSeverity, EvaluableItem, OperandModifier, alert_backend::AlertBackend}, model::{data::{device::Device, device_state::DeviceStatus}, db::pools::init_posgres_pool, facts::{fact_gathering_backend::{DeviceFacts, FactMessage}, icmp::icmp_status::IcmpStatus}}, types::MetricValue};
+    use crate::{alerts::{AlertPredicateOperation, AlertReduceLogic, AlertRule, AlertRuleKind, AlertSeverity, EvaluableItem, OperandModifier, alert_backend::AlertBackend}, model::{data::{device::Device, device_state::DeviceStatus}, db::pools::init_posgres_pool, facts::{fact_gathering_backend::{DeviceFacts, FactMessage}, icmp::icmp_status::IcmpStatus}}, types::MetricValue};
 
     #[tokio::test]
     pub async fn test_simple_alert_rules() {
@@ -704,7 +704,6 @@ mod alert_backend_tests {
             ]
         });
 
-
         let rule_string_prepend = serde_json::json!({
             "id": 1,
             "name": "TEST RULE - Prepend",
@@ -782,28 +781,22 @@ mod alert_backend_tests {
         });
 
         let modifier = OperandModifier::Multi {
-            first: Box::new(OperandModifier::ReplaceN { 
-                pattern: "=".to_string(),
-                with: "".to_string(),
-                count: 1
-            }),
-            then: Box::new(OperandModifier::Multi {
-                first: Box::new(OperandModifier::ReplaceN { 
+            operations: vec![
+                OperandModifier::ReplaceN { 
                     pattern: "=".to_string(),
                     with: "".to_string(),
                     count: 1
-                }),
-                then: Box::new(OperandModifier::Multi {
-                    first: Box::new(OperandModifier::Lower),
-                    then: Box::new(OperandModifier::Multi {
-                        first: Box::new(OperandModifier::Prepend("Un".to_string())),
-                        then: Box::new(OperandModifier::Multi {
-                            first: Box::new(OperandModifier::Trim),
-                            then: Box::new(OperandModifier::Append("able".to_string()))
-                        }) 
-                    })
-                })
-            })
+                },
+                OperandModifier::ReplaceN { 
+                    pattern: "=".to_string(),
+                    with: "".to_string(),
+                    count: 1
+                },
+                OperandModifier::Lower,
+                OperandModifier::Prepend("Un".to_string()),
+                OperandModifier::Trim,
+                OperandModifier::Append("able".to_string())
+            ],
         };
         let rule_string_multi = serde_json::json!({
             "id": 1,
@@ -823,6 +816,44 @@ mod alert_backend_tests {
                 }
             ]
         });
+
+        let complex_modifier = OperandModifier::Multi {
+            operations: vec![
+                OperandModifier::Add(-20.0),
+                OperandModifier::Mul(0.95),
+                OperandModifier::Rem(20.0),
+                OperandModifier::Add(5.5),
+                OperandModifier::Mod(15),
+                OperandModifier::Pow(1.5)
+            ]
+        };
+
+        let rule_complex_modifier = serde_json::json!({
+            "id": 1,
+            "name": "TEST RULE - Prepend",
+            "requires-ack": true,
+            "severity": AlertSeverity::Debug,
+            "target": 10,
+            "reduce-logic": AlertReduceLogic::All,
+            "rule-type": "simple",
+            "data-source": "facts",
+            "predicates": [
+                {
+                    "left-modifier": complex_modifier.clone(),
+                    "left": "&icmp_rtt",
+                    "op": AlertPredicateOperation::MoreThan,
+                    "right": 2.8,
+                },
+                {
+                    "left-modifier": complex_modifier.clone(),
+                    "left": "&icmp_rtt",
+                    "op": AlertPredicateOperation::LessThan,
+                    "right": 3,
+                }
+            ]
+        });
+
+        
         println!("{}", serde_json::json!(rule_string_multi));
 
         let rule1: AlertRule = serde_json::from_value(rule_right_75                         ).expect("Definition should be valid"); // TRUE
@@ -838,6 +869,7 @@ mod alert_backend_tests {
         let ruleb: AlertRule = serde_json::from_value(rule_string_replace                   ).expect("Definition should be valid"); // TRUE
         let rulec: AlertRule = serde_json::from_value(rule_string_replace_n                 ).expect("Definition should be valid"); // FALSE
         let ruled: AlertRule = serde_json::from_value(rule_string_multi                     ).expect("Definition should be valid"); // TRUE
+        let rulee: AlertRule = serde_json::from_value(rule_complex_modifier                 ).expect("Definition should be valid"); // TRUE
         
         assert!(device.clone().eval(&rule1, &dataset, &dataset).await.is_some()); // TRUE
         assert!(device.clone().eval(&rule2, &dataset, &dataset).await.is_some()); // TRUE
@@ -852,6 +884,7 @@ mod alert_backend_tests {
         assert!(device.clone().eval(&ruleb, &dataset, &dataset).await.is_some()); // TRUE
         assert!(device.clone().eval(&rulec, &dataset, &dataset).await.is_none()); // FALSE
         assert!(device.clone().eval(&ruled, &dataset, &dataset).await.is_some()); // TRUE
+        assert!(device.clone().eval(&rulee, &dataset, &dataset).await.is_some()); // TRUE
     }
 
 }

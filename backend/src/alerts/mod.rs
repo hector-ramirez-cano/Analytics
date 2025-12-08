@@ -119,7 +119,7 @@ pub struct AlertEvent {
     /// At creation, this is guaranteed to not be None
     #[serde(rename = "rule-id")]
     pub rule_id: Option<AlertRuleId>,
-    
+
     /// String representation of the value that raised.
     pub value: String,
 }
@@ -144,16 +144,23 @@ pub struct Accessor {
 
 /// Defines which optional operation to apply to an operand.
 /// If the types are not valid, the operation will be ignored
-/// 
+///
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all="lowercase")]
 pub enum OperandModifier {
+    //                _ _   _                    _   _
+    //     /\        (_) | | |                  | | (_)
+    //    /  \   _ __ _| |_| |__  _ __ ___   ___| |_ _  ___
+    //   / /\ \ | '__| | __| '_ \| '_ ` _ \ / _ \ __| |/ __|
+    //  / ____ \| |  | | |_| | | | | | | | |  __/ |_| | (__
+    // /_/    \_\_|  |_|\__|_| |_|_| |_| |_|\___|\__|_|\___|
+
     /// Arithemtic operation `Addition`. Always results in MetricValue::Number
     Add(f64),
 
     /// Arithemtic operation `Multiplication`. Always results in MetricValue::Number
     Mul(f64),
-    
+
     /// Arithemtic operation `Modulo`. Always results in MetricValue::Integer. Contents are denominator
     Mod(i64),
 
@@ -162,6 +169,46 @@ pub enum OperandModifier {
 
     /// Arithemtic operation `Power`. Always results in MetricValue::Number. Contents are expontent
     Pow(f64),
+
+    /// Arithmetic operation `Floor`. Always results in a MetricValue::Integer.
+    ///
+    /// Follows rust definition for Floor:
+    ///
+    /// Returns the largest integer less than or equal to `self`
+    Floor,
+
+    /// Arithmetic operation `Ceil`. Always results in a MetricValue::Integer.
+    ///
+    /// Follows rust definition for Ceil:
+    ///
+    /// Returns the smallest integer greater than or equal to `self`.
+    Ceil,
+
+    /// Arithemtic operation `Round`. Returns the nearest integer. Always results in MetricValue::Integer.
+    ///
+    /// Follows rust definition for round:
+    ///
+    /// Returns the nearest integer to `self`. If a value is half-way between two
+    /// integers, round away from `0.0`.
+    Round,
+
+    /// Arithemtic operation `Round`. Returns the nearest integer. Always results in MetricValue::Integer.
+    ///
+    /// Returns the integer part of any number
+    Truncate,
+
+    //  _____ _        _             
+    // /  ___| |      (_)            
+    // \ `--.| |_ _ __ _ _ __   __ _ 
+    //  `--. \ __| '__| | '_ \ / _` |
+    // /\__/ / |_| |  | | | | | (_| |
+    // \____/ \__|_|  |_|_| |_|\__, |
+    //                          __/ |
+    //                         |___/ 
+
+    /// Any-value operation `ToString`. Always results in MetricValue::String.
+    #[serde(rename="toString")]
+    ToString,
 
     /// String operation `Append`. Always results in MetricValue::String. Contents are suffix
     Append(String),
@@ -184,8 +231,62 @@ pub enum OperandModifier {
     /// String operation `toUpper`. Always results in MetricValue::String. Turns the contents into uppercase
     Upper,
 
-    /// Multi operation. Applies `first`, and subsequently `then`
-    Multi{ first: Box<Self>, then: Box<Self> },
+    //    ______ _ _            _          
+    //    | ___ (_) |          (_)         
+    //    | |_/ /_| |___      ___ ___  ___ 
+    //    | ___ \ | __\ \ /\ / / / __|/ _ \
+    //    | |_/ / | |_ \ V  V /| \__ \  __/
+    //    \____/|_|\__| \_/\_/ |_|___/\___|
+    
+    /// Bitwise operation `And`. Always results in MetricValue::Integer. Applies an AND mask.
+    /// 
+    /// If input is not integer, it's not modified
+    #[serde(rename="bitwiseAnd")]
+    BitwiseAnd(i64),
+
+    /// Bitwise operation `Or`. Always results in MetricValue::Integer. Applies an Or mask.
+    /// 
+    /// If input is not integer, it's not modified
+    #[serde(rename="bitwiseOr")]
+    BitwiseOr(i64),
+
+    /// Bitwise operation `Xor`. Always results in MetricValue::Integer. Applies an XOR mask.
+    /// 
+    /// If input is not integer, it's not modified
+    #[serde(rename="bitwiseXor")]
+    BitwiseXor(i64),
+
+    /// Bitwise operation `Left Shift`. Always results in MetricValue::Integer. LShifts the value. Param is shift position count
+    /// 
+    /// New bits are set to 0x0
+    /// If input is not integer, it's not modified
+    #[serde(rename="bitwiseLshift")]
+    BitwiseLShift(i8),
+
+    /// Bitwise operation `Right Shift`. Always results in MetricValue::Integer. LShifts the value. Param is shift position count
+    /// 
+    /// New bits are set to 0x0
+    /// If input is not integer, it's not modified
+    #[serde(rename="bitwiseRshift")]
+    BitwiseRShift(i8),
+
+    /// Bitwise operation `One's Complement`. Always results in MetricValue::Integer. Applies One's complement to the value
+    /// 
+    /// If input is not integer, it's not modified
+    #[serde(rename="bitwiseComplement")]
+    BitwiseComplement,
+
+    //     _____ _   _               
+    //    |  _  | | | |              
+    //    | | | | |_| |__   ___ _ __ 
+    //    | | | | __| '_ \ / _ \ '__|
+    //    \ \_/ / |_| | | |  __/ |   
+    //     \___/ \__|_| |_|\___|_|   
+    //                               
+    //                               
+
+    /// Multi operation. Applies the operations in order
+    Multi{ operations: Vec<Self> },
 
     /// Default operation. Does nothing
     #[serde(other)]
@@ -375,7 +476,7 @@ pub enum EvaluableItem {
 type EvalResult= (OperandModifier, MetricValue, AlertPredicateOperation, MetricValue, OperandModifier);
 
 impl EvaluableItem {
-    async fn eval_device<'a>(device: Device, rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage) 
+    async fn eval_device<'a>(device: Device, rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage)
         -> Option<(EvaluableItem, Vec<EvalResult>)> {
         let dataset_right = &dataset_right.get(&device.management_hostname)?.metrics;
 
@@ -395,14 +496,14 @@ impl EvaluableItem {
                     Some((EvaluableItem::Device(device), which))
                 } else { None }
             },
-            
+
             AlertRuleKind::Sustained { seconds } => {
                 if !rule.eval_single(&dataset_right) {
                     // returned false, we let the backend know that it should reset the counter (if any)
                     AlertBackend::sustained_reset(rule.rule_id, device.device_id).await;
                     return None
-                } 
-                
+                }
+
                 // Rule returned true
                 // has it returned true before?
                 let t = match AlertBackend::sustained_check_first_raised(rule.rule_id, device.device_id).await {
@@ -418,19 +519,19 @@ impl EvaluableItem {
                     // Dayum, we need to raise. Also reset the alert so it doesn't trigger immediately again
                     let which = rule.raising_values(dataset_right, dataset_right);
                     AlertBackend::sustained_reset(rule.rule_id, device.device_id).await;
-                    
+
                     Some((EvaluableItem::Device(device), which))
                 } else {
                     // Not yet, Ferb
                     None
                 }
-                
+
             },
         }
     }
 
     /// Evaluates the rule with the given datasets. Returns the items for which the rule is raised
-    pub async fn eval<'a>(self, rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage) 
+    pub async fn eval<'a>(self, rule: &'a AlertRule, dataset_left: &'a FactMessage, dataset_right: &'a FactMessage)
         -> Option<Vec<(EvaluableItem, Vec<EvalResult>)>> {
         let cache = Cache::instance();
         match self {

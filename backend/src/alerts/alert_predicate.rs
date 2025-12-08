@@ -6,7 +6,7 @@ use crate::types::{MetricSet, MetricValue};
 impl AlertPredicate {
 
     pub fn eval(&self, dataset_left: &MetricSet, dataset_right: &MetricSet) -> bool {
-        
+
         // Resolve sides
         let (lmod, left, op, right, rmod) = match self {
             AlertPredicate::LeftConst(lmod, left, op, accessor, rmod) => {
@@ -19,14 +19,14 @@ impl AlertPredicate {
                 (lmod, accessor_left.access(&dataset_left), op, accesor_right.access(&dataset_right), rmod)
             },
         };
-        #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating predicate with actual = {:?} {:?} {:?}", left, op, right); }
+        #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating predicate with actual = {:?}{} {:?} {:?}{}", left, lmod.to_string(), op, right, rmod.to_string()); }
 
         let (left, right) = if let Some(left) = lmod.eval(left) && let Some(right) = rmod.eval(right) {
             (left, right)
         } else {
             return false;
-        };        
-        
+        };
+
         // apply operation
         op.eval(&left, &right)
     }
@@ -75,9 +75,9 @@ impl AlertPredicate {
 impl ToString for AlertPredicate {
     fn to_string(&self) -> String {
         match self {
-            AlertPredicate::LeftConst (lmod, metric_value, op, accessor, rmod) => format!("{} {} {} {} {}", lmod.to_string(), metric_value.to_string(), op.to_string(), accessor.key, rmod.to_string()),
-            AlertPredicate::RightConst(lmod, accessor, op, metric_value, rmod) => format!("{} {} {} {} {}", lmod.to_string(), accessor.key, op.to_string(),metric_value.to_string() , rmod.to_string()),
-            AlertPredicate::Variable  (lmod, accessor, op, accessor1, rmod) => format!("{} {} {} {} {}", lmod.to_string(), accessor.key, op.to_string(), accessor1.key, rmod.to_string()),
+            AlertPredicate::LeftConst (lmod, metric_value, op, accessor, rmod) => format!("{}{} {} {}{}", metric_value.to_string    (), lmod.to_string() , op.to_string(), accessor.key, rmod.to_string()),
+            AlertPredicate::RightConst(lmod, accessor, op, metric_value, rmod) => format!("{}{} {} {}{}", accessor.key, op.to_string(), lmod.to_string() , metric_value.to_string() , rmod.to_string()),
+            AlertPredicate::Variable  (lmod, accessor, op, accessor1, rmod) => format!("{}{} {} {}{}"   , accessor.key, op.to_string(), lmod.to_string() , accessor1.key, rmod.to_string()),
         }
     }
 }

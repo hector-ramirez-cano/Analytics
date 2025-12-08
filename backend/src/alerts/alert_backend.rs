@@ -410,7 +410,7 @@ impl AlertBackend {
                         },
                         crate::alerts::EvaluableItem::Device(device) => {
                             let which = which.iter()
-                                .map(|(lmod, lhs, op, rhs, rmod)| format!("[{} {} {} {} {}]", lmod, lhs, op, rhs, rmod)).collect::<Vec<_>>().join(", ");
+                                .map(|(lmod, lhs, op, rhs, rmod)| format!("[{}{} {} {}{}]", lhs, lmod, op, rhs, rmod)).collect::<Vec<_>>().join(", ");
 
                             AlertBackend::raise_alert(rule, &device, which, &event_tx).await;
                         },

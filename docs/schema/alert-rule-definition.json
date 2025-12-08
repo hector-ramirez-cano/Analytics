@@ -96,6 +96,19 @@
         { "$ref": "#/OperationModifierDefinitions/rem" },
         { "$ref": "#/OperationModifierDefinitions/pow" },
 
+        { "$ref": "#/OperationModifierDefinitions/truncate" },
+        { "$ref": "#/OperationModifierDefinitions/ceil"     },
+        { "$ref": "#/OperationModifierDefinitions/floor"    },
+        { "$ref": "#/OperationModifierDefinitions/round"    },
+        
+        { "$ref": "#/OperationModifierDefinitions/bitwiseAnd"},
+        { "$ref": "#/OperationModifierDefinitions/bitwiseOr"},
+        { "$ref": "#/OperationModifierDefinitions/bitwiseXor"},
+        { "$ref": "#/OperationModifierDefinitions/bitwiseLShift"},
+        { "$ref": "#/OperationModifierDefinitions/bitwiseLRhift"},
+        { "$ref": "#/OperationModifierDefinitions/bitwiseComplement"},
+
+
         { "$ref": "#/OperationModifierDefinitions/append"   },
         { "$ref": "#/OperationModifierDefinitions/prepend"  },
         { "$ref": "#/OperationModifierDefinitions/trim"     },
@@ -111,10 +124,15 @@
       "properties": {
         "multi": {
           "type": "object",
-          "required": ["first", "then"],
+          "required": ["operations"],
           "properties": {
-            "first": { "$ref": "#/OperationModifierDefinitions/Modifier" },
-            "then":  { "$ref": "#/OperationModifierDefinitions/Modifier" }
+            "operations": { 
+              "type": "array",
+              "minLength" : 1,
+              "properties": {
+                "$ref": "#/OperationModifierDefinitions/Modifier"
+              }
+            }
           },
           "additionalProperties": false
         }
@@ -165,6 +183,95 @@
         "pow": { "type": "number" }
       },
       "required": ["pow"],
+      "additionalProperties": false
+    },
+
+    "truncate": {
+      "type": "object",
+      "properties": {
+        "truncate": { "type": "null" }
+      },
+      "required": ["truncate"],
+      "additionalProperties": false
+    },
+
+    "ceil": {
+      "type": "object",
+      "properties": {
+        "ceil": { "type": "null" }
+      },
+      "required": ["ceil"],
+      "additionalProperties": false
+    },
+
+    "floor": {
+      "type": "object",
+      "properties": {
+        "floor": { "type": "null" }
+      },
+      "required": ["floor"],
+      "additionalProperties": false
+    },
+
+    "round": {
+      "type": "object",
+      "properties": {
+        "round": { "type": "null" }
+      },
+      "required": ["round"],
+      "additionalProperties": false
+    },
+
+    "bitwiseAnd": {
+      "type": "object",
+      "properties": {
+        "bitwiseAnd": { "type": "integer" }
+      },
+      "required": ["bitwiseAnd"],
+      "additionalProperties": false
+    },
+
+    "bitwiseOr": {
+      "type": "object",
+      "properties": {
+        "bitwiseOr": { "type": "integer" }
+      },
+      "required": ["bitwiseOr"],
+      "additionalProperties": false
+    },
+
+    "bitwiseXor": {
+      "type": "object",
+      "properties": {
+        "bitwiseXor": { "type": "integer" }
+      },
+      "required": ["bitwiseXor"],
+      "additionalProperties": false
+    },
+
+    "bitwiseLShift": {
+      "type": "object",
+      "properties": {
+        "bitwiseLShift": { "type": "integer", "minimum": 1, "maximum": 64}
+      },
+      "required": ["bitwiseLShift"],
+      "additionalProperties": false
+    },
+    "bitwiseRShift": {
+      "type": "object",
+      "properties": {
+        "bitwiseRShift": { "type": "integer", "minimum": 1, "maximum": 64}
+      },
+      "required": ["bitwiseRShift"],
+      "additionalProperties": false
+    },
+
+    "bitwiseComplement": {
+      "type": "object",
+      "properties": {
+        "bitwiseComplement": { "type": "null" }
+      },
+      "required": ["bitwiseComplement"],
       "additionalProperties": false
     },
 
