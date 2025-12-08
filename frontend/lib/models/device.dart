@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:free_map/free_map.dart';
 import 'package:aegis/models/analytics_item.dart';
 import 'package:aegis/models/topology.dart';
@@ -167,8 +168,16 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     }
     return Paint()
       ..shader = AppColors.deviceUnknownGradient.createShader(rect);  
-    
+  }
 
+  Color getStatusColor() {
+    if (reachable == true) {
+      return AppColors.deviceUpColor;
+    }
+    if (reachable == false) {
+      return AppColors.deviceDownColor;
+    }
+    return AppColors.deviceUnknownColor;
   }
 
   /// Returns whether a given [metric] is modified in the current instance, in reference to the original [topology]

@@ -4,6 +4,7 @@ import 'package:aegis/models/device.dart';
 import 'package:aegis/models/topology.dart';
 import 'package:aegis/services/realtime/alerts_realtime_service.dart';
 import 'package:aegis/services/topology/topology_provider.dart';
+import 'package:aegis/theme/app_colors.dart';
 import 'package:aegis/ui/components/overlays/alert_listing_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,7 +62,7 @@ class _AlertNotificationItemState extends ConsumerState<AlertNotificationItem> w
       children: [
         TweenAnimationBuilder<Color?>(
           key: ValueKey("AlertEntry_Notification_${widget.event.id}_ColorTween"),
-          tween: ColorTween(begin: Colors.green, end: const Color.fromARGB(0, 76, 175, 79)),
+          tween: ColorTween(begin: AppColors.alertRtColorEntry, end: AppColors.alertRtColorExit),
           duration: widget.seen ? const Duration(seconds: 0) : seenDuration,
           curve: Curves.easeInExpo,
           builder: (context, color, child) {
@@ -74,11 +75,11 @@ class _AlertNotificationItemState extends ConsumerState<AlertNotificationItem> w
             margin: EdgeInsets.fromLTRB(0, 4, 4, 4),
             padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.overlayBackgroundColor,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black26,
+                  color: AppColors.overlayRtOverlayShadowColor,
                   blurRadius: 4,
                   offset: const Offset(0, 0),
                 ),
@@ -137,20 +138,20 @@ class _AlertNotificationItemState extends ConsumerState<AlertNotificationItem> w
       ),
       subtitle: Text(
         localAlertTime,
-        style: const TextStyle(fontSize: 12, color: Colors.black54),
+        style: const TextStyle(fontSize: 12, color: AppColors.overlayRtOverlaySubtitleColor),
       ),
       childrenPadding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
       children: [
         Text(
           details,
-          style: const TextStyle(fontSize: 12, color: Colors.black87),
+          style: const TextStyle(fontSize: 12, color: AppColors.overlayRtOverlayDetailsColor),
         ),
         const SizedBox(height: 8),
         Align(
           alignment: Alignment.centerLeft,
           child: Text(
             "Origen: $name@$hostname",
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
+            style: const TextStyle(fontSize: 12, color: AppColors.overlayRtOverlaySubtitleColor),
           ),
         ),
       ],

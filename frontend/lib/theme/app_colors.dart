@@ -8,18 +8,38 @@ class AppColors {
   static const Color backgroundColor = Color(0xFFF5F5F5);
   static const Color selectedIconColor = Colors.blueAccent;
 
+  static const Color deviceUpColor = Color.fromRGBO(0, 128, 0, 1);
+  static const Color deviceDownColor = Color.fromRGBO(255, 0, 0, 1);
+  static const Color deviceUnknownColor = Color.fromRGBO(196, 148, 17, 1);
+
+  static const Color notificationBadgeIconColor = Colors.redAccent;
+  static const Color notificationUnknownStateBadgeColor = Colors.blueGrey;
+  static const Color notificationIconColor = Colors.white;
+
+  static const Color alertRtColorEntry = Colors.green;
+  static const Color alertRtColorExit = Color.fromARGB(0, 76, 175, 79);
+  static const Color overlayBackgroundColor = Colors.white;
+  static const Color overlayRtOverlayShadowColor = Colors.black26;
+  static const Color overlayRtOverlaySubtitleColor = Colors.black54;
+  static const Color overlayRtOverlayDetailsColor = Colors.black87;
+
+  static const Color alertRuleEditBadgeFontColor = Colors.black87;
+  static const Color alertRuleEditOpSelectorFontColor = Colors.white;
+  static const Color alertRuleEditOpSelectorSelectedBackgroundColor = Color.fromRGBO(41, 99, 138, 1);
+  static const Color alertRuleEditOpSelectorBackgroundColor = Colors.white;
+
   static final Gradient deviceUpGradient = RadialGradient(
-    colors: [Color.fromRGBO(0, 128, 0, 1), Color.fromRGBO(0, 128, 0, 0.90)],
+    colors: [deviceUpColor, deviceUpColor.withAlpha(200)],
     stops: [0.0, 1.0]
   );
 
   static final Gradient deviceDownGradient = RadialGradient(
-    colors: [Color.fromRGBO(255, 0, 0, 1), Color.fromRGBO(255, 86, 86, 0.894)],
+    colors: [deviceDownColor, Color.fromRGBO(255, 86, 86, 0.894)],
     stops: [0.0, 1.0]
   );
 
   static final Gradient deviceUnknownGradient = RadialGradient(
-    colors: [Color.fromRGBO(196, 148, 17, 1), Color.fromRGBO(207, 115, 8, 0.898)],
+    colors: [deviceUnknownColor, Color.fromRGBO(207, 115, 8, 0.898)],
     stops: [0.0, 1.0]
   );
 

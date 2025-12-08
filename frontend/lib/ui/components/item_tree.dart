@@ -40,7 +40,8 @@ extension on TreeNode {
     }
 
     if (this is TreeNode<Device>) {
-      return const Icon(Icons.dns, size: iconSize,);
+      final color = (data as Device).getStatusColor();
+      return Icon(Icons.dns, size: iconSize, color: color,);
     }
 
     if (this is TreeNode<AlertRule>) {

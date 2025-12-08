@@ -1,3 +1,4 @@
+import 'package:aegis/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,13 +47,13 @@ class _AlertNotificationItemState extends ConsumerState<BackendHealthNotificatio
             margin: EdgeInsets.fromLTRB(0, 4, 4, 4),
             padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.overlayBackgroundColor,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black26,
+                const BoxShadow(
+                  color: AppColors.overlayRtOverlayShadowColor,
                   blurRadius: 4,
-                  offset: const Offset(0, 0),
+                  offset: Offset(0, 0),
                 ),
               ],
             ),
@@ -72,7 +73,7 @@ class _AlertNotificationItemState extends ConsumerState<BackendHealthNotificatio
         TextSpan(text: widget.up ? widget.upIcon : widget.downIcon),
         style: TextStyle(
           fontSize: 20,
-          color: widget.up ? Colors.green : Colors.red,
+          color: widget.up ? AppColors.deviceUpColor : AppColors.deviceDownColor,
         ),
       ),
       title: Text(
@@ -82,7 +83,7 @@ class _AlertNotificationItemState extends ConsumerState<BackendHealthNotificatio
       ),
       subtitle: Text(
         widget.up ? "UP" : "DOWN",
-        style: const TextStyle(fontSize: 12, color: Colors.black54),
+        style: const TextStyle(fontSize: 12, color: AppColors.overlayRtOverlaySubtitleColor),
       ),
       childrenPadding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
       children: [
@@ -91,7 +92,7 @@ class _AlertNotificationItemState extends ConsumerState<BackendHealthNotificatio
             alignment: AlignmentGeometry.centerLeft,
             child: Text(
               widget.message,
-              style: const TextStyle(fontSize: 12, color: Colors.black87),
+              style: const TextStyle(fontSize: 12, color: AppColors.overlayRtOverlayDetailsColor),
             ),
           ),
       ],

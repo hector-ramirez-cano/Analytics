@@ -1,4 +1,5 @@
 import 'package:aegis/services/realtime/backend_health_service.dart';
+import 'package:aegis/theme/app_colors.dart';
 import 'package:aegis/ui/components/overlays/backend_health_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,13 +10,13 @@ class BackendHealthBadgeIcon extends StatelessWidget {
   
   Widget _buildNotificationBadgeIcon(WidgetRef ref) {
     String? badgeContent = "";
-    Color badgeColor = Colors.redAccent;
+    Color badgeColor = AppColors.notificationBadgeIconColor;
 
     final healthStatus = ref.watch(backendHealthServiceProvider);
 
     healthStatus.when(
       error: (_ ,_) => badgeContent = "?",
-      loading: () { badgeContent = "⧗"; badgeColor = Colors.blueGrey; } ,
+      loading: () { badgeContent = "⧗"; badgeColor = AppColors.notificationUnknownStateBadgeColor; } ,
       data: (status) {
         badgeContent = null;
       },
@@ -24,7 +25,7 @@ class BackendHealthBadgeIcon extends StatelessWidget {
     cursor() => badgeContent == "⧗" ? SystemMouseCursors.progress : SystemMouseCursors.click;
 
     return BadgeIcon(
-      icon: Icon(Icons.monitor_heart_sharp, size: 32, color: Colors.white,),
+      icon: Icon(Icons.monitor_heart_sharp, size: 32, color: AppColors.notificationIconColor,),
       badgeContent: badgeContent,
       badgeColor: badgeColor,
       tooltip: "Salud del Backend",

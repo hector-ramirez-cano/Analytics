@@ -1,3 +1,4 @@
+import 'package:aegis/theme/app_colors.dart';
 import 'package:aegis/ui/components/overlays/alert_listing_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,13 +10,13 @@ class AlertBadgeIcon extends StatelessWidget {
   
   Widget _buildNotificationBadgeIcon(WidgetRef ref) {
     String? badgeContent = "";
-    Color badgeColor = Colors.red;
+    Color badgeColor = AppColors.notificationBadgeIconColor;
     int alertCount = 0;
     final unreadNotifications = ref.watch(alertsRealtimeServiceProvider);
 
     unreadNotifications.when(
-      error: (_ ,_) { badgeContent = "?"; badgeColor = Colors.blueGrey; },
-      loading: () { badgeContent = "⧗"; badgeColor = Colors.blueGrey; },
+      error: (_ ,_) { badgeContent = "?"; badgeColor = AppColors.notificationUnknownStateBadgeColor; },
+      loading: () { badgeContent = "⧗"; badgeColor = AppColors.notificationUnknownStateBadgeColor; },
       data: (unseenAlerts) {
         alertCount = unseenAlerts.unseenCount;
         if (alertCount == 0) { badgeContent = null; }
@@ -34,7 +35,7 @@ class AlertBadgeIcon extends StatelessWidget {
 
     return BadgeIcon(
       cursor: badgeContent != null ?  cursor : null,
-      icon: Icon(Icons.notifications, size: 32, color: Colors.white,),
+      icon: Icon(Icons.notifications, size: 32, color: AppColors.notificationIconColor,),
       badgeContent: badgeContent,
       badgeColor: badgeColor,
       tooltip: "Notificaciones",

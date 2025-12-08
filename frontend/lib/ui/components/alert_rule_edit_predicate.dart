@@ -1,6 +1,7 @@
 import 'package:aegis/models/alerts/alert_operand.dart';
 import 'package:aegis/models/alerts/alert_operand_modifier.dart';
 import 'package:aegis/services/metrics/metadata_service.dart';
+import 'package:aegis/theme/app_colors.dart';
 import 'package:aegis/ui/components/operand_modifier_input_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +18,7 @@ const badgeButtonTextStyle = TextStyle(
   fontFamily: 'monospace',
   fontSize: 14,
   fontWeight: FontWeight.w500,
-  color: Colors.black87,
+  color: AppColors.alertRuleEditBadgeFontColor,
   letterSpacing: 0.5,
 );
 
@@ -292,7 +293,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
 
   Widget _makeOpSelector() {
     TextStyle style = TextStyle(fontSize: 18);
-    TextStyle selectedStyle = TextStyle(fontSize: 18, color: Colors.white);
+    TextStyle selectedStyle = TextStyle(fontSize: 18, color: AppColors.alertRuleEditOpSelectorFontColor);
     selected(AlertPredicateOperation op) => op == _predicate.op;
 
 
@@ -304,7 +305,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
           BadgeButton(
             text: op.toPrettyString(),
             textStyle: selected(op) ? selectedStyle : style,
-            backgroundColor: selected(op) ? Color.fromRGBO(41, 99, 138, 1) : Colors.white,
+            backgroundColor: selected(op) ? AppColors.alertRuleEditOpSelectorSelectedBackgroundColor: AppColors.alertRuleEditOpSelectorBackgroundColor,
             onPressed: _isOpEnabled(op) ? () => _handleOpToggle(op) : null,
           ),
       ],
