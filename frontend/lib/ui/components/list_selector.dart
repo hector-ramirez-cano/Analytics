@@ -16,14 +16,16 @@ Widget? noSubtitle(dynamic _) => null;
 Widget? _emptyDisplayTrailing(dynamic option) { return null; }
 String? _emptyGetTrailing(dynamic option) { return ""; }
 
-class ListSelector<T> extends ConsumerStatefulWidget {
+class ListSelector<T> extends StatefulWidget {
 
   final Set<T> options;
+  final bool shrinkWrap;
   final ListSelectorType selectorType;
   final bool Function(dynamic) isSelectedFn;
   final void Function(dynamic, bool?) onChanged;
   final String Function(dynamic) toText;
   final VoidCallback? onClose;
+  final VoidCallback? onClear;
   final void Function(bool)? onTristateToggle;
   final Icon? Function(dynamic) leadingIconBuilder;
   final Widget? Function(dynamic) subtitleBuilder;
@@ -44,6 +46,8 @@ class ListSelector<T> extends ConsumerStatefulWidget {
     required this.toText,
     required this.isAvailable,
     this.onTristateToggle,
+    this.onClear,
+    this.shrinkWrap = false,
     this.subtitleBuilder = noSubtitle,
     this.leadingIconBuilder = noIcon,
     this.onDisplayTrailing = _emptyDisplayTrailing,
@@ -51,14 +55,19 @@ class ListSelector<T> extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ListSelector> createState() => _ListSelectorState<T>();
+  State<ListSelector> createState() => _ListSelectorState<T>();
 }
 
-class _ListSelectorState<T> extends ConsumerState<ListSelector> {
+class _ListSelectorState<T> extends State<ListSelector> {
   static final _blankSpaceRegex = RegExp(r'\s');
   final ScrollController _scrollController = ScrollController();
+  late final TextEditingController _filterController;
 
-  String filterText = "";
+  @override
+  initState() {
+    super.initState();
+    _filterController = TextEditingController();
+  }
 
   List<T> fuzzySearch(String query, List<T> items) {
     final finalQuery = query.toLowerCase().replaceAll(_blankSpaceRegex, "");
@@ -80,6 +89,7 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: TextField(
+          controller: _filterController,
           decoration: const InputDecoration(
             floatingLabelBehavior: FloatingLabelBehavior.auto,
             labelText: "Buscar",
@@ -91,7 +101,6 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
           ),
           onChanged: (text) {
             setState(() {
-              filterText = text;
               _scrollController.animateTo(0, duration: const Duration(milliseconds: 500), curve: Curves.easeIn);
             });
           },
@@ -101,18 +110,33 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
   }
 
   Widget _makeCloseButton() {
-    if (widget.onClose == null) {
-      return SizedBox.shrink();
-    }
     return IconButton(
       icon: const Icon(Icons.close),
       onPressed: widget.onClose,
     );
   }
 
+  Widget _makeClearButton() {
+    return IconButton(
+      icon: const Icon(Icons.close),
+      onPressed: () {
+        setState(() {
+          _filterController.text = "";
+          _filterController.clear();
+          _scrollController.animateTo(0, duration: const Duration(milliseconds: 500), curve: Curves.easeIn);
+        });
+
+        if (widget.onClear != null) {
+          widget.onClear!();
+        }
+      }
+    );
+  }
+
   Widget _makeChecklist(List<T> list) {
     return Expanded(
       child: ListView.builder(
+        shrinkWrap: widget.shrinkWrap,
         controller: _scrollController,
         itemCount: list.length,
         itemBuilder: (context, index) {
@@ -137,9 +161,10 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
     );
   }
 
-    Widget _makeList(BuildContext context, List<T> list) {
+  Widget _makeList(BuildContext context, List<T> list) {
     return Expanded(
       child: ListView.builder(
+        shrinkWrap: widget.shrinkWrap,
         controller: _scrollController,
         itemCount: list.length,
         itemBuilder: (context, index) {
@@ -191,6 +216,7 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
 
     return Expanded(
       child: ListView.builder(
+        shrinkWrap: widget.shrinkWrap,
         controller: _scrollController,
         itemCount: radioButtons.length,
         itemBuilder: (context, index) {
@@ -205,22 +231,26 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
   }
 
   Widget _makeScrollList(BuildContext context) {
-    List<T> list = widget.options.toList() as List<T>;
-    if (filterText.isNotEmpty) {
-      List<T> options = widget.options.toList() as List<T>;
-      list = fuzzySearch(filterText, options);
-    }
+    return Consumer(builder:(context, ref, child) {
+      ref.watch(dialogRebuildProvider);
 
-    switch (widget.selectorType) {
-      case ListSelectorType.checkbox:
-        return _makeChecklist(list);
+      List<T> list = widget.options.toList() as List<T>;
+      if (_filterController.text.isNotEmpty) {
+        List<T> options = widget.options.toList() as List<T>;
+        list = fuzzySearch(_filterController.text, options);
+      }
 
-      case ListSelectorType.radio:
-        return _makeRadioList(list);
+      switch (widget.selectorType) {
+        case ListSelectorType.checkbox:
+          return _makeChecklist(list);
 
-      case ListSelectorType.none:
-        return _makeList(context, list);
-    }
+        case ListSelectorType.radio:
+          return _makeRadioList(list);
+
+        case ListSelectorType.none:
+          return _makeList(context, list);
+      } 
+    },);
   }
 
   Widget _makeToggleSelector() {
@@ -254,8 +284,6 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(dialogRebuildProvider);
-
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 20),
       child: Column(
@@ -263,7 +291,11 @@ class _ListSelectorState<T> extends ConsumerState<ListSelector> {
           Row(
             children: [
               _makeSearchBar(),
-              _makeCloseButton(),
+              if (widget.onClear != null)
+                _makeClearButton(),
+
+              if (widget.onClose != null)
+                _makeCloseButton(),
             ],
           ),
       

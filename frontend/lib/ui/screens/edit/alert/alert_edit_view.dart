@@ -1,4 +1,3 @@
-
 import 'package:aegis/models/alerts/alert_rule_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -368,12 +367,13 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
 
     return rule.definition.map((predicate) {
       return SettingsTile(
-        title: Row(
+        title: Wrap(
           spacing: 4,
+          runSpacing: 8,
           children: [
-            BadgeButton(text: predicate.left.toString()           , backgroundColor: bgColor, textStyle: consolasStyle,),
-            BadgeButton(text: predicate.op?.toPrettyString() ?? "", backgroundColor: bgColor, textStyle: consolasStyle,),
-            BadgeButton(text: predicate.right.toString()          , backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: "${predicate.left}${predicate.leftModifier}"    , backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: predicate.op?.toPrettyString() ?? ""                         , backgroundColor: bgColor, textStyle: consolasStyle,),
+            BadgeButton(text: "${predicate.right}${predicate.rightModifier}"  , backgroundColor: bgColor, textStyle: consolasStyle,),
           ],
         ),
         trailing: IconButton(onPressed: () => onRemovePredicate(predicate), icon: Icon(Icons.delete)),
@@ -408,7 +408,7 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
                 initialValue: null,
               )
             ).show(context),
-          icon: Icon(Icons.add_box),
+          icon: Icon(Icons.add),
         ),
         Spacer(),
       ],
