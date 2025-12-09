@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT telegram_chat_id FROM ClientIdentity.telegram_receiver WHERE authenticated AND subscribed;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "telegram_chat_id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "58ad383b2fdc9dc08911273f5fdda7cd3f98eb0ecc0fdc7ad5cd87116902681a"
+}

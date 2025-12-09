@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE Analytics.Alerts SET ack_actor = $1, ack_time = $2 WHERE alert_id = $3 AND ack_time IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f96674a44397980fb4c215e7358c3ca4d38c0562fa5ce10dc264790096c7c6fd"
+}

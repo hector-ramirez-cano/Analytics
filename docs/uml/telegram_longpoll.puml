@@ -1,0 +1,26 @@
+@startuml
+title Flujo de Long Polling para manejo de mensajes de Telegram
+
+actor "Usuario" as USR
+participant "API de Telegram" as TG
+participant "Backend" as BE
+database "Base de Datos" as DB
+
+
+== Recepción de mensaje de usuario ==
+USR -> TG: Envía mensaje
+
+BE --> TG: getUpdates()
+TG -> BE: updates (MessageID, ChatID, PeerID)
+
+== Procesamiento en Backend ==
+BE -> BE: Procesamiento\nde mensaje
+BE -> DB: Consulta PeerID
+DB --> BE: Datos/Estado del Peer
+
+
+== Respuesta al usuario ==
+BE -> TG: Envío de respuesta (usa ChatID)
+TG -> USR: 
+
+@enduml

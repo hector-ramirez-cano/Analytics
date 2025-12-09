@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT (telegram_user_id IS NULL OR telegram_user_id = $1) as valid, ack_actor_name FROM ClientIdentity.ack_tokens WHERE ack_token = $2;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "valid",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 1,
+        "name": "ack_actor_name",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null,
+      false
+    ]
+  },
+  "hash": "f183e5c1aa239d2224da5a2eab1180ae3ccdd5d234001dfc7fea2d1244a5ce2b"
+}

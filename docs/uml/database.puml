@@ -152,15 +152,17 @@ together {
       * ack_token : VARCHAR(128)
       --
       ack_actor : VARCHAR
+      can_ack: BOOLEAN
+      FK telegram_user_id : BIGINT
     }
 
-      dataclass "ClientIdentity.telegram_receiver" as telegram_receiver {
+    dataclass "ClientIdentity.telegram_receiver" as telegram_receiver {
 
       * telegram_user_id : BIGINT
       --
       authenticated : BOOLEAN
       subscribed : BOOLEAN
-      ack_token : VARCHAR(128)
+      FK ack_token : VARCHAR(128)
     }
 
     ' Relationships with crow's foot

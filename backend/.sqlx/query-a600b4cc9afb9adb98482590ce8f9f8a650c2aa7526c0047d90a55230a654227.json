@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT EXISTS(\n            SELECT 1 FROM ClientIdentity.telegram_receiver WHERE telegram_user_id = $1 AND authenticated is TRUE LIMIT 1\n        ) as authenticated\n        ",
+  "query": "\n        SELECT EXISTS(\n            SELECT 1 FROM ClientIdentity.telegram_receiver WHERE telegram_chat_id = $1 AND authenticated is TRUE LIMIT 1\n        ) as authenticated\n        ",
   "describe": {
     "columns": [
       {
@@ -18,5 +18,5 @@
       null
     ]
   },
-  "hash": "1070551b10a04f3e8a12cca3f66c64a4bc6b5c23eb247fab966decee2d3a3671"
+  "hash": "a600b4cc9afb9adb98482590ce8f9f8a650c2aa7526c0047d90a55230a654227"
 }

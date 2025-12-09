@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE ClientIdentity.ack_tokens SET telegram_user_id = $1 WHERE ack_token = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "49155e633cc1ea97d3a290ac247fd0c21676697f19f37a9508bc021c58cfae63"
+}

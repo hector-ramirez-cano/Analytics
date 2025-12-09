@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT ack_actor_name, can_ack FROM ClientIdentity.ack_tokens WHERE telegram_user_id = $1;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "ack_actor_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "can_ack",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "db60b953d4d3965bad144c5ed23413613f8a2b08857d02d6cb9bf7fc3df83ae6"
+}
