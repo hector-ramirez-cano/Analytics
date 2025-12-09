@@ -27,7 +27,7 @@ fn escape_with_backslash(s: &str, to_escape: &[char]) -> String {
 
 impl Handler {
     pub async fn send_message(client: &Client, chat_id: ChatPeerId, message: &str) {
-        let message = message.replace(".", "\\.");
+        let message = escape_with_backslash(&message, &['.', '=', '\\']);
         let method = tgbot::types::SendMessage::new(chat_id, &message).with_parse_mode(ParseMode::MarkdownV2);
         match client.execute(method).await {
             Ok(_) => (),
@@ -37,20 +37,23 @@ impl Handler {
         }
     }
 
-    pub async fn send_message_button(client: &Client, chat_id: ChatPeerId, message: &str, alert_id: AlertEventId) {
-        let message = message.replace(".", "\\.");
+    pub async fn send_message_button(client: &Client, chat_id: ChatPeerId, message: &str, alert_id: AlertEventId) -> Result<(ChatPeerId, i64), ()>{
+        let message = escape_with_backslash(&message, &['.', '=', '\\']);
         use tgbot::types::*;
         let yes_btn = InlineKeyboardButton::for_callback_data_struct("Ack", &TelegramAckAction{ chat_id, alert_id: alert_id, acked: true}).unwrap();
-        
+
         let keyboard = InlineKeyboardMarkup::default().add_row(vec![yes_btn]);
 
         let method = SendMessage::new(chat_id, &message)
             .with_reply_markup(keyboard)
             .with_parse_mode(ParseMode::MarkdownV2);
         match client.execute(method).await {
-            Ok(_) => (),
+            Ok(m) => {
+                Ok((m.chat.get_id(), m.id))
+            },
             Err(e) => {
-                log::error!("[ERROR][ALERTS][TELEGRAM] failed to send message = '{}' with error = '{e}'. Message will be dropped", &message);
+                log::error!("[ERROR][ALERTS][TELEGRAM] failed to send message with error = '{e}'. Message will be dropped");
+                Err(())
             }
         }
     }
@@ -286,11 +289,11 @@ impl Handler {
 lazy_static::lazy_static! {
     // Unwrap: if this regex is for some reason invalid, it _must_ panic
     static ref BOT_TAG_RE: Regex = Regex::new(
-        r"@.+?(\s|$)"
+        r"\/\S+?@.+?(\s|$)"
     ).unwrap();
 }
 
-async fn _handle_update_message(client: &Client, chat_id: Option<ChatPeerId>, user_id: Option<UserPeerId>, message: Message) {
+async fn _handle_incomming_message(client: &Client, chat_id: Option<ChatPeerId>, user_id: Option<UserPeerId>, message: Message) {
     let text = message.get_text();
     let (chat_id, user_id, text) = match (chat_id, user_id, text) {
         (Some(id), Some(user_id), Some(text)) => (id, user_id, text),
@@ -318,13 +321,63 @@ async fn _handle_update_message(client: &Client, chat_id: Option<ChatPeerId>, us
     }
 }
 
+async fn _handle_batch_message_ack(except: (ChatPeerId, i64), client: &Client, text: &str, callback_query: CallbackQuery) -> Result<(), ()> {
+    let instance = TelegramBackend::instance();
+
+    let mut transaction = match instance.pool.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            log::error!("[ERROR][TELEGRAM] Failed to init transaction for alert ack, with SQL Error = '{e}'");
+            return Err(());
+        }
+    };
+    let data : TelegramAckAction = match serde_json::from_str(&callback_query.data.unwrap_or_default()) {
+        Ok(v) => v,
+        Err(e) => {
+            log::error!("[ERROR][TELEGRAM] Failed to parse telegram ack action from callback query on ack button. Can't update ack status on messages on other chats! E = '{e}'");
+            return Err(());
+        }
+    };
+    let alert_id = data.alert_id;
+    let data = match telegram_operations::get_unacked_messages(data.alert_id, &mut transaction).await  {
+        Ok(d) => d,
+        Err(e) => {
+            log::error!("[ERROR][TELEGRAM] Failed to get unacked telegram messages from database, e = '{e}'"); 
+            return Err(())
+        }
+    };
+    let mut acked: Vec<i64> = Vec::with_capacity(data.len());
+    for pair in data.iter().filter(|f| f.0 != except.0 && f.1 != except.1) {
+        let method = EditMessageText
+            ::for_chat_message(pair.0, pair.1.into(), text)
+            .with_parse_mode(ParseMode::MarkdownV2);
+        if let Err(e) = client.execute(method).await {
+            log::warn!("[WARN ][TELEGRAM] Failed to update message contents after ack! error = {e}");
+            log::info!("                           ^ Chat Peer Id = {}, messageId= {}", pair.0, pair.1);
+        } else {
+            acked.push(pair.0.into());
+        }
+    }
+    if let Err(_) =  telegram_operations::ack_messages(alert_id, acked, &mut transaction).await {
+        log::error!("[ERROR][TELEGRAM] Failed to update acked messages in database");
+        return Err(());
+    }
+
+    if let Err(e) = transaction.commit().await {
+        log::error!("[ERROR][TELEGRAM] Failed to commit transaction during ack of alert. SQL Error = '{e}'");
+        return Err(());
+    }
+
+    Ok(())
+}
+
 async fn _handle_callback_query(client: &Client, callback_query: CallbackQuery) {
+
     // 1.- Extract the data
     let user = callback_query.from.id;
-    let result : TelegramAckAction = match callback_query.parse_data() {
+    let telegram_ack_action : TelegramAckAction = match callback_query.parse_data() {
         Ok(Some(a)) => a,
-        Ok(None) => return,
-        Err(_) => return,
+        Err(_) | Ok(None) => return,
     };
 
     let instance = TelegramBackend::instance();
@@ -335,7 +388,7 @@ async fn _handle_callback_query(client: &Client, callback_query: CallbackQuery) 
         Err(e) => {
             log::error!("[ERROR][TELEGRAM] Failed to init transaction for alert ack, with SQL Error = '{e}'");
             return;
-        } 
+        }
     };
 
     // 3.- Get the name of the ack actor as a string, not chat peer id
@@ -353,7 +406,7 @@ async fn _handle_callback_query(client: &Client, callback_query: CallbackQuery) 
         let method = AnswerCallbackQuery::new(&callback_query.id)
             .with_text(&notice)
             .with_show_alert(true);
-        
+
         if let Err(e) = client.execute(method).await {
             log::error!("[ERROR][TELEGRAM] Failed to send AnswerCallbackResponse after ack! error = {e}");
         };
@@ -361,7 +414,7 @@ async fn _handle_callback_query(client: &Client, callback_query: CallbackQuery) 
     }
 
     // 5.- Ack the alert in the database
-    if let Err(_) = alert_operations::ack_alert(result.alert_id, &ack_actor_name, &mut transaction).await {
+    if let Err(_) = alert_operations::ack_alert(telegram_ack_action.alert_id, &ack_actor_name, &mut transaction).await {
         log::error!("[ERROR][TELEGRAM] Failed to ack alert event! Rolling back...");
         return;
     }
@@ -383,36 +436,44 @@ async fn _handle_callback_query(client: &Client, callback_query: CallbackQuery) 
     };
 
     // 8.- Update the message reply
-    if let Some(MaybeInaccessibleMessage::Message(m)) = callback_query.message {
-        let keyboard = InlineKeyboardMarkup::default().add_row([]);
-        let method = EditMessageReplyMarkup::for_chat_message(result.chat_id, m.id)
-            .with_reply_markup(keyboard);
-
-        if let Err(e) = client.execute(method).await {
-            log::error!("[ERROR][TELEGRAM] Failed to update message reply inline Keyboard after ack! error = {e}");
+    let m = match &callback_query.message {
+        Some(MaybeInaccessibleMessage::Message(m)) => m,
+        None | _ => {
+            log::warn!("[WARN ][TELEGRAM] Ack'd for unavailable message. This is rare");
             return;
-        };
-        
-        let text = match m.get_text() {
-            Some(t) => &t.data,
-            None => {
-                log::error!("[ERROR][TELEGRAM] Failed to get text from message for update during ack");
-                return;
-            }
-        };
-        let text = format!("```Acked\n{}```\n{}", text, escape_with_backslash(&notice, &['.', '-']));
-        let method = EditMessageText
-            ::for_chat_message(result.chat_id, m.id, text)
-            .with_parse_mode(ParseMode::MarkdownV2);
-        if let Err(e) = client.execute(method).await {
-            log::error!("[ERROR][TELEGRAM] Failed to update message contents after ack! error = {e}");
-            return;
-        };
+        }
+    };
+    let keyboard = InlineKeyboardMarkup::default().add_row([]);
+    let method = EditMessageReplyMarkup::for_chat_message(telegram_ack_action.chat_id, m.id)
+        .with_reply_markup(keyboard);
 
-    } else {
-        log::warn!("[WARN ][TELEGRAM] Ack'd for unavailable message. This is rare");
+    if let Err(e) = client.execute(method).await {
+        log::error!("[ERROR][TELEGRAM] Failed to update message reply inline Keyboard after ack! error = {e}");
         return;
     };
+
+    let text = match m.get_text() {
+        Some(t) => &t.data,
+        None => {
+            log::error!("[ERROR][TELEGRAM] Failed to get text from message for update during ack");
+            return;
+        }
+    };
+    let text = format!("```Acked\n{}```\n{}", text, escape_with_backslash(&notice, &['.', '-']));
+    let method = EditMessageText
+        ::for_chat_message(telegram_ack_action.chat_id, m.id, text.clone())
+        .with_parse_mode(ParseMode::MarkdownV2);
+    if let Err(e) = client.execute(method).await {
+        log::error!("[ERROR][TELEGRAM] Failed to update message contents after ack! error = {e}");
+        return;
+    };
+
+    // 9.- Update messages on other chats that reference the same alert
+    if let Err(_) = _handle_batch_message_ack((m.chat.get_id(), m.id), client, &text, callback_query).await {
+        log::error!("[ERROR][TELEGRAM] Failed to update messages after ack")
+    }
+
+
 }
 
 impl UpdateHandler for Handler {
@@ -421,7 +482,7 @@ impl UpdateHandler for Handler {
         let user_id = update.get_user_id();
         match update.update_type {
             tgbot::types::UpdateType::Message(message) => {
-                _handle_update_message(&self.client, chat_id, user_id, message).await;
+                _handle_incomming_message(&self.client, chat_id, user_id, message).await;
             },
             tgbot::types::UpdateType::CallbackQuery(callback_query) => {
                 _handle_callback_query(&self.client, callback_query).await;

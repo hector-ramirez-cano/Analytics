@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT telegram_chat_id FROM ClientIdentity.telegram_receiver WHERE authenticated AND subscribed;",
+  "query": "SELECT telegram_chat_id FROM Telegram.receiver WHERE authenticated AND subscribed;",
   "describe": {
     "columns": [
       {
@@ -16,5 +16,5 @@
       false
     ]
   },
-  "hash": "58ad383b2fdc9dc08911273f5fdda7cd3f98eb0ecc0fdc7ad5cd87116902681a"
+  "hash": "672c5b96e9e362f647b242fc918c8be259b572964afcfadf1de3e107505bc4a7"
 }

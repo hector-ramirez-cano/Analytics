@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO Telegram.unacked_messages (alert_id, chat_peer_id, message_id) VALUES ($1, $2, $3)\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0aaa3de92b4f0494d91204aeb3b2027264d054b0c4349be14427402c21cd4d4b"
+}

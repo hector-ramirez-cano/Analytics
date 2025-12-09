@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT chat_peer_id, message_id FROM Telegram.unacked_messages\n    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "chat_peer_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "message_id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "10f5a193e9d604ea826862a1878b0f58abbdfe09482f787c5ef48dc824870284"
+}

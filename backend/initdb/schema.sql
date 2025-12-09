@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS Analytics.alert_rules (
 
 CREATE TYPE AlertSeverity AS ENUM ('emergency','alert','critical','error','warning','notice','info','debug','unknown');
 CREATE TABLE IF NOT EXISTS Analytics.alerts (
-    alert_id     BIGSERIAL,
+    alert_id     BIGSERIAL PRIMARY KEY,
     alert_time   TIMESTAMPTZ NOT NULL,
     ack_time     TIMESTAMPTZ,
     requires_ack BOOLEAN NOT NULL,
@@ -281,7 +281,10 @@ CREATE TABLE IF NOT EXISTS ClientIdentity.ack_tokens(
     telegram_user_id BIGINT -- managed by telegram, trusted to be unique
 );
 
-CREATE TABLE IF NOT EXISTS ClientIdentity.telegram_receiver(
+
+CREATE SCHEMA IF NOT EXISTS Telegram;
+
+CREATE TABLE IF NOT EXISTS Telegram.receiver(
     telegram_chat_id BIGINT PRIMARY KEY, --managed by telegram, trusted to be unique
     authenticated    BOOLEAN NOT NULL,
     subscribed       BOOLEAN NOT NULL,
@@ -289,4 +292,11 @@ CREATE TABLE IF NOT EXISTS ClientIdentity.telegram_receiver(
     ack_token        VARCHAR(128),
 
     FOREIGN KEY(ack_token) REFERENCES ClientIdentity.ack_tokens ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS Telegram.unacked_messages(
+    alert_id BIGINT NOT NULL,
+    chat_peer_id   BIGINT NOT NULL,
+    message_id     BIGINT NOT NULL,
+
+    FOREIGN KEY(alert_id) REFERENCES Analytics.alerts ON DELETE CASCADE
 );

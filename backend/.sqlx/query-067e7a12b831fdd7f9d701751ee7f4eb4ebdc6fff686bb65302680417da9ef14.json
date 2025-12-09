@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE Telegram.receiver SET subscribed = $1 WHERE telegram_chat_id = $2 AND authenticated = TRUE;\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bool",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "067e7a12b831fdd7f9d701751ee7f4eb4ebdc6fff686bb65302680417da9ef14"
+}

@@ -104,9 +104,9 @@ INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_sta
 
 -- TRUNCATE Analytics.alert_rules;
 
--- TRUNCATE Analytics.alerts; DELETE FROM Analytics.alert_rules;
+-- DELETE FROM Analytics.alerts; DELETE FROM Analytics.alert_rules;
 INSERT INTO Analytics.alert_rules (rule_id, rule_name, requires_ack, rule_definition)
-    VALUES  (1, 'ICMP_RTT > 100ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","data-source":"facts","rule-type": "simple", "predicates":[{"left-modifier": {"multi": {"operations": [{"add": -20.0}, {"mul": 0.95}]}}, "left":"&icmp_rtt","op":"more_than","right":60}]}'),
+    VALUES  (1, 'ICMP_RTT > 100ms', TRUE, '{"severity":"warning","target":1,"reduce-logic": "all","data-source":"facts","rule-type": "simple", "predicates":[{"left-modifier": {"multi": {"operations": [{"add": -20.0}, {"mul": 1.2}]}}, "left":"&icmp_rtt","op":"more_than","right":60}]}'),
             (2, 'Syslog SSH', TRUE, '{"severity":"emergency","target":2,"reduce-logic": "any","data-source":"syslog","rule-type": "simple", "predicates":[{"left":"&syslog_message","op":"contains","right":"ssh"}, {"left":"&syslog_message","op":"contains","right":"login"}]}');
 
 SELECT * FROM Analytics.alert_rules;
@@ -149,7 +149,7 @@ SELECT * FROM Syslog.system_events;
 SELECT * FROM Syslog.system_events WHERE received_at BETWEEN '2025-10-27T06:00:00Z' AND '2025-11-11T21:13:45Z';
 
 
-SELECT * FROM ClientIdentity.telegram_receiver;
+SELECT * FROM Telegram.receiver;
 
 SELECT * FROM ClientIdentity.ack_tokens;
 SELECT (telegram_user_id IS NULL) as empty FROM ClientIdentity.ack_tokens;
@@ -159,9 +159,11 @@ SELECT (1) as exists FROM ClientIdentity.ack_tokens WHERE ack_token = 'BE&d?bzhf
 
 SELECT (telegram_user_id IS NULL OR telegram_user_id = 824918361) as valid FROM ClientIdentity.ack_tokens WHERE ack_token = 'I9tslevG&YfdVAB@Fogy#';
 
-TRUNCATE ClientIdentity.telegram_receiver;
+TRUNCATE Telegram.receiver;
+TRUNCATE Telegram.unacked_messages;
+SELECT * FROM Telegram.unacked_messages;
 UPDATE ClientIdentity.ack_tokens SET telegram_user_id = NULL;
 
 SELECT EXISTS(
-            SELECT 1 FROM ClientIdentity.telegram_receiver WHERE telegram_user_id = 0 AND authenticated is TRUE
+            SELECT 1 FROM Telegram.receiver WHERE telegram_user_id = 0 AND authenticated is TRUE
         ) as authenticated

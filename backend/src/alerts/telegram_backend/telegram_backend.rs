@@ -1,7 +1,8 @@
 use std::{collections::HashSet, sync::{Arc, OnceLock}};
 
 use chrono_tz::Tz;
-use tgbot::{api::Client, handler::LongPoll};
+use rocket::futures::future::join_all;
+use tgbot::{api::Client, handler::LongPoll, types::ChatPeerId};
 use tokio::sync::{RwLock, mpsc::Receiver};
 
 use crate::{alerts::telegram_backend::Handler, model::db::operations::telegram_operations};
@@ -126,38 +127,76 @@ impl TelegramBackend {
     }
 
     fn spawn_telegram_alert_handler_task (mut alert_receiver: Receiver<AlertEvent>) {
-        rocket::tokio::spawn(async move { loop {
-            let event = match alert_receiver.recv().await {
-                None=> continue,
-                Some(monosodiumglutamate) => monosodiumglutamate
-            };
-            log::info!("[INFO ][ALERTS][TELEGRAM] Received an alert event");
-            let instance = TelegramBackend::instance();
+        rocket::tokio::spawn(async move { 
+            loop {
+                let event = match alert_receiver.recv().await {
+                    None=> continue,
+                    Some(monosodiumglutamate) => monosodiumglutamate
+                };
 
-            TelegramBackend::update_user_cache().await;
-            let chats = instance.subscribed_chats.read().await;
-            let client = &instance.client;
-            let device = Cache::instance().get_device(event.target_id).await;
-            let rule = AlertBackend::instance().get_rule_name(event.rule_id.unwrap_or(-1)).await.unwrap_or("[Regla eliminada]".to_string());
+                let instance = TelegramBackend::instance();
+                let pool_executor = &instance.pool;
+                log::info!("[INFO ][ALERTS][TELEGRAM] Received an alert event");
 
-            let (device, rule) = match (device, rule) {
-                (Some(device), rule) => (device, rule),
-                (_, _) => {
-                    log::error!("[ERROR][ALERTS][TELEGRAM] Failed to create rule string representation. Device or Rule invalid");
-                    continue
-                }
-            };
+                // 0.- Update the user cache and rule mapping to only send to auth'd users, and look up devices
+                TelegramBackend::update_user_cache().await;
+                let chats = instance.subscribed_chats.read().await;
+                let client = &instance.client;
+                let device = Cache::instance().get_device(event.target_id).await;
+                let rule = AlertBackend::instance().get_rule_name(event.rule_id.unwrap_or(-1)).await.unwrap_or("[Regla eliminada]".to_string());
 
-            let msg = format_alert(&event, &device, &rule);
-            if event.requires_ack {
-                for chat_id in chats.iter() {
-                    Handler::send_message_button(client, (*chat_id).into(), msg.as_str(), event.alert_id).await;
+                // 1.- Make a string representation of the alert event's rule
+                let (device, rule) = match (device, rule) {
+                    (Some(device), rule) => (device, rule),
+                    (_, _) => {
+                        log::error!("[ERROR][ALERTS][TELEGRAM] Failed to create rule string representation. Device or Rule invalid");
+                        continue
+                    }
+                };
+
+                let msg = format_alert(&event, &device, &rule);
+
+                // 2.- Update the Telegram listeners, and store their messages
+                if !event.requires_ack {
+                    for chat_id in chats.iter() {
+                        Handler::send_message(client, (*chat_id).into(), msg.as_str()).await;
+                    } 
+                    return;
+                } 
+                let futures = chats.iter().map(|chat_id| {
+                    Handler::send_message_button(
+                        client,
+                        (*chat_id).into(),
+                        msg.as_str(),
+                        event.alert_id,
+                    )
+                });
+                let msgs: Vec<(ChatPeerId, i64)> = join_all(futures).await.into_iter().filter_map(|f| f.ok()).collect();
+                if msgs.is_empty() { return; }
+
+                // 3.- Begin the transaction to store the Telegram messages as pending from Ack, so they can be later on updated
+                let mut transaction = match pool_executor.begin().await {
+                    Ok(t) => t,
+                    Err(e) => {
+                        log::error!("[ERROR][TELEGRAM] Failed to init ack message SQL transaction. SQL Error = '{}'", e);
+                        return;
+                    }
+                };
+
+                // 4.- Store the messages into the database
+                for msg in msgs {
+                    match telegram_operations::insert_unacked_message(event.alert_id, msg.0, msg.1, &mut transaction).await {
+                        Ok(_) => (),
+                        Err(e) => {
+                            log::error!("[ERROR][TELEGRAM] Failed to store message for future ack'ing. SQL Error = '{e}'")
+                        },
+                    }
                 }
-            } else {
-                for chat_id in chats.iter() {
-                    Handler::send_message(client, (*chat_id).into(), msg.as_str()).await;
+
+                if let Err(e) = transaction.commit().await {
+                    log::error!("[ERROR][TELEGRAM] Failed to commit transaction during ack of alert. SQL Error = '{e}'");
+                    return
                 }
-            }
         }});
     }
 

@@ -156,7 +156,8 @@ together {
       FK telegram_user_id : BIGINT
     }
 
-    dataclass "ClientIdentity.telegram_receiver" as telegram_receiver {
+  package Telegram {
+    dataclass "Telegram.receiver" as telegram_receiver {
 
       * telegram_user_id : BIGINT
       --
@@ -168,7 +169,17 @@ together {
     ' Relationships with crow's foot
     ack_tokens ||--o{ telegram_receiver : "ack_token"
   }
+
+  dataclass "Telegram.unacked_messages" as telegram_unacked {
+    --
+    alert_id : BIGINT
+    chat_peer_id: BIGINT
+    message_id: BIGINT
+  }
+  }
 }
+
+
 
 package types {
   enum ItemType {
