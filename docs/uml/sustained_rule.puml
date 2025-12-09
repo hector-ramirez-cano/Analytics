@@ -1,0 +1,34 @@
+@startuml
+title Algoritmo reglas sustained
+
+start
+
+repeat
+  :Recaba los datos;
+
+  :Evalúa la regla;
+
+  if (Regla.eval() True?) then (Sí)
+      
+      if (¿Existe en caché?) then (Sí)
+
+          if ((now - FirstTrue) > sustainTime?) then (Sí)
+              :Lanza alerta;
+              :Limpiar caché;
+          else (No)
+              ' No hace nada, solo vuelve a repetir
+          endif
+
+      else (No)
+          :Agregar a caché con FirstTrue = now;
+      endif
+
+  else (No)
+      :Limpiar caché;
+  endif
+
+repeat while (¿Siguiente ronda?) is (sí) not (no)
+
+stop
+
+@enduml
