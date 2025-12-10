@@ -11,6 +11,14 @@ use crate::alerts::telegram_backend::{Handler, TelegramAckAction};
 use crate::model::db::operations::{alert_operations, telegram_operations};
 use crate::types::AlertEventId;
 
+lazy_static::lazy_static! {
+    // Unwrap: if this regex is for some reason invalid, it _must_ panic
+    static ref BOT_TAG_RE: Regex = Regex::new(
+        r"\/\S+?@.+?(\s|$)"
+    ).unwrap();
+}
+
+
 fn escape_with_backslash(s: &str, to_escape: &[char]) -> String {
     let set: std::collections::HashSet<char> = to_escape.iter().cloned().collect();
 
@@ -286,20 +294,13 @@ impl Handler {
     }
 }
 
-lazy_static::lazy_static! {
-    // Unwrap: if this regex is for some reason invalid, it _must_ panic
-    static ref BOT_TAG_RE: Regex = Regex::new(
-        r"\/\S+?@.+?(\s|$)"
-    ).unwrap();
-}
-
 async fn _handle_incomming_message(client: &Client, chat_id: Option<ChatPeerId>, user_id: Option<UserPeerId>, message: Message) {
     let text = message.get_text();
     let (chat_id, user_id, text) = match (chat_id, user_id, text) {
         (Some(id), Some(user_id), Some(text)) => (id, user_id, text),
         (_, _, _) => return
     };
-    let text = BOT_TAG_RE.replace_all(&text.data, "$1");
+    let text = BOT_TAG_RE.replace(&text.data, "$1");
 
     let (command, args) = match text.trim().split_once(" ") {
         Some((cmd, args)) => (cmd, Some(args)),
