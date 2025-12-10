@@ -1,3 +1,5 @@
+import 'package:aegis/services/topology/topology_provider.dart';
+import 'package:aegis/theme/app_colors.dart';
 import 'package:animated_tree_view/tree_view/tree_node.dart';
 import 'package:animated_tree_view/tree_view/tree_view.dart';
 import 'package:animated_tree_view/tree_view/widgets/expansion_indicator.dart';
@@ -40,8 +42,13 @@ extension on TreeNode {
     }
 
     if (this is TreeNode<Device>) {
-      final color = (data as Device).getStatusColor();
-      return Icon(Icons.dns, size: iconSize, color: color,);
+      return Consumer(builder:(context, ref, child) {
+        final Color color = ref.watch(topologyServiceProvider).whenOrNull(data: (t) =>
+          t.items[(data as Device).id]?.getStatusColor() ?? AppColors.deviceUnknownColor
+        ) ?? AppColors.deviceUnknownColor;
+
+        return Icon(Icons.dns, size: iconSize, color: color,);
+      },);
     }
 
     if (this is TreeNode<AlertRule>) {

@@ -10,7 +10,8 @@ class AppColors {
 
   static const Color deviceUpColor = Color.fromRGBO(0, 128, 0, 1);
   static const Color deviceDownColor = Color.fromRGBO(255, 0, 0, 1);
-  static const Color deviceUnknownColor = Color.fromRGBO(196, 148, 17, 1);
+  static const Color deviceUpPartialColor = Color.fromRGBO(196, 148, 17, 1);
+  static const Color deviceUnknownColor = Color.fromRGBO(128, 128, 128, 1);
 
   static const Color notificationBadgeIconColor = Colors.redAccent;
   static const Color notificationUnknownStateBadgeColor = Colors.blueGrey;
@@ -38,8 +39,13 @@ class AppColors {
     stops: [0.0, 1.0]
   );
 
+  static final Gradient devicePartialUpGradient = RadialGradient(
+    colors: [deviceUpPartialColor, Color.fromRGBO(160, 119, 65, 0.89)],
+    stops: [0.0, 1.0]
+  );
+
   static final Gradient deviceUnknownGradient = RadialGradient(
-    colors: [deviceUnknownColor, Color.fromRGBO(207, 115, 8, 0.898)],
+    colors: [deviceUnknownColor, Color.fromRGBO(94, 94, 94, 0.894)],
     stops: [0.0, 1.0]
   );
 

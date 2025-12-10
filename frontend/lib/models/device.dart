@@ -9,10 +9,17 @@ import 'package:aegis/models/topology.dart';
 import 'package:aegis/services/canvas/canvas_interaction_service.dart';
 import 'package:aegis/theme/app_colors.dart';
 
+enum DeviceReachability {
+  reachable,
+  partial,
+  unreachable,
+  unknown
+}
+
 class Device extends GroupableItem<Device> implements HoverTarget{
   final LatLng geoPosition;  // Lat , Long
   final String mgmtHostname;
-  final bool? reachable;      // null => unknown
+  final DeviceReachability reachable;           
   final Map<String, dynamic>? statusMap; // null => reachable => unknown
 
   final Set<String> requestedMetadata;
@@ -47,7 +54,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
     Set? requestedMetrics,
     Set? availableValues,
     Set? dataSources,
-    bool? reachable,
+    DeviceReachability? reachable,
     Map<String, dynamic>? statusMap,
   }) {
     return Device(
@@ -60,7 +67,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
       availableValues  : Set.from(availableValues ?? this.availableValues),
       dataSources      : Set.from(dataSources ?? this.dataSources),
       statusMap        : statusMap ?? this.statusMap,
-      reachable        : reachable,
+      reachable        : reachable ?? this.reachable,
     );
   }
 
@@ -80,7 +87,6 @@ class Device extends GroupableItem<Device> implements HoverTarget{
   }
 
   factory Device.fromJson(Map<String, dynamic> json) {
-    final statusMap = json['state'] ?? {};
 
     return Device(
       id  : json['id'] as int,
@@ -94,7 +100,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
       requestedMetrics:  Set<String>.from(json['configuration']['requested-metrics']),
       availableValues:   Set<String>.from(json['configuration']['available-values']),
       dataSources:       Set<String>.from(json['configuration']['data-sources']),
-      reachable: statusMap.values.any((statusEntry) => statusEntry["status"].toUpperCase() == "REACHABLE"), // updated by topology_provider on device-health-rt
+      reachable: DeviceReachability.unknown, // updated by topology_provider on device-health-rt
       statusMap: json['state']
     );
   }
@@ -125,7 +131,7 @@ class Device extends GroupableItem<Device> implements HoverTarget{
       requestedMetrics: {},
       availableValues: {},
       dataSources: {},
-      reachable: null,
+      reachable: DeviceReachability.unknown,
       statusMap: {}
     );
   }
@@ -158,26 +164,41 @@ class Device extends GroupableItem<Device> implements HoverTarget{
   Paint getPaint(Offset position, Size size) {
     final rect = Rect.fromCircle(center: position, radius: 6);
 
-    if (reachable == true) {
-      return Paint()
+    switch (reachable) {
+      
+      case DeviceReachability.reachable:
+        return Paint()
         ..shader = AppColors.deviceUpGradient.createShader(rect);  
-    }
-    if (reachable == false) {
-      return Paint()
+
+      case DeviceReachability.partial:
+        return Paint()
+        ..shader = AppColors.devicePartialUpGradient.createShader(rect);  
+
+      case DeviceReachability.unreachable:
+        return Paint()
         ..shader = AppColors.deviceDownGradient.createShader(rect);  
-    }
-    return Paint()
+
+      case DeviceReachability.unknown:
+        return Paint()
       ..shader = AppColors.deviceUnknownGradient.createShader(rect);  
+    }
   }
 
   Color getStatusColor() {
-    if (reachable == true) {
-      return AppColors.deviceUpColor;
+    switch (reachable) {
+      
+      case DeviceReachability.reachable:
+        return AppColors.deviceUpColor;
+
+      case DeviceReachability.partial:
+        return AppColors.deviceUpPartialColor;
+        
+      case DeviceReachability.unreachable:
+        return AppColors.deviceDownColor;
+        
+      case DeviceReachability.unknown:
+        return AppColors.deviceUnknownColor;
     }
-    if (reachable == false) {
-      return AppColors.deviceDownColor;
-    }
-    return AppColors.deviceUnknownColor;
   }
 
   /// Returns whether a given [metric] is modified in the current instance, in reference to the original [topology]

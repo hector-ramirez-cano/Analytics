@@ -35,13 +35,22 @@ class TopologyService extends _$TopologyService {
 
       // TODO: Add snmp as a status updater
       final statusMap = deviceEntry.value;
-      bool? status;
+
+      DeviceReachability status;
 
       // if no entry contains a status, it's completely unknown
-      if (statusMap.values.every((statusEntry) => !statusEntry.containsKey("status"))) {
-        status = null;
+      if (statusMap.values.every((statusEntry) => !statusEntry.containsKey("status")) || statusMap.values.isEmpty) {
+        status = DeviceReachability.unknown;
       } else {
-        status = statusMap.values.any((statusEntry) => statusEntry["status"].toUpperCase() == "REACHABLE");
+        int reachableCount = statusMap.values.where((statusEntry) => statusEntry["status"].toUpperCase() == "REACHABLE").length;
+        
+        if (reachableCount == statusMap.values.length || reachableCount == (_parsed!.items[device.id] as Device).dataSources.length) {
+          status = DeviceReachability.reachable;
+        } else if (reachableCount == 0) {
+          status = DeviceReachability.unreachable;
+        } else {
+          status = DeviceReachability.partial;
+        }
       }
 
       itemsCopy[device.id] = (_parsed!.items[device.id] as Device).copyWith(reachable: status, statusMap: statusMap);
