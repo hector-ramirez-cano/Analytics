@@ -1,4 +1,4 @@
-@startuml database
+@startuml
 skinparam linetype ortho
 
 ' Enumerations
@@ -177,6 +177,8 @@ together {
     message_id: BIGINT
   }
   }
+
+  alerts ||--o{ telegram_unacked : alert_id
 }
 
 
@@ -252,5 +254,4 @@ package types {
 }
 
 syslog -d[hidden]-> ClientIdentity
-
 @enduml
