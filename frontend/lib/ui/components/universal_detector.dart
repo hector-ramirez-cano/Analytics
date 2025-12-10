@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+/// Wraps a widget in a detector that can hold GestureDetection, Listener and MouseRegion for input detection.
+/// Useful to handle input for Android/PC at the same time, "Universal" detector.
 class UniversalDetector extends StatelessWidget {
   final Widget child;
   final GestureTapUpCallback? onTapUp;

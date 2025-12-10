@@ -81,17 +81,23 @@ SELECT dashboard_id, row_start, row_span, col_start, col_span, polling_definitio
 -- TRUNCATE Analytics.dashboard_items;
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition)
     VALUES
-        (1, 0, 1, 0, 3, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "fields":["ansible_loadavg_15m", "baseline_1h_ansible_loadavg_15m"], "device-ids":1, "type": "metric", "chart-type":"line"}', '{}');
+        (1, 0, 1, 0, 3, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "fields":["ansible_loadavg_15m", "baseline_1h_ansible_loadavg_15m"], "device-ids":1, "type": "metric", "chart-type":"line"}', 
+        '{}'
+        );
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition)
     VALUES
         (1, 1, 1, 0, 1, '{"update-interval-s": 60, "fields":["icmp_rtt"], "device-ids":1, "type":"metadata", "chart-type": "label"}', '{}');
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition)
     VALUES
-        (1, 1, 1, 1, 1, '{"update-interval-s": 15, "fields":["icmp_status"], "device-ids":203, "type":"metadata", "chart-type": "pie"}', '{}');
+        (1, 1, 1, 1, 1, '{"update-interval-s": 15, "fields":["icmp_status"], "device-ids":203, "type":"metadata", "chart-type": "pie"}', 
+        '{"pie-colors": ["ffdcd6f7", "ffa6b1e1", "ffb4869f", "ff985f6f", "ff4e4c67"], "text-colors": ["FF000000", "FF000000", "FF000000", "FFFFFFFF", "FFFFFFFF", "FFFFFFFF", "FFFFFFFF"]}');
 
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition)
     VALUES
-        (2, 1, 1, 0, 3, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "fields":["icmp_rtt"], "device-ids":1, "type": "metric", "chart-type":"line"}', '{}');
+        (2, 1, 1, 0, 3, '{"start":"-1h", "aggregate-interval-s": 60, "update-interval-s": 60, "fields":["icmp_rtt"], "device-ids":1, "type": "metric", "chart-type":"line"}', 
+        '{
+            "line-colors": ["FF321325", "FF5f0f40", "FF9a031e", "FFcb793a", "FFfcdc4d"]
+        }');
 INSERT INTO Analytics.dashboard_items(dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition)
     VALUES
         (2, 0, 1, 0, 1, '{"update-interval-s": 60, "fields":["icmp_rtt"], "device-ids":1, "type":"metadata", "chart-type": "label"}', '{}');

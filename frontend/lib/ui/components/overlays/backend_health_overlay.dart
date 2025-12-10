@@ -28,7 +28,7 @@ Widget _makeStatusDashboard(WidgetRef ref) {
         BackendHealthNotificationItem(
           key: ValueKey("BackendHealth_Overlay_Telegram_NotificationItem"),
           up: status.telegramEnabled,
-          message: "En configuración",
+          message: "Listo.",
           which: "Telegram",
         ),
         BackendHealthNotificationItem(

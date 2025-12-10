@@ -1,3 +1,4 @@
+import 'package:aegis/models/charts/style_definition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphic/graphic.dart';
@@ -7,83 +8,14 @@ import 'package:aegis/ui/components/retry_indicator.dart';
 
 class MetadataPieChart extends StatelessWidget {
   final MetadataPollingDefinition definition;
+  final StyleDefinition styleDefinition;
 
-  MetadataPieChart({
+  const MetadataPieChart({
     super.key,
     required this.definition,
+    required this.styleDefinition,
   });
 
-  // TODO: Get swatches from db
-  final int swatchIndex = 0;
-  final List<Map<String, List<Color>>> swatches = [
-    {
-      "pieColors" : [
-        Color(0xFF858ae3),
-        Color(0xFF7364d2),
-        Color(0xFF613dc1),
-        Color(0xFF5829a7),
-        Color(0xFF4e148c),
-        Color(0xFF2c0735),
-      ],
-      "textColors":[
-        Color(0xFF000000),
-        Color(0xFF000000),
-        Color(0xFF000000),
-        Color(0xFFFFFFFF),
-        Color(0xFFFFFFFF),
-        Color(0xFFFFFFFF),
-        Color(0xFFFFFFFF),
-      ]
-    },
-    {
-      "pieColors": [
-        Color(0xffdcd6f7),
-        Color(0xffa6b1e1),
-        Color(0xffb4869f),
-        Color(0xff985f6f),
-        Color(0xff4e4c67),
-      ],
-      "textColors": [
-        Color(0xFF000000),
-        Color(0xFF000000),
-        Color(0xFF000000),
-        Color(0xFF000000),
-        Color(0xFFFFFFFF),
-      ]
-    },
-    {
-      "pieColors": [
-        Color(0xFF321325),
-        Color(0xFF5f0f40),
-        Color(0xFF9a031e),
-        Color(0xFFcb793a),
-        Color(0xFFfcdc4d),
-      ],
-      "textColors": [
-        Color(0xFFFFFFFF),
-        Color(0xFFFFFFFF),
-        Color(0xFFFFFFFF),
-        Color(0xFF000000),
-        Color(0xFF000000),
-      ]
-    },
-    {
-      "pieColors": [
-        Color(0xFFffdda1),
-        Color(0xFFfcd16c),
-        Color(0xFFedb230),
-        Color(0xFFea952c),
-        Color(0xFFe77728),
-      ],
-      "textColors": [
-        Color(0xFF000000),
-        Color(0xFF000000),
-        Color(0xFF000000),
-        Color(0xFF000000),
-        Color(0xFF000000),
-      ]
-    }
-  ];
 
   Map<String, Variable> _makeVariableDefinition() {
     return {
@@ -120,7 +52,7 @@ class MetadataPieChart extends StatelessWidget {
     }
 
     return Chart (
-      key: ValueKey("Chars_Metadata_${definition.fields}_${definition.itemIds}_${definition.chartType}"),
+      key: ValueKey("Charts_Metadata_${definition.fields}_${definition.itemIds}_${definition.chartType}"),
       data: values,
       variables: _makeVariableDefinition(),
       transforms: [
@@ -137,16 +69,16 @@ class MetadataPieChart extends StatelessWidget {
           color: ColorEncode(
             encoder: (tuple) {
               final category = tuple['value'];
-              final pieColors = swatches[swatchIndex]["pieColors"];
-              final index = category.hashCode % pieColors!.length;
+              final pieColors = styleDefinition.pieColors;
+              final index = category.hashCode % pieColors.length;
               return pieColors[index];
             },
           ),
           label: LabelEncode(
             encoder: (tuple) {
               final category = tuple['value'];
-              final textColors = swatches[swatchIndex]["textColors"];
-              final index = category.hashCode % textColors!.length;
+              final textColors = styleDefinition.textColors;
+              final index = category.hashCode % textColors.length;
               final style = LabelStyle(textStyle: TextStyle(color: textColors[index], fontSize: 10));
               return Label(tuple['value'].toString(), style);
             }

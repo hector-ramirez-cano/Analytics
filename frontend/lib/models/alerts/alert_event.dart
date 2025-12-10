@@ -39,7 +39,7 @@ class AlertEvent {
       requiresAck: json["requires-ack"],
       severity: AlertSeverity.fromString(json["severity"]),
       message: json["message"],
-      ackActor: json["ackActor"] ?? "Sin confirmar",
+      ackActor: json["ack-actor"] ?? "Sin confirmar",
       targetId: json["target-id"],
       acked: json["acked"] != null,
       value: json["value"]?? ""

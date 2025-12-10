@@ -5,6 +5,7 @@ import 'package:aegis/extensions/semaphore.dart';
 import 'package:aegis/models/charts/metadata_polling_definition.dart';
 import 'package:aegis/models/charts/metric_polling_definition.dart';
 import 'package:aegis/models/charts/dashboard_polling_definition.dart';
+import 'package:aegis/models/charts/style_definition.dart';
 import 'package:aegis/services/websocket_service.dart';
 import 'package:logger/logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -17,6 +18,7 @@ class DashboardItem {
   final int columnStart;
   final int columnSpan;
   final DashboardPollingDefinition definition;
+  final StyleDefinition styleDefinition;
 
   DashboardItem({
     required this.rowStart,
@@ -24,11 +26,13 @@ class DashboardItem {
     required this.columnStart,
     required this.columnSpan,
     required this.definition,
+    required this.styleDefinition,
   });
 
   static DashboardItem fromJson(Map<String, dynamic> items) {
 
     final DashboardPollingDefinition definition;
+    final StyleDefinition styleDefinition = StyleDefinition.fromJson(items["style-definition"]);
     final type = items['polling-definition']['type'];
     if (type == "metric") {
       definition = MetricPollingDefinition.fromJson(items['polling-definition'])!;
@@ -55,6 +59,7 @@ class DashboardItem {
       rowSpan    : items["row-span"] ?? 1,
       columnStart: items["col-start"] ?? 0,
       columnSpan : items["col-span"] ?? 1,
+      styleDefinition: styleDefinition,
       definition: definition
     );
   }

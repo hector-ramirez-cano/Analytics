@@ -33,14 +33,14 @@ class _ChartDashboardState extends ConsumerState<ChartDashboard> {
   DashboardWidget _widgetFromDashboardItem(DashboardItem item, Topology topology) {
     final Widget child;
     if (item.definition is MetadataPollingDefinition && item.definition.chartType == ChartType.pieChart) {
-      child = MetadataPieChart(definition: item.definition as MetadataPollingDefinition);
+      child = MetadataPieChart(definition: item.definition as MetadataPollingDefinition, styleDefinition: item.styleDefinition,);
     }
     else if (item.definition is MetadataPollingDefinition && item.definition.chartType == ChartType.label) {
       child = MetadataLabel(definition: item.definition as MetadataPollingDefinition);
     }
 
     else if (item.definition is MetricPollingDefinition && item.definition.chartType == ChartType.lineChart) {
-      child = MetricLineChart(definition: item.definition as MetricPollingDefinition);
+      child = MetricLineChart(definition: item.definition as MetricPollingDefinition, styleDefinition: item.styleDefinition);
     }
     else {
       // TODO: Handle this via empty type

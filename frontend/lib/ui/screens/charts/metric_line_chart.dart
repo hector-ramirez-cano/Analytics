@@ -1,23 +1,13 @@
 import 'dart:collection';
 import 'dart:math';
 
+import 'package:aegis/models/charts/style_definition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphic/graphic.dart';
 import 'package:aegis/models/charts/metric_polling_definition.dart';
 import 'package:aegis/services/charts/dashboard_metric_service.dart';
 import 'package:aegis/ui/components/retry_indicator.dart';
-
-const metricLineSoft = [
-  Color(0xFF4E79A7), // Soft Blue
-  Color(0xFFF28E2B), // Soft Orange
-  Color(0xFF59A14F), // Soft Green
-  Color(0xFFE15759), // Soft Red
-  Color(0xFFB07AA1), // Soft Purple
-  Color(0xFF9C755F), // Soft Brown
-  Color(0xFF76B7B2), // Aqua
-  Color(0xFFBAB0AC), // Neutral Gray
-];
 
 /// Returns [prevIndex, nextIndex] where:
 ///  - prevIndex is index of largest item < target (or null if none)
@@ -136,10 +126,12 @@ void interpolateMissingPoints(
 
 class MetricLineChart extends StatelessWidget {
   final MetricPollingDefinition definition;
+  final StyleDefinition styleDefinition;
 
   const MetricLineChart({
     super.key,
     required this.definition,
+    required this.styleDefinition,
   });
 
   Map<String, Variable> _makeVariableDefinition(double min, double max) {
@@ -196,23 +188,28 @@ class MetricLineChart extends StatelessWidget {
       return Center(child: Text("No hay datos"));
     }
 
+    // In case sampling rates are different, interpolate the variable not sampled at this datapoint
     interpolateMissingPoints(values, pointPresence, definition.fields, extrapolateIfNoBracket: true);
 
     final valueList = values.entries.map((datapoints) => datapoints.value).toList();
 
-    // Sort values, in case they're not in order
+    // Sort values, in case they're not in order. The graph expects everything to be ordered
     valueList.sort((a, b) => a["time"].compareTo(b["time"]));
 
     // Create one LineMark for each metric "k"
     final marks = definition.fields.map((k) {
       return LineMark(
         position: Varset('time') * Varset(k),
-        color: ColorEncode(value: metricLineSoft[k.hashCode % metricLineSoft.length]),
+        color: ColorEncode(value: styleDefinition.lineColors[k.hashCode % styleDefinition.lineColors.length]),
         shape: ShapeEncode(value: BasicLineShape(smooth: false) ),
         label: LabelEncode(encoder: (values) {
-          if ((values["time"] as DateTime).isAtSameMomentAs(valueList.last["time"])) {
+          final time = (values["time"] as DateTime);
+          final point = valueList.length > 4 ? valueList[5]["time"] : valueList.first["time"];
+
+          if (time.isAtSameMomentAs(point)) {
             return Label(k);
-          } else {
+          }
+          else {
             return Label("");
           }
         })
@@ -221,6 +218,23 @@ class MetricLineChart extends StatelessWidget {
 
     return Chart(
       data: valueList,
+      crosshair: CrosshairGuide(
+        showLabel: [true, true],
+        labelPaddings: [10.0, 10.0],
+        followPointer: [false, false],
+        styles: [PaintStyle(strokeColor: const Color.fromARGB(50, 0, 0, 0)), PaintStyle(strokeColor: const Color.fromARGB(50, 0, 0, 0))],
+        formatter: [(d) => d.toString(), (d) => d.toString()]
+      ),
+      selections: {
+                    'touchMove': PointSelection(
+                      on: {
+                        GestureType.scaleUpdate,
+                        GestureType.tapDown,
+                        GestureType.longPressMoveUpdate
+                      },
+                      dim: Dim.x,
+                    )
+                  },
       variables: _makeVariableDefinition(minX, maxX),
       axes: [Defaults.horizontalAxis, Defaults.verticalAxis],
       marks: marks
