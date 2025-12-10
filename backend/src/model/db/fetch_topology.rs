@@ -48,7 +48,6 @@ pub async fn get_topology_view_as_json(pool: &sqlx::Pool<Postgres>) -> Result<se
         r#"
         SELECT json_build_object(
             'id', v.topology_views_id,
-            'is-physical-view', v.is_physical_view,
             'name', v.name,
             'members', COALESCE(
                 json_agg(
@@ -64,7 +63,7 @@ pub async fn get_topology_view_as_json(pool: &sqlx::Pool<Postgres>) -> Result<se
         FROM Analytics.topology_views v
         LEFT JOIN Analytics.topology_views_member m
             ON v.topology_views_id = m.topology_views_id
-        GROUP BY v.topology_views_id, v.is_physical_view, v.name;
+        GROUP BY v.topology_views_id, v.name;
         "#
     )
     .fetch_all(pool)

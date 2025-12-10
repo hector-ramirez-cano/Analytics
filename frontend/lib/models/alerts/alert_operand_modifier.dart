@@ -108,7 +108,7 @@ sealed class OperandModifier {
       OperandModifierTruncate().definition,
       OperandModifierToString().definition,
 
-      OperandModifierBitwiseAnd(0xFFFFFFFFFFFFFFFF).definition,
+      OperandModifierBitwiseAnd(0xFFFFFFFF).definition,
       OperandModifierBitwiseOr(0).definition,
       OperandModifierBitwiseXor(0).definition,
       OperandModifierBitwiseLShift(0).definition,
@@ -152,7 +152,7 @@ sealed class OperandModifier {
       case 'round':
         return OperandModifierRound();
       case 'bitwiseAnd':
-        return OperandModifierBitwiseAnd(0xFFFFFFFFFFFFFFFF);
+        return OperandModifierBitwiseAnd(0xFFFFFFFFFFF);
       case 'bitwiseOr':
         return OperandModifierBitwiseOr(0x0);
       case 'bitwiseXor':
@@ -806,7 +806,7 @@ class OperandModifierBitwiseAnd extends OperandModifier {
 
   @override String toString() => '.bitwiseAnd($value)';
 
-  @override OperandModifier collapse() => value == 0xFFFFFFFFFFFFFFFF? OperandModifierNone() : this;
+  @override OperandModifier collapse() => value == 0xFFFFFFFFFF? OperandModifierNone() : this;
 
   @override OperandModifierBitwiseAnd setParam(dynamic param, int index) {
     if (index == 1) { return copyWith(value: param);}

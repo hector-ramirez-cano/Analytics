@@ -127,12 +127,13 @@ SELECT count(1) AS count FROM Analytics.alerts OFFSET 0;
 -- TRUNCATE Analytics.telegram_receiver;
 select * from Analytics.telegram_receiver;
 
+-- DROP TABLE Analytics.topology_views;
 SELECT * FROM Analytics.topology_views;
 -- RUNCATE Analytics.topology_views;
-INSERT INTO Analytics.topology_views(topology_views_id, is_physical_view, name)
-    VALUES  (0, FALSE, 'Hasta la vista'),
-            (1, FALSE, 'Baby'),
-            (2, TRUE , 'Globbus');
+INSERT INTO Analytics.topology_views(topology_views_id, name)
+    VALUES  (0, 'Hasta la vista'),
+            (1, 'Baby'),
+            (2, 'Globbus');
 
 -- DROP TABLE Analytics.topology_views_member;
 -- TRUNCATE Analytics.topology_views_member;

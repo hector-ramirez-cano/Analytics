@@ -53,7 +53,6 @@ CREATE TABLE IF NOT EXISTS Analytics.devices (
 
 CREATE TABLE IF NOT EXISTS Analytics.topology_views(
     topology_views_id BIGSERIAL PRIMARY KEY,
-    is_physical_view  BOOLEAN NOT NULL,
     name              VARCHAR(254) NOT NULL
 );
 

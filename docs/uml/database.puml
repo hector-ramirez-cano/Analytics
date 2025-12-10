@@ -30,7 +30,7 @@ dataclass devices {
 dataclass topology_views {
   * topology_views_id : BIGSERIAL,
   --
-  is_physical_view : BOOLEAN (UNUSED)
+  name : VARCHAR(254)
 }
 
 dataclass topology_views_member {
@@ -63,11 +63,11 @@ dataclass alerts {
   * alert_id : BIGSERIAL
   --
   alert_time : TIMESTAMP
-  ack_time : TIMESTAMP (UNUSED)
-  requires_ack : BOOLEAN (UNUSED)
+  ack_time : TIMESTAMP
+  requires_ack : BOOLEAN
   severity : AlertSeverity
   message : VARCHAR
-  ack_actor : VARCHAR (UNUSED)
+  ack_actor : VARCHAR
   value : VARCHAR(254)
   FK rule_id : BIGINT
   FK target_id : BIGINT

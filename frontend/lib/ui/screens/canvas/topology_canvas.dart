@@ -130,9 +130,9 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
     );
   }
 
-  Widget _makeGeoView() {
-    return SizedBox.shrink();
-  }
+  // Widget _makeGeoView() {
+  //   return SizedBox.shrink();
+  // }
 
   // TODO: REFACTOR
   @override
@@ -157,9 +157,9 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
               return _makeEmptyTabSelection(); 
             }
 
-            if (selectedTab.template.isPhysicalView) {
-              return _makeGeoView();
-            }
+            // if (selectedTab.template.isPhysicalView) {
+            //   return _makeGeoView();
+            // }
 
             return Stack (children:[
               _makeCustomPaint(

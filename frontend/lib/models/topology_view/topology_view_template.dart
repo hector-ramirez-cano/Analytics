@@ -7,26 +7,23 @@ import 'package:aegis/models/topology_view/topology_view_member.dart';
 
 class TopologyViewTemplate {
   final int viewId;
-  final bool isPhysicalView;
   final String name;
   final Map<int, TopologyViewMember> members;
 
   TopologyViewTemplate({
     required this.viewId,
-    required this.isPhysicalView,
     required this.name,
     required this.members,
   });
 
   static TopologyViewTemplate? fromJson(Map<String, dynamic> response) {
     final viewId = response["id"];
-    final isPhysicalView = response["is-physical-view"];
     final name = response["name"] ?? "Vista sin nombre";
     final List<dynamic> members = response["members"] ?? [];
 
     // absolutely required, if not present, or the wrong type, we can't recover
-    if (viewId == null || isPhysicalView == null) {
-      Logger().e("While parsing TopologyViewTemplate fromJson, encountered missing values: viewId=$viewId, isPhysicalView=$isPhysicalView");
+    if (viewId == null) {
+      Logger().e("While parsing TopologyViewTemplate fromJson, encountered missing values: viewId=$viewId");
       return null;
     }
 
@@ -35,10 +32,10 @@ class TopologyViewTemplate {
       return null;
     }
 
-    if (isPhysicalView is! bool) {
-      Logger().e("While parsing TopologyViewTemplate fromJson, encountered isPhysicalView is not expected type. Expected bool, actual=$isPhysicalView");
-      return null;
-    }
+    // if (isPhysicalView is! bool) {
+    //   Logger().e("While parsing TopologyViewTemplate fromJson, encountered isPhysicalView is not expected type. Expected bool, actual=$isPhysicalView");
+    //   return null;
+    // }
 
     // if name is not present, we can use an dummy value
     if (response["name"] is! String) {
@@ -54,7 +51,6 @@ class TopologyViewTemplate {
 
     return TopologyViewTemplate(
       viewId: viewId,
-      isPhysicalView: isPhysicalView,
       name: name,
       members: memberMap
     );
