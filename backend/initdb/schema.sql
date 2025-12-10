@@ -123,7 +123,6 @@ CREATE TABLE IF NOT EXISTS Analytics.alerts (
     FOREIGN KEY (rule_id) REFERENCES Analytics.alert_rules(rule_id)
 );
 
-
 CREATE TABLE IF NOT EXISTS Analytics.groups (
     group_id         BIGINT PRIMARY KEY DEFAULT nextval('global_item_id_seq'),
     group_name       VARCHAR(254) NOT NULL,

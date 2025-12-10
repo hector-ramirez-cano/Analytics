@@ -12,6 +12,7 @@ impl AlertEvent {
         ack_time: Option<DateTime<Utc>>,
         rule_id: AlertRuleId,
         value: String,
+        ack_actor: Option<String>,
     ) -> Self {
         let now = Utc::now();
         AlertEvent {
@@ -26,7 +27,9 @@ impl AlertEvent {
             db_notified: false,
             acked: !requires_ack,
             rule_id: Some(rule_id),
+            ack_actor: ack_actor,
             value,
+
         }
     }
 

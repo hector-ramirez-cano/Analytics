@@ -516,6 +516,7 @@ impl AlertBackend {
             db_notified: false,
             acked: false,
             rule_id: Some(rule.rule_id),
+            ack_actor: None,
             value,
         };
 

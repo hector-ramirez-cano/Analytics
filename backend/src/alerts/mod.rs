@@ -115,6 +115,10 @@ pub struct AlertEvent {
     /// Whether the message has been acked. Dynamically generated from database
     pub acked: bool,
 
+    #[serde(rename = "ack-actor")]
+    /// String representation of the ack-actor. Dynamically generated from database
+    pub ack_actor: Option<String>,
+
     /// AlertRule that triggered the alert. Optional, as a rule that raised it could've been deleted from the database
     /// At creation, this is guaranteed to not be None
     #[serde(rename = "rule-id")]

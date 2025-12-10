@@ -120,7 +120,7 @@ pub async fn get_rows(row_count_fetch: i64, filters: &AlertFilters, postgres_poo
     let mut query = QueryBuilder::<Postgres>::new(concat! (
         "SELECT ",
             "alert_id, alert_time, ack_time, requires_ack, severity, message, target_id, ",
-            "TRUE as ws_notified, TRUE as db_notified, (ack_actor IS NOT NULL) as acked, rule_id, value ",
+            "TRUE as ws_notified, TRUE as db_notified, (ack_actor IS NOT NULL) as acked, ack_actor, rule_id, value ",
         "FROM Analytics.alerts "
     ));
 
