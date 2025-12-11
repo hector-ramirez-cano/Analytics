@@ -437,7 +437,7 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
         ],
       ),
       SettingsSection(
-        title: Text("Reglas"),
+        title: Text("Predicados"),
         tiles: [
           ..._makePredicateInput(rule),
           _makeAddPredicateButton()

@@ -93,10 +93,10 @@ class AlertPredicate {
 
     } else {
       // we're just setting not const, we can just straight up copy it
-      newLeft = left.copyWith(isConst: false, dataType: FactsDataType.string);
+      newLeft = left.copyWith(isConst: false, dataType: FactsDataType.string).setValue(null);
       newRight = right;
     }
-    return copyWith(left: newLeft, right: newRight);
+    return forcedCopy(right: newRight, left: newLeft, op: op, leftModifier: OperandModifierNone(), rightModifier: rightModifier);
   }
 
   AlertPredicate setRightConst(bool value) {
@@ -116,10 +116,10 @@ class AlertPredicate {
 
     } else {
       // we're just setting not const, we can just straight up copy it
-      newRight = right.copyWith(isConst: false, dataType: FactsDataType.string);
+      newRight = right.copyWith(isConst: false, dataType: FactsDataType.string).setValue(null);
       newLeft = left;
     }
-    return copyWith(right: newRight, left: newLeft);
+    return forcedCopy(right: newRight, left: newLeft, op: op, leftModifier: leftModifier, rightModifier: OperandModifierNone());
   }
 
   AlertPredicate setLeftForced(bool value) => copyWith(left: left.copyWith(isForced: value));

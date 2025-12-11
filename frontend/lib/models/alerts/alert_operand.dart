@@ -39,7 +39,7 @@ class AlertRuleOperand {
   }
 
   AlertRuleOperand setValue(dynamic value) {
-    if (!isConst) { return copyWith(value: value); }
+    if (!isConst) { return forcedCopyWith(value: value, isConst: false, isInit: value != null, isForced: isForced, dataType: dataType); }
 
     switch (dataType) {
       
@@ -102,6 +102,22 @@ class AlertRuleOperand {
       isConst: isConst ?? this.isConst,
       isForced: isForced ?? this.isForced,
       dataType: dataType ?? this.dataType,
+      isInit:  true,
+    );
+  }
+
+  AlertRuleOperand forcedCopyWith({
+    required dynamic value,
+    required bool isConst,
+    required bool isInit,
+    required bool isForced,
+    required FactsDataType dataType
+  }) {
+    return AlertRuleOperand(
+      value: value,
+      isConst: isConst,
+      isForced: isForced,
+      dataType: dataType,
       isInit:  true,
     );
   }
