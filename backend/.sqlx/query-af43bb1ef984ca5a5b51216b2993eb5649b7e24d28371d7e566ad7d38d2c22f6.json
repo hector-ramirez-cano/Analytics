@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        DELETE FROM Telegram.unacked_messages WHERE alert_id = $1 AND chat_peer_id = ANY($2);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "af43bb1ef984ca5a5b51216b2993eb5649b7e24d28371d7e566ad7d38d2c22f6"
+}

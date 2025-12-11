@@ -200,7 +200,7 @@ pub async fn get_unacked_messages<'e>(alert_id: AlertEventId, transaction: &mut 
         SELECT chat_peer_id, message_id FROM Telegram.unacked_messages WHERE alert_id = $1
     ", alert_id).fetch_all(&mut ** transaction).await;
 
-    let result = match result {
+    let result: Vec<M> = match result {
         Ok(v) => v,
         Err(e) => {
             log::error!("[ERROR][ALERTS][TELEGRAM][DB] Failed to insert unacked message into pending to update messages, with error = '{e}'");
