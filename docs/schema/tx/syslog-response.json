@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SyslogMessage",
+  "type": "object",
+  "required": ["type", "msg"],
+  "properties": {
+    "type": {
+      "const": "syslog"
+    },
+    "msg": {
+      "oneOf": [
+        { "$ref": "#/$defs/RequestSize" },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/SyslogEntry" }
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+
+  "$defs": {
+    "RequestSize": {
+      "type": "object",
+      "required": ["type", "count"],
+      "properties": {
+        "type": {
+          "const": "request-size"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "SyslogEntry": {
+      "type": "object",
+      "required": [
+        "facility",
+        "id",
+        "message",
+        "received-at",
+        "severity",
+        "source"
+      ],
+      "properties": {
+        "facility": {
+          "type": "string",
+          "enum": [
+            "kern","user","mail","daemon","auth","syslog","lpr","news",
+            "uucp","cron","authpriv","ftp","ntp","security","console",
+            "solaris","local0","local1","local2","local3","local4",
+            "local5","local6","local7"
+          ]
+        },
+        "id": {
+          "type": "integer"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "process-id": {
+          "type": "string"
+        },
+        "received-at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "emerg","alert","crit","err",
+            "warning","notice","info","debug"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
