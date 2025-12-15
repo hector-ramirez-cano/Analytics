@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AlertsMessage",
+  "type": "object",
+  "required": ["type", "msg"],
+  "properties": {
+    "type": {
+      "const": "alerts"
+    },
+    "msg": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/RequestSize"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/AlertEntry" }
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+
+  "$defs": {
+    "RequestSize": {
+      "type": "object",
+      "required": ["type", "count"],
+      "properties": {
+        "type": {
+          "const": "request-size"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "AlertEntry": {
+      "type": "object",
+      "required": [
+        "alert-id",
+        "alert-time",
+        "acked",
+        "severity",
+        "message",
+        "target-id",
+        "rule-id",
+        "requires-ack",
+        "value",
+        "ws_notified",
+        "db_notified"
+      ],
+      "properties": {
+        "alert-id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "alert-time": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "ack-time": {
+          "type": ["number", "null"],
+          "exclusiveMinimum": 0
+        },
+        "acked": {
+          "type": "boolean"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "emergency",
+            "alert",
+            "critical",
+            "error",
+            "warning",
+            "notice",
+            "info",
+            "debug"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target-id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rule-id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "requires-ack": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "string"
+        },
+        "ws_notified": {
+          "type": "boolean"
+        },
+        "db_notified": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
