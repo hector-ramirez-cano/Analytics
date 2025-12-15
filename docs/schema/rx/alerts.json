@@ -1,106 +1,127 @@
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "Alerts Message",
-    "type": "object",
-    "required": ["type", "msg"],
-    "properties": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Alerts Message",
+  "type": "object",
+  "required": ["type", "msg"],
+  "properties": {
+    "type": {
+      "const": "alerts"
+    },
+    "msg": {
+      "oneOf": [
+        { "$ref": "#/$defs/alertsEntry" },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/alertsEntry" }
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+
+  "$defs": {
+    "alertsEntry": {
+      "type": "object",
+      "required": ["type", "msg"],
+      "properties": {
         "type": {
-            "const": "alerts"
+          "type": "string",
+          "enum": ["set-filters", "request-size", "request-data"]
         },
         "msg": {
-            "description": "Either a single alerts message entry or an array of them.",
-            "oneOf": [
-                {
-                    "$ref": "#/$defs/alertsEntry"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/alertsEntry"
-                    },
-                    "minItems": 1
-                }
-            ]
+          "type": "object"
         }
+      },
+      "additionalProperties": false,
+
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "set-filters" } }
+          },
+          "then": {
+            "properties": {
+              "msg": { "$ref": "#/$defs/setFiltersMsg" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "request-size" } }
+          },
+          "then": {
+            "properties": {
+              "msg": { "$ref": "#/$defs/requestSizeMsg" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "request-data" } }
+          },
+          "then": {
+            "properties": {
+              "msg": { "$ref": "#/$defs/requestDataMsg" }
+            }
+          }
+        }
+      ]
     },
 
-    "$defs": {
-        "alertsEntry": {
-            "type": "object",
-            "required": ["type", "msg"],
-            "properties": {
-                "type": {
-                    "enum": [
-                        "set-filters",
-                        "request-size",
-                        "request-data"
-                    ]
-                },
-                "msg": {
-                    "oneOf": [
-                        { "$ref": "#/$defs/setFiltersMsg" },
-                        { "$ref": "#/$defs/requestSizeMsg" },
-                        { "$ref": "#/$defs/requestDataMsg" }
-                    ]
-                }
-            }
+    "setFiltersMsg": {
+      "type": "object",
+      "required": ["start", "end", "severity"],
+      "properties": {
+        "start": {
+          "type": "number",
+          "exclusiveMinimum": 0
         },
-
-        "setFiltersMsg": {
-            "type": "object",
-            "required": ["start", "end", "severity"],
-            "properties": {
-                "start": {
-                    "type": "number",
-                    "exclusiveMinimum": 0
-                },
-                "end": {
-                    "type": "number",
-                    "exclusiveMinimum": 0
-                },
-                "severity": {
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                        "type": "string",
-                        "enum": [
-                            "emergency",
-                            "alert",
-                            "critical",
-                            "error",
-                            "warning",
-                            "notice",
-                            "info",
-                            "debug",
-                            "unknown"
-                        ]
-                    }
-                }
-            },
-            "additionalProperties": false
+        "end": {
+          "type": "number",
+          "exclusiveMinimum": 0
         },
-
-        "requestSizeMsg": {
-            "type": "object",
-            "required": [],
-            "properties": {},
-            "additionalProperties": true
-        },
-
-        "requestDataMsg": {
-            "type": "object",
-            "required": ["count", "msg"],
-            "properties": {
-                "count": {
-                    "type": "integer",
-                    "minimum": 0
-                },
-                "msg": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            },
-            "additionalProperties": false
+        "severity": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "emergency",
+              "alert",
+              "critical",
+              "error",
+              "warning",
+              "notice",
+              "info",
+              "debug",
+              "unknown"
+            ]
+          }
         }
+      },
+      "additionalProperties": false
+    },
+
+    "requestSizeMsg": {
+      "type": "object",
+      "maxProperties": 0
+    },
+
+    "requestDataMsg": {
+      "type": "object",
+      "required": ["count", "msg"],
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "msg": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
     }
+  }
 }
