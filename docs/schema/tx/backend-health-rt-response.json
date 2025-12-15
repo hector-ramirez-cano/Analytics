@@ -13,7 +13,7 @@
             "properties": {
                 "status": {
                     "type": "object",
-                    "required": ["influx", "postgres"],
+                    "required": ["influx", "postgres", "backend", "telegram"],
                     "properties": {
                         "influx": {
                             "type": "object",
@@ -35,6 +35,24 @@
                                     "type": "string"
                                 },
                                 "up": {
+                                    "type": "boolean"
+                                }
+                            }
+                        },
+                        "backend": {
+                            "type": "object",
+                            "required": ["read-only"],
+                            "properties": {
+                                "read-only": {
+                                    "type": "boolean"
+                                }
+                            }
+                        },
+                        "enabled": {
+                            "type": "object",
+                            "required": ["enabled"],
+                            "properties": {
+                                "read-only": {
                                     "type": "boolean"
                                 }
                             }
