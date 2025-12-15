@@ -1,100 +1,105 @@
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "SyslogMessage",
-    "type": "object",
-    "required": ["type", "msg"],
-    "properties": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SyslogMessage",
+  "type": "object",
+  "required": ["type", "msg"],
+  "properties": {
+    "type": {
+      "const": "syslog"
+    },
+    "msg": {
+      "oneOf": [
+        { "$ref": "#/$defs/SyslogObject" },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/SyslogObject" }
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+
+  "$defs": {
+    "SyslogObject": {
+      "type": "object",
+      "required": ["type", "msg"],
+      "properties": {
         "type": {
-            "const": "syslog"
+          "type": "string",
+          "enum": ["set-filters", "request-size"]
         },
         "msg": {
-            "description": "Can be a single syslog message object or an array of them.",
-            "oneOf": [
-                { "$ref": "#/$defs/SyslogObject" },
-                {
-                    "type": "array",
-                    "items": { "$ref": "#/$defs/SyslogObject" }
-                }
-            ]
+          "type": "object"
         }
+      },
+      "additionalProperties": false,
+
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "set-filters" } }
+          },
+          "then": {
+            "properties": {
+              "msg": { "$ref": "#/$defs/SetFiltersMsg" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "request-size" } }
+          },
+          "then": {
+            "properties": {
+              "msg": { "$ref": "#/$defs/RequestSizeMsg" }
+            }
+          }
+        }
+      ]
     },
 
-    "$defs": {
-        "SyslogObject": {
-            "type": "object",
-            "required": ["type", "msg"],
-            "properties": {
-                "type": {
-                    "type": "string",
-                    "enum": ["set-filters", "request-size"]
-                },
-                "msg": {
-                    "description": "Inner message varies by type",
-                    "oneOf": [
-                        { "$ref": "#/$defs/SetFiltersMsg" },
-                        { "$ref": "#/$defs/RequestSizeMsg" }
-                    ]
-                }
-            }
+    "SetFiltersMsg": {
+      "type": "object",
+      "required": ["start", "end", "facility", "severity", "offset"],
+      "properties": {
+        "start": { "type": "number", "exclusiveMinimum": 0 },
+        "end": { "type": "number", "exclusiveMinimum": 0 },
+        "facility": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "kern","user","mail","daemon","auth","syslog","lpr","news",
+              "uucp","cron","authpriv","ftp","ntp","security","console",
+              "solaris","local0","local1","local2","local3","local4",
+              "local5","local6","local7"
+            ]
+          }
         },
+        "severity": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "emerg","alert","crit","err",
+              "warning","notice","info","debug"
+            ]
+          }
+        },
+        "message": { "type": "string" },
+        "origin": { "type": "string" },
+        "offset": { "type": "number", "minimum": 0 },
+        "pid": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
 
-        "SetFiltersMsg": {
-            "type": "object",
-            "properties": {
-                "start": {
-                    "type": "number",
-                    "exclusiveMinimum": 0
-                },
-                "end": {
-                    "type": "number",
-                    "exclusiveMinimum": 0
-                },
-                "facility": {
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": [
-                            "kern", "user", "mail", "daemon", "auth", "syslog",
-                            "lpr", "news", "uucp", "cron", "authpriv", "ftp",
-                            "ntp", "security", "console", "solaris", "local0",
-                            "local1", "local2", "local3", "local4", "local5",
-                            "local6", "local7"
-                        ]
-                    },
-                    "minItems": 1
-                },
-                "severity": {
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": [
-                            "emerg", "alert", "crit", "err", "warning",
-                            "notice", "info", "debug"
-                        ]
-                    },
-                    "minItems": 1
-                },
-                "message": {
-                    "type": "string"
-                },
-                "origin": {
-                    "type": "string"
-                },
-                "offset": {
-                    "type": "number",
-                    "minimum": 0
-                },
-                "pid": {
-                    "type": "string"
-                }
-            },
-            "required": ["start", "end", "facility", "severity", "offset"],
-            "additionalProperties": false
-        },
-        "RequestSizeMsg": {
-            "type": "object",
-            "properties": {},
-            "additionalProperties": true
-        }
+    "RequestSizeMsg": {
+      "type": "object",
+      "maxProperties": 0
     }
+  }
 }
