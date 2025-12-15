@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "link.schema.json",
+  "title": "TopologyLink",
+  "type": "object",
+  "required": [
+    "id",
+    "link-subtype",
+    "link-type",
+    "side-a",
+    "side-a-iface",
+    "side-b",
+    "side-b-iface"
+  ],
+  "properties": {
+    "id": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "link-subtype": {
+      "type": ["string", "null"]
+    },
+    "link-type": {
+      "type": "string",
+      "enum": ["copper", "optical", "wireless"]
+    },
+    "side-a": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "side-b": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "side-a-iface": {
+      "type": "string",
+      "minLength": 1
+    },
+    "side-b-iface": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}
