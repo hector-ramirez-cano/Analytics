@@ -192,6 +192,41 @@ Warning: [WARN ][ALARTS] Alert id 1 raised!
 [DEBUG][FACTS] Broadcasting messages. Listener count = 2
 [INFO ][FACTS] Updating Influx with metrics.
 [INFO ][FACTS] Updating Influx with metrics, from inside the update device analytics function
+[DEBUG][WS][RX] Received msg='{"type":"syslog","msg":[{"type":"set-filters","msg":{"start":1763241951.809,"end":1765833951.809,"facility":["kern","user","mail","daemon","auth","syslog","lpr","news","uucp","cron","authpriv","ftp","ntp","security","console","solaris","local0","local1","local2","local3","local4","local5","local6","local7"],"severity":["emerg","alert","crit","err","warning","notice","info","debug"],"message":"","origin":"","offset":0,"pid":""}},{"type":"request-size","msg":{}}]}'
+[DEBUG][DB][SYSLOG] query=SELECT COUNT(1) as total FROM Syslog.system_events WHERE received_at BETWEEN $1 AND $2
+[DEBUG][WS][TX] Sending msg='{"msg":{"count":79,"type":"request-size"},"type":"syslog"}'
+[DEBUG][WS][RX] Received msg='{"type":"syslog","msg":{"type":"request-data","count":30,"msg":{}}}'
+[DEBUG][DB][SYSLOG] query=SELECT id, facility, severity, from_host, received_at, process_id, message, NULL::text as appname, NULL::text as msgid FROM Syslog.system_events  WHERE received_at BETWEEN $1 AND $2LIMIT $3 OFFSET $4
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":1,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:04:26Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":2,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:04:27Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":3,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:04:28Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":4,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:04:29Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":5,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:04:30Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":6,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:04:31Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":7,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:05:38Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":8,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:05:39Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":9,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:05:40Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":10,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:05:41Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":11,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:10:32Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":12,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:10:33Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":13,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:10:34Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":14,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:10:35Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":15,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:10:36Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":16,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:10:37Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":17,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:10:38Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":18,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:10:39Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":19,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:10:40Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":20,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:13:36Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":21,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:13:37Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":22,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:38:00Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":23,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T18:38:01Z","severity":"notice","source":"172.21.0.1"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":24,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T19:31:39Z","severity":"notice","source":"10.144.1.222"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":25,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T19:31:40Z","severity":"notice","source":"10.144.1.222"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":26,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T19:31:41Z","severity":"notice","source":"10.144.1.222"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":27,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T19:33:39Z","severity":"notice","source":"10.144.1.222"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":28,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T19:33:40Z","severity":"notice","source":"10.144.1.222"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":29,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T19:33:41Z","severity":"notice","source":"10.144.1.222"}],"type":"syslog"}'
+[DEBUG][WS][TX] Sending msg='{"msg":[{"facility":"user","id":30,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","process-id":"","received-at":"2025-11-26T19:33:42Z","severity":"notice","source":"10.144.1.222"}],"type":"syslog"}'
 [DEBUG][FACTS][INFLUX] THIS is a bucket = 'analytics'
 [DEBUG][FACTS][INFLUX] Dear god...
 [DEBUG][FACTS][INFLUX] There's more...
@@ -279,3 +314,78 @@ Warning: [WARN ][ALARTS] Alert id 1 raised!
 [INFO ][FACTS] Updating local facts cache.
 [INFO ][FACTS] Sleeping until timeout (5s) zzZ...
 [INFO ][API][RX] {"ruleset-changes":{"rules":[{"data-source":"syslog","id":2,"name":"Syslog SSH","predicates":[{"left":"&syslog_message","op":"contains","right":"ssh"},{"left":"&syslog_message","op":"contains","right":"login"}],"reduce-logic":"any","requires-ack":true,"rule-definition":{"data-source":"syslog","predicates":[{"left":"&syslog_message","op":"contains","right":"ssh"},{"left":"&syslog_message","op":"contains","right":"login"}],"reduce-logic":"any","rule-type":"simple","severity":"emergency","target":1},"rule-type":"simple","severity":"emergency","target":1}]},"ruleset-deletions":{"rules":[]},"topology-changes":{"devices":[{"configuration":{"available-values":["baseline_180d_baseline_1d_icmp_rtt","baseline_1h_baseline_1d_icmp_rtt","baseline_1h_icmp_rtt","baseline_365d_icmp_rtt","baseline_365d_baseline_1d_icmp_rtt","baseline_1m_baseline_1d_icmp_rtt","baseline_15m_baseline_1d_icmp_rtt","baseline_15d_icmp_rtt","baseline_1m_icmp_rtt","baseline_30d_baseline_1d_icmp_rtt","baseline_1d_icmp_rtt","baseline_1d_baseline_1d_icmp_rtt","baseline_180d_icmp_rtt","baseline_15d_baseline_1d_icmp_rtt","icmp_rtt","icmp_loss_percent","icmp_status","baseline_15m_icmp_rtt","baseline_30d_icmp_rtt"],"data-sources":["icmp"],"requested-metadata":["ansible_kernel","ansible_memory_mb","ansible_fqdn","ansible_interfaces"],"requested-metrics":["baseline_1d_icmp_rtt","icmp_rtt"]},"id":3,"latitude":21.159425,"longitude":-101.645852,"management-hostname":"10.144.1.225","name":"Obsidian-lan"}],"groups":[],"links":[]},"topology-deletions":{"devices":[],"groups":[],"links":[]}}
+[INFO ][FACTS][ANSIBLE] Playbook execution done.
+[INFO ][FACTS] Gathered facts!
+[INFO ][FACTS] Updating Influx with metrics.
+[INFO ][FACTS] Updating Influx with metrics, from inside the update device analytics function
+[INFO ][ALERTS][LOADS] Atempting to refresh ruleset
+[INFO ][ALERTS][LOADS] failed to acquire lock on updates, forced=false
+[DEBUG][WS][TX] Sending msg='{"msg":{"10.144.1.1":{"ansible":{"msg":"Task failed: Failed to connect to the host via ssh: ssh: connect to host 10.144.1.1 port 22: No route to host","status":"dark"},"icmp":{"msg":"","status":"unreachable"}},"10.144.1.222":{"ansible":{"msg":"","status":"reachable"},"icmp":{"msg":"","status":"reachable"}},"10.144.1.225":{"ansible":{"msg":"","status":"unknown"},"icmp":{"msg":"","status":"reachable"}}},"type":"device-health-rt"}...'
+[INFO ][FACTS] Updating local facts cache.
+[INFO ][FACTS] Sleeping until timeout (5s) zzZ...
+[INFO ][FACTS] Gathering facts...
+[INFO ][FACTS][BASELINE] Starting baseline gathering
+[INFO ][FACTS][ICMP] Starting ping sweep...
+[INFO ][FACTS][ANSIBLE] Starting playbook execution
+[DEBUG][WS][TX] Sending msg='{"msg":{"status":{"backend":{"read-only":false},"influx":{"msg":"ready for queries and writes","up":true},"postgres":{"msg":"","up":true},"telegram":{"enabled":true}}},"type":"backend-health-rt"}...'
+[INFO ][FACTS][ICMP] Ping sweep done.
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:30 10.144.1.222 16: 42:25: %CRYPTO-6-ISAKMP_INIT: ISAKMP Phase 1 initiated between 192.168.1.1 and 192.168.2.1
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"16","facility":"user","id":-1,"message":"42:25: %CRYPTO-6-ISAKMP_INIT: ISAKMP Phase 1 initiated between 192.168.1.1 and 192.168.2.1","received-at":"2025-12-15T21:32:30Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:31 10.144.1.222 00: 00:48: %LINEPROTO-5-UPDOWN: Line protocol Vlan1, changed state to down
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"00","facility":"user","id":-1,"message":"00:48: %LINEPROTO-5-UPDOWN: Line protocol Vlan1, changed state to down","received-at":"2025-12-15T21:32:31Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:32 10.144.1.222 16: 42:27: %NTP-5-NTP_SYNC: System clock synchronized to NTP server 192.168.1.254
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"16","facility":"user","id":-1,"message":"42:27: %NTP-5-NTP_SYNC: System clock synchronized to NTP server 192.168.1.254","received-at":"2025-12-15T21:32:32Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:33 10.144.1.222 00: 00:47: %LINK-3-UPDOWN: Interface GigabitEthernet0/2, changed state to up
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"00","facility":"user","id":-1,"message":"00:47: %LINK-3-UPDOWN: Interface GigabitEthernet0/2, changed state to up","received-at":"2025-12-15T21:32:33Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][FACTS][ANSIBLE] Playbook execution done.
+[INFO ][FACTS] Gathered facts!
+[INFO ][FACTS] Updating Influx with metrics.
+[INFO ][FACTS] Updating Influx with metrics, from inside the update device analytics function
+[INFO ][ALERTS][LOADS] Atempting to refresh ruleset
+[INFO ][ALERTS][LOADS] failed to acquire lock on updates, forced=false
+[DEBUG][WS][TX] Sending msg='{"msg":{"10.144.1.1":{"ansible":{"msg":"Task failed: Failed to connect to the host via ssh: ssh: connect to host 10.144.1.1 port 22: No route to host","status":"dark"},"icmp":{"msg":"","status":"unreachable"}},"10.144.1.222":{"ansible":{"msg":"","status":"reachable"},"icmp":{"msg":"","status":"reachable"}},"10.144.1.225":{"ansible":{"msg":"","status":"unknown"},"icmp":{"msg":"","status":"reachable"}}},"type":"device-health-rt"}...'
+[INFO ][FACTS] Updating local facts cache.
+[INFO ][FACTS] Sleeping until timeout (5s) zzZ...
+[DEBUG][WS][TX] Sending msg='{"msg":{"status":{"backend":{"read-only":false},"influx":{"msg":"ready for queries and writes","up":true},"postgres":{"msg":"","up":true},"telegram":{"enabled":true}}},"type":"backend-health-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:34 10.144.1.222 18: 47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"18","facility":"user","id":-1,"message":"47:02: %SYS-5-CONFIG_I: Configured from ssh (123.134.95.36)","received-at":"2025-12-15T21:32:34Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:35 10.144.1.222 00: 00:46: %LINK-3-UPDOWN: Interface Port-channel1, changed state to up
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"00","facility":"user","id":-1,"message":"00:46: %LINK-3-UPDOWN: Interface Port-channel1, changed state to up","received-at":"2025-12-15T21:32:35Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:36 10.144.1.222 16: 42:19: %OSPF-5-ADJCHG: Process 1, Nbr 10.0.0.2 on GigabitEthernet0/2 from LOADING to FULL, Loading Done
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"16","facility":"user","id":-1,"message":"42:19: %OSPF-5-ADJCHG: Process 1, Nbr 10.0.0.2 on GigabitEthernet0/2 from LOADING to FULL, Loading Done","received-at":"2025-12-15T21:32:36Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:37 10.144.1.222 00: 00:46: %LINK-3-UPDOWN: Interface Port-channel1, changed state to up
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"00","facility":"user","id":-1,"message":"00:46: %LINK-3-UPDOWN: Interface Port-channel1, changed state to up","received-at":"2025-12-15T21:32:37Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:38 10.144.1.222 16: 42:19: %OSPF-5-ADJCHG: Process 1, Nbr 10.0.0.2 on GigabitEthernet0/2 from LOADING to FULL, Loading Done
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"16","facility":"user","id":-1,"message":"42:19: %OSPF-5-ADJCHG: Process 1, Nbr 10.0.0.2 on GigabitEthernet0/2 from LOADING to FULL, Loading Done","received-at":"2025-12-15T21:32:38Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][FACTS] Gathering facts...
+[INFO ][FACTS][BASELINE] Starting baseline gathering
+[INFO ][FACTS][ICMP] Starting ping sweep...
+[INFO ][FACTS][ANSIBLE] Starting playbook execution
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:39 10.144.1.222 16: 42:19: %OSPF-5-ADJCHG: Process 1, Nbr 10.0.0.2 on GigabitEthernet0/2 from LOADING to FULL, Loading Done
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"16","facility":"user","id":-1,"message":"42:19: %OSPF-5-ADJCHG: Process 1, Nbr 10.0.0.2 on GigabitEthernet0/2 from LOADING to FULL, Loading Done","received-at":"2025-12-15T21:32:39Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:40 10.144.1.222 16: 42:23: %SYS-6-LOGGINGHOST_STARTSTOP: Logging to host 192.168.1.200 started - CLI initiated
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"16","facility":"user","id":-1,"message":"42:23: %SYS-6-LOGGINGHOST_STARTSTOP: Logging to host 192.168.1.200 started - CLI initiated","received-at":"2025-12-15T21:32:40Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:41 10.144.1.222 00: 00:48: %LINEPROTO-5-UPDOWN: Line protocol Vlan1, changed state to down
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"00","facility":"user","id":-1,"message":"00:48: %LINEPROTO-5-UPDOWN: Line protocol Vlan1, changed state to down","received-at":"2025-12-15T21:32:41Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][FACTS][ICMP] Ping sweep done.
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:42 10.144.1.222 00: 00:46: %LINK-3-UPDOWN: Interface Port-channel1, changed state to up
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"00","facility":"user","id":-1,"message":"00:46: %LINK-3-UPDOWN: Interface Port-channel1, changed state to up","received-at":"2025-12-15T21:32:42Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:43 10.144.1.222 00: 00:47: %LINK-3-UPDOWN: Interface GigabitEthernet0/1, changed state to up
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"00","facility":"user","id":-1,"message":"00:47: %LINK-3-UPDOWN: Interface GigabitEthernet0/1, changed state to up","received-at":"2025-12-15T21:32:43Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[DEBUG][WS][TX] Sending msg='{"msg":{"status":{"backend":{"read-only":false},"influx":{"msg":"ready for queries and writes","up":true},"postgres":{"msg":"","up":true},"telegram":{"enabled":true}}},"type":"backend-health-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:44 10.144.1.222 16: 42:15: %SYS-5-CONFIG_I: Configured from console by admin on vty0 (192.168.1.100)
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"16","facility":"user","id":-1,"message":"42:15: %SYS-5-CONFIG_I: Configured from console by admin on vty0 (192.168.1.100)","received-at":"2025-12-15T21:32:44Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][SYSLOG] Received message <13>Dec 15 21:32:45 10.144.1.222 16: 42:15: %SYS-5-CONFIG_I: Configured from console by admin on vty0 (192.168.1.100)
+[DEBUG][WS][TX] Sending msg='{"msg":{"appname":"16","facility":"user","id":-1,"message":"42:15: %SYS-5-CONFIG_I: Configured from console by admin on vty0 (192.168.1.100)","received-at":"2025-12-15T21:32:45Z","severity":"notice","source":"10.144.1.222"},"type":"syslog-rt"}...'
+[INFO ][FACTS][ANSIBLE] Playbook execution done.
+[INFO ][FACTS] Gathered facts!
+[INFO ][FACTS] Updating Influx with metrics.
+[INFO ][FACTS] Updating Influx with metrics, from inside the update device analytics function
+[INFO ][ALERTS][LOADS] Atempting to refresh ruleset
+[INFO ][ALERTS][LOADS] failed to acquire lock on updates, forced=false
+[DEBUG][WS][TX] Sending msg='{"msg":{"10.144.1.1":{"ansible":{"msg":"Task failed: Failed to connect to the host via ssh: ssh: connect to host 10.144.1.1 port 22: No route to host","status":"dark"},"icmp":{"msg":"","status":"unreachable"}},"10.144.1.222":{"ansible":{"msg":"","status":"reachable"},"icmp":{"msg":"","status":"reachable"}},"10.144.1.225":{"ansible":{"msg":"","status":"unknown"},"icmp":{"msg":"","status":"reachable"}}},"type":"device-health-rt"}...'
+[INFO ][FACTS] Updating local facts cache.
+[INFO ][FACTS] Sleeping until timeout (5s) zzZ...
+{"data-source":"facts","id":1,"name":"TEST RULE - Multiple metrics","predicates":[{"left":"&icmp_rtt","op":"more_than","right":75},{"left":"&icmp_status","op":"equal","right":"Reachable"}],"reduce-logic":"any","requires-ack":true,"rule-type":"simple","severity":"debug","target":10}
+{"data-source":"facts","id":1,"name":"TEST RULE - Prepend","predicates":[{"left":"&icmp_status","op":"not_equal","right":"  =REACH=  ","right-modifier":{"multi":{"operations":[{"replacen":{"count":1,"pattern":"=","with":""}},{"replacen":{"count":1,"pattern":"=","with":""}},"lower",{"prepend":"Un"},"trim",{"append":"able"}]}}}],"reduce-logic":"any","requires-ack":true,"rule-type":"simple","severity":"debug","target":10}
+{"data-source":"facts","id":1,"name":"TEST RULE - Prepend","predicates":[{"left":"&icmp_rtt","left-modifier":{"multi":{"operations":[{"add":-20.0},{"mul":0.95},{"rem":20.0},{"add":5.5},{"mod":15},{"pow":1.5}]}},"op":"more_than","right":2.8},{"left":"&icmp_rtt","left-modifier":{"multi":{"operations":[{"add":-20.0},{"mul":0.95},{"rem":20.0},{"add":5.5},{"mod":15},{"pow":1.5}]}},"op":"less_than","right":3}],"reduce-logic":"all","requires-ack":true,"rule-type":"simple","severity":"debug","target":10}
