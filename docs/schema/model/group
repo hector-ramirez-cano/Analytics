@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "group.schema.json",
+  "title": "TopologyGroup",
+  "type": "object",
+  "required": ["id", "is-display-group", "members", "name"],
+  "properties": {
+    "id": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "is-display-group": {
+      "type": "boolean"
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      }
+    },
+    "name": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
