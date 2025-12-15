@@ -120,7 +120,7 @@ pub async fn get_metric_range(influx_client : &influxdb2::Client, influx_filter:
     let result = execute_query(influx_client, query).await;
 
     serde_json::json!({
-        "min-y": result.get(0).and_then(|f| f.get("_value")).unwrap_or(&serde_json::json!(0)),
+        "min-y": result.first().and_then(|f| f.get("_value")).unwrap_or(&serde_json::json!(0)),
         "max-y": result.get(1).and_then(|f| f.get("_value")).unwrap_or(&serde_json::json!(0)),
     })
 }
@@ -193,11 +193,11 @@ pub async fn get_baseline_metrics(influx_client: &influxdb2::Client, device_host
         return Metrics::new()
     }
 
-    let query = format!(r#"
+    let query = r#"
         from(bucket: "baselines")
             |> range(start: -2h)
             |> last()
-    "#);
+    "#.to_string();
 
     let data = execute_query(influx_client, query).await;
 
@@ -284,7 +284,7 @@ pub async fn get_baseline_metrics(influx_client: &influxdb2::Client, device_host
 
         // Insert the entry
         metrics.entry(hostname.to_owned())
-            .or_insert(HashMap::new())
+            .or_default()
             .insert(metric_name, MetricValue::Number(value.into()));
     }
 
@@ -379,7 +379,7 @@ pub async fn update_device_analytics(influx_client : &influxdb2::Client, message
         let mut point = DataPoint::builder("metrics").tag("device_id", device_id.to_string());
 
         #[cfg(debug_assertions)] {
-            log::info!("[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>{}", device_id.to_string());
+            log::info!("[DEBUG][FACTS][INFLUX] It contains 'metrics'>'device_id'>{}", device_id);
         }
 
         let device_requested_metrics = match Cache::instance().get_device_requested_metrics(device_id).await {

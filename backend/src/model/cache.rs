@@ -61,7 +61,7 @@ impl Cache {
     }
 
     pub async fn update_topology(&self, pool: &sqlx::Pool<sqlx::Postgres>, forced: bool) -> Result<(), AegisError>{
-        let mut connection = pool.acquire().await.map_err(|e| AegisError::Sql(e))?;
+        let mut connection = pool.acquire().await.map_err(AegisError::Sql)?;
         update_topology_cache(&mut connection, forced).await
     }
 
@@ -86,7 +86,7 @@ impl Cache {
     pub async fn get_device_hostnames(&self) -> Option<HashMap<DeviceId, String>> {
         let r = self.devices.read().await;
 
-        let map = r.iter().map(|(id, device)| (id.clone(), device.management_hostname.clone())).collect();
+        let map = r.iter().map(|(id, device)| (*id, device.management_hostname.clone())).collect();
         Some(map)
     }
 
@@ -105,7 +105,7 @@ impl Cache {
         let r = self.devices.read().await;
         let d = r.iter().find(|(_, d)| d.management_hostname==management_hostname);
         if let Some((id, _)) = d {
-            Some(id.clone())
+            Some(*id)
         }
         else {
             None
@@ -179,7 +179,7 @@ impl Cache {
 
     pub async fn get_group_members(&self, id: GroupId) -> Option<Vec<ItemId>> {
         let r = self.groups.read().await;
-        Some(r.get(&id)?.members.clone()?)
+        r.get(&id)?.members.clone()
     }
 
     // TODO: Enforce no loops are held for any given group. Db already enforces this, but the backend should enforce this also, just in case
@@ -262,10 +262,7 @@ impl Cache {
             Some(d) => Some(EvaluableItem::Device(d.clone())),
             None=> {
                 let r = self.groups.read().await;
-                match r.get(&id) {
-                    Some(g) => Some(EvaluableItem::Group(g.clone())),
-                    None => None
-                }
+                r.get(&id).map(|g| EvaluableItem::Group(g.clone()))
             }
         }
     }
@@ -323,7 +320,7 @@ impl Cache {
         let now: EpochSeconds = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
-            .as_secs().into();
+            .as_secs();
         let mut w: RwLockWriteGuard<'_, EpochSeconds> = self.last_update.write().await;
         *w = now;
     }
@@ -334,13 +331,13 @@ impl Cache {
     ///
     /// Returns None if an update is not needed (someone else updated recently).
     pub async fn try_claim_update(&self, forced: bool) -> Option<RwLockWriteGuard<'_, EpochSeconds>> {
-        let interval_secs: EpochSeconds = Config::instance().get_value_opt ("backend/controller/cache/cache_invalidation_s", "/").unwrap_or_default().as_u64().unwrap_or(60).into();
+        let interval_secs: EpochSeconds = Config::instance().get_value_opt ("backend/controller/cache/cache_invalidation_s", "/").unwrap_or_default().as_u64().unwrap_or(60);
 
         // fast read-only check
         let now: EpochSeconds = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
-            .unwrap_or(0).into();
+            .unwrap_or(0);
 
         // if the update isn't due, and the caller didn't request a forced update
         let last: EpochSeconds = *self.last_update.read().await;
@@ -368,7 +365,7 @@ impl Cache {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
-            .unwrap_or(0).into()
+            .unwrap_or(0)
     }
 
     pub async fn as_json(&self) -> Result<serde_json::Value, AegisError> {

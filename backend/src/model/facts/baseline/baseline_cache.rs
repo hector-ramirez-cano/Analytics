@@ -22,9 +22,8 @@ impl BaselineCache {
 
     pub fn init(influx_client: &influxdb2::Client) {
         let innit_bruv = INSTANCE.set(Arc::new(BaselineCache::new(influx_client.clone())));
-        if let Err(_) = innit_bruv {
+        if innit_bruv.is_err() {
             println!("[WARN][BASELINE] Baseline backend was init more than once!. Ignoring second init...");
-            return;
         }
     }
 

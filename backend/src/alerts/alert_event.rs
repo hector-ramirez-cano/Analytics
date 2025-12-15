@@ -4,6 +4,7 @@ use crate::{alerts::{AlertEvent, AlertSeverity}, types::{AlertRuleId, AlertTarge
 
 
 impl AlertEvent {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         requires_ack: bool,
         severity: AlertSeverity,
@@ -27,7 +28,7 @@ impl AlertEvent {
             db_notified: false,
             acked: !requires_ack,
             rule_id: Some(rule_id),
-            ack_actor: ack_actor,
+            ack_actor,
             value,
 
         }
@@ -51,7 +52,7 @@ impl AlertEvent {
         if stringify {
             map.insert("severity".into(), serde_json::json!(self.severity.to_string()));
         } else {
-            map.insert("severity".into(), serde_json::to_value(&self.severity).unwrap_or(serde_json::Value::String("".to_string())));
+            map.insert("severity".into(), serde_json::to_value(self.severity).unwrap_or(serde_json::Value::String("".to_string())));
         }
 
         map.insert("message".into(), serde_json::json!(self.message));
@@ -70,6 +71,6 @@ impl std::fmt::Display for AlertEvent {
         if let Some(sev) = dict.get_mut("severity") {
             *sev = serde_json::json!(self.severity.to_string());
         }
-        write!(f, "{}", dict.to_string())
+        write!(f, "{}", dict)
     }
 }

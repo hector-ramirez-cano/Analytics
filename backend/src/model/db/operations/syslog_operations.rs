@@ -8,7 +8,7 @@ use crate::{model::db::operations::RowCount, syslog::{SyslogFacility, SyslogFilt
 pub async fn update_database(postgres_pool: &Pool<Postgres>, msg: &SyslogMessage) -> Result<(), ()> {
     let time = msg.received_at.unwrap_or_default();
     let hostname = msg.source.clone().unwrap_or_default();
-    let procid = msg.procid.clone().unwrap_or(String::new()).to_string();
+    let procid = msg.procid.clone().unwrap_or_default().to_string();
     let result = sqlx::query!(r#"
         INSERT INTO Syslog.system_events
             (facility, severity, from_host, received_at, process_id, message, message_id, appname)
@@ -82,7 +82,7 @@ fn append_where_clause(filters: & SyslogFilters, query : & mut QueryBuilder<Post
 pub async fn get_row_count(filters: &SyslogFilters, postgres_pool: &Pool<Postgres>) -> i64 {
     let mut query = QueryBuilder::<Postgres>::new("SELECT COUNT(1) as total FROM Syslog.system_events");
 
-    append_where_clause(&filters, &mut query, None, false);
+    append_where_clause(filters, &mut query, None, false);
 
     #[cfg(debug_assertions)] { log::info!("[DEBUG][DB][SYSLOG] query={}", query.sql()); }
 

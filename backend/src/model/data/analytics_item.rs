@@ -5,6 +5,7 @@ use crate::model::data::link::Link;
 use crate::model::data::group::Group;
 
 #[derive(Clone, Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum AnalyticsItem {
     Device(Device),
     Link(Link),

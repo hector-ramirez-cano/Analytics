@@ -50,7 +50,7 @@ impl Config {
 
         #[cfg(debug_assertions)] {
             println!("[INFO][CONFIG] Loaded debug config!");
-            v = v.get_mut("debug").with_context(|| format!("[FATAL] Expected 'debug' block for debug builds"))?.take();
+            v = v.get_mut("debug").with_context(|| "[FATAL] Expected 'debug' block for debug builds".to_string())?.take();
         }
         #[cfg(not(debug_assertions))] {
             println!("[INFO][CONFIG] Loaded release config!");

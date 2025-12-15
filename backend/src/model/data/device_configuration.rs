@@ -63,7 +63,7 @@ impl DeviceConfiguration {
                 .and_then(|v| v.as_array())
                 .map_or_else(HashSet::new, |arr| {
                     arr.iter()
-                        .filter_map(|x| Some(DataSource::from(x.as_str())))
+                        .map(|x| DataSource::from(x.as_str()))
                         .collect()
                 }),
             available_values: cfg
@@ -93,7 +93,6 @@ impl DeviceConfiguration {
         })
     }
 }
-
 
 impl Hash for DeviceConfiguration {
     fn hash<H: Hasher>(&self, state: &mut H) {

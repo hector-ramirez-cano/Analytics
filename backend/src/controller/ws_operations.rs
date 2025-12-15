@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::fmt::Display;
 
 use sqlx::Postgres;
 use tokio::sync::mpsc;
@@ -33,9 +34,9 @@ impl WsMsg {
     }
 }
 
-impl ToString for WsMsg {
-    fn to_string(&self) -> String {
-        serde_json::json!(self).to_string()
+impl Display for WsMsg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", serde_json::json!(self))
     }
 }
 
@@ -91,7 +92,8 @@ pub async fn ws_get_topology_view(data_to_socket: &mut mpsc::Sender<String>, poo
         "msg": view
     });
 
-    Ok(ws_send_msg(data_to_socket, "topology-view", &msg.to_string()).await)
+    let _: () = ws_send_msg(data_to_socket, "topology-view", &msg.to_string()).await;
+    Ok(())
 }
 
 pub async fn ws_get_dashboards(data_to_socket: &mut mpsc::Sender<String>, pool: &sqlx::Pool<Postgres>) -> Result<(), ()> {
@@ -170,7 +172,7 @@ pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg: WsMs
                 Some(m) => m,
                 None => {
                     ws_send_error_msg(data_to_socket, 
-                        format!("[BACKEND] Facts querying yielded no members for group").as_str()).await; 
+                        "[BACKEND] Facts querying yielded no members for group".to_string().as_str()).await; 
                     return Err(())
                 }
             };
@@ -179,7 +181,8 @@ pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg: WsMs
         else if cache.has_device(id).await {
             devices.push(id);
         }
-        else {} // Explicitly do nothing 
+        
+        // Explicitly do nothing 
     }
 
     // Extract facts
@@ -264,7 +267,7 @@ pub async fn ws_query_metadata(data_to_socket: &mut mpsc::Sender<String>, msg: W
                 Some(m) => m,
                 None => {
                     ws_send_error_msg(data_to_socket, 
-                        format!("[BACKEND] Metadata querying yielded no members for group").as_str()).await; 
+                        "[BACKEND] Metadata querying yielded no members for group".to_string().as_str()).await; 
                     return Err(())
                 }
             };
@@ -273,7 +276,7 @@ pub async fn ws_query_metadata(data_to_socket: &mut mpsc::Sender<String>, msg: W
         else if cache.has_device(id).await {
             devices.push(id);
         }
-        else {} // Explicitly do nothing 
+         // Explicitly do nothing 
     }
 
     // Extract metadata
@@ -332,7 +335,7 @@ pub async fn ws_query_metrics(data_to_socket: &mut mpsc::Sender<String>, influx_
     match data_to_socket.send(msg.to_string()).await {
         Ok(_) => return Ok(()),
         Err(e) => {
-            log::error!("[ERROR][WS][METRICS] Failed to send metrics message with e = {}, msg='{}'", e.to_string(), msg.to_string())
+            log::error!("[ERROR][WS][METRICS] Failed to send metrics message with e = {}, msg='{}'", e, msg)
         }
     }
 
@@ -354,7 +357,7 @@ pub async fn ws_handle_syslog(
         | serde_json::Value::Bool(_) 
         | serde_json::Value::Number(_) 
         | serde_json::Value::String(_) => {
-            let e = format!("[ERROR][WS][SYSLOG] Could not parse inner syslog message. Expected message types = (Object, Array). Message was = '{}'", msg.to_string());
+            let e = format!("[ERROR][WS][SYSLOG] Could not parse inner syslog message. Expected message types = (Object, Array). Message was = '{}'", msg);
             log::error!("{}", e);
             ws_send_error_msg(data_to_socket, &e).await;
             return Err(());
@@ -388,7 +391,7 @@ pub async fn ws_handle_alerts(
         | serde_json::Value::Bool(_) 
         | serde_json::Value::Number(_) 
         | serde_json::Value::String(_) => {
-            let e = format!("[ERROR][WS][ALERTS] Could not parse inner Alert message. Expected message types = (Object, Array). Message was = '{}'", msg.to_string());
+            let e = format!("[ERROR][WS][ALERTS] Could not parse inner Alert message. Expected message types = (Object, Array). Message was = '{}'", msg);
             log::error!("{}", e);
             ws_send_error_msg(data_to_socket, &e).await;
             return Err(());
@@ -519,7 +522,7 @@ async fn ws_route_syslog_check_filters<'a>(data_to_socket: &'a mut mpsc::Sender<
             let e = format!("[ERROR][WS][SYSLOG] Requested size/data before setting filters = '{}'", msg.kind);
             log::error!("{}", e);
             ws_send_error_msg(data_to_socket, &e).await;
-            return Err(())
+            Err(())
         }
     }
 }
@@ -539,7 +542,7 @@ async fn ws_route_syslog_request_data(
         match data_to_socket.send(msg.to_string()).await {
             Ok(_) => (),
             Err(e) => {
-                log::error!("[ERROR][WS][Syslog] Failed to send syslog message with e = {}, msg='{}'", e.to_string(), msg.to_string())
+                log::error!("[ERROR][WS][Syslog] Failed to send syslog message with e = {}, msg='{}'", e, msg)
             }
         }
     }
@@ -552,7 +555,7 @@ async fn ws_route_syslog_request_size(
 ) -> Result<(), ()> {
     let filters = ws_route_syslog_check_filters(data_to_socket, filters, msg).await?;
 
-    let size = crate::model::db::operations::syslog_operations::get_row_count(filters, &pool).await;
+    let size = crate::model::db::operations::syslog_operations::get_row_count(filters, pool).await;
 
     let msg = serde_json::json!({
         "type": "syslog",
@@ -565,7 +568,7 @@ async fn ws_route_syslog_request_size(
     match data_to_socket.send(msg.to_string()).await {
         Ok(_) => return Ok(()),
         Err(e) => {
-            log::error!("[ERROR][WS][Syslog] Failed to send syslog message with e = {}, msg='{}'", e.to_string(), msg.to_string())
+            log::error!("[ERROR][WS][Syslog] Failed to send syslog message with e = {}, msg='{}'", e, msg)
         }
     }
 
@@ -585,7 +588,7 @@ async fn ws_route_syslog(
     let msg = match msg {
         Some(m) => m,
         None => {
-            let e = format!("[ERROR][WS][SYSLOG] Could not parse inner syslog message. Message was = '{}'", msg_in.to_string());
+            let e = format!("[ERROR][WS][SYSLOG] Could not parse inner syslog message. Message was = '{}'", msg_in);
             log::error!("{}", e);
             ws_send_error_msg(data_to_socket, &e).await;
             return Err(());
@@ -625,7 +628,7 @@ async fn ws_route_alerts_check_filters<'a>(data_to_socket: &'a mut mpsc::Sender<
             let e = format!("[ERROR][WS][ALERTS] Requested size before setting filters = '{}'", msg.kind);
             log::error!("{}", e);
             ws_send_error_msg(data_to_socket, &e).await;
-            return Err(())
+            Err(())
         }
     }
 }
@@ -646,7 +649,7 @@ async fn ws_route_alerts_request_data(
         match data_to_socket.send(msg.to_string()).await {
             Ok(_) => (),
             Err(e) => {
-                log::error!("[ERROR][WS][Syslog] Failed to send syslog message with e = {}, msg='{}'", e.to_string(), msg.to_string())
+                log::error!("[ERROR][WS][Syslog] Failed to send syslog message with e = {}, msg='{}'", e, msg)
             }
         }
     }
@@ -660,7 +663,7 @@ async fn ws_route_alerts_request_size(
     let filters = ws_route_alerts_check_filters(data_to_socket, filters, msg).await?;
 
     
-    let size = crate::model::db::operations::alert_operations::get_row_count(filters, &pool).await;
+    let size = crate::model::db::operations::alert_operations::get_row_count(filters, pool).await;
 
     let msg = serde_json::json!({
         "type": "alerts",
@@ -673,7 +676,7 @@ async fn ws_route_alerts_request_size(
     match data_to_socket.send(msg.to_string()).await {
         Ok(_) => return Ok(()),
         Err(e) => {
-            log::error!("[ERROR][WS][Syslog] Failed to send syslog message with e = {}, msg='{}'", e.to_string(), msg.to_string())
+            log::error!("[ERROR][WS][Syslog] Failed to send syslog message with e = {}, msg='{}'", e, msg)
         }
     }
 
@@ -694,7 +697,7 @@ async fn ws_route_alerts (
     let msg = match msg {
         Some(m) => m,
         None => {
-            let e = format!("[ERROR][WS][ALERTS] Could not parse inner alerts message. Message was = '{}'", msg_in.to_string());
+            let e = format!("[ERROR][WS][ALERTS] Could not parse inner alerts message. Message was = '{}'", msg_in);
             log::error!("{}", e);
             ws_send_error_msg(data_to_socket, &e).await;
             return Err(());

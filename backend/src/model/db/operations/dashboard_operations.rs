@@ -7,14 +7,14 @@ use crate::model::data::dashboard::DashboardItem;
 
 pub async fn get_dashboards_as_json(pool: &sqlx::PgPool) -> Result<HashMap<DashboardId, Dashboard>, AegisError>{
     let dashboard_members = sqlx::query_as!(DashboardItem, "SELECT dashboard_id, row_start, row_span, col_start, col_span, polling_definition, style_definition FROM Analytics.dashboard_items")
-    .fetch_all(&*pool)
+    .fetch_all(pool)
     .await
-    .map_err(|e| AegisError::Sql(e))?;
+    .map_err(AegisError::Sql)?;
 
     let mut items = HashMap::new();
     for member in dashboard_members {
-        if !items.contains_key(&member.dashboard_id) {
-            items.insert(member.dashboard_id, vec![member]);
+        if let std::collections::hash_map::Entry::Vacant(e) = items.entry(member.dashboard_id) {
+            e.insert(vec![member]);
         } else {
             let members = items.get_mut(&member.dashboard_id).expect("[FATAL]Unreachable code");
             members.push(member);
@@ -24,9 +24,9 @@ pub async fn get_dashboards_as_json(pool: &sqlx::PgPool) -> Result<HashMap<Dashb
     let rows = sqlx::query!(r#"
         SELECT dashboard_id, dashboard_name FROM Analytics.dashboard;"#
     )
-    .fetch_all(&*pool)
+    .fetch_all(pool)
     .await
-    .map_err(|e| AegisError::Sql(e))?;
+    .map_err(AegisError::Sql)?;
 
     let mut dashboards = HashMap::new();
     for row in rows {
@@ -38,6 +38,6 @@ pub async fn get_dashboards_as_json(pool: &sqlx::PgPool) -> Result<HashMap<Dashb
         dashboards.insert(dashboard_id, dashboard);
     }
 
-    return Ok(dashboards);
+    Ok(dashboards)
 }
 

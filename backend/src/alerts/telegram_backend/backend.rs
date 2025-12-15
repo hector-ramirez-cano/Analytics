@@ -95,7 +95,7 @@ impl TelegramBackend {
         let backend = Arc::new(TelegramBackend::new(token, pool));
         let innit_bruv = INSTANCE.set(backend);
 
-        if let Err(_) = innit_bruv {
+        if innit_bruv.is_err() {
             println!("[WARN][Telegram] Telegram backend was init more than once!. Ignoring second init...");
             return;
         }

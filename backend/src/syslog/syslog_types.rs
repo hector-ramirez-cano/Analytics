@@ -179,10 +179,10 @@ impl SyslogFacility {
 
 impl<'a> From<syslog_loose::Message<&'a str>> for SyslogMessage {
     fn from(m: syslog_loose::Message<&'a str>) -> Self {
-        let hostname = if let Some(h) = m.hostname { Some(h.to_string()) } else { None };
-        let appname  = if let Some(h) = m.appname { Some(h.to_string()) } else { None };
-        let procid   = if let Some(h) = m.procid { Some(h.to_string()) } else { None };
-        let msgid    = if let Some(h) = m.msgid { Some(h.to_string()) } else { None };
+        let hostname = m.hostname.map(|h| h.to_string());
+        let appname  = m.appname.map(|h| h.to_string());
+        let procid   = m.procid.map(|h| h.to_string());
+        let msgid    = m.msgid.map(|h| h.to_string());
         let facility = if let Some(f) = m.facility { f.into() } else { SyslogFacility::Local7 };
         let severity = if let Some(s) = m.severity { s.into() } else { SyslogSeverity::Err };
 
@@ -190,12 +190,12 @@ impl<'a> From<syslog_loose::Message<&'a str>> for SyslogMessage {
 
         SyslogMessage {
             id: -1,
-            facility: facility,
-            severity: severity,
+            facility,
+            severity,
             source: hostname,
-            procid: procid,
+            procid,
             received_at: m.timestamp.map(|ts|  DateTime::<Utc>::from_naive_utc_and_offset(ts.naive_local(), Utc)),
-            msg: msg,
+            msg,
             appname,
             msgid,
         }

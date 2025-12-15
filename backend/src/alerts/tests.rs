@@ -247,7 +247,7 @@ mod alert_backend_tests {
                 "right": "Reachable",
             }]
         });
-        println!("{}", rule_any_multiple_metrics.to_string());
+        println!("{}", rule_any_multiple_metrics);
 
 
         let rule1: AlertRule = serde_json::from_value(rule_right_75                         ).expect("Definition should be valid"); // FALSE
@@ -470,7 +470,7 @@ mod alert_backend_tests {
                 "right": "Unreachable",
             }]
         });
-        println!("{}", rule_delta.to_string());
+        println!("{}", rule_delta);
         let rule_sustained   : AlertRule  = serde_json::from_value(rule_delta.clone()).expect("Rule should be valid");
         let rule_interrupted : AlertRule  = serde_json::from_value(rule_delta.clone()).expect("Rule should be valid");
 
@@ -855,6 +855,7 @@ mod alert_backend_tests {
 
         
         println!("{}", serde_json::json!(rule_string_multi));
+        println!("{}", serde_json::json!(rule_complex_modifier));
 
         let rule1: AlertRule = serde_json::from_value(rule_right_75                         ).expect("Definition should be valid"); // TRUE
         let rule2: AlertRule = serde_json::from_value(rule_right_0                          ).expect("Definition should be valid"); // TRUE

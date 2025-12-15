@@ -6,7 +6,7 @@ use sqlx::{Postgres, Transaction};
 use tgbot::types::{AnswerCallbackQuery, CallbackQuery, EditMessageReplyMarkup, EditMessageText, InlineKeyboardMarkup, MaybeInaccessibleMessage, Message};
 use tgbot::{api::Client, handler::UpdateHandler, types::{ChatPeerId, ParseMode, UserPeerId}};
 
-use crate::alerts::telegram_backend::telegram_backend::TelegramBackend;
+use crate::alerts::telegram_backend::backend::TelegramBackend;
 use crate::alerts::telegram_backend::{Handler, TelegramAckAction};
 use crate::model::db::operations::{alert_operations, telegram_operations};
 use crate::types::AlertEventId;
@@ -35,7 +35,7 @@ fn escape_with_backslash(s: &str, to_escape: &[char]) -> String {
 
 impl Handler {
     pub async fn send_message(client: &Client, chat_id: ChatPeerId, message: &str) {
-        let message = escape_with_backslash(&message, &['.', '=', '\\']);
+        let message = escape_with_backslash(message, &['.', '=', '\\']);
         let method = tgbot::types::SendMessage::new(chat_id, &message).with_parse_mode(ParseMode::MarkdownV2);
         match client.execute(method).await {
             Ok(_) => (),
@@ -46,9 +46,9 @@ impl Handler {
     }
 
     pub async fn send_message_button(client: &Client, chat_id: ChatPeerId, message: &str, alert_id: AlertEventId) -> Result<(ChatPeerId, i64), ()>{
-        let message = escape_with_backslash(&message, &['.', '=', '\\']);
+        let message = escape_with_backslash(message, &['.', '=', '\\']);
         use tgbot::types::*;
-        let yes_btn = InlineKeyboardButton::for_callback_data_struct("Ack", &TelegramAckAction{ chat_id, alert_id: alert_id, acked: true}).unwrap();
+        let yes_btn = InlineKeyboardButton::for_callback_data_struct("Ack", &TelegramAckAction{ chat_id, alert_id, acked: true}).unwrap();
 
         let keyboard = InlineKeyboardMarkup::default().add_row(vec![yes_btn]);
 
@@ -85,7 +85,7 @@ impl Handler {
         };
 
         // 1.- Check if it's auth
-        if let Ok(true) = telegram_operations::is_auth(chat_id, &pool_executor).await {
+        if let Ok(true) = telegram_operations::is_auth(chat_id, pool_executor).await {
             Handler::send_message(client, chat_id, "Su chat ya había sido atenticado. No se requiere otra acción").await;
             return
         }
@@ -100,7 +100,7 @@ impl Handler {
         };
 
         // 3.- Check if the token exists in the database
-        if let Err(_) = telegram_operations::ack_token_exists(params.to_string(), pool_executor).await {
+        if (telegram_operations::ack_token_exists(params.to_string(), pool_executor).await).is_err() {
             Handler::send_message(client, chat_id, format!("El token introducido no es válido. Token introducido =`{}`", params).as_str()).await;
             return;
         }
@@ -120,7 +120,7 @@ impl Handler {
 
             let result = Self::_handle_auth_private(client, &chat_id, user_id, params.to_string(), &mut transaction, pool_executor).await;
 
-            if let Err(_) = result {
+            if result.is_err() {
                 return
             }
         }
@@ -173,7 +173,7 @@ impl Handler {
         };
 
         // 2.- add the user's chat to the subscription list
-        if let Err(_) = telegram_operations::subscribe_chat(chat_id, true, &mut transaction).await {
+        if (telegram_operations::subscribe_chat(chat_id, true, &mut transaction).await).is_err() {
             Handler::send_message(client, chat_id, "Error inesperado al cambiar su estado de suscripción. Intente nuevamente más tarde").await
         }
 
@@ -307,10 +307,7 @@ async fn _handle_incomming_message(client: &Client, chat_id: Option<ChatPeerId>,
         None => (&(*text), None)
     };
 
-    let is_private = match message.chat {
-        tgbot::types::Chat::Private(_) => true,
-        _ => false
-    };
+    let is_private = matches!(message.chat, tgbot::types::Chat::Private(_));
 
     match command {
         "/start"       => Handler::handle_start(client, chat_id).await,
@@ -350,7 +347,7 @@ async fn _handle_batch_message_ack(except: (ChatPeerId, i64), client: &Client, t
     let mut acked: Vec<i64> = Vec::with_capacity(data.len());
     for pair in data.iter().filter(|f| f.0 != except.0 && f.1 != except.1) {
         let method = EditMessageText
-            ::for_chat_message(pair.0, pair.1.into(), text)
+            ::for_chat_message(pair.0, pair.1, text)
             .with_parse_mode(ParseMode::MarkdownV2);
         if let Err(e) = client.execute(method).await {
             log::warn!("[WARN ][TELEGRAM] Failed to update message contents after ack! error = {e}");
@@ -359,7 +356,7 @@ async fn _handle_batch_message_ack(except: (ChatPeerId, i64), client: &Client, t
             acked.push(pair.0.into());
         }
     }
-    if let Err(_) =  telegram_operations::ack_messages(alert_id, acked, &mut transaction).await {
+    if (telegram_operations::ack_messages(alert_id, acked, &mut transaction).await).is_err() {
         log::error!("[ERROR][TELEGRAM] Failed to update acked messages in database");
         return Err(());
     }
@@ -415,7 +412,7 @@ async fn _handle_callback_query(client: &Client, callback_query: CallbackQuery) 
     }
 
     // 5.- Ack the alert in the database
-    if let Err(_) = alert_operations::ack_alert(telegram_ack_action.alert_id, &ack_actor_name, &mut transaction).await {
+    if (alert_operations::ack_alert(telegram_ack_action.alert_id, &ack_actor_name, &mut transaction).await).is_err() {
         log::error!("[ERROR][TELEGRAM] Failed to ack alert event! Rolling back...");
         return;
     }
@@ -439,7 +436,7 @@ async fn _handle_callback_query(client: &Client, callback_query: CallbackQuery) 
     // 8.- Update the message reply
     let m = match &callback_query.message {
         Some(MaybeInaccessibleMessage::Message(m)) => m,
-        None | _ => {
+        _ => {
             log::warn!("[WARN ][TELEGRAM] Ack'd for unavailable message. This is rare");
             return;
         }
@@ -470,7 +467,7 @@ async fn _handle_callback_query(client: &Client, callback_query: CallbackQuery) 
     };
 
     // 9.- Update messages on other chats that reference the same alert
-    if let Err(_) = _handle_batch_message_ack((m.chat.get_id(), m.id), client, &text, callback_query).await {
+    if (_handle_batch_message_ack((m.chat.get_id(), m.id), client, &text, callback_query).await).is_err() {
         log::error!("[ERROR][TELEGRAM] Failed to update messages after ack")
     }
 

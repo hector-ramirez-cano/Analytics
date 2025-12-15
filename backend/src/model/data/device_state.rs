@@ -22,8 +22,8 @@ impl DeviceStatus {
         icmp_status: IcmpStatus,
     ) -> Self {
         Self {
-            ansible_status: ansible_status,
-            icmp_status: icmp_status,
+            ansible_status,
+            icmp_status,
         }
     }
 

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::alerts::{Accessor, AlertPredicate, AlertPredicateOperation, OperandModifier};
@@ -10,16 +12,16 @@ impl AlertPredicate {
         // Resolve sides
         let (lmod, left, op, right, rmod) = match self {
             AlertPredicate::LeftConst(lmod, left, op, accessor, rmod) => {
-                (lmod, Some(left), op, accessor.access(&dataset_right), rmod)
+                (lmod, Some(left), op, accessor.access(dataset_right), rmod)
             },
             AlertPredicate::RightConst(lmod, accessor, op, right, rmod) => {
-                (lmod, accessor.access(&dataset_left), op, Some(right), rmod)
+                (lmod, accessor.access(dataset_left), op, Some(right), rmod)
             },
             AlertPredicate::Variable(lmod, accessor_left, op, accesor_right, rmod) => {
-                (lmod, accessor_left.access(&dataset_left), op, accesor_right.access(&dataset_right), rmod)
+                (lmod, accessor_left.access(dataset_left), op, accesor_right.access(dataset_right), rmod)
             },
         };
-        #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating predicate with actual = {:?}{} {:?} {:?}{}", left, lmod.to_string(), op, right, rmod.to_string()); }
+        #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating predicate with actual = {:?}{} {:?} {:?}{}", left, lmod, op, right, rmod); }
 
         let (left, right) = if let Some(left) = lmod.eval(left) && let Some(right) = rmod.eval(right) {
             (left, right)
@@ -33,17 +35,17 @@ impl AlertPredicate {
 
     pub fn get_op(&self) -> AlertPredicateOperation {
         match self {
-            AlertPredicate::LeftConst (_, _, op, _, _) => op.clone(),
-            AlertPredicate::RightConst(_, _, op, _, _) => op.clone(),
-            AlertPredicate::Variable  (_, _, op, _, _) => op.clone(),
+            AlertPredicate::LeftConst (_, _, op, _, _) => *op,
+            AlertPredicate::RightConst(_, _, op, _, _) => *op,
+            AlertPredicate::Variable  (_, _, op, _, _) => *op,
         }
     }
 
     pub fn eval_left<'a>(&'a self, dataset_left : &'a MetricSet) -> Option<MetricValue> {
         match self {
             AlertPredicate::LeftConst (lmod, metric_value, _, _, _) => lmod.eval(Some(metric_value)),
-            AlertPredicate::RightConst(lmod, accessor, _, _, _) => lmod.eval(accessor.access(&dataset_left)),
-            AlertPredicate::Variable  (lmod, accessor, _, _, _) => lmod.eval(accessor.access(&dataset_left)),
+            AlertPredicate::RightConst(lmod, accessor, _, _, _) => lmod.eval(accessor.access(dataset_left)),
+            AlertPredicate::Variable  (lmod, accessor, _, _, _) => lmod.eval(accessor.access(dataset_left)),
         }
     }
 
@@ -65,23 +67,24 @@ impl AlertPredicate {
 
     pub fn eval_right<'a>(&'a self, dataset_right : &'a MetricSet) -> Option<MetricValue> {
         match self {
-            AlertPredicate::LeftConst (_, _, _, accessor, rmod) => rmod.eval(accessor.access(&dataset_right)),
+            AlertPredicate::LeftConst (_, _, _, accessor, rmod) => rmod.eval(accessor.access(dataset_right)),
             AlertPredicate::RightConst(_, _, _, metric_value, rmod) => rmod.eval(Some(metric_value)),
-            AlertPredicate::Variable  (_, _, _, accessor, rmod) => rmod.eval(accessor.access(&dataset_right)),
+            AlertPredicate::Variable  (_, _, _, accessor, rmod) => rmod.eval(accessor.access(dataset_right)),
         }
     }
 }
 
-impl ToString for AlertPredicate {
-    fn to_string(&self) -> String {
-        match self {
-            AlertPredicate::LeftConst (lmod, metric_value, op, accessor, rmod) => format!("{}{} {} {}{}", metric_value.to_string    (), lmod.to_string() , op.to_string(), accessor.key, rmod.to_string()),
-            AlertPredicate::RightConst(lmod, accessor, op, metric_value, rmod) => format!("{}{} {} {}{}", accessor.key, op.to_string(), lmod.to_string() , metric_value.to_string() , rmod.to_string()),
-            AlertPredicate::Variable  (lmod, accessor, op, accessor1, rmod) => format!("{}{} {} {}{}"   , accessor.key, op.to_string(), lmod.to_string() , accessor1.key, rmod.to_string()),
-        }
+impl Display for AlertPredicate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            AlertPredicate::LeftConst (lmod, metric_value, op, accessor, rmod) => format!("{}{} {} {}{}", metric_value, lmod , op, accessor.key, rmod),
+            AlertPredicate::RightConst(lmod, accessor, op, metric_value, rmod) => format!("{}{} {} {}{}", accessor.key, op, lmod , metric_value , rmod),
+            AlertPredicate::Variable  (lmod, accessor, op, accessor1, rmod) => format!("{}{} {} {}{}"   , accessor.key, op, lmod , accessor1.key, rmod),
+        };
+
+        write!(f, "{s}")
     }
 }
-
 
 // --- Serialize ---
 impl Serialize for AlertPredicate {

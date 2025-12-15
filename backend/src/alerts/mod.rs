@@ -324,10 +324,12 @@ pub enum AlertReduceLogic {
 /// Kind of rule to be evaluated. Changes which data will be used, and the behavior to raise the alert.
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(rename_all="lowercase")]
+#[derive(Default)]
 pub enum AlertRuleKind {
     /// Evaluates using only data in the current dataset.
     /// Useful for predicates that don't require any external data.
     /// Such as any time a given value is spotted, like 'SSH' in syslog
+    #[default]
     Simple,
 
     /// Evaluates using the current data set, and the one previous to it
@@ -346,11 +348,6 @@ pub enum AlertRuleKind {
     Sustained { seconds: EpochSeconds }
 }
 
-impl Default for AlertRuleKind {
-    fn default() -> Self {
-        AlertRuleKind::Simple
-    }
-}
 
 impl fmt::Display for AlertRuleKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -472,6 +469,7 @@ pub enum AlertDataSource {
 
 /// Defines the items that can be evaluated against a rule.
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum EvaluableItem {
     Device (Device),
     Group (Group)
@@ -487,8 +485,8 @@ impl EvaluableItem {
         #[cfg(debug_assertions)] { log::info!("[DEBUG][ALERTS][EVAL] Evaluating rule for device={} kind is {}", device.management_hostname, rule.rule_kind); }
         match rule.rule_kind {
             AlertRuleKind::Simple => {
-                if rule.eval_single(&dataset_right) {
-                    let which = rule.raising_values(&dataset_right, &dataset_right);
+                if rule.eval_single(dataset_right) {
+                    let which = rule.raising_values(dataset_right, dataset_right);
                     Some((EvaluableItem::Device(device), which))
                 } else { None }
             },
@@ -502,7 +500,7 @@ impl EvaluableItem {
             },
 
             AlertRuleKind::Sustained { seconds } => {
-                if !rule.eval_single(&dataset_right) {
+                if !rule.eval_single(dataset_right) {
                     // returned false, we let the backend know that it should reset the counter (if any)
                     AlertBackend::sustained_reset(rule.rule_id, device.device_id).await;
                     return None
@@ -562,7 +560,7 @@ impl EvaluableItem {
                 if triggered.is_empty() {
                     return None;
                 }
-                return Some(triggered)
+                Some(triggered)
             },
             EvaluableItem::Device(device) => {
                 Some(vec![EvaluableItem::eval_device(device, rule, dataset_left, dataset_right).await?])

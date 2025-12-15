@@ -64,11 +64,10 @@ fn ping_host_once(host: &str) -> io::Result<(i32, String, IcmpStatus, f64, f64)>
             }
         }
         // try extract loss
-        if let Some(cap) = LOSS_RE.captures(&stdout) {
-            if let Some(loss) = cap.get(1) {
+        if let Some(cap) = LOSS_RE.captures(&stdout)
+            && let Some(loss) = cap.get(1) {
                 loss_pct = parse_float(loss.as_str(), 0.0);
             }
-        }
         IcmpStatus::Reachable
     } else {
         // examine stderr text for known errors (same order/logic as Python)
@@ -83,7 +82,7 @@ fn ping_host_once(host: &str) -> io::Result<(i32, String, IcmpStatus, f64, f64)>
         } else if stderr_s.contains(HOST_NOT_FOUND_PATTERN) || stdout_s.contains(HOST_NOT_FOUND_PATTERN) {
             IcmpStatus::HostNotFound(stderr_s.to_string())
         } else {
-            IcmpStatus::Unknown(format!("stdout={}, stderr={}", stdout_s.to_string(), stderr_s.to_string()))
+            IcmpStatus::Unknown(format!("stdout={}, stderr={}", stdout_s, stderr_s))
         }
     };
 

@@ -182,13 +182,11 @@ async fn run_playbook(targets: Vec<String>) -> (Metrics, Status) {
                     }
 
                     // Update status, only if it hasn't been overriden
-                    if !status.contains_key(&host) {
-                        status.insert(host, DeviceStatus::new_ansible(AnsibleStatus::Reachable));
-                    }
+                    status.entry(host).or_insert_with(|| DeviceStatus::new_ansible(AnsibleStatus::Reachable));
                 } 
                 else if event_name == "runner_on_unreachable" {
                     // override status with dark, and inform what failed
-                    let msg = res.get_item("msg").and_then(|v| Ok(v.extract::<String>()?)).unwrap_or("".to_owned()).to_string();
+                    let msg = res.get_item("msg").and_then(|v| v.extract::<String>()).unwrap_or("".to_owned()).to_string();
                     status.insert(host, DeviceStatus::new_ansible(AnsibleStatus::Dark(msg)));
                 }
             }

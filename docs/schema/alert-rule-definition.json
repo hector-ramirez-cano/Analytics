@@ -4,7 +4,7 @@
 
   "required": [
     "severity", "target", "reduce-logic",
-    "source", "predicates", "requires-ack", "id"
+    "data-source", "predicates", "requires-ack", "id"
   ],
 
   "properties": {
@@ -37,10 +37,10 @@
 
     "reduce-logic": {
       "type": "string",
-      "enum": ["and", "or", "any"]
+      "enum": ["all", "or", "any"]
     },
 
-    "source": {
+    "data-source": {
       "type": "string",
       "enum": ["facts", "syslog"]
     },
@@ -60,7 +60,10 @@
             "type": ["string", "number", "boolean", "null", "object", "array"]
           },
           "left-modifier": {
-            "$ref": "#/OperationModifierDefinitions/Modifier"
+            "oneOf": [
+              { "$ref": "#/OperationModifierDefinitions/multi" },
+              { "$ref": "#/OperationModifierDefinitions/Modifier" }
+            ]
           },
 
           "op": {
@@ -75,7 +78,10 @@
             "type": ["string", "number", "boolean", "null", "object", "array"]
           },
           "right-modifier": {
-            "$ref": "#/OperationModifierDefinitions/Modifier"
+            "oneOf": [
+              { "$ref": "#/OperationModifierDefinitions/multi" },
+              { "$ref": "#/OperationModifierDefinitions/Modifier" }
+            ]
           }
         },
         "additionalProperties": false
@@ -88,8 +94,6 @@
   "OperationModifierDefinitions": {
     "Modifier": {
       "oneOf": [
-        { "$ref": "#/OperationModifierDefinitions/multi" },
-        
         { "$ref": "#/OperationModifierDefinitions/add" },
         { "$ref": "#/OperationModifierDefinitions/mul" },
         { "$ref": "#/OperationModifierDefinitions/mod" },
@@ -105,7 +109,7 @@
         { "$ref": "#/OperationModifierDefinitions/bitwiseOr"},
         { "$ref": "#/OperationModifierDefinitions/bitwiseXor"},
         { "$ref": "#/OperationModifierDefinitions/bitwiseLShift"},
-        { "$ref": "#/OperationModifierDefinitions/bitwiseLRhift"},
+        { "$ref": "#/OperationModifierDefinitions/bitwiseRShift"},
         { "$ref": "#/OperationModifierDefinitions/bitwiseComplement"},
 
 
@@ -129,7 +133,7 @@
             "operations": { 
               "type": "array",
               "minLength" : 1,
-              "properties": {
+              "items": {
                 "$ref": "#/OperationModifierDefinitions/Modifier"
               }
             }

@@ -126,7 +126,7 @@ impl SyslogBackend {
             Ok(_) => (),
             Err(_) => {
                 log::error!("[ERROR][SYSLOG] Failed to insert message into database. Syslog Message will be dropped");
-                ()
+                
             }
         }
     }
@@ -191,7 +191,7 @@ impl SyslogBackend {
                         continue
                     }
                 };
-                let message: std::borrow::Cow<'_, str> = String::from_utf8_lossy(&mut buf[..len]);
+                let message: std::borrow::Cow<'_, str> = String::from_utf8_lossy(&buf[..len]);
                 log::info!("[INFO ][SYSLOG] Received message {}", &message);
                 let message = syslog_loose::parse_message(&message, syslog_loose::Variant::Either);
                 let message: SyslogMessage = message.into();

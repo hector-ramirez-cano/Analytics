@@ -15,10 +15,10 @@ pub async fn commit(mut data: serde_json::Value, pool: &sqlx::Pool<Postgres>) ->
         let mut transaction: sqlx::Transaction<'_, Postgres> = pool.begin().await
             .map_err(|err| (format!("Could not begin commit transaction. Err = '{err}'").to_string(), 500))?;
 
-        let mut data = data.as_object_mut().ok_or(("'data' is not Json Object".to_string(), 400))?;
+        let data = data.as_object_mut().ok_or(("'data' is not Json Object".to_string(), 400))?;
         
-        insert_and_update(&mut data, &mut transaction).await?;
-        delete_items(&mut data, &mut transaction).await?;
+        insert_and_update(data, &mut transaction).await?;
+        delete_items(data, &mut transaction).await?;
 
         transaction.commit().await.map_err(|err|  (format!("Could not commit transaction, error = '{err}'"), 500))?;
     }
@@ -201,7 +201,7 @@ async fn update_groups<'t>(groups: Vec<serde_json::Value>, transaction: &mut Tra
             .map_err(|e| (format!("Could not delete group members during update. SQL Error = '{e}'"), 500))?;
         }
 
-        for member in group.members.unwrap_or(Vec::new()) {
+        for member in group.members.unwrap_or_default() {
             sqlx::query!("
                 INSERT INTO Analytics.group_members
                     (group_id, item_id)
@@ -251,17 +251,17 @@ async fn update_links<'t>(links: Vec<serde_json::Value>, transaction: &mut Trans
 async fn update_rules<'t>(rules: Vec<serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     for rule_in in rules {
         let definition = rule_in.get("rule-definition")
-        .ok_or((format!("Could not update rule. 'rule-definition' is missing for rule"), 400))?.clone();
+        .ok_or(("Could not update rule. 'rule-definition' is missing for rule".to_string(), 400))?.clone();
     
     
         let rule : AlertRule = serde_json::from_value(rule_in)
             .map_err(|e| (format!("Could not update rule. Parsing failed with error = '{e}'"), 400))?;
 
         if rule.reduce_logic == AlertReduceLogic::Unknown {
-            return Err((format!("Could not update rule. Reduce Logic can't be unknown"), 400));
+            return Err(("Could not update rule. Reduce Logic can't be unknown".to_string(), 400));
         }
         if rule.severity == AlertSeverity::Unknown {
-            return Err((format!("Could not update rule. Alert Severity can't be unknown"), 400));
+            return Err(("Could not update rule. Alert Severity can't be unknown".to_string(), 400));
         }
 
         log::info!("[INFO ][DB][UPDATES] Updating rule= {}", rule.rule_id);

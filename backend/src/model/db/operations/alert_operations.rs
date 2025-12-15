@@ -100,7 +100,7 @@ fn append_where_clause(filters: &AlertFilters, query: &mut QueryBuilder<Postgres
 pub async fn get_row_count(filters: &AlertFilters, postgres_pool: &Pool<Postgres>) -> i64 {
     let mut query = QueryBuilder::<Postgres>::new("SELECT COUNT(1) as total FROM Analytics.alerts ");
 
-    append_where_clause(&filters, &mut query, None);
+    append_where_clause(filters, &mut query, None);
 
     #[cfg(debug_assertions)] { log::info!("[DEBUG][DB][ALERTS] query={}", query.sql()); }
 

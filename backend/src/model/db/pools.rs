@@ -86,11 +86,11 @@ pub async fn init_influx_client() -> influxdb2::Client {
 
     let conn_url = format!("{schema}{host}:{port}");
 
-    let client = influxdb2::Client::new(
+    
+
+    influxdb2::Client::new(
         conn_url,
         org,
         token
-    );
-
-    client
+    )
 }

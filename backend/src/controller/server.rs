@@ -32,7 +32,7 @@ use crate::syslog::syslog_backend::SyslogBackend;
 #[get("/heartbeat")]
 pub fn heartbeat() -> &'static str {
     #[cfg(debug_assertions)] {print!("[DEBUG]Heartbeat!");}
-    return "Bip bop"
+    "Bip bop"
 }
 
 #[get("/api/topology")]
@@ -71,7 +71,7 @@ pub async fn api_configure(data: RocketJson, pool: &State<sqlx::PgPool>) -> stat
         log::info!("[INFO ][API][RX] {}", data.0);
     }
 
-    if Config::instance().get("backend/controller/configure/enabled", "/").unwrap_or(false) == false {
+    if !Config::instance().get("backend/controller/configure/enabled", "/").unwrap_or(false) {
         log::warn!("[WARN ][API] Tried to configure, while read-only!");
 
         let err_body = serde_json::json!({
@@ -241,11 +241,11 @@ async fn ws_handle_message(
                 Ok(msg) => ws_route_message(pool, influx_client, data_to_socket, syslog_filters, alert_filters, msg).await,
             }
         }
-        Message::Binary(_) => ws_send_error_msg(data_to_socket, format!("[BACKEND] Received message via websocket that is not text type. Actual = 'Binary'").as_str()).await,
-        Message::Ping(_) => ws_send_error_msg(data_to_socket, format!("[BACKEND] Received message via websocket that is not text type. Actual = 'Ping'").as_str()).await,
-        Message::Pong(_) => ws_send_error_msg(data_to_socket, format!("[BACKEND] Received message via websocket that is not text type. Actual = 'Pong'").as_str()).await,
-        Message::Frame(_) => ws_send_error_msg(data_to_socket, format!("[BACKEND] Received message via websocket that is not text type. Actual = 'Frame'").as_str()).await,
-        Message::Close(_) => ws_send_error_msg(data_to_socket, format!("[BACKEND] WebSocket client requested closing. Actual = 'Close'").as_str()).await,
+        Message::Binary(_) => ws_send_error_msg(data_to_socket, "[BACKEND] Received message via websocket that is not text type. Actual = 'Binary'".to_string().as_str()).await,
+        Message::Ping(_) => ws_send_error_msg(data_to_socket, "[BACKEND] Received message via websocket that is not text type. Actual = 'Ping'".to_string().as_str()).await,
+        Message::Pong(_) => ws_send_error_msg(data_to_socket, "[BACKEND] Received message via websocket that is not text type. Actual = 'Pong'".to_string().as_str()).await,
+        Message::Frame(_) => ws_send_error_msg(data_to_socket, "[BACKEND] Received message via websocket that is not text type. Actual = 'Frame'".to_string().as_str()).await,
+        Message::Close(_) => ws_send_error_msg(data_to_socket, "[BACKEND] WebSocket client requested closing. Actual = 'Close'".to_string().as_str()).await,
     }
 }
 

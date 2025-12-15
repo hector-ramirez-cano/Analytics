@@ -27,21 +27,21 @@ impl OperandModifier {
             MetricValue::String(s) => {
                 match self {
                     // Always valid. It shoult never reach this arm, but just in case
-                    OperandModifier::None => return Some(value.clone()),
+                    OperandModifier::None => Some(value.clone()),
                     OperandModifier::Multi { operations } => {
                         let mut value = value.clone();
                         for op in operations {
                             value = op.eval(Some(&value)).unwrap_or(value).clone();
                         }
-                        return Some(value.clone())
+                        Some(value.clone())
                     }
 
                     // Valid String operations
-                    OperandModifier::Append(t) => return Some(MetricValue::String(format!("{}{}", s, t).to_owned())),
-                    OperandModifier::Prepend(t) => return Some(MetricValue::String(format!("{}{}", t, s).to_owned())),
-                    OperandModifier::Trim => return Some(MetricValue::String(s.trim().to_string())),
-                    OperandModifier::Lower => return Some(MetricValue::String(s.to_lowercase())),
-                    OperandModifier::Upper => return Some(MetricValue::String(s.to_uppercase())),
+                    OperandModifier::Append(t) => Some(MetricValue::String(format!("{}{}", s, t).to_owned())),
+                    OperandModifier::Prepend(t) => Some(MetricValue::String(format!("{}{}", t, s).to_owned())),
+                    OperandModifier::Trim => Some(MetricValue::String(s.trim().to_string())),
+                    OperandModifier::Lower => Some(MetricValue::String(s.to_lowercase())),
+                    OperandModifier::Upper => Some(MetricValue::String(s.to_uppercase())),
                     OperandModifier::Replace{pattern, with} => Some(MetricValue::String(s.replace(pattern, with))),
                     OperandModifier::ReplaceN{pattern, with, count} => Some(MetricValue::String(s.replacen(pattern, with, *count))),
                     OperandModifier::ToString => Some(MetricValue::String(s.clone())),
@@ -64,7 +64,7 @@ impl OperandModifier {
                     | OperandModifier::Mul(_) => {
                         log::error!("[ERROR][ALERTS][RULES] Tried to apply arithmetic operand modifier to String Metric.");
                         log::warn!("^ This item will be skipped from modification");
-                        return Some(value.clone())
+                        Some(value.clone())
                     },
                 }
             },
@@ -72,26 +72,26 @@ impl OperandModifier {
             MetricValue::Number(n) => {
                 match self {
                     // Always valid. It shoult never reach this arm, but just in case
-                    OperandModifier::None => return Some(value.clone()),
+                    OperandModifier::None => Some(value.clone()),
                     OperandModifier::Multi { operations } => {
                         let mut value = value.clone();
                         for op in operations {
                             value = op.eval(Some(&value)).unwrap_or(value).clone();
                         }
-                        return Some(value.clone())
+                        Some(value.clone())
                     }
 
                     // Valid Arithmetic operations.
-                    OperandModifier::Add(f) =>  return Some(MetricValue::Number(n+f)),
-                    OperandModifier::Mul(f) => return Some(MetricValue::Number(n*f)),
-                    OperandModifier::Rem(den) => return Some(MetricValue::Number(n % den)),
-                    OperandModifier::Mod(den) => return Some(MetricValue::Integer(n.0 as i64 % den)),
-                    OperandModifier::Pow(exp) => return Some(MetricValue::Number(n.pow(exp))),
-                    OperandModifier::Ceil => return Some(MetricValue::Integer(n.ceil() as i64)),
-                    OperandModifier::Floor => return Some(MetricValue::Integer(n.floor() as i64)),
-                    OperandModifier::Round => return Some(MetricValue::Integer(n.round() as i64)),
-                    OperandModifier::Truncate => return Some(MetricValue::Integer(n.trunc() as i64)),
-                    OperandModifier::ToString => return Some(MetricValue::String(n.to_string())),
+                    OperandModifier::Add(f) =>  Some(MetricValue::Number(n+f)),
+                    OperandModifier::Mul(f) => Some(MetricValue::Number(n*f)),
+                    OperandModifier::Rem(den) => Some(MetricValue::Number(n % den)),
+                    OperandModifier::Mod(den) => Some(MetricValue::Integer(n.0 as i64 % den)),
+                    OperandModifier::Pow(exp) => Some(MetricValue::Number(n.pow(exp))),
+                    OperandModifier::Ceil => Some(MetricValue::Integer(n.ceil() as i64)),
+                    OperandModifier::Floor => Some(MetricValue::Integer(n.floor() as i64)),
+                    OperandModifier::Round => Some(MetricValue::Integer(n.round() as i64)),
+                    OperandModifier::Truncate => Some(MetricValue::Integer(n.trunc() as i64)),
+                    OperandModifier::ToString => Some(MetricValue::String(n.to_string())),
                     
                     // Bitwise operations. Show error and return unchanged
                     OperandModifier::BitwiseAnd(_)
@@ -102,7 +102,7 @@ impl OperandModifier {
                     | OperandModifier::BitwiseComplement => {
                         log::error!("[ERROR][ALERTS][RULES] Tried to apply bitwise operand modifier to Numeric Metric.");
                         log::warn!("^ This item will be skipped from modification");
-                        return Some(value.clone())
+                        Some(value.clone())
                     }
 
                     // String operations. Show error and return unchanged
@@ -115,7 +115,7 @@ impl OperandModifier {
                     | OperandModifier::Append(_) => {
                         log::error!("[ERROR][ALERTS][RULES] Tried to apply String operand modifier to Numeric Metric.");
                         log::warn!("^ This item will be skipped from modification");
-                        return Some(value.clone())
+                        Some(value.clone())
                     }
                     
                 }
@@ -123,26 +123,26 @@ impl OperandModifier {
             MetricValue::Integer(n) =>
             match self {
                     // Always valid. It shoult never reach this arm, but just in case
-                    OperandModifier::None => return Some(value.clone()),
+                    OperandModifier::None => Some(value.clone()),
                     OperandModifier::Multi { operations } => {
                         let mut value = value.clone();
                         for op in operations {
                             value = op.eval(Some(&value)).unwrap_or(value).clone();
                         }
-                        return Some(value.clone())
+                        Some(value.clone())
                     }
 
                     // Valid Arithmetic operations.
-                    OperandModifier::Add(f) => return Some(MetricValue::Number((f+(*n as f64)).into())),
-                    OperandModifier::Mul(f) => return Some(MetricValue::Number((f*(*n as f64)).into())),
-                    OperandModifier::Rem(den) => return Some(MetricValue::Number(((*n as f64) % den).into())),
-                    OperandModifier::Mod(den) => return Some(MetricValue::Integer(n % den)),
-                    OperandModifier::Pow(exp) => return Some(MetricValue::Number((*n as f64).pow(exp).into())),
-                    OperandModifier::Ceil => return Some(MetricValue::Integer(*n)),
-                    OperandModifier::Floor => return Some(MetricValue::Integer(*n)),
-                    OperandModifier::Round => return Some(MetricValue::Integer(*n)),
-                    OperandModifier::Truncate => return Some(MetricValue::Integer(*n)),
-                    OperandModifier::ToString => return Some(MetricValue::String(n.to_string())),
+                    OperandModifier::Add(f) => Some(MetricValue::Number((f+(*n as f64)).into())),
+                    OperandModifier::Mul(f) => Some(MetricValue::Number((f*(*n as f64)).into())),
+                    OperandModifier::Rem(den) => Some(MetricValue::Number(((*n as f64) % den).into())),
+                    OperandModifier::Mod(den) => Some(MetricValue::Integer(n % den)),
+                    OperandModifier::Pow(exp) => Some(MetricValue::Number((*n as f64).pow(exp).into())),
+                    OperandModifier::Ceil => Some(MetricValue::Integer(*n)),
+                    OperandModifier::Floor => Some(MetricValue::Integer(*n)),
+                    OperandModifier::Round => Some(MetricValue::Integer(*n)),
+                    OperandModifier::Truncate => Some(MetricValue::Integer(*n)),
+                    OperandModifier::ToString => Some(MetricValue::String(n.to_string())),
                     OperandModifier::BitwiseAnd(m) => Some(MetricValue::Integer(n & m)),
                     OperandModifier::BitwiseOr(m) => Some(MetricValue::Integer(n | m)),
                     OperandModifier::BitwiseXor(m) => Some(MetricValue::Integer(n ^ m)),
@@ -159,7 +159,7 @@ impl OperandModifier {
                     | OperandModifier::Append(_) => {
                         log::error!("[ERROR][ALERTS][RULES] Tried to apply String operand modifier to Numeric Metric.");
                         log::warn!("^ This item will be skipped from modification");
-                        return Some(value.clone())
+                        Some(value.clone())
                     }
                 },
 
@@ -168,7 +168,7 @@ impl OperandModifier {
             | MetricValue::Array(_) => {
                 log::error!("[ERROR][ALERTS][RULES] Tried to apply operand modifier to non-modifiable value. Actual metric: {}", value);
                 log::warn!("^ This item will be skipped from modification");
-                return Some(value.clone())
+                Some(value.clone())
             },
         }
     }

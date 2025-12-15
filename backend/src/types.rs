@@ -113,9 +113,9 @@ impl<'de> Deserialize<'de> for MetricValue {
     }
 }
 
-impl Into<serde_json::Value> for MetricValue {
-    fn into(self) -> serde_json::Value {
-        match self {
+impl From<MetricValue> for serde_json::Value {
+    fn from(val: MetricValue) -> Self {
+        match val {
             MetricValue::String(v) => serde_json::json!(v),
             MetricValue::Number(v)    => serde_json::json!(*v),
             MetricValue::Integer(v)   => serde_json::json!(v),
@@ -126,9 +126,9 @@ impl Into<serde_json::Value> for MetricValue {
     }
 }
 
-impl Into<MetricValue> for serde_json::Value {
-    fn into(self) -> MetricValue {
-        match self {
+impl From<serde_json::Value> for MetricValue {
+    fn from(val: serde_json::Value) -> Self {
+        match val {
             serde_json::Value::Null => MetricValue::Null(),
             serde_json::Value::Bool(b) => MetricValue::Boolean(b),
             serde_json::Value::Number(number) => MetricValue::Number(number.as_f64().unwrap_or(0.0).into()),
@@ -161,9 +161,9 @@ impl fmt::Display for MetricValue {
     }
 }
 
-impl Into<FieldValue> for MetricValue {
-    fn into(self) -> FieldValue {
-        match self {
+impl From<MetricValue> for FieldValue {
+    fn from(val: MetricValue) -> Self {
+        match val {
             MetricValue::String(m) => FieldValue::String(m),
             MetricValue::Number(m) => FieldValue::F64(*m),
             MetricValue::Integer(m) => FieldValue::I64(m),

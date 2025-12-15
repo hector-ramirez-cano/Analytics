@@ -33,7 +33,7 @@ impl From<Option<DeviceDataSource>> for DeviceDataSource {
 }
 
 pub async fn get_topology_as_json(pool: &sqlx::PgPool) -> Result<serde_json::Value, AegisError> {
-    let mut conn = pool.acquire().await.map_err(|e| AegisError::Sql(e))?;
+    let mut conn = pool.acquire().await.map_err(AegisError::Sql)?;
 
     // Update before returning, if needed
     update_topology_cache(&mut conn, false).await?;
@@ -68,7 +68,7 @@ pub async fn get_topology_view_as_json(pool: &sqlx::Pool<Postgres>) -> Result<se
     )
     .fetch_all(pool)
     .await
-    .map_err(|e| AegisError::Sql(e))?;
+    .map_err(AegisError::Sql)?;
 
     Ok(serde_json::Value::Array(rows))
 }
@@ -88,13 +88,13 @@ pub async fn query_devices(conn: &mut PoolConnection<Postgres>) -> Result<HashMa
     )
         .fetch_all(&mut **conn)
         .await
-        .map_err(|e| AegisError::Sql(e))?;
+        .map_err(AegisError::Sql)?;
 
     for row in rows {
         let device_id = row.device_id;
 
         datasources.entry(device_id)
-            .or_insert_with(HashSet::new)
+            .or_default()
             .insert(row.fact_data_source);
     }
     
@@ -124,10 +124,10 @@ pub async fn query_devices(conn: &mut PoolConnection<Postgres>) -> Result<HashMa
         };
 
         let old_device = cache.get_device(device_id).await;
-        let old_state = old_device.and_then(|d| Some(d.state)).unwrap_or(DeviceStatus::empty());
+        let old_state = old_device.map(|d| d.state).unwrap_or(DeviceStatus::empty());
 
         let device = Device {
-            device_id: device_id.into(),
+            device_id,
             device_name: row.device_name.unwrap_or("Unnamed device".to_owned()),
             latitude: row.latitude,
             longitude: row.longitude,
@@ -136,7 +136,7 @@ pub async fn query_devices(conn: &mut PoolConnection<Postgres>) -> Result<HashMa
             state: old_state
         };
 
-        devices.insert(device_id.into(), device);
+        devices.insert(device_id, device);
     }
 
     Ok(devices)
@@ -150,7 +150,7 @@ pub async fn query_links(conn: &mut PoolConnection<Postgres>) -> Result<HashMap<
     )
     .fetch_all(&mut **conn)
     .await
-    .map_err(|e| AegisError::Sql(e))?;
+    .map_err(AegisError::Sql)?;
 
     let mut links = HashMap::new();
     for row in rows {
@@ -171,7 +171,7 @@ pub async fn query_groups(conn: &mut PoolConnection<Postgres>) -> Result<HashMap
         "#
     )
     .fetch_all(&mut **conn)
-    .map_err(|e| AegisError::Sql(e))
+    .map_err(AegisError::Sql)
     .await?;
 
     let mut groups = HashMap::new();

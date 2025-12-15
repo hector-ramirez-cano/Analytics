@@ -47,22 +47,22 @@ impl AlertPredicateOperation {
             AlertPredicateOperation::Contains => match left {
                 MetricValue::String(l_str) => {
                     match right {
-                        MetricValue::String(r_str) => return l_str.to_lowercase().contains(&r_str.to_lowercase()),
-                        MetricValue::Number(r_f) => return l_str.to_lowercase().contains(&r_f.to_string()),
-                        MetricValue::Integer(r_i) => return l_str.to_lowercase().contains(&r_i.to_string()),
-                        MetricValue::Boolean(r_b) => return l_str.to_lowercase().contains(&r_b.to_string()),
+                        MetricValue::String(r_str) => l_str.to_lowercase().contains(&r_str.to_lowercase()),
+                        MetricValue::Number(r_f) => l_str.to_lowercase().contains(&r_f.to_string()),
+                        MetricValue::Integer(r_i) => l_str.to_lowercase().contains(&r_i.to_string()),
+                        MetricValue::Boolean(r_b) => l_str.to_lowercase().contains(&r_b.to_string()),
 
                         MetricValue::Array(_) 
                         | MetricValue::Null() => {
                             log::error!("[ERROR][RULES] Failed to evaluate contains predicate operation. Right was not 'string', 'number' 'integer' or 'boolean'");
-                            return false;
+                            false
                         }
                     }
                 }
                 MetricValue::Array(l_arr) => l_arr.contains(right),
                 _ => {
                     log::error!("[ERROR][RULES] Failed to evaluate contains predicate operation. Left was not 'string' or 'array'");
-                    return false;
+                    false
                 },
             },
 

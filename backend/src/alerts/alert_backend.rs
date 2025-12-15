@@ -8,7 +8,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::Mutex;
 use tokio::sync::mpsc;
 
-use crate::alerts::telegram_backend::telegram_backend::TelegramBackend;
+use crate::alerts::telegram_backend::backend::TelegramBackend;
 use crate::types::{AlertId, AlertRuleId, DeviceId, EpochSeconds};
 use crate::config::Config;
 use crate::alerts::{AlertDataSource, AlertEvent, AlertRule};
@@ -92,7 +92,7 @@ impl AlertBackend {
         let backend = Arc::new(AlertBackend::new(pool));
         let innit_bruv = INSTANCE.set(backend);
 
-        if let Err(_) = innit_bruv {
+        if innit_bruv.is_err() {
             println!("[WARN][ALERTS] Alerts backend was init more than once!. Ignoring second init...");
             return;
         }
@@ -145,7 +145,7 @@ impl AlertBackend {
             None => return None,
         };
 
-        return rules.get(&device_id).copied()
+        rules.get(&device_id).copied()
     }
 
     // Sets the raised record for the given rule id and given device, to NOW
@@ -155,7 +155,7 @@ impl AlertBackend {
         let now: EpochSeconds = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
-            .unwrap_or(0).into();
+            .unwrap_or(0);
 
         let entry = records.entry(rule_id)
             .or_insert(HashMap::new())
@@ -171,7 +171,7 @@ impl AlertBackend {
         let now: EpochSeconds = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
-            .unwrap_or(0).into();
+            .unwrap_or(0);
 
         let elapsed = now.saturating_sub(first_raised);
 
@@ -291,6 +291,7 @@ impl AlertBackend {
     //
         /// Spawns the task that will handle the evaluation of FactMessages against the rules
     pub fn spawn_eval_facts_task(mut receiver: Receiver<FactMessage>, event_tx : Sender<AlertEvent>,) {
+        #[allow(clippy::let_underscore_future)]
         let _ = rocket::tokio::task::spawn(async move { 
             let instance = Self::instance();
             println!("[INFO ][ALERTS] Spawned alert eval facts task");
@@ -321,6 +322,7 @@ impl AlertBackend {
 
     /// Spawns the task that will handle the evaluation of SyslogMessages against the rules
     pub fn spawn_eval_syslog_task(mut receiver: Receiver<SyslogMessage>, event_tx: Sender<AlertEvent>) {
+        #[allow(clippy::let_underscore_future)]
         let _ = rocket::tokio::task::spawn(async move {
         let instance = Self::instance();
         log::info!("[INFO ][ALERTS] Spawned syslog eval thread!");
@@ -350,6 +352,7 @@ impl AlertBackend {
     /// If it can't requeue, the event is dropped
     /// ws writes are best effort. If it fails, it just keeps going.
     pub fn spawn_event_handler(event_tx: Sender<AlertEvent>, mut event_rx: Receiver<AlertEvent>) {
+        #[allow(clippy::let_underscore_future)]
         let _ = rocket::tokio::task::spawn(async move { 
             let instance = Self::instance();
         loop {
@@ -392,12 +395,13 @@ impl AlertBackend {
     // $$ |  $$ |$$    $$/ $$ |$$       |/     $$/
     // $$/   $$/  $$$$$$/  $$/  $$$$$$$/ $$$$$$$/
 
-    async fn eval_rules(rules: &Vec<AlertRule>, old_facts: &FactMessage, new_facts : &FactMessage, event_tx: &Sender<AlertEvent>) {
-        
-        for rule in rules.iter() {
-            let item = match Cache::instance().get_evaluable_item(rule.target_item).await { Some(i) => i, None=> continue };
+    async fn eval_rules(rules: &[AlertRule], old_facts: &FactMessage, new_facts : &FactMessage, event_tx: &Sender<AlertEvent>) {
+        let instance = Cache::instance();
 
-            let triggered = item.eval(rule, &old_facts, &new_facts).await;
+        for rule in rules.iter() {
+            let item = match instance.get_evaluable_item(rule.target_item).await { Some(i) => i, None=> continue };
+
+            let triggered = item.eval(rule, old_facts, new_facts).await;
 
             // if item trigered, raise an alert for each alerting item
             if let Some(t) = triggered {
@@ -412,7 +416,7 @@ impl AlertBackend {
                             let which = which.iter()
                                 .map(|(lmod, lhs, op, rhs, rmod)| format!("[{}{} {} {}{}]", lhs, lmod, op, rhs, rmod)).collect::<Vec<_>>().join(", ");
 
-                            AlertBackend::raise_alert(rule, &device, which, &event_tx).await;
+                            AlertBackend::raise_alert(rule, &device, which, event_tx).await;
                         },
                     }
                 }
@@ -546,13 +550,13 @@ impl AlertBackend {
     /// Returns None if an update is not needed (someone else updated recently).
     // TODO: Force caller to update last_update, in case the caller fails out, it doens't register as an "update"
     pub async fn try_claim_update(&self, forced: bool) -> Option<RwLockWriteGuard<'_, EpochSeconds>> {
-        let interval_secs: EpochSeconds = Config::instance().get_value_opt ("backend/model/cache/rule_set_cache_invalidation_s", "/").unwrap_or_default().as_u64().unwrap_or(3600).into();
+        let interval_secs: EpochSeconds = Config::instance().get_value_opt ("backend/model/cache/rule_set_cache_invalidation_s", "/").unwrap_or_default().as_u64().unwrap_or(3600);
 
         // fast read-only check
         let now: EpochSeconds = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
-            .unwrap_or(0).into();
+            .unwrap_or(0);
 
         // if the update isn't due, and the caller didn't request a forced update
         let last: EpochSeconds = *self.last_update.read().await;

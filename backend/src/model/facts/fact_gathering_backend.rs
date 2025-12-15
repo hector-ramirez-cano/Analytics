@@ -148,7 +148,7 @@ impl FactGatheringBackend {
 
     pub async fn update_database(pool: &sqlx::Pool<Postgres>, influx_client : &influxdb2::Client, msg: &FactMessage) {
         log::info!("[INFO ][FACTS] Updating Influx with metrics.");
-        db::operations::influx_operations::update_device_analytics(influx_client, &msg).await;
+        db::operations::influx_operations::update_device_analytics(influx_client, msg).await;
         db::update_topology::update_device_metadata(pool, msg).await;
     }
 
@@ -157,7 +157,7 @@ impl FactGatheringBackend {
         let cache = Cache::instance();
         
         for (hostname, facts) in &msg {
-            let id = match cache.get_device_id(&hostname).await {
+            let id = match cache.get_device_id(hostname).await {
                 Some(id) => id,
                 None => {
                     log::error!("[ERROR][FACTS][CACHE] While updating device cache/status and exposed fields: Device wasn't found in cache. This should be unreachable!");
@@ -237,7 +237,7 @@ impl FactGatheringBackend {
             for device in metrics {
                 let entry = combined_metrics
                     .entry(device.0)
-                    .or_insert_with(HashMap::new);
+                    .or_default();
 
                 recursive_merge(entry, &device.1);
             }
@@ -246,7 +246,7 @@ impl FactGatheringBackend {
             for device in status {
                 let entry = combined_status
                     .entry(device.0)
-                    .or_insert_with(DeviceStatus::default);
+                    .or_default();
 
                 entry.merge(device.1);
             }
@@ -276,6 +276,6 @@ impl FactGatheringBackend {
     }
 
     pub fn extract_exposed_fields(metrics : &MetricSet) -> ExposedFields {
-        metrics.iter().map(|(name, _)| name.clone().to_string()).collect()
+        metrics.keys().map(|name| name.clone().to_string()).collect()
     }
 }

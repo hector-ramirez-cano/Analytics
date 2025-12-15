@@ -3,7 +3,7 @@ use tgbot::{api::Client, types::ChatPeerId};
 
 use crate::types::AlertEventId;
 
-pub mod telegram_backend;
+pub mod backend;
 
 struct Handler { client: Client }
 
