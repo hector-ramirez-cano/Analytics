@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aegis/models/charts/dashboard_polling_definition.dart';
 import 'package:aegis/models/charts/metadata_polling_definition.dart';
 import 'package:aegis/models/charts/metric_polling_definition.dart';
-import 'package:aegis/models/topology.dart';
 import 'package:aegis/services/dashboard_service.dart';
 import 'package:aegis/services/topology/topology_provider.dart';
 import 'package:aegis/services/websocket_service.dart';
@@ -15,32 +14,34 @@ import 'package:aegis/ui/screens/charts/metadata_label.dart';
 import 'package:aegis/ui/screens/charts/metadata_pie_chart.dart';
 import 'package:aegis/ui/screens/charts/metric_line_chart.dart';
 
-class ChartDashboard extends ConsumerStatefulWidget {
-  
+class ChartDashboard extends StatelessWidget {
   
   const ChartDashboard({
     super.key
   });
 
-  @override
-  ConsumerState<ChartDashboard> createState() => _ChartDashboardState();
-}
+  void onRetry(WidgetRef ref) async { ref.invalidate(websocketServiceProvider); ref.invalidate(topologyServiceProvider); }
 
-class _ChartDashboardState extends ConsumerState<ChartDashboard> {
-
-  void onRetry() async { ref.invalidate(websocketServiceProvider); ref.invalidate(topologyServiceProvider); }
-
-  DashboardWidget _widgetFromDashboardItem(DashboardItem item, Topology topology) {
+  DashboardWidget _widgetFromDashboardItem(DashboardItem item) {
     final Widget child;
     if (item.definition is MetadataPollingDefinition && item.definition.chartType == ChartType.pieChart) {
-      child = MetadataPieChart(definition: item.definition as MetadataPollingDefinition, styleDefinition: item.styleDefinition,);
+      child = MetadataPieChart(
+        key: ValueKey("Widget_ChartDashboard_MetadataPie_${item.definition.groupableId}_${item.definition.fields}"),
+        definition: item.definition as MetadataPollingDefinition, styleDefinition: item.styleDefinition,
+      );
     }
     else if (item.definition is MetadataPollingDefinition && item.definition.chartType == ChartType.label) {
-      child = MetadataLabel(definition: item.definition as MetadataPollingDefinition);
+      child = MetadataLabel(
+        key: ValueKey("Widget_ChartDashboard_label_${item.definition.groupableId}_${item.definition.fields}"),
+        definition: item.definition as MetadataPollingDefinition
+      );
     }
 
     else if (item.definition is MetricPollingDefinition && item.definition.chartType == ChartType.lineChart) {
-      child = MetricLineChart(definition: item.definition as MetricPollingDefinition, styleDefinition: item.styleDefinition);
+      child = MetricLineChart(
+        key: ValueKey("Widget_ChartDashboard_MetricLineChart_${item.definition.groupableId}_${item.definition.fields}"),
+        definition: item.definition as MetricPollingDefinition, styleDefinition: item.styleDefinition
+      );
     }
     else {
       // TODO: Handle this via empty type
@@ -57,7 +58,7 @@ class _ChartDashboardState extends ConsumerState<ChartDashboard> {
   }
 
   Widget _makeEmptyDashboardSelection() {
-    return SizedBox.expand(
+    return const SizedBox.expand(
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min, // keeps the column as small as possible
@@ -73,36 +74,30 @@ class _ChartDashboardState extends ConsumerState<ChartDashboard> {
     );
   }
 
-  Widget _fromLayoutsWithTopology(Topology topology, HashMap<int, DashboardLayout> layouts, int selected) {
+  Widget _fromLayouts(HashMap<int, DashboardLayout> layouts, int selected) {
     if (layouts.isEmpty || !layouts.containsKey(selected)) { return _makeEmptyDashboardSelection(); }
 
     final layout = layouts[selected]!;
 
-    final children = layout.items.map((item) => _widgetFromDashboardItem(item, topology)).toList();
+    final children = layout.items.map((item) => _widgetFromDashboardItem(item)).toList();
 
-    return Dashboard(name: layout.name, children: children);
-  }
-
-  Widget _fromLayouts(HashMap<int, DashboardLayout> layouts) {
-    final topologyAsync = ref.watch(topologyServiceProvider);
-    final selected = ref.watch(dashboardSelectionProvider);
-
-    return topologyAsync.when(
-      error: (e, _) => RetryIndicator(onRetry: () async => onRetry, isLoading: false, error: e),
-      loading: () => RetryIndicator(onRetry: () async => onRetry , isLoading: true),
-      data: (topology) => _fromLayoutsWithTopology(topology, layouts, selected),
-    );
+    return Dashboard(key: ValueKey("Widget_ChartDashboard_Dashboard"), name: layout.name, children: children);
   }
 
   @override
   Widget build(BuildContext context) {
-    final dashboardFuture = ref.watch(dashboardServiceProvider);
+    return Consumer(
+      key: ValueKey("Consumer_ChartDashboard"),
+      builder:(context, ref, child) {
+      final dashboardFuture = ref.watch(dashboardServiceProvider);
+      final selected = ref.watch(dashboardSelectionProvider);
 
-    return dashboardFuture.when(
-      data: (dashboards) => _fromLayouts(dashboards),
-      error: (e, _) => RetryIndicator(onRetry: () async => onRetry, isLoading: false, error: e),
-      loading: () => RetryIndicator(onRetry: () async => onRetry , isLoading: true)
-    );
-
+      return dashboardFuture.when(
+        data: (dashboards) => _fromLayouts(dashboards, selected),
+        error: (e, _) => RetryIndicator(onRetry: () async => onRetry(ref), isLoading: false, error: e),
+        loading: () => RetryIndicator(onRetry: () async => onRetry(ref) , isLoading: true)
+      );
+    },);
   }
+
 }

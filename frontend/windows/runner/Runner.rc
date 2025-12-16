@@ -90,12 +90,12 @@ BEGIN
                 BLOCK "040904e4"
                 BEGIN
                         VALUE "CompanyName", "com.example" "\0"
-                        VALUE "FileDescription", "network_analytics" "\0"
+                        VALUE "FileDescription", "aegis" "\0"
                         VALUE "FileVersion", VERSION_AS_STRING "\0"
-                        VALUE "InternalName", "network_analytics" "\0"
+                        VALUE "InternalName", "aegis" "\0"
                         VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-                        VALUE "OriginalFilename", "network_analytics.exe" "\0"
-                        VALUE "ProductName", "network_analytics" "\0"
+                        VALUE "OriginalFilename", "aegis.exe" "\0"
+                        VALUE "ProductName", "aegis" "\0"
                         VALUE "ProductVersion", VERSION_AS_STRING "\0"
                 END
         END

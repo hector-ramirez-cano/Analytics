@@ -11,6 +11,12 @@ import 'package:aegis/ui/screens/syslog/syslog_viewer.dart';
 
 class ContentArea extends StatelessWidget {
 
+  static const _topologyTabView = TopologyTabView(key: ValueKey("Screen_TopologyTabView"));
+  static const _chartDashboard = ChartDashboard(key: ValueKey("Screen_ChartDashboard"));
+  static const _itemEditView = ItemEditView(key: ValueKey("Screen_ItemEditView"));
+  static const _syslogViewer = SyslogViewer(key: ValueKey("Screen_SyslogViewer"));
+  static const _alertViewer = AlertViewer(key: ValueKey("Screen_AlertViewer"));
+
   const ContentArea({super.key});
 
   @override
@@ -22,22 +28,22 @@ class ContentArea extends StatelessWidget {
 
         switch (screen) {
           case WorkplaceScreen.canvas:
-            return TopologyTabView();
+            return _topologyTabView;
 
           case WorkplaceScreen.charts:
-            return ChartDashboard();
+            return _chartDashboard; 
 
           // case WorkplaceScreen.settings:
-          //   return SettingsScreen();
+          //   return SettingsScreen(key: ValueKey("Screen_SettingsScreen"));
 
           case WorkplaceScreen.edit:
-            return ItemEditView();
+            return _itemEditView; 
 
           case WorkplaceScreen.syslog:
-            return SyslogViewer();
+            return _syslogViewer; 
 
           case WorkplaceScreen.alerts:
-            return AlertViewer();
+            return _alertViewer; 
 
           case null:
             Logger().w("Created content area for undefined WorkplaceScreen");

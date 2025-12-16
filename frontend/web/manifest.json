@@ -1,6 +1,6 @@
 {
-                "name": "network_analytics",
-                "short_name": "network_analytics",
+                "name": "aegis",
+                "short_name": "aegis",
                 "start_url": ".",
                 "display": "standalone",
                 "background_color": "#0175C2",

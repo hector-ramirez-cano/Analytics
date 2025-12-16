@@ -38,6 +38,7 @@ class Dashboard extends StatelessWidget {
     final rowCount    = children.map((widget) => widget.rowStart    + widget.rowSpan   ).reduce((a, b) => a > b ? a : b);
 
     return LayoutGrid(
+      key: ValueKey("Widget_dashboard_LayoutGrid"),
       columnSizes: [...List.generate(columnCount, (_) => 1.fr), 20.px],
       rowSizes: [...List.generate(rowCount, (_) => 1.fr), 20.px],
       rowGap: 20,

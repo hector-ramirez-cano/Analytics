@@ -90,7 +90,7 @@ class WsListener{
 }
 
 
-@riverpod
+@Riverpod(keepAlive: true)
 class WebsocketService extends _$WebsocketService {
   static final wsLogger = Logger(filter: ConfigFilter.fromConfig("debug/enable_ws_logging", false));
   final Map<String, WsListener> listeners = {};

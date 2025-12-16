@@ -204,10 +204,17 @@ class MetricLineChart extends StatelessWidget {
         shape: ShapeEncode(value: BasicLineShape(smooth: false) ),
         label: LabelEncode(encoder: (values) {
           final time = (values["time"] as DateTime);
-          final point = valueList.length > 4 ? valueList[5]["time"] : valueList.first["time"];
+          // final point = valueList.length > 4 ? valueList[5]["time"] : valueList.first["time"];
+          final point = valueList.last["time"];
 
           if (time.isAtSameMomentAs(point)) {
-            return Label(k);
+            return Label(k, LabelStyle(
+              offset: Offset(-80, 0),
+              textStyle: TextStyle(
+                color: styleDefinition.lineColors[k.hashCode % styleDefinition.lineColors.length],
+
+              ))
+            );
           }
           else {
             return Label("");
@@ -217,6 +224,7 @@ class MetricLineChart extends StatelessWidget {
     }).toList();
 
     return Chart(
+      key: ValueKey("Widget_MetricLineChart_Chart_${definition.groupableId}_${definition.fields}"),
       data: valueList,
       crosshair: CrosshairGuide(
         showLabel: [true, true],
@@ -226,15 +234,15 @@ class MetricLineChart extends StatelessWidget {
         formatter: [(d) => d.toString(), (d) => d.toString()]
       ),
       selections: {
-                    'touchMove': PointSelection(
-                      on: {
-                        GestureType.scaleUpdate,
-                        GestureType.tapDown,
-                        GestureType.longPressMoveUpdate
-                      },
-                      dim: Dim.x,
-                    )
-                  },
+        'touchMove': PointSelection(
+          on: {
+            GestureType.scaleUpdate,
+            GestureType.tapDown,
+            GestureType.longPressMoveUpdate
+          },
+          dim: Dim.x,
+        )
+      },
       variables: _makeVariableDefinition(minX, maxX),
       axes: [Defaults.horizontalAxis, Defaults.verticalAxis],
       marks: marks

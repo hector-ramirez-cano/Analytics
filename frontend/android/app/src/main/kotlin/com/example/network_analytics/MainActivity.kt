@@ -1,4 +1,4 @@
-package com.example.network_analytics
+package com.example.aegis
 
 import io.flutter.embedding.android.FlutterActivity
 

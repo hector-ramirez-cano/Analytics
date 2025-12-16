@@ -75,6 +75,7 @@ class _TopologyCanvasState extends State<TopologyCanvas> {
   Widget _makeFloatingButtons() {
     Widget makeFab(String heroTag, Icon icon, VoidCallback onPressed) {
       return FloatingActionButton(
+        key: ValueKey("Widget_TopologyCanvas_FAB_$heroTag"),
         heroTag: heroTag,
         mini: true,
         onPressed: onPressed,

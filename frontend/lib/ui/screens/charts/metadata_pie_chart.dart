@@ -9,13 +9,12 @@ import 'package:aegis/ui/components/retry_indicator.dart';
 class MetadataPieChart extends StatelessWidget {
   final MetadataPollingDefinition definition;
   final StyleDefinition styleDefinition;
-
+  
   const MetadataPieChart({
     super.key,
     required this.definition,
     required this.styleDefinition,
   });
-
 
   Map<String, Variable> _makeVariableDefinition() {
     return {
