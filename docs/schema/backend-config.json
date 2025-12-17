@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ApplicationConfig",
+  "type": "object",
+  "required": ["release"],
+  "properties": {
+    "debug": { "$ref": "#/$defs/environment" },
+    "release": { "$ref": "#/$defs/environment" }
+  },
+  "additionalProperties": false,
+
+  "$defs": {
+    "environment": {
+      "type": "object",
+      "required": ["backend"],
+      "properties": {
+        "security": {
+          "type": "object",
+          "required": ["vault_pass", "vault"],
+          "properties": {
+            "vault_pass": { "type": "string", "minLength": 1 },
+            "vault": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+
+        "backend": {
+          "type": "object",
+          "required": ["model", "controller"],
+          "properties": {
+            "model": {
+              "type": "object",
+              "required": ["private_data_dir", "cache"],
+              "properties": {
+                "private_data_dir": { "type": "string", "minLength": 1 },
+                "ssh_user": { "type": "string", "minLength": 1 },
+                "cache": {
+                  "type": "object",
+                  "required": ["rule_set_cache_invalidation_s"],
+                  "properties": {
+                    "rule_set_cache_invalidation_s": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+
+            "controller": {
+              "type": "object",
+              "required": [
+                "configure",
+                "cache",
+                "syslog",
+                "fact-gathering",
+                "postgres",
+                "influx",
+                "telegram"
+              ],
+              "properties": {
+                "configure": {
+                  "type": "object",
+                  "required": ["enabled"],
+                  "properties": {
+                    "enabled": { "type": "boolean" }
+                  },
+                  "additionalProperties": false
+                },
+
+                "cache": {
+                  "type": "object",
+                  "required": ["cache_invalidation_s"],
+                  "properties": {
+                    "cache_invalidation_s": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "additionalProperties": false
+                },
+
+                "syslog": {
+                  "type": "object",
+                  "required": ["RFC5424-port"],
+                  "properties": {
+                    "RFC5424-port": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 65535
+                    }
+                  },
+                  "additionalProperties": false
+                },
+
+                "fact-gathering": {
+                  "type": "object",
+                  "required": ["polling_time_s"],
+                  "properties": {
+                    "polling_time_s": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "additionalProperties": false
+                },
+
+                "postgres": {
+                  "type": "object",
+                  "required": ["port", "hostname", "name", "schema"],
+                  "properties": {
+                    "port": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 65535
+                    },
+                    "hostname": { "type": "string", "minLength": 1 },
+                    "name": { "type": "string", "minLength": 1 },
+                    "schema": {
+                      "type": "string",
+                      "pattern": "^postgresql://"
+                    },
+                    "$ref": { "type": "string", "minLength": 1 }
+                  },
+                  "additionalProperties": false
+                },
+
+                "influx": {
+                  "type": "object",
+                  "required": ["port", "hostname", "org", "schema", "bucket"],
+                  "properties": {
+                    "port": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 65535
+                    },
+                    "hostname": { "type": "string", "minLength": 1 },
+                    "org": { "type": "string", "minLength": 1 },
+                    "schema": {
+                      "type": "string",
+                      "pattern": "^(https?)://"
+                    },
+                    "bucket": { "type": "string", "minLength": 1 },
+                    "$ref": { "type": "string", "minLength": 1 }
+                  },
+                  "additionalProperties": false
+                },
+
+                "telegram": {
+                  "type": "object",
+                  "required": ["enabled"],
+                  "properties": {
+                    "enabled": { "type": "boolean" },
+                    "$ref": { "type": "string", "minLength": 1 }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
