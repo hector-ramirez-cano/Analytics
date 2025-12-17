@@ -12,7 +12,7 @@
   "$defs": {
     "environment": {
       "type": "object",
-      "required": ["security", "backend"],
+      "required": ["backend"],
       "properties": {
         "security": {
           "type": "object",
