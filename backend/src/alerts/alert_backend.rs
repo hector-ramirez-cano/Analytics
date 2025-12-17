@@ -437,7 +437,8 @@ impl AlertBackend {
         
         // as long as this mfer lives, no one can access the rules
         let _last_update_lock = match last_update_lock {
-            Some(l) => l, None => {
+            Some(l) => l,
+            None => {
                 log::info!("[INFO ][ALERTS][LOADS] failed to acquire lock on updates, forced={forced}");
                 return;
             }

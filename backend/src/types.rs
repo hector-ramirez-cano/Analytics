@@ -15,6 +15,7 @@ pub type AlertTargetId = i64;
 
 pub type ItemId = i64;
 pub type EvaluableItemId = i64;
+pub type PlaybookId = i32;
 pub type DeviceId = ItemId;
 pub type LinkId = ItemId;
 pub type GroupId = ItemId;

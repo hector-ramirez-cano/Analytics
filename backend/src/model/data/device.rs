@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::data::device_configuration::DeviceConfiguration;
 use crate::model::data::device_state::DeviceStatus;
-use crate::types::DeviceId;
+use crate::types::{DeviceId, PlaybookId};
 
 #[derive(Debug)]
 pub enum DeviceError {
@@ -35,6 +35,9 @@ pub struct Device {
 
     #[serde (rename = "state", default)]
     pub state: DeviceStatus,
+
+    #[serde (rename = "playbooks", default)]
+    pub playbooks: Vec<PlaybookId>
 }
 
 impl Device {
@@ -53,7 +56,8 @@ impl Device {
             longitude,
             management_hostname,
             configuration,
-            state: DeviceStatus::default()
+            state: DeviceStatus::default(),
+            playbooks: Vec::new()
         }
     }
     pub fn to_dict(&self) -> HashMap<String, serde_json::Value> {

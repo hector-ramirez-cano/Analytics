@@ -14,7 +14,7 @@ use crate::model::data::group::Group;
 use crate::model::data::device_configuration::DeviceConfiguration;
 use crate::model::data::DataSource;
 use crate::model::db::update_topology::update_topology_cache;
-use crate::types::{DeviceId, GroupId, LinkId};
+use crate::types::{DeviceId, GroupId, LinkId, PlaybookId};
 
 #[allow(unused)] // Needs to be allowed. Needed for compilation, but the compiler complains of a type casting needed if it's removed
 use crate::model::data::link_type::LinkType;
@@ -23,6 +23,19 @@ use crate::model::data::link_type::LinkType;
 struct DeviceDataSource {
     device_id: DeviceId,
     fact_data_source: DataSource,
+}
+
+#[derive(sqlx::FromRow, Debug, Clone)]
+pub struct Playbook {
+    pub playbook_id: PlaybookId,
+    pub playbook_name: String,
+    pub is_enabled: bool
+}
+
+#[derive(sqlx::FromRow)]
+struct DevicePlaybooks {
+    device_id: Option<DeviceId>,
+    playbook_ids: Option<Vec<PlaybookId>>
 }
 
 
@@ -73,7 +86,24 @@ pub async fn get_topology_view_as_json(pool: &sqlx::Pool<Postgres>) -> Result<se
     Ok(serde_json::Value::Array(rows))
 }
 
+pub async fn query_playbooks(conn: &mut PoolConnection<Postgres>) -> Result<HashMap<PlaybookId, Playbook>, AegisError> {
+    let playbooks = sqlx::query_as!(Playbook, 
+        "SELECT playbook_id, playbook_name, is_enabled FROM Analytics.playbooks WHERE TRUE;"
+    ).fetch_all(&mut **conn)
+    .await
+    .map_err(|e| {
+        println!("[ERROR][DB]Failed to SELECT device_playbooks from database with error = '{}'", &e.to_string());
+        AegisError::Sql(e)
+    })?;
 
+    let mut _playbooks = HashMap::new();
+
+    for playbook in playbooks {
+        _playbooks.insert(playbook.playbook_id, playbook);
+    }
+
+    Ok(_playbooks)
+}
 
 pub async fn query_devices(conn: &mut PoolConnection<Postgres>) -> Result<HashMap<DeviceId, Device>, AegisError>{
     // Query datasources
@@ -97,7 +127,30 @@ pub async fn query_devices(conn: &mut PoolConnection<Postgres>) -> Result<HashMa
             .or_default()
             .insert(row.fact_data_source);
     }
-    
+
+    // Query playbooks
+    let _playbooks = sqlx::query_as!(DevicePlaybooks,
+        "
+        SELECT
+            device_id,
+            array_agg(DISTINCT playbook_id::INT) AS playbook_ids
+        FROM Analytics.devices_playbooks
+        GROUP BY device_id;
+        "
+    )
+    .fetch_all(&mut **conn)
+    .await
+    .map_err(|e| {
+        println!("[ERROR][DB]Failed to SELECT device_playbooks from database with error = '{}'", &e.to_string());
+        AegisError::Sql(e)
+    })?;
+    let mut playbooks: HashMap<DeviceId, Vec<PlaybookId>> = HashMap::new();
+    for row in _playbooks {
+        if let Some(device_id)  = row.device_id {
+            playbooks.insert(device_id, row.playbook_ids.unwrap_or_default());
+        }
+    }
+
     // Query devices themselves
     let rows = sqlx::query!(
         "SELECT Analytics.devices.device_id, device_name, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values 
@@ -133,7 +186,8 @@ pub async fn query_devices(conn: &mut PoolConnection<Postgres>) -> Result<HashMa
             longitude: row.longitude,
             management_hostname: row.management_hostname,
             configuration: config,
-            state: old_state
+            state: old_state,
+            playbooks: playbooks.get(&device_id).unwrap_or(&Vec::new()).to_vec()
         };
 
         devices.insert(device_id, device);

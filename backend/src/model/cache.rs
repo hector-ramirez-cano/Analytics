@@ -14,9 +14,10 @@ use crate::model::data::device::Device;
 use crate::model::data::device_state::DeviceStatus;
 use crate::model::data::link::Link;
 use crate::model::data::group::Group;
+use crate::model::db::fetch_topology::Playbook;
 use crate::model::db::update_topology::update_topology_cache;
 use crate::model::facts::fact_gathering_backend::FactMessage;
-use crate::types::{DeviceId, EpochSeconds, EvaluableItemId, GroupId, ItemId, LinkId, ExposedFields, MetricValue};
+use crate::types::{DeviceId, EpochSeconds, EvaluableItemId, ExposedFields, GroupId, ItemId, LinkId, MetricValue, PlaybookId};
 
 async fn serialize_map<T: Serialize>(lock: &RwLock<HashMap<i64, T>>) -> Result<String, serde_json::Error> {
     serde_json::to_string(&*lock.read().await)
@@ -25,6 +26,7 @@ async fn serialize_map<T: Serialize>(lock: &RwLock<HashMap<i64, T>>) -> Result<S
 pub struct Cache {
     pub facts: RwLock<FactMessage>,
     devices: RwLock<HashMap<DeviceId, Device>>,
+    playbooks: RwLock<HashMap<PlaybookId, Playbook>>,
     links: RwLock<HashMap<LinkId, Link>>,
     groups: RwLock<HashMap<GroupId, Group>>,
     last_update: RwLock<EpochSeconds>, // epoch seconds
@@ -35,6 +37,7 @@ impl Cache {
     fn new() -> Self {
         Self {
             devices: RwLock::new(HashMap::new()),
+            playbooks: RwLock::new(HashMap::new()),
             links: RwLock::new(HashMap::new()),
             groups: RwLock::new(HashMap::new()),
             facts: RwLock::new(HashMap::new()),
@@ -63,6 +66,13 @@ impl Cache {
     pub async fn update_topology(&self, pool: &sqlx::Pool<sqlx::Postgres>, forced: bool) -> Result<(), AegisError>{
         let mut connection = pool.acquire().await.map_err(AegisError::Sql)?;
         update_topology_cache(&mut connection, forced).await
+    }
+
+    /// Playbooks API
+    pub async fn get_playbooks(&self) -> Vec<Playbook>{
+        let r = self.playbooks.read().await;
+
+        r.values().filter(|k| k.is_enabled).cloned().collect()
     }
 
     /// Devices API
@@ -282,12 +292,18 @@ impl Cache {
     }
 
     // Update API
-    pub async fn update_all(&self, devices: HashMap<DeviceId, Device>, links: HashMap<LinkId, Link>, groups: HashMap<GroupId, Group>) {
+    pub async fn update_all(&self, devices: HashMap<DeviceId, Device>, links: HashMap<LinkId, Link>, groups: HashMap<GroupId, Group>, playbooks: HashMap<PlaybookId, Playbook>) {
 
         // Update devices
         let mut w = self.devices.write().await;
         w.clear();
         w.extend(devices);
+
+        // Update playbooks
+        let mut w = self.playbooks.write().await;
+        w.clear();
+        w.extend(playbooks);
+        w.insert(-1, Playbook { playbook_id: -1, playbook_name: "default".to_string(), is_enabled: true });
 
         // Update links
         let mut w = self.links.write().await;
@@ -400,7 +416,7 @@ impl Cache {
             .collect::<Vec<String>>()
     }
 
-    pub async fn ansible_inventory(&self) -> Vec<String> {
+    pub async fn ansible_inventory(&self, playbook: &Playbook) -> Vec<String> {
         let config = Config::instance();
         let user: String = config.get("backend/model/ssh_user", "/")
             .expect("[FATAL] Config file should specify an ssh user for remote acess under backend/model/ssh_user, and be of type String");
@@ -408,6 +424,7 @@ impl Cache {
         self.devices.read().await
             .values()
             .filter(|d| d.configuration.data_sources.contains(&DataSource::Ssh))
+            .filter(|d| playbook.playbook_name == "default" || d.playbooks.contains(&playbook.playbook_id))
             .map(|d| format!("{} ansible_user={}", d.management_hostname.as_str(), user))
             .collect::<Vec<String>>()
 

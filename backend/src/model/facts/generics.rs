@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::types::MetricValue;
+use crate::types::{MetricSet, MetricValue, Metrics, Status};
 
 pub trait ToMetrics {
     /// Convert `self` into MetricValue entries, using `prefix` as the current metric name.
@@ -74,20 +74,56 @@ impl ToMetrics for serde_json::Value {
 /// Recursively merges `src` into `dst`.
 /// - If both values are arrays, merges them element-wise.
 /// - Otherwise, `src` overwrites `dst`.
-pub fn recursive_merge(
-    dst: &mut HashMap<String, MetricValue>,
-    src: &HashMap<String, MetricValue>,
+pub fn recursive_merge_metrics(
+    dst: &mut MetricSet,
+    src: MetricSet,
 ) {
     for (key, src_val) in src {
-        match (dst.get_mut(key), src_val) {
+        match (dst.get_mut(&key), src_val) {
             // Merge arrays element-wise (optional: customize strategy)
             (Some(MetricValue::Array(dst_arr)), MetricValue::Array(src_arr)) => {
                 dst_arr.extend(src_arr.clone()); // or use a smarter merge strategy
             }
 
             // Overwrite or insert
-            _ => {
-                dst.insert(key.clone(), src_val.clone());
+            (_, src_val) => {
+                dst.insert(key.clone(), src_val);
+            }
+        }
+    }
+}
+
+/// Recursively merges `src` into `dst`.
+/// - If both values are arrays, merges them element-wise.
+/// - Otherwise, `src` overwrites `dst`.
+pub fn recursive_merge(
+    dst: &mut( Metrics, Status),
+    src: (Metrics, Status),
+) {
+    for (key, src_val) in src.0 {
+        match (dst.0.get_mut(&key), src_val) {
+            // Merge arrays element-wise (optional: customize strategy)
+            (Some(dst_metrics), src_metrics) => {
+                recursive_merge_metrics(dst_metrics, src_metrics);
+            }
+
+            // Overwrite or insert
+            (_, src_val) => {
+                dst.0.insert(key.clone(), src_val);
+            }
+        }
+    }
+
+    for (key, src_val) in src.1 {
+        match (dst.1.get_mut(&key), src_val) {
+            // Merge arrays element-wise (optional: customize strategy)
+            (Some(dst_status), src_status) => {
+                dst_status.merge(src_status);
+            }
+
+            // Overwrite or insert
+            (_, src_val) => {
+                dst.1.insert(key.clone(), src_val);
             }
         }
     }

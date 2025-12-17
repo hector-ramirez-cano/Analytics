@@ -22,6 +22,26 @@ INSERT INTO Analytics.devices (device_id, device_name, latitude, longitude, mana
         (2, 'Tlatelolco-lan', 21.159425, -101.645852, '10.144.1.1'   , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]'),
         (3, 'Obsidian-lan'  , 21.159425, -101.645852, '10.144.1.225' , '["ansible_memory_mb", "ansible_fqdn", "ansible_kernel", "ansible_interfaces"]' , '[]');
 
+INSERT INTO Analytics.playbooks (playbook_id, playbook_name, is_enabled) VALUES (1, 'fact_gathering', TRUE);
+INSERT INTO Analytics.playbooks (playbook_id, playbook_name, is_enabled) VALUES (2, 'some_fact_gathering', TRUE);
+
+DELETE FROM Analytics.playbooks WHERE playbook_id = 2;
+
+INSERT INTO Analytics.devices_playbooks (device_id, playbook_id) 
+    VALUES 
+        (1, 1),
+        (2, 1);
+INSERT INTO Analytics.devices_playbooks (device_id, playbook_id) 
+    VALUES 
+        (1, 2);
+
+SELECT
+    device_id,
+    array_agg(DISTINCT playbook_id::INT) AS playbook_ids
+FROM Analytics.devices_playbooks
+GROUP BY device_id;
+
+
 SELECT * FROM Analytics.device_data_sources;
 INSERT INTO Analytics.device_data_sources (device_id, fact_data_source)
     VALUES

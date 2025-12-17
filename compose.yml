@@ -56,6 +56,7 @@ services:
       - ./backend/identity/postgres_db.json:/analytics/identity/postgres_db.json:ro
       - ./backend/identity/telegram.json:/analytics/identity/telegram.json:ro
       - ./backend/config.json:/analytics/config.json:ro
+      - ./backend/ansible/project/:/analytics/ansible/project/:ro
     stdin_open: true
     tty: true
     restart: always

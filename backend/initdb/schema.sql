@@ -51,6 +51,22 @@ CREATE TABLE IF NOT EXISTS Analytics.devices (
     CONSTRAINT chk_lng_in_range CHECK (longitude >= -180 AND longitude <= 180)
 );
 
+
+CREATE TABLE IF NOT EXISTS Analytics.playbooks (
+    playbook_id   SERIAL    PRIMARY KEY,
+    playbook_name VARCHAR(254) NOT NULL,
+    is_enabled    BOOLEAN      NOT NULL
+);
+
+
+CREATE TABLE IF NOT EXISTS Analytics.devices_playbooks (
+    device_id BIGINT NOT NULL,
+    playbook_id INT NOT NULL,
+
+    FOREIGN KEY (device_id)   REFERENCES Analytics.devices(device_id) ON DELETE CASCADE,
+    FOREIGN KEY (playbook_id) REFERENCES Analytics.playbooks(playbook_id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS Analytics.topology_views(
     topology_views_id BIGSERIAL PRIMARY KEY,
     name              VARCHAR(254) NOT NULL

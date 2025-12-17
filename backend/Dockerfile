@@ -39,7 +39,7 @@ COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy backend
-COPY ansible/project/ ./ansible/project
+# COPY ansible/project/ ./ansible/project
 COPY ./prelude ./prelude
 COPY ./Rocket.toml ./Rocket.toml
 

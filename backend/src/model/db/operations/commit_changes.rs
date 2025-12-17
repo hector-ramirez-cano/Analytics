@@ -132,7 +132,6 @@ async fn update_devices<'t>(devices: Vec<serde_json::Value>, transaction: &mut T
         let available_values = hashset_to_json_array(&device.configuration.available_values);
 
         let result = if device.device_id <= 0 {
-            dbg!("Inserting the mfer");
             sqlx::query!("
                 INSERT INTO Analytics.devices
                     (device_name, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values)

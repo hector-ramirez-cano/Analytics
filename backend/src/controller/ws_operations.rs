@@ -196,8 +196,6 @@ pub async fn ws_query_facts(data_to_socket: &mut mpsc::Sender<String>, msg: WsMs
         extracted.insert(hostname, extracted_facts);
     }
 
-    dbg!(&original_starwalker);
-
     let msg = serde_json::json!({
         "type": original_starwalker,
         "msg": {

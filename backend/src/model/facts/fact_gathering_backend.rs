@@ -13,7 +13,7 @@ use crate::model::data::device_state::DeviceStatus;
 use crate::model::db;
 use crate::model::facts::ansible::ansible_backend;
 use crate::model::facts::baseline::baseline_backend;
-use crate::model::facts::generics::recursive_merge;
+use crate::model::facts::generics::recursive_merge_metrics;
 use crate::types::{DeviceHostname, ExposedFields, MetricSet, Metrics, Status};
 use crate::model::facts::icmp::icmp_backend;
 
@@ -239,7 +239,7 @@ impl FactGatheringBackend {
                     .entry(device.0)
                     .or_default();
 
-                recursive_merge(entry, &device.1);
+                recursive_merge_metrics(entry, device.1);
             }
 
             // Recursively merge status

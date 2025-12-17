@@ -348,8 +348,6 @@ async fn execute_query(influx_client : &influxdb2::Client, influx_script: String
 /// Inserts datapoints into influxdb bucket.
 pub async fn update_device_analytics(influx_client : &influxdb2::Client, message : &FactMessage) {
 
-    log::info!("[INFO ][FACTS] Updating Influx with metrics, from inside the update device analytics function");
-
     let bucket  = Config::instance().get::<String>("backend/controller/influx/bucket", "/");
 
     let bucket = match bucket {

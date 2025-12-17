@@ -1,8 +1,8 @@
-use std::{collections::{HashMap}, env, io, path::{Component, Path, PathBuf}};
+use std::{collections::HashMap, env, fs, io, path::{Component, Path, PathBuf}};
 
 use pyo3::{Bound, PyAny, PyErr, Python, types::{PyAnyMethods, PyDict, PyIterator, PyModule}};
 
-use crate::{config::Config, model::{cache::Cache, data::device_state::DeviceStatus, facts::{ansible::ansible_status::AnsibleStatus, generics::ToMetrics}}};
+use crate::{config::Config, model::{cache::Cache, data::device_state::DeviceStatus, db::fetch_topology::Playbook, facts::{ansible::ansible_status::AnsibleStatus, generics::{ToMetrics, recursive_merge}}}};
 use crate::types::{MetricValue, Metrics, Status};
 
 fn normalize_no_symlink(p: &Path) -> PathBuf {
@@ -44,15 +44,24 @@ pub fn abspath<P: AsRef<Path>>(path: P) -> io::Result<PathBuf> {
 /// 
 /// Internally, it calls ansible_runner via PyO3, as that's the official
 /// Ansible library or programming API
-async fn run_playbook(targets: Vec<String>) -> (Metrics, Status) {
-    let config   = Config::instance();
-    let playbook :String = config.get("backend/model/playbooks/fact_gathering", "/")
-        .expect("[FATAL]Config file does not contain playbook for fact gathering");
-    let private :String = config.get("backend/model/private_data_dir", "/")
+async fn run_playbook(targets: Vec<String>, playbook: Playbook) -> (Metrics, Status) {
+    let config = Config::instance();
+
+    // let playbook : String = config.get("backend/model/playbooks/fact_gathering", "/")
+    //     .expect("[FATAL]Config file does not contain playbook for fact gathering");
+    let private : String = config.get("backend/model/private_data_dir", "/")
         .expect("[FATAL]Config file does not contain a private directory");
 
+    
     let cwd = env::current_dir().expect("[FATAL]Failed to get current working directory");
     let private = abspath_with_cwd(private, &cwd);
+    let playbook_name = format!("{}.yml", playbook.playbook_name);
+    let playbook_path = private.join(&playbook_name);
+    
+    if let Err(e) = fs::metadata(playbook_path) && e.kind() == io::ErrorKind::NotFound {
+        log::warn!("[WARN ][FACTS][ANSIBLE] Playbook referenced in database does not map to actual file; playbook = '{}', id={}. Skipping...", playbook_name, playbook.playbook_id);
+        return (HashMap::new(), HashMap::new());
+    }
 
     let targets = targets.join("\n");
     
@@ -103,7 +112,7 @@ async fn run_playbook(targets: Vec<String>) -> (Metrics, Status) {
 
             let kwargs = PyDict::new(py);
             kwargs.set_item("private_data_dir", &private)?;
-            kwargs.set_item("playbook", &playbook)?;
+            kwargs.set_item("playbook", playbook_name)?;
             kwargs.set_item("inventory", inventory)?;
             kwargs.set_item("artifact_dir", "/tmp/runner_output")?;
             kwargs.set_item("quiet", true)?;
@@ -117,7 +126,7 @@ async fn run_playbook(targets: Vec<String>) -> (Metrics, Status) {
                     log::error!("[FATAL] Ansible runner can't run, e='{e}'");
                     log::info!("[INFO ] Current working directory was={}", cwd.display());
                     log::info!("[INFO ] Current config file was={}", Config::instance().get_curr_config_path());
-                    log::info!("[INFO ] Playbook directory was={}", playbook);
+                    log::info!("[INFO ] Playbook name was={}", playbook.playbook_name);
                     log::info!("[INFO ] Private directory was={}", private.display());
                     panic!("[FATAL] Ansible runner can't run, e='{e}'");
                 }
@@ -206,10 +215,17 @@ async fn run_playbook(targets: Vec<String>) -> (Metrics, Status) {
 
 pub async fn gather_facts() -> (Metrics, Status) {
     log::info!("[INFO ][FACTS][ANSIBLE] Starting playbook execution");
-    
-    let targets = Cache::instance().ansible_inventory().await;
-    let results = run_playbook(targets).await;
+    let cache = Cache::instance();
 
+    let mut results : (Metrics, Status) = (HashMap::new(), HashMap::new());
+
+    for playbook in cache.get_playbooks().await.into_iter().filter(|p| p.is_enabled) {
+        log::info!("[INFO ][FACTS][ANSIBLE] Playbook  `{}.yml` is executing...", playbook.playbook_name);
+
+        let targets = Cache::instance().ansible_inventory(&playbook).await;
+        let result = run_playbook(targets, playbook).await;
+        recursive_merge(&mut results, result);
+    }
     log::info!("[INFO ][FACTS][ANSIBLE] Playbook execution done.");
 
     results
