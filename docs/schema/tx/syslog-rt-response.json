@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SyslogRealtimeMessage",
+  "type": "object",
+  "required": ["type", "msg"],
+  "properties": {
+    "type": {
+      "const": "syslog-rt"
+    },
+    "msg": {
+      "type": "object",
+      "required": [
+        "appname",
+        "facility",
+        "id",
+        "message",
+        "received-at",
+        "severity",
+        "source"
+      ],
+      "properties": {
+        "appname": {
+          "type": "string",
+          "minLength": 1
+        },
+        "facility": {
+          "type": "string",
+          "enum": [
+            "kern","user","mail","daemon","auth","syslog","lpr","news",
+            "uucp","cron","authpriv","ftp","ntp","security","console",
+            "solaris","local0","local1","local2","local3","local4",
+            "local5","local6","local7"
+          ]
+        },
+        "id": {
+          "type": "integer"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "received-at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "emerg","alert","crit","err",
+            "warning","notice","info","debug"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
