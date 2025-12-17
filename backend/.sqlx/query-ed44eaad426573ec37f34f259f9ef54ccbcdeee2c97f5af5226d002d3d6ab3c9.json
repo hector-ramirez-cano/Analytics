@@ -1,0 +1,39 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO Analytics.links\n                    (side_a, side_b, side_a_iface, side_b_iface, link_type, link_subtype)\n                VALUES\n                    ($1, $2, $3, $4, $5, $6)\n                RETURNING link_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "link_id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Varchar",
+        "Varchar",
+        {
+          "Custom": {
+            "name": "linktype",
+            "kind": {
+              "Enum": [
+                "optical",
+                "copper",
+                "wireless",
+                "unknown"
+              ]
+            }
+          }
+        },
+        "Varchar"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ed44eaad426573ec37f34f259f9ef54ccbcdeee2c97f5af5226d002d3d6ab3c9"
+}

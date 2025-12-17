@@ -3,7 +3,7 @@ use sqlx::{Postgres, Transaction};
 
 use crate::alerts::{AlertReduceLogic, AlertSeverity};
 #[allow(unused)] // Needs to be allowed. Needed for compilation, but the compiler complains of a type casting needed if it's removed
-use crate::{alerts::{AlertRule, alert_backend::AlertBackend}, misc::hashset_to_json_array, model::{cache::Cache, data::{DataSource, device::Device, group::Group, link::Link, link_type::LinkType}}};
+use crate::{types::DeviceId, alerts::{AlertRule, alert_backend::AlertBackend}, misc::hashset_to_json_array, model::{cache::Cache, data::{DataSource, device::Device, group::Group, link::Link, link_type::LinkType}}};
 
 type E = (String, i16);
 pub async fn commit(mut data: serde_json::Value, pool: &sqlx::Pool<Postgres>) -> Result<(), E> {
@@ -122,7 +122,7 @@ async fn delete_items<'t>(data: &mut serde_json::Map<String, serde_json::Value>,
 /// Updates the devices table with new information
 async fn update_devices<'t>(devices: Vec<serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     for device in devices {
-        let device : Device = serde_json::from_value(device).map_err(|e| (format!("Could not update device. Parsing failed with error = '{e}'"), 400))?;
+        let mut device : Device = serde_json::from_value(device).map_err(|e| (format!("Could not update device. Parsing failed with error = '{e}'"), 400))?;
         let device_name = device.device_name;
         let latitude = device.latitude;
         let longitude = device.longitude;
@@ -131,23 +131,33 @@ async fn update_devices<'t>(devices: Vec<serde_json::Value>, transaction: &mut T
         let requested_metrics = hashset_to_json_array(&device.configuration.requested_metrics);
         let available_values = hashset_to_json_array(&device.configuration.available_values);
 
-        let result = if device.device_id <= 0 {
-            sqlx::query!("
+        if device.device_id <= 0 {
+            let result = sqlx::query!(r#"
                 INSERT INTO Analytics.devices
                     (device_name, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values)
                 VALUES
-                    ($1, $2, $3, $4, $5, $6, $7)",
+                    ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING device_id;"#,
                 device_name, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values,
-            ).execute(&mut **transaction).await
+            ).fetch_one(&mut **transaction).await;
+
+            match result {
+                Ok(id) => {
+                    device.device_id = id.device_id;
+                },
+                Err(e) => {
+                    return Err((format!("Failed to update device with SQL Error = '{e}'"), 500));
+                }
+            }
+
         } else {
             sqlx::query!(
                 "UPDATE Analytics.devices
                 SET device_name=$1, latitude=$2, longitude=$3, management_hostname=$4, requested_metadata=$5, requested_metrics=$6, available_values=$7
                 WHERE device_id =$8",
                 device_name, latitude, longitude, management_hostname, requested_metadata, requested_metrics, available_values, device.device_id,
-            ).execute(&mut **transaction).await
+            ).execute(&mut **transaction).await.map_err(|e| (format!("Failed to update device with SQL Error = '{e}'"), 500))?;
         };
-        result.map_err(|e| (format!("Failed to update device with SQL Error = '{e}'"), 500))?;
 
         // Remove all the instances of datasources in normalized table
         // they'll be inserted again. This is done so removing items also has an effect
@@ -175,21 +185,24 @@ async fn update_devices<'t>(devices: Vec<serde_json::Value>, transaction: &mut T
 /// Updates the groups table and group_members table with new information
 async fn update_groups<'t>(groups: Vec<serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     for group in groups {
-        let group : Group = serde_json::from_value(group).map_err(|e| (format!("Could not update group. Parsing failed with error = '{e}'"), 400))?;
+        let mut group : Group = serde_json::from_value(group).map_err(|e| (format!("Could not update group. Parsing failed with error = '{e}'"), 400))?;
         if group.group_id <= 0 {
-            sqlx::query!("
+            let result = sqlx::query!("
                 INSERT INTO Analytics.groups
                     (group_name, is_display_group)
                 VALUES
-                    ($1, $2)",
+                    ($1, $2)
+                RETURNING group_id;",
                 group.name, group.is_display_group
-            ).execute(&mut **transaction).await
+            ).fetch_one(&mut **transaction).await
             .map_err(|e| (format!("Could not insert group. SQL Error = '{e}'"), 500))?;
+
+            group.group_id = result.group_id;
         } else {
             sqlx::query!("
                 UPDATE Analytics.groups
                 SET group_name = $1, is_display_group = $2
-                WHERE group_id = $3",
+                WHERE group_id = $3;",
                 group.name, group.is_display_group, group.group_id
             ).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not update group. SQL Error = '{e}'"), 500))?;
@@ -206,7 +219,7 @@ async fn update_groups<'t>(groups: Vec<serde_json::Value>, transaction: &mut Tra
                     (group_id, item_id)
                 VALUES
                     ($1, $2)
-                ON CONFLICT (group_id, item_id) DO NOTHING",
+                ON CONFLICT (group_id, item_id) DO NOTHING;",
                 group.group_id, member
             ).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not update group members durin gupdate. SQL Error = '{e}'"), 500))?;
@@ -219,17 +232,20 @@ async fn update_groups<'t>(groups: Vec<serde_json::Value>, transaction: &mut Tra
 /// Updates the links table with new information
 async fn update_links<'t>(links: Vec<serde_json::Value>, transaction: &mut Transaction<'t, Postgres>) -> Result<(), E> {
     for link in links {
-        let link : Link = serde_json::from_value(link).map_err(|e| (format!("Could not update link. Parsing failed with error = '{e}'"), 500))?;
+        let mut link : Link = serde_json::from_value(link).map_err(|e| (format!("Could not update link. Parsing failed with error = '{e}'"), 500))?;
         
         if link.link_id <= 0 {
-            sqlx::query!("
+            let id = sqlx::query!("
                 INSERT INTO Analytics.links
                     (side_a, side_b, side_a_iface, side_b_iface, link_type, link_subtype)
                 VALUES
-                    ($1, $2, $3, $4, $5, $6)",
+                    ($1, $2, $3, $4, $5, $6)
+                RETURNING link_id",
                 link.side_a, link.side_b, link.side_a_iface, link.side_b_iface, link.link_type as LinkType, link.link_subtype
-            ).execute(&mut **transaction).await
+            ).fetch_one(&mut **transaction).await
             .map_err(|e| (format!("Could not insert link. SQL Error = '{e}'"), 500))?;
+
+            link.link_id = id.link_id;
         } else {
             sqlx::query!("
             UPDATE Analytics.links
@@ -253,7 +269,7 @@ async fn update_rules<'t>(rules: Vec<serde_json::Value>, transaction: &mut Trans
         .ok_or(("Could not update rule. 'rule-definition' is missing for rule".to_string(), 400))?.clone();
     
     
-        let rule : AlertRule = serde_json::from_value(rule_in)
+        let mut rule : AlertRule = serde_json::from_value(rule_in)
             .map_err(|e| (format!("Could not update rule. Parsing failed with error = '{e}'"), 400))?;
 
         if rule.reduce_logic == AlertReduceLogic::Unknown {
@@ -266,20 +282,23 @@ async fn update_rules<'t>(rules: Vec<serde_json::Value>, transaction: &mut Trans
         log::info!("[INFO ][DB][UPDATES] Updating rule= {}", rule.rule_id);
 
         if rule.rule_id <= 0 {
-            sqlx::query!("
+            let id = sqlx::query!("
                 INSERT INTO Analytics.alert_rules
                     (rule_name, requires_ack, rule_definition)
                 VALUES
-                    ($1, $2, $3)",
+                    ($1, $2, $3)
+                RETURNING rule_id;",
                 rule.name, rule.requires_ack, definition
-            ).execute(&mut **transaction).await
+            ).fetch_one(&mut **transaction).await
             .map_err(|e| (format!("Could not insert rule. SQL error = '{e}'"), 500))?;
+
+            rule.rule_id = id.rule_id;
         } else {
             log::info!("[INFO ][DB][UPDATES] Definition= {}", &definition);
             sqlx::query!("
                 UPDATE Analytics.alert_rules
                 SET rule_name=$1, requires_ack=$2, rule_definition=$3
-                WHERE rule_id =$4",
+                WHERE rule_id =$4;",
                 rule.name, rule.requires_ack, definition, rule.rule_id
             ).execute(&mut **transaction).await
             .map_err(|e| (format!("Could not update rule. SQL Error = '{e}'"), 500))?;

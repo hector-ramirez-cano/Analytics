@@ -62,7 +62,7 @@
     },
     "backend": {
       "model": {
-        "private_data_dir": "ansible",
+        "private_data_dir": "ansible/project",
         "ssh_user": "zaph",
         "cache":{
           "rule_set_cache_invalidation_s": 3600

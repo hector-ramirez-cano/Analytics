@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO Analytics.alert_rules\n                    (rule_name, requires_ack, rule_definition)\n                VALUES\n                    ($1, $2, $3)\n                RETURNING rule_id;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "rule_id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Bool",
+        "Jsonb"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c4307c1358c6d8dc05b060b3a65f893d575eed1f23b067c5b71021287ff57eb6"
+}

@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO Analytics.groups\n                    (group_name, is_display_group)\n                VALUES\n                    ($1, $2)\n                RETURNING group_id;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "group_id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "dfa642a79012a82bab1614bc6232e22784400fa484d71b8c8b3e4d821be144e8"
+}

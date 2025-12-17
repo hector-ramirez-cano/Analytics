@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO Analytics.group_members\n                    (group_id, item_id)\n                VALUES\n                    ($1, $2)\n                ON CONFLICT (group_id, item_id) DO NOTHING;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "581def6d13b26e050ee2af264753c9bdc7ab0e8853fc36923ac4f11fc3313b46"
+}

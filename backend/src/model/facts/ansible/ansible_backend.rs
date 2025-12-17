@@ -58,8 +58,13 @@ async fn run_playbook(targets: Vec<String>, playbook: Playbook) -> (Metrics, Sta
     let playbook_name = format!("{}.yml", playbook.playbook_name);
     let playbook_path = private.join(&playbook_name);
     
-    if let Err(e) = fs::metadata(playbook_path) && e.kind() == io::ErrorKind::NotFound {
+    if let Err(e) = fs::metadata(playbook_path.clone()) && e.kind() == io::ErrorKind::NotFound {
         log::warn!("[WARN ][FACTS][ANSIBLE] Playbook referenced in database does not map to actual file; playbook = '{}', id={}. Skipping...", playbook_name, playbook.playbook_id);
+        log::info!("[INFO]   ^^^^^^^^^^^^^^^^^^^^^^^ Playbook_path = {}", playbook_path.display());
+        log::info!("[INFO]                           CWD = {}", cwd.display());
+        for path in fs::read_dir(private.clone()).unwrap() {
+            log::info!("[INFO]                           Files in directory= {:?}", path);
+        }
         return (HashMap::new(), HashMap::new());
     }
 

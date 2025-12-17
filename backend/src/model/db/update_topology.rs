@@ -35,8 +35,8 @@ pub async fn update_device_metadata(pool: &sqlx::Pool<Postgres>, msg: &FactMessa
         let available_values = serde_json::json!(&facts.exposed_fields);
         let metadata = serde_json::json!(&facts.exposed_fields);
 
-        let result = sqlx::query!("UPDATE Analytics.devices 
-                    SET metadata = $1, available_values = $2 
+        let result = sqlx::query!("UPDATE Analytics.devices
+                    SET metadata = $1, available_values = $2
                     WHERE device_id = $3",
                     metadata, available_values, id,
                 ).execute(pool).await;

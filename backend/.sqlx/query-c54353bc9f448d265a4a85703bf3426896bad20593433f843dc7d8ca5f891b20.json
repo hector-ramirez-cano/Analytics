@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            device_id,\n            array_agg(DISTINCT playbook_id::INT) AS playbook_ids\n        FROM Analytics.devices_playbooks\n        GROUP BY device_id;\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "device_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "playbook_ids",
+        "type_info": "Int4Array"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "c54353bc9f448d265a4a85703bf3426896bad20593433f843dc7d8ca5f891b20"
+}

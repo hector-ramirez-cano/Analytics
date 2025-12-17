@@ -34,6 +34,11 @@ class TopologyCanvasPainter extends CustomPainter {
     double scale = canvasState.scale;
     Offset centerOffset = canvasState.centerOffset;
 
+    const textStyle = TextStyle(
+      color: Colors.black,
+      fontSize: 12,
+    );
+
     for (var device in topologyView.devices) {
       final memberPosition = canvasTabs.getPositionInState(device.id);
       final position = memberPosition.globalToPixel(size, scale, centerOffset);
@@ -45,6 +50,23 @@ class TopologyCanvasPainter extends CustomPainter {
       }
 
       canvas.drawCircle(position, radius, devicePaint);
+
+      final textSpan = TextSpan(
+        text: device.name,
+        style: textStyle,
+      );
+      final textPainter = TextPainter(
+        text: textSpan,
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout(
+        minWidth: 0,
+        maxWidth: size.width,
+      );
+      final xCenter = (position.dx - textPainter.width / 2);
+      final yCenter = 15 + (position.dy - textPainter.height / 2);
+      final offset = Offset(xCenter, yCenter);
+      textPainter.paint(canvas, offset);
     }
   }
 

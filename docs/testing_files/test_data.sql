@@ -6,6 +6,7 @@ SELECT * FROM Analytics.group_members;
 SELECT device_id, data_source FROM Analytics.device_data_sources;
 
 SELECT * FROM Analytics.devices;
+-- DELETE FROM Analytics.devices; DELETE FROM Analytics.groups;
 SELECT * FROM Analytics.device_data_sources;
 
 UPDATE Analytics.devices SET available_values = NULL;
@@ -26,6 +27,7 @@ INSERT INTO Analytics.playbooks (playbook_id, playbook_name, is_enabled) VALUES 
 INSERT INTO Analytics.playbooks (playbook_id, playbook_name, is_enabled) VALUES (2, 'some_fact_gathering', TRUE);
 
 DELETE FROM Analytics.playbooks WHERE playbook_id = 2;
+SELECT * FROM Analytics.playbooks;
 
 INSERT INTO Analytics.devices_playbooks (device_id, playbook_id) 
     VALUES 
