@@ -70,8 +70,42 @@ class Group extends GroupableItem<Group>{
     }
   }
 
+  static Set<GroupableItem> resolveMembers(
+    Group group,
+    Map<int, dynamic> items, {
+    Set<int>? visiting,
+  }) {
+    visiting ??= <int>{};
+
+    // cycle / self-reference protection
+    if (visiting.contains(group.id)) {
+      return {};
+    }
+
+    visiting.add(group.id);
+
+    final resolved = <GroupableItem>{};
+
+    for (final member in items[group.id].members) {
+      if (member is Group) {
+        items[member.id] = member.copyWith(members: resolveMembers(member, items, visiting: visiting));
+        resolved.addAll(
+          (items[member.id] as Group).members
+        );
+      } else {
+        // device or other leaf
+        resolved.add(member);
+      }
+    }
+
+    visiting.remove(group.id);
+    return resolved;
+  }
+
+
   /// Populates the members of a group, with a given [json] array. Queries the items from an [items] map of {int -> dynamic}
   static void fillGroupMembers(List<dynamic> json, Map<int, dynamic> items) {
+    // First pasS: only direct leafs and nested groups
     for (var group in json) {
       int id = group["id"];
       
@@ -82,6 +116,12 @@ class Group extends GroupableItem<Group>{
       }
 
       items[id] = (items[id] as Group).copyWith(members: {...oldMembers, ...members});
+    }
+
+    // Second pass: resolve nesting
+    for (final item in items.values.whereType<Group>()) {
+      final resolved = resolveMembers(item, items);
+      items[item.id] = item.copyWith(members: resolved);
     }
   }
 
