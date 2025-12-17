@@ -162,8 +162,6 @@ CREATE TABLE IF NOT EXISTS Analytics.dashboard(
     dashboard_name VARCHAR(254) NOT NULL
 );
 
--- DROP TABLE Analytics.dashboard_items;
-
 CREATE TABLE IF NOT EXISTS Analytics.dashboard_items(
     dashboard_id SMALLINT NOT NULL,
     row_start    SMALLINT NOT NULL,
