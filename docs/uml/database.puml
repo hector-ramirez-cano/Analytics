@@ -27,6 +27,21 @@ dataclass devices {
   FK item_id : BIGINT
 }
 
+dataclass devices_playbooks {
+  --
+  FK device_id: BIGINT
+  FK playbook_id: INT
+}
+
+dataclass playbooks {
+  * playbook_id: SERIAL
+  --
+  playbook_name: VARCHAR(254)
+  is_enabled: BOOLEAN
+}
+
+
+
 dataclass topology_views {
   * topology_views_id : BIGSERIAL,
   --
@@ -120,6 +135,9 @@ devices ||--o{ device_data_sources : device_id
 devices ||--o{ alerts : target_id
 devices ||--o{ links : side_a
 devices ||--o{ links : side_b
+
+devices ||--o{ devices_playbooks
+devices_playbooks ||--o{ playbooks
 
 groups ||--o{ group_members : group_id
 items ||--o{ group_members : item_id
