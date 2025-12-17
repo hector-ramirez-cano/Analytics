@@ -20,8 +20,7 @@
           "cache_invalidation_s": 60
         },
         "syslog": {
-          "RFC5424-port":1514,
-          "db_path" : "."
+          "RFC5424-port":1514
         },
         "fact-gathering":{
           "polling_time_s": 5
@@ -69,8 +68,7 @@
           "cache_invalidation_s": 60
         },
         "syslog": {
-          "RFC5424-port":1514,
-          "db_path" : "."
+          "RFC5424-port":1514
         },
         "fact-gathering":{
           "polling_time_s": 5
