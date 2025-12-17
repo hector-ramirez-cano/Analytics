@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,10 +36,11 @@ class _SyslogViewerState extends ConsumerState<SyslogViewer> {
     return LogTable(key: Key("SyslogDbTable"));
   }
 
-  List<ResizableChild> _makeContainers(WidgetRef ref) {
+  List<ResizableChild> _makeContainers(BuildContext context, WidgetRef ref) {
+    final height = MediaQuery.of(context).size.height;
     return [
       ResizableChild(
-        size: ResizableSize.shrink(min: 250),
+        size: ResizableSize.shrink(min: min(height*0.3, 250)),
         child: _makeSyslogRealtimeViewer(ref),
         divider: const ResizableDivider(
           thickness: 2,
@@ -45,7 +48,7 @@ class _SyslogViewerState extends ConsumerState<SyslogViewer> {
         )
       ),
       ResizableChild(
-        size: ResizableSize.expand(min: 300),
+        size: ResizableSize.expand(min: min(height*0.3, 300)),
         child: _makeLogTable(ref)
       )
     ];
@@ -57,7 +60,7 @@ class _SyslogViewerState extends ConsumerState<SyslogViewer> {
     return ResizableContainer(
         direction: Axis.vertical,
         controller: syslogViewerController,
-        children: _makeContainers(ref)
+        children: _makeContainers(context, ref)
       );
   }
 }
