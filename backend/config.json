@@ -20,8 +20,7 @@
           "cache_invalidation_s": 60
         },
         "syslog": {
-          "RFC5424-port":1514,
-          "db_path" : "."
+          "RFC5424-port":1514
         },
         "fact-gathering":{
           "polling_time_s": 5
@@ -31,13 +30,6 @@
           "hostname": "localhost",
           "name": "AnalyticsDB",
           "schema": "postgresql://",
-          "max_idle_s": 60,
-          "num_workers": 3,
-          "min_size": 1,
-          "max_size": 10,
-          "reconnect_timeout_s": 15,
-          "retry_timeout_s": 5,
-          "request_timeout_s": 5,
           "$ref": "identity/postgres_db.json"
         },
         "influx": {
@@ -76,8 +68,7 @@
           "cache_invalidation_s": 60
         },
         "syslog": {
-          "RFC5424-port":1514,
-          "db_path" : "."
+          "RFC5424-port":1514
         },
         "fact-gathering":{
           "polling_time_s": 5
@@ -87,13 +78,6 @@
           "hostname": "postgres_db",
           "name": "AnalyticsDB",
           "schema": "postgresql://",
-          "max_idle_s": 60,
-          "num_workers": 3,
-          "min_size": 1,
-          "max_size": 10,
-          "reconnect_timeout_s": 15,
-          "retry_timeout_s": 5,
-          "request_timeout_s": 5,
           "$ref": "identity/postgres_db.json"
         },
         "influx": {
