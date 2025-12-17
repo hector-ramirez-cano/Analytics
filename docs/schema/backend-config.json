@@ -84,14 +84,13 @@
 
                 "syslog": {
                   "type": "object",
-                  "required": ["RFC5424-port", "db_path"],
+                  "required": ["RFC5424-port"],
                   "properties": {
                     "RFC5424-port": {
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 65535
-                    },
-                    "db_path": { "type": "string", "minLength": 1 }
+                    }
                   },
                   "additionalProperties": false
                 },
