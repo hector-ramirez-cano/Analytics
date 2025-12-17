@@ -210,7 +210,7 @@
                     },
                     "schema": {
                       "type": "string",
-                      "pattern": "^http://"
+                      "pattern": "^https?://"
                     },
                     "bucket": {
                       "type": "string",
