@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aegis/ui/components/dialogs/checklist_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aegis/models/syslog/syslog_facility.dart';
@@ -9,12 +10,13 @@ import 'package:aegis/models/syslog/syslog_table_page.dart';
 import 'package:aegis/services/syslog/syslog_db_service.dart';
 import 'package:aegis/services/websocket_service.dart';
 import 'package:aegis/ui/components/date_range_picker.dart';
-import 'package:aegis/ui/components/dialogs/checklist_dialog.dart';
 import 'package:aegis/ui/components/dialogs/syslog_table_info_dialog.dart';
 import 'package:aegis/ui/screens/syslog/log_table_columns.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 class LogTable extends StatefulWidget {
+  static final allowFilters = false; // !!! Experimental !!!
+
   const LogTable({
     super.key,
   });
@@ -87,7 +89,7 @@ class _LogTableState extends State<LogTable> {
         );
       }
     );
-}
+  }
 
   void _onDateSelect(DateTimeRange range, WidgetRef ref) => ref.read(syslogDbServiceProvider.notifier).onDateSelect(_stateManager, range, ref);
 
@@ -107,7 +109,7 @@ class _LogTableState extends State<LogTable> {
   void _onTrinaGridLoaded(TrinaGridOnLoadedEvent event, WidgetRef ref) {
     _stateManager = event.stateManager;
     
-    _stateManager.setShowColumnFilter(true);
+    _stateManager.setShowColumnFilter(LogTable.allowFilters);
 
     // set not loading, and tell TrinaGrid which widget it should use
     _stateManager.setShowLoading(false, customLoadingWidget: shimmer);
@@ -169,6 +171,16 @@ class _LogTableState extends State<LogTable> {
   }
 
   Widget _makeLogTable(SyslogTablePage cache, WidgetRef ref)  {
+    final TrinaFilterColumnWidgetDelegate? severityFilterDelegate, facilityFilterDelegate;
+    if (LogTable.allowFilters) {
+      facilityFilterDelegate = _makeEnumWidgetDelegate(SyslogFacility.values, cache, ref);
+      severityFilterDelegate = _makeEnumWidgetDelegate(SyslogFacility.values, cache, ref);
+    } else {
+      severityFilterDelegate = null;
+      facilityFilterDelegate = null;
+    }
+
+    
     List<TrinaColumn> columns = [
       TrinaColumn(
         title: "Recibido", field: "RecievedAt",
@@ -179,48 +191,55 @@ class _LogTableState extends State<LogTable> {
       TrinaColumn(
         title: "Facility", field: "Facility",
         renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: true, width: 32,
+        enableSorting: true, enableFilterMenuItem: LogTable.allowFilters && true, width: 32,
         type: TrinaColumnType.select(
           SyslogFacility.values, itemToString: (item) => item.toString(),
         ),
-        filterWidgetDelegate: _makeEnumWidgetDelegate(SyslogFacility.values, cache, ref)
+        filterWidgetDelegate: facilityFilterDelegate
       ),
 
       TrinaColumn(
         title: "Severidad", field: "Severity",
         type: TrinaColumnType.select(SyslogSeverity.values), renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: true, width: 32,
-        filterWidgetDelegate: _makeEnumWidgetDelegate(SyslogSeverity.values, cache, ref)
+        enableSorting: true, enableFilterMenuItem: LogTable.allowFilters && true, width: 32,
+        filterWidgetDelegate: severityFilterDelegate
       ),
 
       TrinaColumn(
         title: "Origen",field: "Origin",
         type: TrinaColumnType.text(), renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: true, width: 64
+        enableSorting: true, enableFilterMenuItem: LogTable.allowFilters && true, width: 64
       ),
 
       TrinaColumn(
         title: "PID", field: "PID",
         type: TrinaColumnType.number(negative: false, format: "########"), renderer: columnRenderer,
-        enableSorting: false, enableFilterMenuItem: true, width: 32,
+        enableSorting: false, enableFilterMenuItem: LogTable.allowFilters && true, width: 32,
       ),
 
       TrinaColumn(
         title: "Mensaje", field: "Message",
         type: TrinaColumnType.text(), renderer: columnRenderer,
-        enableSorting: false, enableFilterMenuItem: true,
+        enableSorting: false, enableFilterMenuItem: LogTable.allowFilters && true,
       ),
     ];
 
     // TODO: handle retries and loading
+    final TrinaGridColumnFilterConfig columnFilterConfig;
+    if (LogTable.allowFilters) {
+      columnFilterConfig = TrinaGridColumnFilterConfig(
+        debounceMilliseconds: _debounceDuration.inMilliseconds
+      );
+    } else {
+      columnFilterConfig = const TrinaGridColumnFilterConfig();
+    }
+
     return TrinaGrid(
       columns: columns,
       rows: [],
       onLoaded: (event) => _onTrinaGridLoaded(event, ref),
       configuration: TrinaGridConfiguration(
-        columnFilter: TrinaGridColumnFilterConfig(
-          debounceMilliseconds: _debounceDuration.inMilliseconds
-        ),
+        columnFilter: columnFilterConfig,
         enableMoveHorizontalInEditing: true,
         columnSize: TrinaGridColumnSizeConfig(
           autoSizeMode: TrinaAutoSizeMode.scale,

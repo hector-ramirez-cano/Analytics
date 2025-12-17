@@ -1,3 +1,4 @@
+import 'package:aegis/ui/components/dialogs/checklist_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aegis/models/alerts/alert_event.dart';
@@ -6,12 +7,13 @@ import 'package:aegis/models/alerts/alert_table_page.dart';
 import 'package:aegis/services/alerts/alert_db_service.dart';
 import 'package:aegis/services/websocket_service.dart';
 import 'package:aegis/ui/components/date_range_picker.dart';
-import 'package:aegis/ui/components/dialogs/checklist_dialog.dart';
 import 'package:aegis/ui/components/dialogs/syslog_table_info_dialog.dart';
 import 'package:aegis/ui/screens/syslog/log_table_columns.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 class AlertViewer extends ConsumerStatefulWidget {
+  static final allowFilters = false; // !!! Experimental !!!
+
   const AlertViewer({super.key});
 
   @override
@@ -83,7 +85,7 @@ class _AlertViewerState extends ConsumerState<AlertViewer> {
         );
       }
     );
-}
+  }
 
   void _onDateSelect(DateTimeRange range, WidgetRef ref) => ref.read(alertDbServiceProvider.notifier).onDateSelect(_stateManager, range, ref);
 
@@ -103,7 +105,7 @@ class _AlertViewerState extends ConsumerState<AlertViewer> {
   void _onTrinaGridLoaded(TrinaGridOnLoadedEvent event, WidgetRef ref) {
     _stateManager = event.stateManager;
 
-    _stateManager.setShowColumnFilter(true);
+    _stateManager.setShowColumnFilter(AlertViewer.allowFilters);
 
     // set not loading
     _stateManager.setShowLoading(false);
@@ -175,62 +177,77 @@ class _AlertViewerState extends ConsumerState<AlertViewer> {
   }
 
   Widget _makeLogTable(AlertTablePage cache, WidgetRef ref)  {
+    final TrinaFilterColumnWidgetDelegate? filterDelegate;
+    if (AlertViewer.allowFilters) {
+      filterDelegate = _makeEnumWidgetDelegate(AlertSeverity.values, cache, ref);
+    } else {
+      filterDelegate = null;
+    }
+
     List<TrinaColumn> columns = [
       TrinaColumn(
         title: 'ID', field: 'AlertId',
         type: TrinaColumnType.number(negative: false, format: '########'), renderer: columnRenderer,
-        enableSorting: false, enableFilterMenuItem: true, width: 16,
+        enableSorting: false, enableFilterMenuItem: AlertViewer.allowFilters && true, width: 16,
       ),
       TrinaColumn(
         title: 'Req. Ack', field: 'RequiresAck',
         type: TrinaColumnType.boolean(trueText: '✔', falseText: '✖'), renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: false, width: 16
+        enableSorting: true, enableFilterMenuItem: AlertViewer.allowFilters && false, width: 16
       ),
       TrinaColumn(
         title: 'Alertado', field: 'AlertTime',
         type: TrinaColumnType.date(format: 'yyyy-MM-dd hh:mm:ss'), renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: false, width: 50
+        enableSorting: true, enableFilterMenuItem: AlertViewer.allowFilters && false, width: 50
       ),
       TrinaColumn(
         title: 'Ack', field: 'AckTime',
         type: TrinaColumnType.date(format: 'yyyy-MM-dd hh:mm:ss'), renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: false, width: 50
+        enableSorting: true, enableFilterMenuItem: AlertViewer.allowFilters && false, width: 50
       ),
 
       TrinaColumn(
         title: 'Severidad', field: 'Severity',
         type: TrinaColumnType.select(AlertSeverity.values), renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: true, width: 32,
-        filterWidgetDelegate: _makeEnumWidgetDelegate(AlertSeverity.values, cache, ref)
+        enableSorting: true, enableFilterMenuItem: AlertViewer.allowFilters && true, width: 32,
+        filterWidgetDelegate: filterDelegate
       ),
 
       TrinaColumn(
         title: 'Mensaje', field: 'Message',
         type: TrinaColumnType.text(), renderer: columnRenderer,
-        enableSorting: false, enableFilterMenuItem: true,
+        enableSorting: false, enableFilterMenuItem: AlertViewer.allowFilters && true,
       ),
 
       TrinaColumn(
         title: 'Disp.',field: 'TargetId',
         type: TrinaColumnType.text(), renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: true, width: 16
+        enableSorting: true, enableFilterMenuItem: AlertViewer.allowFilters && true, width: 16
       ),
 
       TrinaColumn(
         title: 'Responsable Ack',field: 'AckActor',
         type: TrinaColumnType.text(), renderer: columnRenderer,
-        enableSorting: true, enableFilterMenuItem: true, width: 64
+        enableSorting: true, enableFilterMenuItem: AlertViewer.allowFilters && true, width: 64
       ),
     ];
+
+    final TrinaGridColumnFilterConfig columnFilterConfig;
+    if (AlertViewer.allowFilters) {
+      columnFilterConfig = TrinaGridColumnFilterConfig(
+        debounceMilliseconds: _debounceDuration.inMilliseconds
+      );
+    } else {
+      columnFilterConfig = const TrinaGridColumnFilterConfig();
+    }
+
 
     return TrinaGrid(
       columns: columns,
       rows: [],
       onLoaded: (event) => _onTrinaGridLoaded(event, ref),
       configuration: TrinaGridConfiguration(
-        columnFilter: TrinaGridColumnFilterConfig(
-          debounceMilliseconds: _debounceDuration.inMilliseconds
-        ),
+        columnFilter: columnFilterConfig,
         enableMoveHorizontalInEditing: true,
         columnSize: TrinaGridColumnSizeConfig(
           autoSizeMode: TrinaAutoSizeMode.scale,
