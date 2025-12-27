@@ -50,7 +50,17 @@ class AlertRuleOperand {
         return copyWith(value: double.tryParse(value));
         
       case FactsDataType.boolean:
-        bool? boolean = value == "true" ? true : value == "false" ? false : null;
+        bool? boolean;
+        if (value is bool) {
+          boolean = value;
+        } else if (value == "true") {
+          boolean = true;
+        } else if (value == "false") {
+          boolean = false;
+        } else {
+          boolean = null;
+        }
+
         return copyWith(value: boolean);
 
       case FactsDataType.nullable:

@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PollingDefinition",
+  "type": "object",
+
+  "required": [
+    "chart-type",
+    "update-interval-s",
+    "fields",
+    "device-ids",
+    "type"
+  ],
+
+  "properties": {
+    "chart-type": {
+      "type": "string",
+      "enum": ["line", "pie", "label"]
+    },
+
+    "type": {
+      "type": "string",
+      "enum": ["metric", "metadata"]
+    },
+
+    "update-interval-s": {
+      "type": "integer",
+      "exclusiveMinimum": 0
+    },
+
+    "aggregate-interval-s": {
+      "type": "integer",
+      "exclusiveMinimum": 0
+    },
+
+    "start": {
+      "type": "string",
+      "pattern": "^-"
+    },
+
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+
+    "device-ids": {
+      "type": "integer",
+      "exclusiveMinimum": 0
+    }
+  },
+
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "chart-type": { "const": "line" }
+        }
+      },
+      "then": {
+        "required": ["start", "aggregate-interval-s"],
+        "properties": {
+          "type": { "const": "metric" },
+          "fields": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "chart-type": {
+            "enum": ["pie", "label"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "type": { "const": "metadata" },
+          "fields": {
+            "minItems": 1,
+            "maxItems": 1
+          }
+        }
+      }
+    }
+  ],
+
+  "additionalProperties": false
+}

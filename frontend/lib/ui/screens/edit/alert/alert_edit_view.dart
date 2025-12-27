@@ -340,11 +340,11 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
   }
 
   AbstractSettingsTile _makeMembersInput() {
-    final notifier = ref.watch(itemEditSelectionProvider.notifier);
+    final notifier = ref.watch(itemEditSelectionProvider.notifier); 
 
     var target = widget.topology.items[notifier.alertRule.targetId];
 
-    var members = Text(target.name);
+    var members = Text(target?.name ?? "");
 
     return SettingsTile(
       title: Text("Miembros"),
@@ -384,13 +384,14 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
                 onSave: (newP) => onUpdatePredicate(predicate, newP),
                 target: widget.topology.items[rule.targetId],
                 initialValue: predicate,
+                parentRule: rule,
               )
             ).show(context),
       );
     }).toList();
   }
 
-  AbstractSettingsTile _makeAddPredicateButton() {
+  AbstractSettingsTile _makeAddPredicateButton(AlertRule rule) {
     final notifier = ref.watch(itemEditSelectionProvider.notifier);
 
     var target = widget.topology.items[notifier.alertRule.targetId];
@@ -405,6 +406,7 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
                 topology: widget.topology,
                 onSave: onAddPredicate,
                 target: target,
+                parentRule: rule,
                 initialValue: null,
               )
             ).show(context),
@@ -440,7 +442,7 @@ class _AlertEditViewState extends ConsumerState<AlertEditView> {
         title: Text("Predicados"),
         tiles: [
           ..._makePredicateInput(rule),
-          _makeAddPredicateButton()
+          _makeAddPredicateButton(rule)
         ]
       )
     ];

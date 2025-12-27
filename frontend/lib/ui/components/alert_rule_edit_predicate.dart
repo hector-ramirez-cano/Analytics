@@ -1,5 +1,7 @@
 import 'package:aegis/models/alerts/alert_operand.dart';
 import 'package:aegis/models/alerts/alert_operand_modifier.dart';
+import 'package:aegis/models/alerts/alert_rule.dart';
+import 'package:aegis/models/alerts/alert_source.dart';
 import 'package:aegis/services/metrics/metadata_service.dart';
 import 'package:aegis/theme/app_colors.dart';
 import 'package:aegis/ui/components/operand_modifier_input_bar.dart';
@@ -29,10 +31,12 @@ class AlertRuleEditPredicate extends StatefulWidget {
     super.key,
     required this.topology,
     required this.target,
+    required this.parentRule,
     required this.initialValue,
     required this.onSave,
   });
 
+  final AlertRule parentRule;
   final AlertPredicate? initialValue;
   final Function(AlertPredicate op) onSave;
   final GroupableItem target;
@@ -165,7 +169,19 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
   }
 
   Widget _makeVariableSelector(bool forced, bool isLeft) {
-    final top = widget.topology.getAllAvailableValues(widget.target);
+    final Set<String> variableNames;
+    switch (widget.parentRule.source) {
+      
+      case AlertSource.syslog:
+        variableNames = {"syslog_message"};
+        
+      case AlertSource.facts:
+        variableNames = widget.topology.getAllAvailableValues(widget.target);
+
+      case AlertSource.unknown:
+        variableNames = {};
+    }
+
     final forcedToggle = isLeft ? _handleForcedLeftToggle : _handleForcedRightToggle;
     final constToggle = isLeft ? _handleConstLeftToggle : _handleConstRightToggle;
     final enabled = isLeft ? !_predicate.right.isConst : !_predicate.left.isConst;
@@ -176,7 +192,7 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
             onClose: null,
             onClear: () => {},
             shrinkWrap: true,
-            options: top,
+            options: variableNames,
             selectorType: ListSelectorType.radio,
             toText: (v) => v,
             onChanged: (val, _) => _handleVariableInputSelect(isLeft, val),
@@ -196,6 +212,10 @@ class _AlertRuleEditPredicateState extends State<AlertRuleEditPredicate> {
   }
 
   Widget _makeVariableSubtitle(String item) {
+    if (item == "syslog_message") {
+      return Text("");
+    }
+
     return Consumer(builder: (context, ref, child) {
       final values = widget.topology.getAllAvailableValues(widget.target);
       final md = ref.watch(metadataServiceProvider(metadata: values, deviceId: widget.target.id));

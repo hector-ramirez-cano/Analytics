@@ -439,7 +439,7 @@ impl AlertBackend {
         let _last_update_lock = match last_update_lock {
             Some(l) => l,
             None => {
-                log::info!("[INFO ][ALERTS][LOADS] failed to acquire lock on updates, forced={forced}");
+                log::info!("[INFO ][ALERTS][LOADS] failed to acquire lock on updates, forced={forced}, Update isn't due or it's already being updated");
                 return;
             }
         };

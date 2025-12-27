@@ -4,6 +4,7 @@ use std::path::Path;
 use std::sync::{Arc, OnceLock};
 
 use anyhow::{anyhow, Context, Result};
+use arc_swap::ArcSwap;
 use serde::de::DeserializeOwned;
 use serde_json::{Map, Value};
 
@@ -15,24 +16,42 @@ pub struct Config {
     config_path: String,
 }
 
+static CONFIG: OnceLock<ArcSwap<Config>> = OnceLock::new();
+
 impl Config {
+    
     /// Returns the global singleton instance, loading "config.json" on first call.
     // Expect: if the config file is not present, it _must_ panic
     pub fn instance() -> Arc<Config> {
-        static INSTANCE: OnceLock<Arc<Config>> = OnceLock::new();
-        INSTANCE
+        
+        CONFIG
             .get_or_init(|| {
                 let cfg = Config::parse("config.json", true)
-                    .expect("failed to load config.json"); // fail-fast on startup
-                let config_path = "config.json".to_string();
-                Arc::new(Config { config: cfg, config_path})
+                    .expect("failed to load config.json");
+                ArcSwap::from_pointee(Config {
+                    config: cfg,
+                    config_path: "config.json".into(),
+                })
             })
-            .clone()
-    }
-
+            .load_full()
+}
     pub fn init() {
         let _ = Config::instance();
         println!("[INFO] Init config");
+    }
+
+    pub fn reload() -> Option<()> {
+        let new_cfg = Config::parse("config.json", true)
+            .expect("failed to reload config.json");
+
+        let new_arc = Arc::new(Config {
+            config: new_cfg,
+            config_path: "config.json".into(),
+        });
+
+        CONFIG.get()?.store(new_arc);
+
+        Some(())
     }
 
     pub fn get_curr_config_path(&self) -> String {

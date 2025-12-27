@@ -14,7 +14,7 @@
       },
       "controller": {
         "configure": {
-          "enabled": false
+          "enabled": true
         },
         "cache": {
           "cache_invalidation_s": 60
@@ -22,8 +22,8 @@
         "syslog": {
           "RFC5424-port":1514
         },
-        "fact-gathering":{
-          "polling_time_s": 5
+        "fact_gathering":{
+          "polling_time_s": 30
         },
         "postgres": {
           "port": 5432,

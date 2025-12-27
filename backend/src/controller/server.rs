@@ -35,6 +35,28 @@ pub fn heartbeat() -> &'static str {
     "Bip bop"
 }
 
+#[get("/api/reload_config")]
+pub async fn get_reload_config() -> status::Custom<RocketJson>{
+    match Config::reload() {
+        Some(_) => {
+            let ok_body = serde_json::json!({
+                "code": 200,
+                "message": "Success"
+            });
+
+            status::Custom(rocket::http::Status::Ok, RocketJson::from(ok_body))
+        },
+        None => {
+            let err_body = serde_json::json!({
+                "code": 500,
+                "message": "Failed to load rules"
+            });
+
+            status::Custom(rocket::http::Status::InternalServerError, RocketJson::from(err_body))
+        },
+    }
+}
+
 #[get("/api/topology")]
 pub async fn get_topology(pool: &State<sqlx::PgPool>) -> Result<response::content::RawJson<String>, rocket::http::Status> {
     #[cfg(debug_assertions)] {log::debug!("[DEBUG]Get topology!");}
@@ -62,7 +84,6 @@ pub async fn get_rules() -> status::Custom<RocketJson> {
         }
     }
 }
-
 
 #[post("/api/configure", data = "<data>")]
 pub async fn api_configure(data: RocketJson, pool: &State<sqlx::PgPool>) -> status::Custom<RocketJson> {
@@ -218,7 +239,6 @@ async fn ws_receive_task(
         }
     }
 }
-
 
 async fn ws_handle_message(
     pool: &sqlx::PgPool,

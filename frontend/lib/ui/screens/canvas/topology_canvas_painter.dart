@@ -89,7 +89,6 @@ class TopologyCanvasPainter extends CustomPainter {
       }
 
       canvas.drawPath(path, linkPaint);
-
     }
   }
 

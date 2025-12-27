@@ -4,7 +4,6 @@ skinparam linetype ortho
 ' Enumerations
 package Analytics {
 
-
 ' Tables
 dataclass items {
   * id : BIGSERIAL

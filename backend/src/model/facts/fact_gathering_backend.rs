@@ -216,7 +216,13 @@ impl FactGatheringBackend {
             Self::update_database(&pool, &influx_client, &results).await;
             Self::update_cache(results).await; // should be the last one, as it takes ownership
 
-            let timeout_s = Config::instance().get("backend/controller/fact-gathering/polling_time_s", "/").unwrap_or(6);
+            let timeout_s = match Config::instance().get("backend/controller/fact_gathering/polling_time_s", "/") {
+                Ok(s) => s,
+                Err(_) => {
+                    log::error!("[ERROR][FACTS] Missing timeout definition in config file, default to 15 seconds");
+                    15
+                },
+            };
             log::info!("[INFO ][FACTS] Sleeping until timeout ({}s) zzZ...", timeout_s);
             tokio::time::sleep(Duration::from_secs(timeout_s)).await;
         }});

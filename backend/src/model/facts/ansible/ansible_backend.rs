@@ -39,6 +39,39 @@ pub fn abspath<P: AsRef<Path>>(path: P) -> io::Result<PathBuf> {
     Ok(abspath_with_cwd(path, cwd))
 }
 
+/// Ansible does this very annoying thing, via Jinja2, where even if a value is casted as number in the playbook, it gets converted back to a string
+/// So we have to do double work, by manually trying to convert anything that looks like a number into a number
+fn parse_numbers_and_clean(metrics: &mut Metrics) {
+    for set in metrics.values_mut() {
+        for metric in set.values_mut() {
+            // if there's a single item in the array, destructure for ease of access
+            if let MetricValue::Array(a) = metric && a.len() == 1 {
+                *metric = a[0].clone();
+            }
+
+            if let MetricValue::String(s) = metric {
+                // it's a string. We try to parse it
+                // First as an integer
+                // Note: Parse will fail for anything that's not strictly an integer. 
+                //       Any non-numeric characters, including spaces, will result in a parse fail
+                //       As per the FromStr implementation of i64 https://doc.rust-lang.org/std/str/trait.FromStr.html#tymethod.from_str
+                if let Ok(value) = s.trim().parse::<i64>() {
+                    *metric = MetricValue::Integer(value);
+                    continue;
+                }
+
+                // Nope, let's try parsing as a float
+                // Note: Any non-f64 character or incorrect format will result in a parse fail
+                //       As per the FromStr implementation of f64 https://doc.rust-lang.org/std/str/trait.FromStr.html#tymethod.from_str
+                if let Ok(value) = s.trim().parse::<f64>() {
+                    *metric = MetricValue::Number(value.into());
+                    continue
+                }
+            }
+        }
+    }
+}
+
 /// Executes the ansible playbook found on the config files under the path
 /// > backend/model/playbooks/fact_gathering
 /// 
@@ -212,7 +245,10 @@ async fn run_playbook(targets: Vec<String>, playbook: Playbook) -> (Metrics, Sta
     let result = result.await;
 
     match result {
-        Ok(Ok((metrics, status))) => (metrics, status),
+        Ok(Ok((mut metrics, status))) => {
+            parse_numbers_and_clean(&mut metrics);
+            (metrics, status)
+        },
         Ok(Err(_)) => (HashMap::new(), HashMap::new()),
         Err(_) => (HashMap::new(), HashMap::new()),
     }
@@ -225,7 +261,7 @@ pub async fn gather_facts() -> (Metrics, Status) {
     let mut results : (Metrics, Status) = (HashMap::new(), HashMap::new());
 
     for playbook in cache.get_playbooks().await.into_iter().filter(|p| p.is_enabled) {
-        log::info!("[INFO ][FACTS][ANSIBLE] Playbook  `{}.yml` is executing...", playbook.playbook_name);
+        log::info!("[INFO ][FACTS][ANSIBLE] Playbook `{}.yml` is executing...", playbook.playbook_name);
 
         let targets = Cache::instance().ansible_inventory(&playbook).await;
         let result = run_playbook(targets, playbook).await;

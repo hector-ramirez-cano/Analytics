@@ -44,6 +44,7 @@ async fn launch() -> _ {
                 server::get_topology,
                 server::get_rules,
                 server::api_configure,
+                server::get_reload_config,
 
                 // Websocket
                 server::ws_router,
