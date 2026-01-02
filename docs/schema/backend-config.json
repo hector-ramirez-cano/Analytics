@@ -55,7 +55,7 @@
                 "configure",
                 "cache",
                 "syslog",
-                "fact-gathering",
+                "fact_gathering",
                 "postgres",
                 "influx",
                 "telegram"
@@ -95,7 +95,7 @@
                   "additionalProperties": false
                 },
 
-                "fact-gathering": {
+                "fact_gathering": {
                   "type": "object",
                   "required": ["polling_time_s"],
                   "properties": {
