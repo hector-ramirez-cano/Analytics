@@ -1,0 +1,10 @@
+{
+  "debug": {
+    "user": "myuser",
+    "password": "YOUR_PASSWORD_HERE"
+  },
+  "release": {
+    "user": "myuser",
+    "password": "YOUR_PASSWORD_HERE"
+  }
+}

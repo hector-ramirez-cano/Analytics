@@ -1,0 +1,14 @@
+{
+  "debug": {
+    "user": "poller",
+    "password": "YOUR_PA$$WORD_H3R3",
+    "token":"YOUR_T0KEN_HERE",
+    "operator_token": "YOUR_OPERATOR_T0KEN_HERE"
+  },
+  "release": {
+    "user": "poller",
+    "password": "2319W41B0D",
+    "token":"YOUR_T0KEN_HERE",
+    "operator_token": "YOUR_OPERATOR_T0KEN_HERE"
+  }
+}

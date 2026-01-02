@@ -1,0 +1,8 @@
+{
+    "debug": {
+        "API-token": "YOUR_TELEGRAM_API_TOKEN"
+    },
+    "release": {
+        "API-token": "YOUR_TELEGRAM_API_TOKEN"
+    }
+}
