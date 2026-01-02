@@ -219,7 +219,9 @@ impl FactGatheringBackend {
             let timeout_s = match Config::instance().get("backend/controller/fact_gathering/polling_time_s", "/") {
                 Ok(s) => s,
                 Err(_) => {
-                    log::error!("[ERROR][FACTS] Missing timeout definition in config file, default to 15 seconds");
+                    log::error!("Error: [ERROR][FACTS] Missing timeout definition in config file, default to 15 seconds");
+                    log::info!("        ^^^^^^^^^^^^^^ Make sure 'polling_time_s' is found in the config file at 'backend/controller/fact_gathering' and is of type int");
+                    log::info!("                       Make sure 'polling_time_s' is present in the correct target (debug/release)");
                     15
                 },
             };
