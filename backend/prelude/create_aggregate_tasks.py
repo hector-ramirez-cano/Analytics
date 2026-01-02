@@ -20,6 +20,16 @@ def init_db_pool():
     org = Config.Config.get("backend/controller/influx/org")
     schema = Config.Config.get("backend/controller/influx/schema", "http://")
     token = Config.Config.get("backend/controller/influx/operator_token")
+
+    if token is None or len(token) == 0:
+        print("[INFO ]Skipping automatic creation of tasks and buckets. 'backend/controller/influx/operator_token' is not found in config file.")
+        print("[WARN ]THIS SHOULD ONLY BE DONE IF THE STRUCTS ALREADY EXIST!")
+        return
+
+    if token is not str:
+        print("[WARN ]Skipping automatic creation of tasks and buckets. 'backend/controller/influx/operator_token' is found on config file, but is not of type 'str'")
+        return
+
     conn_uri = schema + host + ":" + str(port)
     _influx_db_client = InfluxDBClient(url=conn_uri, token=token, org=org)
     _influx_db_write_api = _influx_db_client.write_api(write_options=SYNCHRONOUS)
