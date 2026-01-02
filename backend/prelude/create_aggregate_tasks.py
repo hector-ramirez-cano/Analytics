@@ -1,6 +1,6 @@
 from typing import Optional
 
-from influxdb_client import WriteApi, InfluxDBClient, InfluxDBClient, BucketRetentionRules
+from influxdb_client import WriteApi, InfluxDBClient, BucketRetentionRules
 from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb_client.client.query_api import QueryApi
 from influxdb_client.client.tasks_api import TasksApi
